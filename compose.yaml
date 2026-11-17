@@ -66,6 +66,27 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Local only: on a fresh stack, creates the Acme demo office through the Platform's own setup
+  # and fills it with demo data (SEED_DEMO_DATA=true in sample.env.backend). Once the office is
+  # there it exits at once, so every later start keeps your data. Remove the office with
+  # `docker compose down -v` to get a fresh demo. Production has no such service.
+  seed:
+    networks:
+      - crm
+    build: ../consultancy-crm-backend
+    image: consultancy-crm-backend
+    command: ["python", "manage.py", "seed_demo"]
+    env_file:
+      - path: sample.env.backend
+      - path: .env.backend
+        required: false
+    restart: "no"
+    depends_on:
+      backend:
+        condition: service_started
+      worker:
+        condition: service_started
+
   # Next.js: the only way in. The browser talks to it on every subdomain; its server forwards
   # /api/... to Django with the browser's host in X-Forwarded-Host.
   frontend:

@@ -99,7 +99,8 @@ cd consultancy-crm-backend   # or consultancy-crm-frontend
 docker compose up -d --build
 ```
 
-Then open <http://admin.localhost:8080/platform>.
+Then open <http://acme.localhost:8080> (the demo office, ready after about a minute; see
+"Demo office" below) or the Platform at <http://admin.localhost:8080/platform>.
 
 ### How a request flows
 
@@ -141,6 +142,32 @@ Consultancies live at `<subdomain>.localhost`. Browsers (Chrome, Firefox) and
 systemd-resolved send every `*.localhost` name to `127.0.0.1`, so no `/etc/hosts` edits are
 needed. With other resolvers (e.g. macOS + `curl`), add a line per subdomain to `/etc/hosts`:
 `127.0.0.1 acme.localhost`.
+
+### Demo office (ready on the first start)
+
+Nothing to create by hand: on a fresh stack the one-off `seed` service runs
+`python manage.py seed_demo`, which creates the **Acme Education Consultancy** office through the
+Platform's own setup (the worker builds its schema), then fills it with Staff, Students,
+Applications, Visas, Documents, payments, tasks and two weeks of Clock-in, dated relative to today.
+It takes about a minute after the app is up; `docker compose logs -f seed` shows it working. Once
+the office is there the service exits at once, so later starts keep your changes. For a fresh
+demo again: `docker compose down -v && docker compose up -d`.
+
+Log in at <http://acme.localhost:8080> with password `Demo-Acme-2026!` as any of:
+
+| Email                  | Role                       |
+| ---------------------- | -------------------------- |
+| `admin@acme.com`       | Admin (Ramesh Bhandari)    |
+| `counsellor@acme.com`  | Counsellor (Sita Karki)    |
+| `counsellor2@acme.com` | Counsellor (Bikash Thapa)  |
+| `frontdesk@acme.com`   | Front Desk (Anita Gurung)  |
+| `teacher@acme.com`     | Teacher (Prakash Shrestha) |
+
+It only runs when `SEED_DEMO_DATA=true` (set in `sample.env.backend`; put
+`SEED_DEMO_DATA=false` in `.env.backend` to start empty). Production never sets it and has no
+`seed` service. Clock-in works in the demo because `DEMO_OFFICE_NETWORK` (backend) and
+`DEV_CLIENT_IP` (frontend) hold the same public address. The demo itself is `demo/acme_seed.py`
+in the backend repo: a plain script kept outside ruff and mypy; the command around it is tested.
 
 ### Platform and dev Consultancies
 
