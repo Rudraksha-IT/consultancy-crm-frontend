@@ -36,7 +36,8 @@ jobs:
           done
           exit $status
 
-  checks:
+  # Format, lint and types, beside the tests and the build.
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,10 +53,53 @@ jobs:
         run: pnpm lint
       - name: Type check
         run: pnpm typecheck
+
+  # Every test with coverage (vitest already uses all the runner's CPUs).
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - name: Tests
         run: pnpm test
+
+  # The production build, as on the server. Next.js reuses its build cache from the last run.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: next-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**', 'next.config.ts') }}
+          restore-keys: next-${{ hashFiles('pnpm-lock.yaml') }}-
       - name: Build
         run: pnpm build
+
+  # The one check the branch ruleset requires: passes only when every job above passed, so a
+  # failed, cancelled or skipped job can never count as green.
+  checks:
+    if: always()
+    needs: [lint, tests, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: All checks passed
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "lint, tests, build: $RESULTS"
+          for result in $RESULTS; do [ "$result" = success ] || exit 1; done
 
   # After the checks pass on main: build the slim image and push it to ECR, tagged with the
   # commit. Deploy it on the server with deploy/deploy.sh <commit>. Needs the repository
