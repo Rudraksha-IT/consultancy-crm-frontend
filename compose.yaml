@@ -1,7 +1,7 @@
 # The whole app for local development: Next.js, Django, PostgreSQL, MinIO and MailHog.
 # Clone consultancy-crm-backend and consultancy-crm-frontend side by side in one folder; this file
-# builds this repo from "." and the other from the sibling folder, and reads
-# .env.backend and .env.frontend from this folder. The same file is in both repos,
+# builds this repo from "." and the other from the sibling folder. It runs on the local defaults
+# in .env.*.example as they are; an optional .env.backend or .env.frontend here overrides them. The same file is in both repos,
 # so `docker compose up -d --build` works from either. The app is served on http://localhost:8080.
 name: consultancy-crm
 
@@ -18,7 +18,10 @@ services:
     command: >-
       sh -c "python manage.py migrate_on_deploy
       && python manage.py create_documents_bucket"
-    env_file: .env.backend
+    env_file:
+      - path: .env.backend.example
+      - path: .env.backend
+        required: false
     restart: "no"
     depends_on:
       postgres:
@@ -34,8 +37,12 @@ services:
       - crm
     build: ../consultancy-crm-backend
     image: consultancy-crm-backend
-    # Every Django setting is in .env.backend (copy .env.backend.example).
-    env_file: .env.backend
+    # Django settings: the safe local defaults in .env.backend.example, then .env.backend
+    # (optional, never committed) for any value you want to change.
+    env_file:
+      - path: .env.backend.example
+      - path: .env.backend
+        required: false
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -49,7 +56,10 @@ services:
     build: ../consultancy-crm-backend
     image: consultancy-crm-backend
     command: ["python", "manage.py", "run_jobs"]
-    env_file: .env.backend
+    env_file:
+      - path: .env.backend.example
+      - path: .env.backend
+        required: false
     stop_grace_period: 2m
     depends_on:
       migrate:
@@ -64,8 +74,12 @@ services:
     image: consultancy-crm-frontend
     ports:
       - "8080:3000"
-    # Every Next.js setting is in .env.frontend (copy .env.frontend.example).
-    env_file: .env.frontend
+    # Next.js settings: the safe local defaults in .env.frontend.example, then .env.frontend
+    # (optional, never committed) for any value you want to change.
+    env_file:
+      - path: .env.frontend.example
+      - path: .env.frontend
+        required: false
     depends_on:
       - backend
 

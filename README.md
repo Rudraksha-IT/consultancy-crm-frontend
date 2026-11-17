@@ -95,9 +95,7 @@ Next.js, Django, PostgreSQL, MinIO and MailHog. There is no reverse proxy (ADR 0
 mkdir consultancy-crm && cd consultancy-crm
 git clone <org>/consultancy-crm-backend.git
 git clone <org>/consultancy-crm-frontend.git
-cd consultancy-crm-backend   # or consultancy-crm-frontend: each has both templates
-cp .env.backend.example .env.backend
-cp .env.frontend.example .env.frontend
+cd consultancy-crm-backend   # or consultancy-crm-frontend
 docker compose up -d --build
 ```
 
@@ -129,9 +127,10 @@ browser ── acme.localhost:8080 ──► Next.js (frontend, the only publish
   or DELETE whose `Origin` isn't the page's own host. Browser JavaScript never sees a token.
 - The services refuse to start without `INTERNAL_API_TOKEN` (both, 32+ characters),
   `JWT_SIGNING_KEY` (Django, 32+ bytes) and `AUTH_COOKIE_KEY` (Next.js, 32 bytes base64).
-  The compose file holds no app settings: Django reads `.env.backend` and Next.js
-  reads `.env.frontend`, both beside `compose.yaml`. Neither is ever committed; copy the templates (local
-  defaults) first.
+  No env file needs to be shared or copied: compose reads the safe local defaults in
+  `.env.backend.example` and `.env.frontend.example`, then an optional `.env.backend` or
+  `.env.frontend` beside `compose.yaml` (never committed) for any value you want to change. The
+  examples hold placeholders only, never a real secret; production sets its own values.
 
 A one-off `migrate` container runs the migrations (and creates the local MinIO bucket), then
 exits; the backend starts only after it succeeds. The app is served on port 8080.
@@ -149,7 +148,7 @@ Platform Admins work on `admin.localhost` (override the subdomain with
 `PLATFORM_SUBDOMAIN`). There is no sign-up and no command to type: the `migrate` step runs
 `ensure_platform_admin`, which creates the Platform Admin from `PLATFORM_ADMIN_NAME`,
 `PLATFORM_ADMIN_EMAIL` and `PLATFORM_ADMIN_PASSWORD` in `.env.backend` if no Platform Admin has
-that email yet (issue 59). With the sample values, log in as `ops@platform.test` /
+that email yet (issue 59). With the sample values, log in as `admin@platform.com` /
 `Local-Platform-2026!`, then change your name, email or password on the Platform's **Account**
 page.
 
