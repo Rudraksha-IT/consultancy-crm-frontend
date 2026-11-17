@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+jobs:
+  # Every commit pushed or proposed must follow Conventional Commits and credit no AI as
+  # co-author. The same check runs locally as the commit-msg hook; this one cannot be skipped.
+  commit-messages:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check every new commit message
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          if [ "$EVENT" = pull_request ]; then
+            range="$PR_BASE..$PR_HEAD"
+          elif git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            range="$BEFORE..$AFTER"
+          else
+            range="$AFTER"  # first push of a branch, or history rewritten: check all of it
+          fi
+          status=0
+          for commit in $(git rev-list "$range"); do
+            git log -1 --format=%B "$commit" > "$RUNNER_TEMP/message"
+            node scripts/check-commit-message.mjs "$RUNNER_TEMP/message" || { echo "::error::Commit $commit breaks the rules above"; status=1; }
+          done
+          exit $status
+
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Format
+        run: pnpm format:check
+      - name: Lint
+        run: pnpm lint
+      - name: Type check
+        run: pnpm typecheck
+      - name: Tests
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+
+  # After the checks pass on main: build the slim image and push it to ECR, tagged with the
+  # commit. Deploy it on the server with deploy/deploy.sh <commit>. Needs the repository
+  # variables AWS_REGION and AWS_ROLE_ARN (an IAM role GitHub may assume through OIDC, allowed to
+  # push to the consultancy-crm-frontend ECR repository). No AWS keys are stored in GitHub.
+  image:
+    needs: [commit-messages, checks]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/consultancy-crm-frontend:${{ github.sha }}
+          # Unchanged layers (the dependencies) are reused, so most builds take a minute or two.
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend

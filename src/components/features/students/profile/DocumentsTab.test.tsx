@@ -1,0 +1,195 @@
+import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+import { StaffContextContext } from "@/components/features/shell/staffContext";
+import { ToastProvider } from "@/components/ui/ToastProvider";
+import type { StaffContext } from "@/lib/api";
+import { DEFAULT_THEME } from "@/lib/theme";
+import { backend, on, onEach } from "@/test/backend";
+import { CHECKLIST, PASSPORT_DOCUMENT, item } from "@/test/documents";
+import { PROFILE } from "@/test/studentProfile";
+
+import { StudentProfilePage } from "./StudentProfilePage";
+import { consultancySummary } from "@/test/consultancy";
+
+const COUNSELLOR: StaffContext = {
+  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  consultancy: consultancySummary(),
+  modules: ["students", "documents"],
+  dateDisplay: "AD",
+  colourMode: "device",
+  supportAccess: null,
+  theme: DEFAULT_THEME,
+};
+
+const CHECKLIST_PATH = "/api/students/7/documents/";
+
+function renderPage() {
+  render(
+    <StaffContextContext value={COUNSELLOR}>
+      <ToastProvider>
+        <StudentProfilePage studentId={7} />
+      </ToastProvider>
+    </StaffContextContext>,
+  );
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("the profile's Documents tab", () => {
+  it("comes after Applications and shows how many are received", async () => {
+    backend(on("GET", "/api/students/7/", PROFILE));
+    renderPage();
+
+    const tabs = within(await screen.findByRole("tablist", { name: "Sections" })).getAllByRole(
+      "tab",
+    );
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      "Applications 0",
+      "Documents 1/8",
+      "Tasks 0",
+      "Profile",
+      "Activity",
+    ]);
+  });
+
+  it("opens the checklist, and an upload updates the tab's count", async () => {
+    const uploaded = {
+      ...CHECKLIST,
+      done: 3,
+      items: CHECKLIST.items.map((one) =>
+        one.document_type.id === 4
+          ? item({ id: 4, name: "Bank Statement", state: "waiting", document: PASSPORT_DOCUMENT })
+          : one,
+      ),
+    };
+    let isUploaded = false;
+    backend(
+      onEach("GET", "/api/students/7/", () => ({
+        ...PROFILE,
+        documents: isUploaded ? { done: 3, total: 4 } : PROFILE.documents,
+      })),
+      on("GET", CHECKLIST_PATH, CHECKLIST),
+      onEach(
+        "POST",
+        CHECKLIST_PATH,
+        () => {
+          isUploaded = true;
+          return uploaded;
+        },
+        201,
+      ),
+    );
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("tab", { name: "Documents 1/8" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Upload for Bank Statement" }));
+    const dialog = screen.getByRole("dialog");
+    await userEvent.upload(
+      within(dialog).getByLabelText("File"),
+      new File(["%PDF-1.7"], "bank.pdf", { type: "application/pdf" }),
+    );
+    await userEvent.click(within(dialog).getByRole("button", { name: "Upload" }));
+
+    expect(await screen.findByRole("tab", { name: "Documents 3/4" })).toBeVisible();
+  });
+
+  it("offers the Student's Applications and Visas as links when uploading", async () => {
+    const deakin = {
+      id: 11,
+      university: { id: 3, name: "Deakin University" },
+      course: { id: 4, name: "Master of IT", level: "master" },
+      intake: "2027-03",
+      status: "offer",
+      offer_kind: "",
+      offered_on: null,
+      offer_letter: null,
+      documents: [],
+    };
+    const visa = {
+      id: 21,
+      application_id: 11,
+      university: deakin.university,
+      course: deakin.course,
+      status: "applied",
+      started_on: "2026-10-12",
+      biometrics_at: null,
+      medical_at: null,
+      interview_at: null,
+      documents: [],
+    };
+    backend(
+      on("GET", "/api/students/7/", { ...PROFILE, applications: [deakin], visas: [visa] }),
+      on("GET", CHECKLIST_PATH, CHECKLIST),
+    );
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("tab", { name: "Documents 1/8" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Upload for Bank Statement" }));
+
+    const link = within(screen.getByRole("dialog")).getByRole("combobox", {
+      name: "Link to (optional)",
+    });
+    expect(
+      within(link)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual([
+      "Just the Student",
+      "Application: Deakin University, Master of IT",
+      "Visa: Deakin University, Master of IT",
+    ]);
+  });
+
+  it("reloads the profile after a change, so linked Documents show on the Application", async () => {
+    const deakin = {
+      id: 11,
+      university: { id: 3, name: "Deakin University" },
+      course: { id: 4, name: "Master of IT", level: "master" },
+      intake: "2027-03",
+      status: "applied",
+      offer_kind: "",
+      offered_on: null,
+      offer_letter: null,
+    };
+    const linked = {
+      id: 31,
+      document_type: { id: 4, name: "Bank Statement" },
+      files: [{ id: 41, file_name: "passport.pdf" }],
+      verification: "pending",
+    };
+    let profileCalls = 0;
+    backend(
+      onEach("GET", "/api/students/7/", () => {
+        profileCalls += 1;
+        return {
+          ...PROFILE,
+          applications: [{ ...deakin, documents: profileCalls === 1 ? [] : [linked] }],
+        };
+      }),
+      on("GET", CHECKLIST_PATH, CHECKLIST),
+      on("POST", CHECKLIST_PATH, CHECKLIST, 201),
+    );
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("tab", { name: "Documents 1/8" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Upload for Bank Statement" }));
+    const dialog = screen.getByRole("dialog");
+    await userEvent.selectOptions(
+      within(dialog).getByRole("combobox", { name: "Link to (optional)" }),
+      "Application: Deakin University, Master of IT",
+    );
+    await userEvent.upload(
+      within(dialog).getByLabelText("File"),
+      new File(["%PDF-1.7"], "bank.pdf", { type: "application/pdf" }),
+    );
+    await userEvent.click(within(dialog).getByRole("button", { name: "Upload" }));
+    await screen.findByText("Uploaded. Waiting for a check.");
+    await userEvent.click(screen.getByRole("tab", { name: /^Applications/ }));
+
+    const list = await screen.findByRole("list", { name: "Documents for Deakin University" });
+    expect(within(list).getByText("Bank Statement")).toBeVisible();
+  });
+});

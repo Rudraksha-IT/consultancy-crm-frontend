@@ -1,0 +1,84 @@
+import clsx from "clsx";
+
+import { Icon } from "@/components/ui/Icon";
+import { GESTURE_TEXT } from "@/constants/gestures";
+import type { PageEdge, PullHint } from "@/lib/gestures";
+import type { NavItem } from "@/lib/navigation";
+
+type PullGapProps = {
+  edge: PageEdge;
+  hint: PullHint<NavItem> | null;
+  /** The page is sliding away: the gap fades with it. */
+  isLeaving: boolean;
+};
+
+const PERCENT = 100;
+
+/** Up at the top (to the previous page), down at the bottom (to the next). */
+const ARROWS = { top: "arrowUp", bottom: "arrowDown" } as const;
+
+/**
+ * The gap a pull opens at the top or bottom of the page (issue 90). A little darker than the page,
+ * it says where letting go will go, with a bar that fills and turns green when it is ready; the
+ * words change too, so the colour never stands alone. It grows and closes smoothly with the page
+ * (the same easing), so it never jumps with each scroll step or vanishes on letting go.
+ */
+export function PullGap({ edge, hint, isLeaving }: PullGapProps) {
+  const shown = hint?.edge === edge ? hint : null;
+  if (shown === null) return <ClosedGap edge={edge} />;
+  return (
+    <div
+      data-pull-gap={edge}
+      className={clsx(gapClasses(edge, true), shown.isReady ? "text-ink" : "text-ink-2", {
+        "opacity-0": isLeaving,
+      })}
+      style={{ height: `${String(shown.shift)}px` }}
+    >
+      <p role="status" className="inline-flex items-center gap-2">
+        <Icon name={ARROWS[edge]} size="sm" />
+        {hintText(shown)}
+      </p>
+      <PullBar isReady={shown.isReady} progress={shown.progress} />
+    </div>
+  );
+}
+
+/** Not pulled: the gap stays, closed, so letting go early closes it smoothly with the page. */
+function ClosedGap({ edge }: { edge: PageEdge }) {
+  return (
+    <div
+      data-pull-gap={edge}
+      aria-hidden="true"
+      className={gapClasses(edge, false)}
+      style={{ height: "0px" }}
+    />
+  );
+}
+
+function gapClasses(edge: PageEdge, isPulled: boolean): string {
+  return clsx(
+    "bg-gap text-secondary pointer-events-none absolute inset-x-0 grid place-content-center justify-items-center gap-2 overflow-hidden font-semibold transition-[height,opacity]",
+    // While pulled it eases after each scroll step; once let go it closes with the page.
+    isPulled ? "duration-150 ease-out" : "duration-200 ease-in-out",
+    edge === "top" ? "top-0" : "bottom-0",
+  );
+}
+
+function hintText({ isReady, page }: PullHint<NavItem>): string {
+  return isReady ? GESTURE_TEXT.release(page.label) : GESTURE_TEXT.keepPulling(page.label);
+}
+
+/** Fills as the pull grows; green once letting go will change the page. */
+function PullBar({ isReady, progress }: { isReady: boolean; progress: number }) {
+  return (
+    <span aria-hidden="true" className="bg-fill-2 rounded-pill block h-1 w-36 overflow-hidden">
+      <span
+        className={clsx(
+          "block h-full transition-[width,background-color] duration-150 ease-out",
+          isReady ? "bg-good" : "bg-ink-3",
+        )}
+        style={{ width: `${String(progress * PERCENT)}%` }}
+      />
+    </span>
+  );
+}

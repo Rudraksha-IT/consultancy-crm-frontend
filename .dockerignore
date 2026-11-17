@@ -1,0 +1,35 @@
+# The image is built from source and package files only: keep the build context small
+# (1 GiB micro EC2). Dependencies are installed inside the image.
+
+# Secrets: settings come from the environment, never from a file in the image
+.env*
+*.pem
+
+# Dependencies and build output made on this machine
+node_modules
+.next
+out
+build
+coverage
+*.tsbuildinfo
+.cache
+.eslintcache
+
+# Git, CI, hooks and docs
+.git
+.github
+.gitignore
+.dockerignore
+.husky
+README.md
+compose.yaml
+Dockerfile
+
+# Logs, editors, OS and local AI-agent notes
+*.log
+.vscode
+.idea
+.DS_Store
+.claude
+CLAUDE.md
+AGENTS.md

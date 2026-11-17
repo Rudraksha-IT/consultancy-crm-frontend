@@ -1,0 +1,119 @@
+"use client";
+
+import { Fragment, useState, type ReactNode } from "react";
+
+import { useDates } from "@/components/features/shell/dateDisplay";
+import { Banner } from "@/components/ui/Banner";
+import { Button } from "@/components/ui/Button";
+import { InfoTip } from "@/components/ui/InfoTip";
+import { Journey } from "@/components/ui/Journey";
+import { useToast } from "@/components/ui/useToast";
+import { LABELS, MESSAGES } from "@/constants/messages";
+import { STAGE_LABELS, Stage } from "@/constants/stages";
+import { InvalidFieldsError, setStage, type StudentProfile } from "@/lib/api";
+import { localDayIso } from "@/lib/dates";
+import { lostStory, type LostMoment } from "@/lib/students";
+
+import { saveFailure } from "./saveErrors";
+
+type StageSectionProps = {
+  profile: StudentProfile;
+  onSaved: (profile: StudentProfile) => void;
+};
+
+/**
+ * The Student's journey. Their counsellor or an Admin moves a hand-set Stage by clicking it, and
+ * brings a Lost Student back to Counselling from the Lost banner (spec 38-40).
+ */
+export function StageSection({ profile, onSaved }: StageSectionProps) {
+  const { showToast } = useToast();
+  const [isMoving, setIsMoving] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+  const isLost = profile.stage === Stage.Lost;
+
+  async function move(stage: Stage, doneMessage: string): Promise<void> {
+    setIsMoving(true);
+    setFailure(null);
+    try {
+      const saved = await setStage(profile.id, { stage });
+      showToast(doneMessage);
+      onSaved(saved);
+    } catch (error) {
+      setFailure(moveFailure(error));
+    }
+    setIsMoving(false);
+  }
+
+  return (
+    <div className="grid gap-4">
+      {isLost && (
+        <Banner
+          tone="problem"
+          action={
+            profile.canSetStage && (
+              <Button
+                isLoading={isMoving}
+                loadingLabel={LABELS.saving}
+                onClick={() => void move(Stage.Counselling, MESSAGES.backInCounselling)}
+              >
+                {LABELS.bringBackToCounselling}
+              </Button>
+            )
+          }
+        >
+          <b>{LABELS.lost}</b> <span className="whitespace-pre-wrap">{profile.lostReason}</span>
+        </Banner>
+      )}
+      <Journey
+        stage={profile.stage}
+        nextStep={profile.progress.nextStep}
+        isDone={profile.progress.isDone}
+        isMoving={isMoving}
+        info={lostBefore(profile)}
+        onMoveTo={
+          profile.canSetStage
+            ? (stage) => void move(stage, MESSAGES.stageSet(STAGE_LABELS[stage]))
+            : undefined
+        }
+      />
+      {failure !== null && <Banner tone="problem">{failure}</Banner>}
+    </div>
+  );
+}
+
+/** The ⓘ, only for a Student who was ever Lost. */
+function lostBefore(profile: StudentProfile): ReactNode {
+  const story = lostStory(profile.stageChanges);
+  return story.length > 0 ? <LostBefore story={story} /> : undefined;
+}
+
+/** The ⓘ for a Student who was ever Lost: when they were Lost, why, and when they came back. */
+function LostBefore({ story }: { story: readonly LostMoment[] }) {
+  const dates = useDates();
+  const day = (at: string): string => dates.date(localDayIso(at) ?? at);
+  return (
+    <>
+      <InfoTip label={LABELS.whenTheyWereLost}>
+        {story.map((moment, index) => (
+          <Fragment key={`${moment.kind}-${moment.at}`}>
+            {index > 0 && " "}
+            <span className="block">
+              {moment.kind === "lost"
+                ? LABELS.lostOn(day(moment.at), moment.reason)
+                : LABELS.cameBackOn(day(moment.at))}
+            </span>
+          </Fragment>
+        ))}
+      </InfoTip>
+      <span className="text-small text-ink-2">{LABELS.lostBefore}</span>
+    </>
+  );
+}
+
+function moveFailure(error: unknown): string {
+  if (error instanceof InvalidFieldsError) {
+    const [first] = Object.values<string[] | undefined>(error.fieldErrors).flat();
+    if (first !== undefined) return first;
+  }
+  return saveFailure(error);
+}

@@ -1,0 +1,98 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo, useState, type ReactNode } from "react";
+
+import { LogoutButton } from "@/components/features/shell/LogoutButton";
+import { ThemeToggle } from "@/components/features/theme/ThemeToggle";
+import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
+import { useColourMode } from "@/components/features/theme/useColourMode";
+import { Avatar } from "@/components/ui/Avatar";
+import { BrandMark } from "@/components/ui/BrandMark";
+import { IconLink } from "@/components/ui/IconLink";
+import { ToastProvider } from "@/components/ui/ToastProvider";
+import { LABELS, MESSAGES } from "@/constants/messages";
+import { PLATFORM_ACCOUNT_TEXT } from "@/constants/platformAccount";
+import { ROUTES } from "@/constants/routes";
+import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
+import { DEFAULT_THEME } from "@/lib/theme";
+
+import { PlatformTabs } from "./PlatformTabs";
+import { useProductLogo } from "./productLogo";
+import { PlatformAdminContext } from "./platformAdminContext";
+import { usePlatformSession } from "./usePlatformSession";
+
+type PlatformShellProps = {
+  children: ReactNode;
+};
+
+/** The logged-in Platform frame: a header bar with the product's name and who is logged in. */
+export function PlatformShell({ children }: PlatformShellProps) {
+  const session = usePlatformSession();
+
+  if (session.status === "loading") {
+    return <p className="text-ink-2 p-6">{MESSAGES.loading}</p>;
+  }
+  if (session.status === "failed") {
+    return (
+      <p role="alert" className="text-bad p-6 font-semibold">
+        {MESSAGES.sessionFailed}
+      </p>
+    );
+  }
+  return (
+    <ToastProvider>
+      <PlatformFrame admin={session.value}>{children}</PlatformFrame>
+    </ToastProvider>
+  );
+}
+
+type PlatformFrameProps = {
+  admin: PlatformAdmin;
+  children: ReactNode;
+};
+
+function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
+  const [admin, setAdmin] = useState(loaded);
+  const current = useMemo(() => ({ admin, setAdmin }), [admin]);
+  const colourMode = useColourMode(`platform-${String(admin.id)}`);
+  const productLogo = useProductLogo();
+  useAppliedTheme(DEFAULT_THEME, colourMode.mode);
+
+  return (
+    <PlatformAdminContext value={current}>
+      <div className="flex min-h-full flex-col">
+        <header className="min-h-topbar bg-side-bg text-side-ink wide:px-10 flex items-center justify-between gap-3 px-4">
+          <Link
+            href={ROUTES.platformHome}
+            className="min-h-control flex min-w-0 items-center gap-3"
+          >
+            <BrandMark name={LABELS.productName} logo={productLogo} />
+            <b className="text-body font-bold">{LABELS.productName}</b>
+          </Link>
+          <div className="flex items-center gap-2">
+            <IconLink
+              href={ROUTES.platformAccount}
+              icon="gear"
+              label={PLATFORM_ACCOUNT_TEXT.openAccount}
+              tone="sidebar"
+            />
+            <ThemeToggle mode={colourMode.mode} onToggle={colourMode.toggleMode} tone="sidebar" />
+            <span className="border-side-rule phone:pl-4 flex items-center gap-3 border-l pl-2">
+              <Avatar name={admin.name} />
+              <span className="phone:grid hidden leading-5">
+                <b className="text-secondary font-semibold">{admin.name}</b>
+                <span className="text-small text-side-muted">{LABELS.platformAdmin}</span>
+              </span>
+              <LogoutButton endSession={logOutOfPlatform} loginPath={ROUTES.platformLogin} />
+            </span>
+          </div>
+        </header>
+        <PlatformTabs />
+        <main className="px-page wide:pt-10 min-w-0 pt-7 pb-30">
+          <div className="max-w-content mx-auto grid grid-cols-1 gap-8">{children}</div>
+        </main>
+      </div>
+    </PlatformAdminContext>
+  );
+}

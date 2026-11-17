@@ -1,0 +1,9 @@
+import { API_PATHS } from "@/constants/api";
+
+import { getJson } from "./client";
+import { ConsultancySchema, type Consultancy } from "./types";
+
+/** The Consultancy that owns the subdomain this page was loaded from. */
+export function fetchCurrentConsultancy(fetchFn: typeof fetch = fetch): Promise<Consultancy> {
+  return getJson(API_PATHS.currentConsultancy, ConsultancySchema, fetchFn);
+}

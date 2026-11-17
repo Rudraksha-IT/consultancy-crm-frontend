@@ -1,0 +1,129 @@
+# The whole app for local development: Next.js, Django, PostgreSQL, MinIO and MailHog.
+# Clone consultancy-crm-backend and consultancy-crm-frontend side by side in one folder; this file
+# builds this repo from "." and the other from the sibling folder, and reads
+# .env.backend and .env.frontend from this folder. The same file is in both repos,
+# so `docker compose up -d --build` works from either. The app is served on http://localhost:8080.
+name: consultancy-crm
+
+services:
+  # Runs once before Django starts, then exits. migrate_on_deploy (issue 59) migrates the shared
+  # schema, creates the Platform Admin from PLATFORM_ADMIN_* (never stopping on a bad value),
+  # then migrates every Consultancy's schema and rebuilds the Central login's index; then the
+  # local MinIO bucket. Never part of the backend's own start.
+  migrate:
+    networks:
+      - crm
+    build: ../consultancy-crm-backend
+    image: consultancy-crm-backend
+    command: >-
+      sh -c "python manage.py migrate_on_deploy
+      && python manage.py create_documents_bucket"
+    env_file: .env.backend
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  # Django: no published port. Only the frontend reaches it, at http://backend:8000 on the
+  # private network, and every call must carry INTERNAL_API_TOKEN (ADR 0002). It starts with the
+  # image's own command (gunicorn, config/gunicorn.py) once `migrate` has finished.
+  backend:
+    networks:
+      - crm
+    build: ../consultancy-crm-backend
+    image: consultancy-crm-backend
+    # Every Django setting is in .env.backend (copy .env.backend.example).
+    env_file: .env.backend
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # The job queue's worker (issue 60): builds each new Consultancy's schema and invites its first
+  # Admin, one job at a time, so the Platform's Create answers at once. Same image and settings as
+  # the backend; no port. SIGTERM lets the current job finish (stop_grace_period).
+  worker:
+    networks:
+      - crm
+    build: ../consultancy-crm-backend
+    image: consultancy-crm-backend
+    command: ["python", "manage.py", "run_jobs"]
+    env_file: .env.backend
+    stop_grace_period: 2m
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  # Next.js: the only way in. The browser talks to it on every subdomain; its server forwards
+  # /api/... to Django with the browser's host in X-Forwarded-Host.
+  frontend:
+    networks:
+      - crm
+    build: .
+    image: consultancy-crm-frontend
+    ports:
+      - "8080:3000"
+    # Every Next.js setting is in .env.frontend (copy .env.frontend.example).
+    env_file: .env.frontend
+    depends_on:
+      - backend
+
+  postgres:
+    networks:
+      - crm
+    image: postgres:17
+    # Local-only credentials; POSTGRES_* in .env.backend match.
+    environment:
+      POSTGRES_DB: crm
+      POSTGRES_USER: crm
+      POSTGRES_PASSWORD: crm
+    ports:
+      # Local machine only, so pytest on this machine uses this same server. pytest-django makes
+      # its own `test_crm` database here and drops it afterwards; `crm` is never touched.
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crm -d crm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # S3-compatible stand-in for Document storage (issue 16): the private `crm-documents` bucket.
+  # MinIO no longer publishes images to Docker Hub; Chainguard maintains this build.
+  minio:
+    networks:
+      - crm
+    image: chainguard/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      # Local-only credentials; AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY in .env.backend match.
+      MINIO_ROOT_USER: crm-minio
+      MINIO_ROOT_PASSWORD: crm-minio-secret
+    ports:
+      # Local machine only: other devices on the LAN cannot reach storage.
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
+    volumes:
+      - minio-data:/data
+
+  # Catch-all mail server for local development: nothing leaves this machine.
+  mailhog:
+    networks:
+      - crm
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      # Local machine only: the inbox web page.
+      - "127.0.0.1:8025:8025"
+
+# Every service joins this one network and reaches the others by service name.
+# Only the frontend (and Postgres, MinIO and MailHog, on this machine only) publish ports outside it.
+networks:
+  crm:
+    name: consultancy-crm
+    driver: bridge
+
+volumes:
+  postgres-data:
+  minio-data:

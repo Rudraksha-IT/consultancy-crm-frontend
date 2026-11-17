@@ -1,0 +1,83 @@
+/** Two-step login (issue 61): its words on screen. Never "OTP"; "Code" stays the emailed one. */
+
+import { LABELS } from "./messages";
+
+export const TWO_FACTOR_TEXT = {
+  verifyTitle: "Enter the number from your authenticator app",
+  verifyIntro: `Open your authenticator app and type the 6-digit number it shows for ${LABELS.productName}.`,
+  recoveryIntro: "Type one of the recovery codes you saved. Each one works once.",
+  numberLabel: "6-digit number",
+  recoveryCodeLabel: "Recovery code",
+  useRecoveryCode: "Use a recovery code instead",
+  useNumber: "Use the number from your app instead",
+  continue: "Continue",
+  checking: "Checking…",
+  enterNumber: "Enter the 6-digit number from your app.",
+  enterRecoveryCode: "Enter one of your recovery codes.",
+  wrongNumber: "That number isn't right. Enter the newest number from your app.",
+  wrongRecoveryCode: "That recovery code isn't right, or it was already used.",
+  tooManyTries: "Too many wrong tries. Wait 15 minutes, then try again.",
+  startAgain: "This sign-in has timed out or was already used. Log in again.",
+  failed: "We couldn't check that. Please try again.",
+  backToLogIn: "Back to log in",
+
+  setupTitle: "Set up two-step login",
+  setupIntro:
+    "Scan this QR code with an authenticator app, such as Google Authenticator, Microsoft Authenticator or 1Password.",
+  loadingSetup: "Getting your setup key…",
+  setupFailed: "We couldn't start the setup. Please try again.",
+  tryAgain: "Try again",
+  qrLabel: "QR code to scan with your authenticator app",
+  cantScan: "Can't scan it? Type this setup key into the app instead.",
+  secretLabel: "Setup key",
+  copyKey: "Copy key",
+  keyCopied: "Key copied",
+  confirmLabel: "Then enter the 6-digit number the app shows",
+  confirm: "Confirm",
+
+  codesTitle: "Save your recovery codes",
+  codesIntro:
+    "If you lose your phone, each code lets you log in once. They are shown only now: keep them somewhere safe, away from your phone.",
+  codesLabel: "Your recovery codes",
+  copyCodes: "Copy codes",
+  codesCopied: "Recovery codes copied",
+  copyFailed: "Copying isn't allowed here. Select the codes and copy them by hand.",
+  downloadCodes: "Download codes",
+  codesFileName: "consultancy-crm-recovery-codes.txt",
+  savedThem: "I've saved my recovery codes",
+  goOn: "Continue to the Platform",
+  goOnToOffice: "Continue",
+
+  securityTitle: "Security",
+  securityHelp:
+    "After your password, you also enter a number from an authenticator app on your phone, so a stolen password alone can't open the Platform.",
+  adminRequiresIt: "Your Admin requires two-step login for you, so only they can switch it off.",
+  stateOn: "On",
+  stateOff: "Off",
+  stateLabel: "Two-step login is",
+  codesLeft: (count: number) =>
+    count === 1 ? "1 recovery code left" : `${String(count)} recovery codes left`,
+  loadingState: "Loading…",
+  stateFailed: "We couldn't load your two-step login. Refresh the page to try again.",
+  switchOn: "Switch on",
+  switchOff: "Switch off",
+  switchOnTitle: "Switch on two-step login?",
+  switchOnBody:
+    "You'll be signed out everywhere, including here, and set up your authenticator app straight away.",
+  switchOnConfirm: "Switch on and set up",
+  switchingOn: "Switching on…",
+  cancel: "Cancel",
+  switchOffTitle: "Switch off two-step login",
+  switchOffBody:
+    "Enter your password and a number from your app. You'll be signed out everywhere else.",
+  password: "Password",
+  enterPassword: "Enter your password.",
+  wrongPassword: "That isn't your current password.",
+  switchedOff: "Two-step login switched off. Your other sessions have been signed out.",
+  newCodes: "Make new recovery codes",
+  newCodesBody: "Your old recovery codes stop working. Enter a number from your app.",
+  makeCodes: "Make new codes",
+  done: "Done",
+  numberForChanges: "Number from your authenticator app",
+  numberForChangesHint: "Needed to save any change while two-step login is on.",
+} as const;

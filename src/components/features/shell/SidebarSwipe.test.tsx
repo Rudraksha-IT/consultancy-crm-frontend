@@ -1,0 +1,268 @@
+import { act, fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+import { jsonResponse } from "@/lib/api/test-helpers";
+import { NARROW_SCREEN_QUERY } from "@/lib/gestures";
+import { fakeMatchMedia } from "@/test/matchMedia";
+import { TEST_COLOURS } from "@/lib/theme/testColours";
+import { resetTheme } from "@/test/themes";
+
+import { AppShell } from "./AppShell";
+import { SIDEBAR_ID } from "./Sidebar";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  usePathname: () => "/",
+}));
+vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => vi.fn() }));
+
+const CONTEXT = {
+  staff: {
+    id: 7,
+    name: "Ram Thapa",
+    email: "ram@acme.test",
+    role: "teacher",
+    colour_mode: "device",
+  },
+  consultancy: { name: "Acme Education" },
+  modules: ["students", "tasks", "batches"],
+  date_display: "AD",
+  support_access: null,
+  theme: {
+    page: "stone",
+    sidebar: TEST_COLOURS.white,
+    accent: TEST_COLOURS.emerald,
+    dark: { base: "soft", sidebar: "darker", accent: "auto" },
+  },
+};
+
+const NO_NOTIFICATIONS = { count: 0, page: 1, page_size: 20, unread_count: 0, results: [] };
+const MENU_WIDTH = 300;
+
+async function renderShell({ isNarrow }: { isNarrow: boolean }): Promise<void> {
+  vi.stubGlobal(
+    "matchMedia",
+    fakeMatchMedia(
+      () => false,
+      (query) => isNarrow && query === NARROW_SCREEN_QUERY,
+    ).matchMedia,
+  );
+  vi.stubGlobal(
+    "fetch",
+    vi.fn<typeof fetch>().mockImplementation((path) => {
+      if (path === "/api/context/") return Promise.resolve(jsonResponse(CONTEXT));
+      if (path === "/api/notifications/") return Promise.resolve(jsonResponse(NO_NOTIFICATIONS));
+      return Promise.resolve(new Response(null, { status: 204 }));
+    }),
+  );
+  render(<AppShell>page</AppShell>);
+  await screen.findByText("page");
+  Object.defineProperty(menu(), "offsetWidth", { configurable: true, value: MENU_WIDTH });
+}
+
+afterEach(() => {
+  resetTheme();
+});
+
+function menu(): HTMLElement {
+  const element = document.getElementById(SIDEBAR_ID);
+  if (element === null) throw new Error("no sidebar");
+  return element;
+}
+
+function menuButton(): HTMLElement {
+  return screen.getByRole("button", { name: "Open the menu" });
+}
+
+/** One finger touching down at `from`, moving through `moves` and lifting. */
+function swipe(target: Element, from: [number, number], moves: [number, number][]): void {
+  const touch = ([clientX, clientY]: [number, number]) => [{ clientX, clientY }];
+  fireEvent.touchStart(target, { touches: touch(from) });
+  for (const point of moves) fireEvent.touchMove(target, { touches: touch(point) });
+  fireEvent.touchEnd(target, { touches: [] });
+}
+
+/** A wheel step with its own time, as a touchpad sends them. */
+function wheel(target: Element, init: WheelEventInit, at: number): WheelEvent {
+  const event = new WheelEvent("wheel", { bubbles: true, cancelable: true, ...init });
+  Object.defineProperty(event, "timeStamp", { value: at });
+  act(() => {
+    target.dispatchEvent(event);
+  });
+  return event;
+}
+
+describe("swiping the slide-out menu on phones and tablets", () => {
+  it("opens from the left edge, following the finger, once past halfway", async () => {
+    await renderShell({ isNarrow: true });
+    const main = screen.getByRole("main");
+
+    fireEvent.touchStart(main, { touches: [{ clientX: 4, clientY: 300 }] });
+    fireEvent.touchMove(main, { touches: [{ clientX: 100, clientY: 305 }] });
+    expect(menu()).toHaveAttribute("data-dragging");
+    expect(menu().style.translate).toBe(`${String(100 - 4 - MENU_WIDTH)}px`);
+    fireEvent.touchMove(main, { touches: [{ clientX: 220, clientY: 310 }] });
+    fireEvent.touchEnd(main, { touches: [] });
+
+    expect(menuButton()).toHaveAttribute("aria-expanded", "true");
+    expect(menu()).not.toHaveAttribute("data-dragging");
+    expect(menu().style.translate).toBe("");
+  });
+
+  it("snaps back shut when let go before halfway", async () => {
+    await renderShell({ isNarrow: true });
+
+    swipe(
+      screen.getByRole("main"),
+      [4, 300],
+      [
+        [60, 300],
+        [120, 300],
+      ],
+    );
+
+    expect(menuButton()).toHaveAttribute("aria-expanded", "false");
+    expect(menu().style.translate).toBe("");
+  });
+
+  it("does nothing for a swipe that doesn't start at the edge, or that goes up or down", async () => {
+    await renderShell({ isNarrow: true });
+
+    swipe(screen.getByRole("main"), [80, 300], [[300, 300]]);
+    swipe(
+      screen.getByRole("main"),
+      [4, 300],
+      [
+        [10, 400],
+        [250, 420],
+      ],
+    );
+
+    expect(menuButton()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("closes with a swipe to the left on the open menu, and stays open on a short one", async () => {
+    await renderShell({ isNarrow: true });
+    await userEvent.click(menuButton());
+    const link = screen.getByRole("link", { name: "Tasks" });
+
+    swipe(
+      link,
+      [250, 300],
+      [
+        [200, 300],
+        [180, 300],
+      ],
+    );
+    expect(menuButton()).toHaveAttribute("aria-expanded", "true");
+
+    swipe(
+      link,
+      [250, 300],
+      [
+        [150, 300],
+        [40, 300],
+      ],
+    );
+    expect(menuButton()).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("judges the release by where the finger lifted, even if its last move was missed", async () => {
+    await renderShell({ isNarrow: true });
+    const main = screen.getByRole("main");
+
+    fireEvent.touchStart(main, { touches: [{ clientX: 4, clientY: 300 }] });
+    fireEvent.touchMove(main, { touches: [{ clientX: 100, clientY: 300 }] });
+    fireEvent.touchEnd(main, { touches: [], changedTouches: [{ clientX: 240, clientY: 300 }] });
+
+    expect(menuButton()).toHaveAttribute("aria-expanded", "true");
+    expect(menu()).not.toHaveAttribute("data-dragging");
+    expect(menu().style.translate).toBe("");
+  });
+
+  it("puts the menu back where it was when the touch is cancelled", async () => {
+    await renderShell({ isNarrow: true });
+    const main = screen.getByRole("main");
+
+    fireEvent.touchStart(main, { touches: [{ clientX: 4, clientY: 300 }] });
+    fireEvent.touchMove(main, { touches: [{ clientX: 250, clientY: 300 }] });
+    fireEvent.touchCancel(main, { touches: [] });
+
+    expect(menuButton()).toHaveAttribute("aria-expanded", "false");
+    expect(menu().style.translate).toBe("");
+  });
+
+  it("never moves the menu from a touchpad there", async () => {
+    await renderShell({ isNarrow: true });
+
+    const event = wheel(screen.getByRole("main"), { deltaX: 40 }, 0);
+    wheel(screen.getByRole("main"), { deltaX: 40 }, 16);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBeNull();
+  });
+});
+
+describe("swiping the sidebar with two fingers on a laptop touchpad", () => {
+  it("collapses on a swipe to the left and opens on a later one to the right, remembered", async () => {
+    await renderShell({ isNarrow: false });
+    const main = screen.getByRole("main");
+
+    const first = wheel(main, { deltaX: 30 }, 1000);
+    wheel(main, { deltaX: 30 }, 1016);
+
+    expect(first.defaultPrevented).toBe(true);
+    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Expand the menu" })).toBeInTheDocument();
+
+    wheel(main, { deltaX: -30 }, 2000);
+    wheel(main, { deltaX: -30 }, 2016);
+
+    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBe("false");
+    expect(screen.getByRole("button", { name: "Collapse the menu" })).toBeInTheDocument();
+  });
+
+  it("switches once per gesture: reversing in the same gesture does nothing", async () => {
+    await renderShell({ isNarrow: false });
+    const main = screen.getByRole("main");
+
+    for (const [deltaX, at] of [
+      [30, 0],
+      [30, 16],
+      [-40, 32],
+      [-40, 48],
+      [-40, 64],
+    ] as const) {
+      wheel(main, { deltaX }, at);
+    }
+
+    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBe("true");
+  });
+
+  it("never moves on a mouse wheel", async () => {
+    await renderShell({ isNarrow: false });
+    const main = screen.getByRole("main");
+
+    const down = wheel(main, { deltaY: 100 }, 0);
+    wheel(main, { deltaX: 100, shiftKey: true }, 400);
+    wheel(main, { deltaX: 100, shiftKey: true }, 450);
+
+    expect(down.defaultPrevented).toBe(false);
+    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBeNull();
+  });
+
+  it("leaves a sideways scroller (a wide table) to scroll", async () => {
+    await renderShell({ isNarrow: false });
+    const table = document.createElement("div");
+    table.style.overflowX = "auto";
+    Object.defineProperty(table, "scrollWidth", { value: 1200 });
+    Object.defineProperty(table, "clientWidth", { value: 600 });
+    screen.getByRole("main").append(table);
+
+    const event = wheel(table, { deltaX: 30 }, 0);
+    wheel(table, { deltaX: 30 }, 16);
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBeNull();
+  });
+});
