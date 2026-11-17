@@ -82,7 +82,11 @@ No commit may credit an AI tool as co-author (`Co-authored-by: Claude ...`, `...
 `scripts/check-commit-message.mjs` enforces both rules as the `commit-msg` hook, which
 `pnpm install` sets up (husky). The `commit-messages` job in
 `.github/workflows/ci.yml` checks every pushed commit again, so skipping the hook doesn't help;
-make it a required check on `main` (Settings → Branches) so nothing merges without it.
+`main` and `dev` take changes only through pull requests, with `commit-messages`, `checks`
+and `pr-title` required (the branch ruleset). Branch from `dev`; merge into `dev` with **Squash
+and merge**, so the pull request title becomes the commit (`.github/workflows/pr-title.yml` checks
+it by the same rules). Release with a pull request from `dev` into `main`, merged with **Create a
+merge commit**.
 
 ## Run the whole app
 
