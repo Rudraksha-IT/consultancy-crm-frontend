@@ -33,3 +33,6 @@ Dockerfile
 .claude
 CLAUDE.md
 AGENTS.md
+
+# Local settings samples: read by compose, not needed in the image
+sample.env.*

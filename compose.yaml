@@ -1,8 +1,9 @@
 # The whole app for local development: Next.js, Django, PostgreSQL, MinIO and MailHog.
-# Clone consultancy-crm-backend and consultancy-crm-frontend side by side in one folder; this file
-# builds this repo from "." and the other from the sibling folder. It runs on the local defaults
-# in .env.*.example as they are; an optional .env.backend or .env.frontend here overrides them. The same file is in both repos,
-# so `docker compose up -d --build` works from either. The app is served on http://localhost:8080.
+# Clone consultancy-crm-backend and consultancy-crm-frontend side by side in one folder. This file
+# builds this repo from "." and the other from the sibling folder, and is the same in both repos,
+# so `docker compose up -d --build` works from either. It runs on the safe local defaults in
+# sample.env.backend and sample.env.frontend; an optional .env.backend or .env.frontend here
+# (never committed) overrides any value. The app is served on http://localhost:8080.
 name: consultancy-crm
 
 services:
@@ -19,7 +20,7 @@ services:
       sh -c "python manage.py migrate_on_deploy
       && python manage.py create_documents_bucket"
     env_file:
-      - path: .env.backend.example
+      - path: sample.env.backend
       - path: .env.backend
         required: false
     restart: "no"
@@ -37,10 +38,10 @@ services:
       - crm
     build: ../consultancy-crm-backend
     image: consultancy-crm-backend
-    # Django settings: the safe local defaults in .env.backend.example, then .env.backend
+    # Django settings: the safe local defaults in sample.env.backend, then .env.backend
     # (optional, never committed) for any value you want to change.
     env_file:
-      - path: .env.backend.example
+      - path: sample.env.backend
       - path: .env.backend
         required: false
     depends_on:
@@ -57,7 +58,7 @@ services:
     image: consultancy-crm-backend
     command: ["python", "manage.py", "run_jobs"]
     env_file:
-      - path: .env.backend.example
+      - path: sample.env.backend
       - path: .env.backend
         required: false
     stop_grace_period: 2m
@@ -74,10 +75,10 @@ services:
     image: consultancy-crm-frontend
     ports:
       - "8080:3000"
-    # Next.js settings: the safe local defaults in .env.frontend.example, then .env.frontend
+    # Next.js settings: the safe local defaults in sample.env.frontend, then .env.frontend
     # (optional, never committed) for any value you want to change.
     env_file:
-      - path: .env.frontend.example
+      - path: sample.env.frontend
       - path: .env.frontend
         required: false
     depends_on:

@@ -59,7 +59,7 @@ The server needs these (validated with zod at startup, `src/lib/config`; never `
 | `AUTH_COOKIE_SECURE` | `true` (default) or `false`                  | `false` only for local plain HTTP                            |
 | `PRODUCT_DOMAIN`     | `localhost`                                  | Only `<subdomain>.<PRODUCT_DOMAIN>` hosts are forwarded      |
 
-`pnpm dev` needs them in `.env.local` (see `.env.frontend.example`) and a Django it can reach. The easy way
+`pnpm dev` needs them in `.env.local` (see `sample.env.frontend`) and a Django it can reach. The easy way
 is the whole stack from the parent directory (`docker compose up`).
 
 ## Commits
@@ -128,7 +128,7 @@ browser ── acme.localhost:8080 ──► Next.js (frontend, the only publish
 - The services refuse to start without `INTERNAL_API_TOKEN` (both, 32+ characters),
   `JWT_SIGNING_KEY` (Django, 32+ bytes) and `AUTH_COOKIE_KEY` (Next.js, 32 bytes base64).
   No env file needs to be shared or copied: compose reads the safe local defaults in
-  `.env.backend.example` and `.env.frontend.example`, then an optional `.env.backend` or
+  `sample.env.backend` and `sample.env.frontend`, then an optional `.env.backend` or
   `.env.frontend` beside `compose.yaml` (never committed) for any value you want to change. The
   examples hold placeholders only, never a real secret; production sets its own values.
 
