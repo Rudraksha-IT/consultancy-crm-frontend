@@ -97,7 +97,9 @@ async function renderShellWith(
   );
   const view = render(<AppShell>{children}</AppShell>);
   await screen.findByRole("main");
-  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  // Event times come from Date.now in jsdom: freeze it, so a slow machine can't split one pull in
+  // two. performance.now stays real: a scroll seen before this line keeps a comparable time.
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
   return view;
 }
 

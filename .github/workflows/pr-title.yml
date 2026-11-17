@@ -1,0 +1,23 @@
+name: PR title
+
+# With squash merging, a pull request's title becomes the commit on dev, so it must follow the
+# same rules as every commit: Conventional Commits, and no AI credit. Runs again when the title
+# is edited. Make "pr-title" a required check in the branch ruleset.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the pull request title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          printf '%s\n' "$TITLE" > "$RUNNER_TEMP/title"
+          node scripts/check-commit-message.mjs "$RUNNER_TEMP/title" || { echo "::error::Rename the pull request, e.g. feat(clock): add weekly days off"; exit 1; }

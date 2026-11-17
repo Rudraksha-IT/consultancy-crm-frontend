@@ -5,6 +5,13 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 const MIN_COVERAGE_PERCENT = 90;
+// Times on screen are the office's local time, so every test runs in the office's time zone: the
+// same result on a laptop in Nepal and on CI (UTC). Set before the workers start; they inherit it.
+const OFFICE_TIME_ZONE = "Asia/Kathmandu";
+process.env.TZ = OFFICE_TIME_ZONE;
+// Long user flows (a whole edit form, typed and saved) take a few seconds when every file runs at
+// once on a busy machine; the 5 s default made them fail at random.
+const TEST_TIMEOUT_MS = 15_000;
 
 const TEST_FILE = /\.test\.tsx?$/;
 const MOCKS_A_MODULE = /\bvi\.(do)?[mM]ock\(/;
@@ -34,6 +41,8 @@ export default defineConfig({
   },
   test: {
     environment: "jsdom",
+    testTimeout: TEST_TIMEOUT_MS,
+    env: { TZ: OFFICE_TIME_ZONE },
     globals: true,
     setupFiles: ["./vitest.setup.ts"],
     restoreMocks: true,

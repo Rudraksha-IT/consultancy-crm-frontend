@@ -1,0 +1,2 @@
+# Before every push: format, lint and types (fast). Tests and the build run on CI.
+pnpm check
