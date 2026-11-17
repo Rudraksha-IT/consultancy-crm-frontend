@@ -1,5 +1,7 @@
 # Consultancy CRM — frontend
 
+The rules and decisions this repository follows (ADRs, logging, design system, glossary) are in [`docs/`](docs/README.md).
+
 Next.js (App Router) + TypeScript (strict). The browser calls the API on the **same origin**
 (`/api/...`); this app's server forwards those calls to Django, which is never reachable from the
 browser (ADR 0002; see "Run the whole app" below for how a request flows).
