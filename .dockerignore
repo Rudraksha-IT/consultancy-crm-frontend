@@ -20,6 +20,7 @@ coverage
 .github
 .gitignore
 .dockerignore
+docs
 .husky
 README.md
 compose.yaml
