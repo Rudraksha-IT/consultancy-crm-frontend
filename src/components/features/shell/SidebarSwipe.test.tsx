@@ -58,9 +58,13 @@ async function renderShell({ isNarrow }: { isNarrow: boolean }): Promise<void> {
   render(<AppShell>page</AppShell>);
   await screen.findByText("page");
   Object.defineProperty(menu(), "offsetWidth", { configurable: true, value: MENU_WIDTH });
+  // Gestures read the clock (event times, performance.now). Freeze it, so a slow machine can't
+  // split one swipe into two; timers stay real.
+  vi.useFakeTimers({ toFake: ["performance", "Date"] });
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   resetTheme();
 });
 

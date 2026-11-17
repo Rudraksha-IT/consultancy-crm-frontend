@@ -97,7 +97,7 @@ async function renderShellWith(
   );
   const view = render(<AppShell>{children}</AppShell>);
   await screen.findByRole("main");
-  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "performance", "Date"] });
   return view;
 }
 
