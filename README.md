@@ -17,14 +17,14 @@ frontend
 │  ├─ hooks                       ► useFullPageNavigation.ts · useSession.ts
 │  ├─ app/api/[...path]/route.ts  ► forwards every browser `/api/...` call to Django (server only)
 │  ├─ instrumentation.ts          ► stops the server at startup without valid server settings (lib/config/startupCheck)
-│  ├─ lib                         ► api/ (browser client: client, auth, platform, consultancy, types, errors) · auth-cookie/ (server: sealed login cookie) · backend/ (server: forwardToBackend, session, refresh, backendCall, requestHeaders, requestBody, responses, tokenCookie) · config/ (server settings) · navigation/
+│  ├─ lib                         ► api/ (browser client, one folder per area: core (client, errors, types), auth, platform, students, applications, documents, catalogue, money, staff, classes, office, workspace; index.ts exports all) · auth-cookie/ (server: sealed login cookie) · backend/ (server: forwardToBackend, session, refresh, backendCall, requestHeaders, requestBody, responses, tokenCookie) · config/ (server settings) · navigation/
 │  └─ constants                   ► api.ts · messages.ts · modules.ts · navigation.ts · roles.ts · routes.ts
 ├─ .github/workflows              ► ci.yml
 ├─ .husky                         ► pre-commit
 └─ (root)                         ► package.json · tsconfig.json · eslint.config.mjs · .prettierrc.json · vitest.config.mts · vitest.setup.ts · next.config.ts · Dockerfile
 ```
 
-- `lib/api` is the only place the browser calls `fetch`. Every response is validated with `zod`
+- `lib/api` is the only place the browser calls `fetch`; import from `@/lib/api`. Every response is validated with `zod`
   and failures surface as `ApiRequestError`.
 - `lib/backend` and `lib/config` are server only (`import "server-only"`): they hold the internal
   token and Django's address, which must never reach the browser bundle.
