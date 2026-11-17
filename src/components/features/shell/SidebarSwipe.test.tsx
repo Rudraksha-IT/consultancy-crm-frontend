@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { NARROW_SCREEN_QUERY } from "@/lib/gestures";
 import { fakeMatchMedia } from "@/test/matchMedia";
 import { TEST_COLOURS } from "@/lib/theme/testColours";

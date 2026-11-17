@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { ForgotPassword } from "./ForgotPassword";

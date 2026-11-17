@@ -2,7 +2,7 @@ import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { ToastProvider } from "@/components/ui/ToastProvider";
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { backend, callsTo, on } from "@/test/backend";
 
 import { DocumentTypesSettings } from "./DocumentTypesSettings";

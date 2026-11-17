@@ -1,0 +1,196 @@
+import { ApiRequestError, InvalidFieldsError } from "../core/errors";
+import { addStudent, fetchStudents } from "./students";
+import { jsonResponse } from "../core/test-helpers";
+
+const ROW = {
+  id: 9,
+  name: "Anish Neupane",
+  phone: "9819988776",
+  email: "anish@gmail.test",
+  country: "canada",
+  source: "walk_in",
+  stage: "lead",
+  assigned_counsellor: { id: 2, name: "Bikash Thapa" },
+};
+
+const STORED = {
+  ...ROW,
+  highest_qualification: "bachelor",
+  past_degree: "BBS, TU",
+  previous_job: "",
+  sub_agent_name: "",
+  note: "Wants a diploma.",
+  created_at: "2026-11-01T10:15:00+05:45",
+};
+
+const NEW_ANISH = {
+  name: "Anish Neupane",
+  phone: "9819988776",
+  email: "anish@gmail.test",
+  country: "canada",
+  source: "walk_in",
+  subAgentName: "",
+  highestQualification: "bachelor",
+  pastDegree: "BBS, TU",
+  previousJob: "",
+  note: "Wants a diploma.",
+  assignedCounsellor: "2",
+} as const;
+
+function sentBody(fetchFn: ReturnType<typeof answering>): unknown {
+  const body = fetchFn.mock.calls[0]?.[1]?.body;
+  return typeof body === "string" ? JSON.parse(body) : undefined;
+}
+
+function answering(response: Response) {
+  return vi.fn<typeof fetch>().mockResolvedValue(response);
+}
+
+function pageOf(results: unknown[], count = results.length) {
+  return { count, page: 1, page_size: 25, results };
+}
+
+describe("fetchStudents", () => {
+  it("asks for the filters and returns the page in frontend naming", async () => {
+    const fetchFn = answering(jsonResponse(pageOf([ROW], 30)));
+
+    const page = await fetchStudents(
+      {
+        search: "anish",
+        stage: "lead",
+        counsellor: "me",
+        source: "",
+        country: "",
+        targetLevel: "",
+      },
+      2,
+      fetchFn,
+    );
+
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(
+      "/api/students/?q=anish&stage=lead&counsellor=me&page=2",
+    );
+    expect(page.count).toBe(30);
+    expect(page.pageSize).toBe(25);
+    expect(page.students).toEqual([
+      {
+        id: 9,
+        name: "Anish Neupane",
+        phone: "9819988776",
+        email: "anish@gmail.test",
+        country: "canada",
+        source: "walk_in",
+        stage: "lead",
+        assignedCounsellor: { id: 2, name: "Bikash Thapa" },
+      },
+    ]);
+  });
+
+  it("accepts a Student with no counsellor yet", async () => {
+    const fetchFn = answering(jsonResponse(pageOf([{ ...ROW, assigned_counsellor: null }])));
+
+    const page = await fetchStudents(
+      { search: "", stage: "", counsellor: "", source: "", country: "", targetLevel: "" },
+      1,
+      fetchFn,
+    );
+
+    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/students/");
+    expect(page.students[0]?.assignedCounsellor).toBeNull();
+  });
+
+  it.each([
+    ["an unknown Stage", { ...ROW, stage: "nowhere" }],
+    ["an unknown Source", { ...ROW, source: "tiktok" }],
+    ["an unknown country", { ...ROW, country: "mars" }],
+    ["a missing name", { ...ROW, name: undefined }],
+  ])("refuses an answer with %s", async (_, row) => {
+    const fetchFn = answering(jsonResponse(pageOf([row])));
+
+    await expect(
+      fetchStudents(
+        { search: "", stage: "", counsellor: "", source: "", country: "", targetLevel: "" },
+        1,
+        fetchFn,
+      ),
+    ).rejects.toBeInstanceOf(ApiRequestError);
+  });
+});
+
+describe("addStudent", () => {
+  it("sends the visitor in the API's naming and returns them as stored", async () => {
+    const fetchFn = answering(jsonResponse(STORED, 201));
+
+    const added = await addStudent(NEW_ANISH, fetchFn);
+
+    const [path, init] = fetchFn.mock.calls[0] ?? [];
+    expect(path).toBe("/api/students/");
+    expect(init?.method).toBe("POST");
+    expect(sentBody(fetchFn)).toEqual({
+      name: "Anish Neupane",
+      phone: "9819988776",
+      email: "anish@gmail.test",
+      country: "canada",
+      source: "walk_in",
+      highest_qualification: "bachelor",
+      past_degree: "BBS, TU",
+      previous_job: "",
+      note: "Wants a diploma.",
+      assigned_counsellor: 2,
+    });
+    expect(added).toMatchObject({
+      id: 9,
+      name: "Anish Neupane",
+      stage: "lead",
+      note: "Wants a diploma.",
+    });
+  });
+
+  it("sends the Sub-agent name only for a Sub-agent Source", async () => {
+    const fetchFn = answering(
+      jsonResponse({ ...STORED, source: "sub_agent", sub_agent_name: "Himal" }, 201),
+    );
+
+    await addStudent({ ...NEW_ANISH, source: "sub_agent", subAgentName: "Himal" }, fetchFn);
+
+    expect(sentBody(fetchFn)).toMatchObject({
+      source: "sub_agent",
+      sub_agent_name: "Himal",
+    });
+  });
+
+  it("sends no counsellor as null", async () => {
+    const fetchFn = answering(jsonResponse({ ...STORED, assigned_counsellor: null }, 201));
+
+    await addStudent({ ...NEW_ANISH, assignedCounsellor: "" }, fetchFn);
+
+    expect(sentBody(fetchFn)).toMatchObject({
+      assigned_counsellor: null,
+    });
+  });
+
+  it("rejects with the refused fields in frontend naming", async () => {
+    const fetchFn = answering(
+      jsonResponse(
+        { phone: ["Enter a mobile number."], sub_agent_name: ["Enter the Sub-agent's name."] },
+        400,
+      ),
+    );
+
+    const error: unknown = await addStudent(NEW_ANISH, fetchFn).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(InvalidFieldsError);
+    expect(error).toMatchObject({
+      fieldErrors: {
+        phone: ["Enter a mobile number."],
+        subAgentName: ["Enter the Sub-agent's name."],
+      },
+    });
+  });
+
+  it("rejects with the API error for any other failure", async () => {
+    const fetchFn = answering(jsonResponse({ detail: "Teachers can't see Students." }, 403));
+
+    await expect(addStudent(NEW_ANISH, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+  });
+});

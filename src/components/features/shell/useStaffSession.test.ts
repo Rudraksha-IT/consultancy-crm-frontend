@@ -1,6 +1,6 @@
 import { renderHook } from "@testing-library/react";
 
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 
 import { useStaffSession } from "./useStaffSession";
 

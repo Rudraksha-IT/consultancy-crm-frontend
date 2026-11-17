@@ -5,7 +5,7 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 import type { StaffContext } from "@/lib/api";
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
 import { fakeMatchMedia } from "@/test/matchMedia";

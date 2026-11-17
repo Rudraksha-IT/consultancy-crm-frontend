@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { fakeMatchMedia } from "@/test/matchMedia";
 import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { holdUnsavedChanges } from "@/lib/unsavedChanges";

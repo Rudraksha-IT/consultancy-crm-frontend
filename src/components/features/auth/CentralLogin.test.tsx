@@ -2,7 +2,7 @@ import { LABELS } from "@/constants/messages";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { resetTheme } from "@/test/themes";
 
 import { CentralLogin } from "./CentralLogin";

@@ -5,8 +5,8 @@ export {
   chooseOffer,
   fetchPickableUniversities,
   type NewOfferLetter,
-} from "./applications";
-export { fetchStaffContext, logIn, logOut } from "./auth";
+} from "./applications/applications";
+export { fetchStaffContext, logIn, logOut } from "./auth/auth";
 export {
   addHoliday,
   addMissedTime,
@@ -23,7 +23,7 @@ export {
   saveWeeklyOff,
   saveWorkingDay,
   setMissingClockOut,
-} from "./clock";
+} from "./staff/clock";
 export type {
   ClockAnywhere,
   ClockCorrection,
@@ -41,7 +41,7 @@ export type {
   TeamMonthRow,
   TeamNow,
   WorkingDay,
-} from "./clock";
+} from "./staff/clock";
 export {
   answerWorkFromHome,
   askForWorkFromHome,
@@ -51,36 +51,44 @@ export {
   fetchPersonWorkFromHome,
   setWorkFromHome,
   WorkFromHomeRefusedError,
-} from "./workFromHome";
+} from "./staff/workFromHome";
 export type {
   MyWorkFromHome,
   NewWorkFromHome,
   PersonWorkFromHome,
   WorkFromHomeDates,
-} from "./workFromHome";
-export { fetchApplicationFilterChoices, fetchApplications } from "./officeApplications";
-export { fetchVisaFilterChoices, fetchVisas } from "./officeVisas";
+} from "./staff/workFromHome";
+export {
+  fetchApplicationFilterChoices,
+  fetchApplications,
+} from "./applications/officeApplications";
+export { fetchVisaFilterChoices, fetchVisas } from "./applications/officeVisas";
 export {
   addOfficeNetwork,
   fetchCurrentNetwork,
   fetchOfficeNetworks,
   OfficeNetworkRefusedError,
   removeOfficeNetwork,
-} from "./officeNetworks";
+} from "./office/officeNetworks";
 export type {
   CurrentNetwork,
   OfficeNetwork,
   OfficeNetworkChange,
   OfficeNetworkLimits,
   OfficeNetworkList,
-} from "./officeNetworks";
-export type { OfficeVisa, OfficeVisaPage, VisaFilterChoices } from "./officeVisas";
+} from "./office/officeNetworks";
+export type { OfficeVisa, OfficeVisaPage, VisaFilterChoices } from "./applications/officeVisas";
 export type {
   ApplicationFilterChoices,
   OfficeApplication,
   OfficeApplicationPage,
-} from "./officeApplications";
-export { addCourse, addUniversity, fetchUniversities, importCatalogue } from "./catalogue";
+} from "./applications/officeApplications";
+export {
+  addCourse,
+  addUniversity,
+  fetchUniversities,
+  importCatalogue,
+} from "./catalogue/catalogue";
 export type {
   CatalogueImportResult,
   Course,
@@ -90,7 +98,7 @@ export type {
   UniversityField,
   UniversityInput,
   UniversityPage,
-} from "./catalogueTypes";
+} from "./catalogue/catalogueTypes";
 export {
   CatalogueRefusedError,
   deleteUniversity,
@@ -99,13 +107,13 @@ export {
   saveUniversityEdit,
   setCourseIntakes,
   UniversityEditRefusedError,
-} from "./catalogueEdit";
+} from "./catalogue/catalogueEdit";
 export type {
   CourseEditField,
   CourseEditInput,
   UniversityEditField,
   UniversityEditInput,
-} from "./catalogueEdit";
+} from "./catalogue/catalogueEdit";
 export {
   getJson,
   patchJson,
@@ -114,7 +122,7 @@ export {
   postWithoutBody,
   putJson,
   sendWithoutBody,
-} from "./client";
+} from "./core/client";
 export {
   fetchBulkCount,
   fetchMessages,
@@ -124,7 +132,7 @@ export {
   sendBulkMessage,
   sendMessage,
   sendTestSms,
-} from "./communication";
+} from "./office/communication";
 export type {
   BulkCount,
   BulkMessageField,
@@ -138,8 +146,13 @@ export type {
   ProviderSettingsField,
   ProviderSettingsInput,
   TestSmsResult,
-} from "./communication";
-export { removeLogo, setShowNameBesideLogo, updateDateDisplay, uploadLogo } from "./configuration";
+} from "./office/communication";
+export {
+  removeLogo,
+  setShowNameBesideLogo,
+  updateDateDisplay,
+  uploadLogo,
+} from "./office/configuration";
 export {
   addCountryDocument,
   addDocumentType,
@@ -165,8 +178,8 @@ export {
   setNeededByEveryone,
   setStudentDocuments,
   uploadDocument,
-} from "./documents";
-export type { UploadField } from "./documents";
+} from "./documents/documents";
+export type { UploadField } from "./documents/documents";
 export type {
   BinItem,
   BinNote,
@@ -192,16 +205,16 @@ export type {
   PaperworkPage,
   PaperworkRow,
   StoredDocument,
-} from "./documentsTypes";
-export { fetchCurrentConsultancy } from "./consultancy";
-export { fetchPipeline, fetchProgress, fetchWaiting } from "./home";
+} from "./documents/documentsTypes";
+export { fetchCurrentConsultancy } from "./office/consultancy";
+export { fetchPipeline, fetchProgress, fetchWaiting } from "./workspace/home";
 export {
   fetchClassReport,
   fetchMoneyReport,
   fetchSourceReport,
   fetchStaffProgressReport,
   fetchStudentReport,
-} from "./reports";
+} from "./workspace/reports";
 export type {
   ClassReportRow,
   CountryCount,
@@ -214,10 +227,10 @@ export type {
   StaffProgressRow,
   StudentMonth,
   StudentReport,
-} from "./reports";
-export type { ProgressList, ProgressRow, Waiting } from "./home";
-export { fetchStaffProgress } from "./staffProgress";
-export type { ProgressCard, ProgressChange, StaffProgress } from "./staffProgress";
+} from "./workspace/reports";
+export type { ProgressList, ProgressRow, Waiting } from "./workspace/home";
+export { fetchStaffProgress } from "./staff/staffProgress";
+export type { ProgressCard, ProgressChange, StaffProgress } from "./staff/staffProgress";
 export {
   ApiRequestError,
   restrictionOfError,
@@ -229,8 +242,8 @@ export {
   TooManyCodesError,
   TooManyPasswordTriesError,
   WrongCurrentPasswordError,
-} from "./errors";
-export { checkJoinCode, completeJoin, requestJoinCode } from "./join";
+} from "./core/errors";
+export { checkJoinCode, completeJoin, requestJoinCode } from "./core/join";
 export {
   changeMyPassword,
   fetchMyDetails,
@@ -240,21 +253,21 @@ export {
   saveMyDetails,
   saveNotificationChoices,
   signOutOtherDevices,
-} from "./mySettings";
+} from "./staff/mySettings";
 export type {
   MyDetails,
   MyDetailsChange,
   MyDetailsField,
   PasswordChange,
   SignedInDevice,
-} from "./mySettings";
-export { checkResetCode, completePasswordReset, requestResetCode } from "./passwordReset";
+} from "./staff/mySettings";
+export { checkResetCode, completePasswordReset, requestResetCode } from "./auth/passwordReset";
 export {
   checkPlatformResetCode,
   completePlatformPasswordReset,
   requestPlatformResetCode,
-} from "./platformPasswordReset";
-export { requestOfficeLinks } from "./centralLogin";
+} from "./platform/platformPasswordReset";
+export { requestOfficeLinks } from "./auth/centralLogin";
 export {
   changeConsultancyStatus,
   createConsultancy,
@@ -265,11 +278,11 @@ export {
   logOutOfPlatform,
   updateConsultancyTheme,
   updateModules,
-} from "./platform";
-export type { PlatformLoginOutcome, StatusChange, StatusChangeField } from "./platform";
-export { changePlatformPassword, savePlatformName } from "./platformAccount";
-export { addConsultancyAdmin, fetchProductDomain } from "./officeAdmins";
-export type { InvitedAdmin, NewOfficeAdmin, OfficeAdminField } from "./officeAdmins";
+} from "./platform/platform";
+export type { PlatformLoginOutcome, StatusChange, StatusChangeField } from "./platform/platform";
+export { changePlatformPassword, savePlatformName } from "./platform/platformAccount";
+export { addConsultancyAdmin, fetchProductDomain } from "./staff/officeAdmins";
+export type { InvitedAdmin, NewOfficeAdmin, OfficeAdminField } from "./staff/officeAdmins";
 export {
   confirmTwoFactorSetup,
   fetchMyTwoFactor,
@@ -282,16 +295,21 @@ export {
   verifyStaffTwoFactor,
   verifyTwoFactor,
   WrongNumberError,
-} from "./twoFactor";
-export type { StaffLoginOutcome } from "./staffLogin";
-export type { SecondStepAnswer, TwoFactorSide, TwoFactorState, TwoFactorStep } from "./twoFactor";
-export type { PlatformAccountField } from "./platformAccount";
+} from "./auth/twoFactor";
+export type { StaffLoginOutcome } from "./auth/staffLogin";
+export type {
+  SecondStepAnswer,
+  TwoFactorSide,
+  TwoFactorState,
+  TwoFactorStep,
+} from "./auth/twoFactor";
+export type { PlatformAccountField } from "./platform/platformAccount";
 export {
   isReadOnlyRestriction,
   onRestriction,
   restrictionOf,
   type Restriction,
-} from "./restriction";
+} from "./core/restriction";
 export {
   cancelInvite,
   changeEmployeeRole,
@@ -303,29 +321,39 @@ export {
   resendInvite,
   resetEmployeeTwoFactor,
   setEmployeeTwoFactor,
-} from "./staff";
-export { fetchStudentHistory, fetchStudentProfile, saveNote } from "./studentProfile";
-export { EDIT_LISTS, saveEditDetails, type EditDetailsInput, type EditList } from "./editDetails";
-export { assignCounsellor, setStage, transferStudent } from "./studentJourney";
-export { addVisaLetter, changeVisaStatus, setVisaDates, startVisa } from "./visas";
-export type { NewVisaLetter } from "./visas";
-export type { VisaDatesChange } from "./visas";
-export { changePayment, deletePayment, fetchPayments, recordPayment } from "./payments";
-export { addFee, changeFee, deleteFee, fetchOwingStudents, fetchStudentFees } from "./fees";
-export type { Fee, NewFee, OwingPage, OwingStudent, StudentFees } from "./fees";
-export { addExpense, changeExpense, deleteExpense, fetchExpenses } from "./expenses";
-export type { Expense, ExpensePage, NewExpense } from "./expenses";
+} from "./staff/staff";
+export { fetchStudentHistory, fetchStudentProfile, saveNote } from "./students/studentProfile";
+export {
+  EDIT_LISTS,
+  saveEditDetails,
+  type EditDetailsInput,
+  type EditList,
+} from "./students/editDetails";
+export { assignCounsellor, setStage, transferStudent } from "./students/studentJourney";
+export { addVisaLetter, changeVisaStatus, setVisaDates, startVisa } from "./applications/visas";
+export type { NewVisaLetter } from "./applications/visas";
+export type { VisaDatesChange } from "./applications/visas";
+export { changePayment, deletePayment, fetchPayments, recordPayment } from "./money/payments";
+export { addFee, changeFee, deleteFee, fetchOwingStudents, fetchStudentFees } from "./money/fees";
+export type { Fee, NewFee, OwingPage, OwingStudent, StudentFees } from "./money/fees";
+export { addExpense, changeExpense, deleteExpense, fetchExpenses } from "./money/expenses";
+export type { Expense, ExpensePage, NewExpense } from "./money/expenses";
 export {
   addCommission,
   changeCommissionStatus,
   fetchCommission,
   fetchReceivedCommission,
-} from "./commission";
-export type { Commission, CommissionPage, NewCommission, ReceivedCommission } from "./commission";
-export type { NewPayment, PaymentFilters, PaymentPage, Receipt } from "./payments";
-export { addStudent, fetchStudents } from "./students";
-export { fetchAttendanceDay, fetchStudentClasses, saveAttendanceDay } from "./attendance";
-export type { AttendanceDay, DayMarks, StudentClass } from "./attendance";
+} from "./money/commission";
+export type {
+  Commission,
+  CommissionPage,
+  NewCommission,
+  ReceivedCommission,
+} from "./money/commission";
+export type { NewPayment, PaymentFilters, PaymentPage, Receipt } from "./money/payments";
+export { addStudent, fetchStudents } from "./students/students";
+export { fetchAttendanceDay, fetchStudentClasses, saveAttendanceDay } from "./classes/attendance";
+export type { AttendanceDay, DayMarks, StudentClass } from "./classes/attendance";
 export {
   addStudentToBatch,
   createBatch,
@@ -335,7 +363,7 @@ export {
   fetchEnrolledStudents,
   removeStudentFromBatch,
   saveBatch,
-} from "./batches";
+} from "./classes/batches";
 export type {
   Batch,
   BatchForm,
@@ -345,7 +373,7 @@ export type {
   BatchWithStudents,
   EnrolledStudent,
   EnrolledStudentPage,
-} from "./batches";
+} from "./classes/batches";
 export {
   createTask,
   fetchMyTasks,
@@ -353,11 +381,15 @@ export {
   fetchTaskAssignees,
   fetchTaskCount,
   setTaskDone,
-} from "./tasks";
-export type { NewTask, Task, TaskAssignee, TaskFilters, TaskPage } from "./tasks";
-export { fetchNotifications, markAllNotificationsRead, setNotificationRead } from "./notifications";
-export type { AppNotification, NotificationPage } from "./notifications";
-export { DetailAnswerSchema, StaffStatus } from "./types";
+} from "./workspace/tasks";
+export type { NewTask, Task, TaskAssignee, TaskFilters, TaskPage } from "./workspace/tasks";
+export {
+  fetchNotifications,
+  markAllNotificationsRead,
+  setNotificationRead,
+} from "./workspace/notifications";
+export type { AppNotification, NotificationPage } from "./workspace/notifications";
+export { DetailAnswerSchema, StaffStatus } from "./core/types";
 export type {
   Application,
   DocumentProgress,
@@ -401,8 +433,13 @@ export type {
   WorkExperience,
   WorkExperienceField,
   WorkExperienceInput,
-} from "./types";
-export { fetchStudentProgress, fetchStudentVisits, fetchTodaysVisits, logVisit } from "./visits";
+} from "./core/types";
+export {
+  fetchStudentProgress,
+  fetchStudentVisits,
+  fetchTodaysVisits,
+  logVisit,
+} from "./students/visits";
 export type {
   NewVisit,
   NewVisitField,
@@ -411,7 +448,7 @@ export type {
   TodaysVisits,
   Visit,
   VisitPage,
-} from "./visits";
+} from "./students/visits";
 export {
   downloadOfficeData,
   enterSupportVisit,
@@ -421,12 +458,17 @@ export {
   signOutStaff,
   startSupportVisit,
   switchOfficeModules,
-} from "./supportAccess";
-export type { StartedVisit, SupportField, SupportVisit } from "./supportAccess";
-export { searchEverything, SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from "./search";
-export type { FoundBatch, FoundClassStudent, FoundStudent, SearchResults } from "./search";
-export { downloadExport, fetchExportRecords } from "./exports";
-export type { ExportRecord, ExportRecordPage } from "./exports";
+} from "./platform/supportAccess";
+export type { StartedVisit, SupportField, SupportVisit } from "./platform/supportAccess";
+export { searchEverything, SEARCH_MAX_LENGTH, SEARCH_MIN_LENGTH } from "./workspace/search";
+export type {
+  FoundBatch,
+  FoundClassStudent,
+  FoundStudent,
+  SearchResults,
+} from "./workspace/search";
+export { downloadExport, fetchExportRecords } from "./office/exports";
+export type { ExportRecord, ExportRecordPage } from "./office/exports";
 export {
   approveTransferRequest,
   askToTakeStudent,
@@ -434,10 +476,10 @@ export {
   declineTransferRequest,
   fetchTransferRequestCount,
   fetchTransferRequests,
-} from "./transferRequests";
-export type { TransferRequestPage } from "./transferRequests";
-export type { TransferRequest } from "./transferRequestTypes";
-export { onUnexpectedError, reportUnexpectedError, unexpectedErrorOf } from "./unexpected";
+} from "./students/transferRequests";
+export type { TransferRequestPage } from "./students/transferRequests";
+export type { TransferRequest } from "./students/transferRequestTypes";
+export { onUnexpectedError, reportUnexpectedError, unexpectedErrorOf } from "./core/unexpected";
 export {
   PLATFORM_ADMIN_STATUSES,
   checkPlatformJoinCode,
@@ -451,22 +493,22 @@ export {
   requestPlatformJoinCode,
   resendPlatformAdminCode,
   uploadProductLogo,
-} from "./platformTeam";
+} from "./platform/platformTeam";
 export type {
   NewPlatformAdmin,
   PlatformAdminRow,
   PlatformAdminStatus,
   PlatformTeamField,
-} from "./platformTeam";
-export { nextLoginStep } from "./loginStep";
-export type { LoginNext } from "./loginStep";
+} from "./platform/platformTeam";
+export { nextLoginStep } from "./auth/loginStep";
+export type { LoginNext } from "./auth/loginStep";
 export {
   fetchConversation,
   fetchConversations,
   fetchInboxCheck,
   fetchInboxPeople,
   sendInboxMessage,
-} from "./inbox";
+} from "./workspace/inbox";
 export type {
   InboxCheck,
   InboxContact,
@@ -474,4 +516,4 @@ export type {
   InboxMessage,
   InboxPerson,
   InboxThread,
-} from "./inbox";
+} from "./workspace/inbox";

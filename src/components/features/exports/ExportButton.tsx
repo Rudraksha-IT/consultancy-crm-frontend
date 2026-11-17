@@ -10,7 +10,7 @@ import { useToast } from "@/components/ui/useToast";
 import { HTTP_STATUS } from "@/constants/api";
 import { EXPORT_COLUMNS, EXPORT_TEXT, MAX_EXPORT_ROWS, type ExportList } from "@/constants/exports";
 import { ApiRequestError, downloadExport } from "@/lib/api";
-import { DetailAnswerSchema } from "@/lib/api/types";
+import { DetailAnswerSchema } from "@/lib/api/core/types";
 import { todayIso } from "@/lib/dates";
 import { exportFileName, type ExportFilters } from "@/lib/exports";
 

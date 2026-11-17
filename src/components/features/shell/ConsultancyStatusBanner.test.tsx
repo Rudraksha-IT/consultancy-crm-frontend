@@ -1,7 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 
 import { ConsultancyStatus, STATUS_TEXT } from "@/constants/consultancyStatus";
-import { reportRestriction } from "@/lib/api/restriction";
+import { reportRestriction } from "@/lib/api/core/restriction";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { ConsultancyStatusBanner } from "./ConsultancyStatusBanner";

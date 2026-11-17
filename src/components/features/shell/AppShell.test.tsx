@@ -2,7 +2,7 @@ import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { buildThemeTokens, normaliseThemeConfig } from "@/lib/theme";
 import { resetTheme } from "@/test/themes";
 

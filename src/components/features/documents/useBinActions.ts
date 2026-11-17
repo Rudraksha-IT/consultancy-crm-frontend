@@ -13,7 +13,7 @@ import {
   type BinTarget,
   type Checklist,
 } from "@/lib/api";
-import { DetailAnswerSchema } from "@/lib/api/types";
+import { DetailAnswerSchema } from "@/lib/api/core/types";
 
 import type { Deleting } from "./DocumentChecklist";
 

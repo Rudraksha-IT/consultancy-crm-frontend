@@ -1,6 +1,6 @@
 import { act, render, screen } from "@testing-library/react";
 
-import { reportUnexpectedError } from "@/lib/api/unexpected";
+import { reportUnexpectedError } from "@/lib/api/core/unexpected";
 
 import { UnexpectedErrorBanner } from "./UnexpectedErrorBanner";
 

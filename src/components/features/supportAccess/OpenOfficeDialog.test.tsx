@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import type { StartedVisit } from "@/lib/api";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 

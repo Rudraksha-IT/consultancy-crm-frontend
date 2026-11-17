@@ -7,7 +7,7 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { formatAdDate } from "@/lib/dates";
 import { DEFAULT_THEME } from "@/lib/theme";
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { fakeMatchMedia } from "@/test/matchMedia";

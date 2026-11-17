@@ -1,4 +1,4 @@
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 
 /** One canned answer: a Response for the calls it matches, else undefined. */
 export type Answer = (path: string, init?: RequestInit) => Response | undefined;

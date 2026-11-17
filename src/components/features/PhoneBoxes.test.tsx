@@ -9,7 +9,7 @@ import { Journey } from "@/components/ui/Journey";
 import { StageMeter } from "@/components/ui/StageMeter";
 import { Stage } from "@/constants/stages";
 import { Country } from "@/constants/students";
-import { BatchSchema } from "@/lib/api/batches";
+import { BatchSchema } from "@/lib/api/classes/batches";
 import type { Message, PaperworkRow, StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";

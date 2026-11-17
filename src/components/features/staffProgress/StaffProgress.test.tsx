@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { jsonResponse } from "@/lib/api/test-helpers";
+import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { consultancySummary } from "@/test/consultancy";
 import { testHost } from "@/test/hosts";
 import { DEFAULT_THEME } from "@/lib/theme";

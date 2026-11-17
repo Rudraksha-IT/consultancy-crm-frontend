@@ -5,7 +5,7 @@ import { HomePage } from "@/components/features/home/HomePage";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { StudentClassSchema } from "@/lib/api/attendance";
+import { StudentClassSchema } from "@/lib/api/classes/attendance";
 import { formatOtherCalendar } from "@/lib/dates";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
