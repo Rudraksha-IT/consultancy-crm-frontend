@@ -327,7 +327,9 @@ describe("AppShell's Theme", () => {
       staff: { ...TEACHER_CONTEXT.staff, colour_mode: "dark" },
     });
 
-    expect(document.documentElement.dataset.theme).toBe("dark");
+    await waitFor(() => {
+      expect(document.documentElement.dataset.theme).toBe("dark");
+    });
   });
 });
 

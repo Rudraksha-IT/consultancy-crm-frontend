@@ -88,6 +88,12 @@ and merge**, so the pull request title becomes the commit (`.github/workflows/pr
 it by the same rules). Release with a pull request from `dev` into `main`, merged with **Create a
 merge commit**.
 
+**Checks on your machine.** Every commit runs prettier and eslint on the changed files and the
+type check; every push runs `pnpm check` (format, lint and types over the whole repo). Tests and
+the build run on CI for every pull request. Tests always run in the office's time zone
+(`Asia/Kathmandu`, set in `vitest.config.mts`), so a local `pnpm test` gives the same result as
+CI. Never skip the hooks with `--no-verify`.
+
 ## Run the whole app
 
 The app is two repositories: **consultancy-crm-backend** (Django) and **consultancy-crm-frontend**
