@@ -1,8 +1,11 @@
 name: CI
 
+# Pull requests run every check on every push (the gate before merging into dev or main). After a
+# merge, dev has exactly the code its pull request tested (branches must be up to date), so only
+# main runs again: the release check, and the image for the server.
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
   pull_request:
 
 jobs:
