@@ -14,6 +14,7 @@ The product is used all day by non-technical office staff, often with a Student 
 5. **Dark mode has its own settings.** The background comes from a fixed list of near-black options (pure black, black, charcoal, graphite, soft dark, warm black, pine black, teal black). It is never a saturated dark blue or brown.
 6. **Colour is never the only signal.** Every status also has a word or an icon (for example a "Rejected" chip, an "Overdue" label).
 7. **Line icons from one set.** No emoji in the interface.
+8. **An action never moves the person.** Approving, saving, deleting, switching a tab, ticking a box or closing a dialog keeps the page where it was: same scroll position, and focus back on the control that was used (or, if it is gone, the nearest control for the same item). Update data in place (React Query cache, local state); never remount the page, reset scroll or navigate for an action that stays on the same page. The same holds inside dialogs and sheets: redrawing a dialog (switching its tabs, ticking, removing an item, coming back after "Are you sure?") keeps each scrolled area where it was. Only opening another page starts at the top. Component tests check that focus stays after the action (product owner, 2026-11-18).
 
 ## Tokens
 
