@@ -1,7 +1,7 @@
 # Design system
 
 Status: draft, from the approved prototype (the product docs' `docs/prototype/crm-demo.html`). Revised 2026-11-14 from the prototype approved that day (tickets 67 to 69): sidebar width and swipes, swipe between pages, centred search, the confirm popup, the Activity timeline, money on number cards and the keyboard rule. Revised 2026-11-16 (tickets 94 to 97): the phone breakpoint is 640, and phones follow the new "Phones (640 and below)" section (tab bar, iOS / Material sizes, lean lists, pill filters, bottom sheets, settings pages one section at a time).
-Applies to the frontend repository. Terminology follows `GLOSSARY.md`.
+Applies to the frontend repository. Terminology follows the glossary (`docs/GLOSSARY.md` in the workspace repository).
 
 The product is used all day by non-technical office staff, often with a Student sitting across the desk. Every rule below serves that: big, calm, one job per screen, and the same look and behaviour everywhere.
 

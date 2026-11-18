@@ -4,7 +4,7 @@ Each file records one architecture decision: its context, the decision, and its 
 
 Numbers are shared by both repositories, so a number missing here is a decision that only concerns the other app. Here, that means 0001, 0005, 0008, 0012, 0013, 0014, 0015, 0016, 0018, which live in `consultancy-crm-backend/docs/adr/`.
 
-ADRs 0001 to 0004 were written when the decisions were made. ADRs 0005 to 0022 were recorded on 17 November 2026 for decisions already built. A later ADR that changes an earlier one says so at the top, and a replaced decision stays here with its status changed.
+ADRs 0001 to 0004 were written when the decisions were made. ADRs 0005 to 0022 were recorded on 17 November 2026 for decisions already built; 0023 on, when decided. A later ADR that changes an earlier one says so at the top, and a replaced decision stays here with its status changed.
 
 | ADR                                                                | Decision                                                                                 | Status   |
 | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | -------- |
@@ -21,3 +21,4 @@ ADRs 0001 to 0004 were written when the decisions were made. ADRs 0005 to 0022 w
 | [0020](0020-inbox-by-polling.md)                                   | Inbox checks for messages every 30 seconds                                               | Accepted |
 | [0021](0021-dates-stored-in-ad.md)                                 | Dates stored in AD; BS for display                                                       | Accepted |
 | [0022](0022-design-tokens-and-one-theme-function.md)               | Every colour from tokens built by one theme function                                     | Accepted |
+| [0023](0023-all-email-through-the-product-smtp.md)                 | All email through the product's own SMTP account; no SMS                                 | Accepted |
