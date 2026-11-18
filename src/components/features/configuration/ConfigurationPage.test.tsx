@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 
 import { SetPageSwipeContext } from "@/components/features/shell/pageSwipe";
 import { SetDateDisplayContext } from "@/components/features/shell/dateDisplay";
+import { SetOfficeDetailsContext } from "@/components/features/shell/officeDetails";
 import { SetOfficeLogoContext } from "@/components/features/shell/officeLogo";
 import { ShellThemeContext } from "@/components/features/shell/shellTheme";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
@@ -34,11 +35,13 @@ function renderPage(context: StaffContext, setTheme = vi.fn<(theme: ThemeConfig)
       <SetDateDisplayContext value={vi.fn()}>
         <ShellThemeContext value={{ theme: context.theme, setTheme }}>
           <SetOfficeLogoContext value={vi.fn()}>
-            <SetPageSwipeContext value={vi.fn()}>
-              <ToastProvider>
-                <ConfigurationPage />
-              </ToastProvider>
-            </SetPageSwipeContext>
+            <SetOfficeDetailsContext value={vi.fn()}>
+              <SetPageSwipeContext value={vi.fn()}>
+                <ToastProvider>
+                  <ConfigurationPage />
+                </ToastProvider>
+              </SetPageSwipeContext>
+            </SetOfficeDetailsContext>
           </SetOfficeLogoContext>
         </ShellThemeContext>
       </SetDateDisplayContext>
@@ -83,7 +86,7 @@ describe("ConfigurationPage", () => {
 
     expect(menuItems()).toEqual(["General", "Documents", "Exports"]);
     const general = screen.getByRole("region", { name: "General" });
-    expect(partTitles(general)).toEqual(["Office logo", "Dates"]);
+    expect(partTitles(general)).toEqual(["Office logo", "Office details", "Dates"]);
     expect(screen.queryByRole("region", { name: "Documents" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Save colours" })).not.toBeInTheDocument();
     const dates = screen.getByRole("region", { name: "Dates" });

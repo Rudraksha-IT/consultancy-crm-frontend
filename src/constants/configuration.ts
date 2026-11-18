@@ -3,7 +3,8 @@ export const CONFIGURATION_SECTIONS_TEXT = {
   backLabel: "All of Configuration",
   general: {
     title: "General",
-    description: "How the office looks, how dates show, and page swipes.",
+    description:
+      "How the office looks, its details at the bottom of every email, and how dates show.",
   },
   documents: {
     title: "Documents",

@@ -149,10 +149,12 @@ export type {
 } from "./office/communication";
 export {
   removeLogo,
+  saveOfficeDetails,
   setShowNameBesideLogo,
   updateDateDisplay,
   uploadLogo,
 } from "./office/configuration";
+export type { SavedOfficeDetails } from "./office/configuration";
 export {
   addCountryDocument,
   addDocumentType,
@@ -389,7 +391,7 @@ export {
   setNotificationRead,
 } from "./workspace/notifications";
 export type { AppNotification, NotificationPage } from "./workspace/notifications";
-export { DetailAnswerSchema, StaffStatus } from "./core/types";
+export { DetailAnswerSchema, NO_OFFICE_DETAILS, StaffStatus } from "./core/types";
 export type {
   Application,
   DocumentProgress,
@@ -398,6 +400,7 @@ export type {
   AssignedStudent,
   StageChange,
   Consultancy,
+  OfficeDetails,
   OfficeLogo,
   CounsellorChoice,
   Employee,

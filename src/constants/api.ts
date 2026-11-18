@@ -152,6 +152,8 @@ export const API_PATHS = {
   catalogueIntakes: "/api/catalogue/intakes/",
   configurationDates: "/api/configuration/dates/",
   configurationLogo: "/api/configuration/logo/",
+  /** Office details (PUT, Admins only); every Role reads them from the context. */
+  configurationOfficeDetails: "/api/configuration/office-details/",
   /** Office Networks for Clock-in (GET list, POST add), Admins only (issue 55). */
   officeNetworks: "/api/office-networks/",
   officeNetwork: (id: number) => `/api/office-networks/${String(id)}/`,

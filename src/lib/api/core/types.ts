@@ -11,6 +11,7 @@ import {
 import { DATE_DISPLAYS } from "@/constants/dates";
 import { MODULES } from "@/constants/modules";
 import { COLOUR_MODE_CHOICES } from "@/constants/mySettings";
+import { OFFICE_DETAILS_LIMITS } from "@/constants/officeDetails";
 import { ROLES } from "@/constants/roles";
 import { Stage } from "@/constants/stages";
 import {
@@ -46,6 +47,32 @@ export type OfficeLogo = z.infer<typeof LogoSchema>;
 
 /** The logo, or null for the initials; an answer that isn't our logo also shows the initials. */
 const OptionalLogoSchema = LogoSchema.nullable().catch(null);
+
+/** The office's details as stored (spec stories 11-16), in frontend naming. */
+export const OfficeDetailsSchema = z
+  .object({
+    contact_email: z.string().max(OFFICE_DETAILS_LIMITS.contactEmail),
+    phone: z.string().max(OFFICE_DETAILS_LIMITS.phone),
+    address_line1: z.string().max(OFFICE_DETAILS_LIMITS.addressLine),
+    address_line2: z.string().max(OFFICE_DETAILS_LIMITS.addressLine),
+    website: z.string().max(OFFICE_DETAILS_LIMITS.website),
+  })
+  .transform(({ contact_email, address_line1, address_line2, ...rest }) => ({
+    contactEmail: contact_email,
+    addressLine1: address_line1,
+    addressLine2: address_line2,
+    ...rest,
+  }));
+
+export type OfficeDetails = z.infer<typeof OfficeDetailsSchema>;
+
+export const NO_OFFICE_DETAILS: OfficeDetails = {
+  contactEmail: "",
+  phone: "",
+  addressLine1: "",
+  addressLine2: "",
+  website: "",
+};
 
 /** The longest Status message shown; a longer one is not ours and is dropped. */
 const STATUS_MESSAGE_MAX_LENGTH = 300;
@@ -92,12 +119,19 @@ export const StaffContextSchema = z
         status: ShownStatusSchema,
         status_message: StatusMessageSchema,
         evaluation_ends_at: MomentSchema.nullable().catch(null),
+        // Damaged or missing details show as none, so "add the contact email first" shows.
+        office_details: OfficeDetailsSchema.catch(NO_OFFICE_DETAILS),
+        has_contact_email: z.boolean().catch(false),
       })
-      .transform(({ status_message, evaluation_ends_at, ...consultancy }) => ({
-        ...consultancy,
-        statusMessage: status_message,
-        evaluationEndsAt: evaluation_ends_at,
-      })),
+      .transform(
+        ({ status_message, evaluation_ends_at, office_details, has_contact_email, ...rest }) => ({
+          ...rest,
+          statusMessage: status_message,
+          evaluationEndsAt: evaluation_ends_at,
+          officeDetails: office_details,
+          hasContactEmail: has_contact_email && office_details.contactEmail !== "",
+        }),
+      ),
     modules: z.array(z.enum(MODULES)),
     date_display: z.enum(DATE_DISPLAYS),
     // Swipe between pages (asked 2026-11-16): off unless the server clearly says it is on.

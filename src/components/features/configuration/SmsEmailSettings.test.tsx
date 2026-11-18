@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 
 import { SetDateDisplayContext } from "@/components/features/shell/dateDisplay";
 import { SetPageSwipeContext } from "@/components/features/shell/pageSwipe";
+import { SetOfficeDetailsContext } from "@/components/features/shell/officeDetails";
 import { SetOfficeLogoContext } from "@/components/features/shell/officeLogo";
 import { ShellThemeContext } from "@/components/features/shell/shellTheme";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
@@ -55,11 +56,13 @@ function renderPage(context: StaffContext = ADMIN) {
       <SetDateDisplayContext value={vi.fn()}>
         <ShellThemeContext value={{ theme: context.theme, setTheme: vi.fn() }}>
           <SetOfficeLogoContext value={vi.fn()}>
-            <SetPageSwipeContext value={vi.fn()}>
-              <ToastProvider>
-                <ConfigurationPage />
-              </ToastProvider>
-            </SetPageSwipeContext>
+            <SetOfficeDetailsContext value={vi.fn()}>
+              <SetPageSwipeContext value={vi.fn()}>
+                <ToastProvider>
+                  <ConfigurationPage />
+                </ToastProvider>
+              </SetPageSwipeContext>
+            </SetOfficeDetailsContext>
           </SetOfficeLogoContext>
         </ShellThemeContext>
       </SetDateDisplayContext>
