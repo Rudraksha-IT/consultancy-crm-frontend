@@ -79,7 +79,7 @@ describe("fetchExportRecords", () => {
   });
 
   it.each([
-    { ...RECORD, list: "payments" },
+    { ...RECORD, list: "fees" },
     { ...RECORD, row_count: -1 },
     { ...RECORD, at: "yesterday" },
     { ...RECORD, filters: 3 },

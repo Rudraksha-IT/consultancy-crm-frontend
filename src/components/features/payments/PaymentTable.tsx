@@ -11,7 +11,7 @@ import { OneLine } from "@/components/ui/OneLine";
 import { useToast } from "@/components/ui/useToast";
 import { PAYMENT_METHOD_LABELS, PAYMENT_TEXT } from "@/constants/payments";
 import { ROUTES } from "@/constants/routes";
-import type { Receipt } from "@/lib/api";
+import { describeFeeType, type Receipt } from "@/lib/api";
 import { formatNpr } from "@/lib/money";
 
 import { EditPaymentDialog } from "./EditPaymentDialog";
@@ -118,7 +118,7 @@ function PaymentRow({ payment, showsStudent, onOpen }: PaymentRowProps) {
         </DataCell>
       )}
       <DataCell {...(!showsStudent && { part: "line" as const })} shrinks className={CELL}>
-        <OneLine block>{payment.purpose}</OneLine>
+        <OneLine block>{describeFeeType(payment.feeType, payment.note)}</OneLine>
       </DataCell>
       <DataCell
         part="fact"

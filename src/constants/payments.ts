@@ -21,18 +21,6 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cheque: "Cheque",
 };
 
-/** What Payments are usually for, offered while typing; any other text is fine too. */
-export const PAYMENT_PURPOSE_SUGGESTIONS = [
-  "IELTS class fee",
-  "PTE class fee",
-  "Japanese class fee",
-  "Application processing fee",
-  "Visa processing fee",
-  "Document translation",
-] as const;
-
-/** The longest purpose the API accepts. */
-export const PAYMENT_PURPOSE_MAX_LENGTH = 200;
 /** The largest amount the API accepts (NPR 10 crore). */
 export const PAYMENT_MAX_AMOUNT = 100_000_000;
 
@@ -42,8 +30,6 @@ export const PAYMENT_TEXT = {
   amount: "Amount (NPR)",
   date: "Date",
   method: "Method",
-  purpose: "What it's for",
-  purposePlaceholder: "e.g. Visa processing fee",
   afterSaving: "After saving you'll see the receipt.",
   othersStayWithAdmin: "Other Payments and totals stay with the Admin.",
   saveAndShowReceipt: "Save and show receipt",
@@ -65,8 +51,8 @@ export const PAYMENT_TEXT = {
   changesSaved: "Changes saved",
   deletePayment: "Delete payment",
   confirmDeleteTitle: (receiptNumber: string) => `Delete Payment ${receiptNumber}?`,
-  confirmDelete: (receiptNumber: string, amount: string, name: string, purpose: string) =>
-    `${receiptNumber}, ${amount} from ${name} for ${purpose}.`,
+  confirmDelete: (receiptNumber: string, amount: string, name: string, forWhat: string) =>
+    `${receiptNumber}, ${amount} from ${name} for ${forWhat}.`,
   deletionIsRecorded: "The deletion is recorded in the Student's History with these details.",
   confirmDeleteButton: "Delete Payment",
   deleted: "Payment deleted",
@@ -101,6 +87,6 @@ export const ACCOUNTS_TEXT = {
   from: "From",
   to: "To",
   search: "Student or receipt number",
-  purpose: "What it's for",
+  feeType: "Fee Type",
   show: "Show",
 } as const;

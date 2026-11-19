@@ -4,7 +4,8 @@ import { jsonResponse } from "../core/test-helpers";
 
 const FEE = {
   id: 31,
-  purpose: "Visa processing",
+  fee_type: { id: 3, name: "Visa fee" },
+  note: "",
   amount: 40000,
   added_by: { name: "Bikash Thapa" },
   added_at: "2026-11-03T10:15:00+05:45",
@@ -20,7 +21,8 @@ const FRONTEND_FEES = {
   fees: [
     {
       id: 31,
-      purpose: "Visa processing",
+      feeType: { id: 3, name: "Visa fee" },
+      note: "",
       amount: 40000,
       addedBy: { name: "Bikash Thapa" },
     },
@@ -69,54 +71,56 @@ describe("fetchStudentFees", () => {
 });
 
 describe("addFee", () => {
-  it("POSTs the purpose and amount and returns the Student's Fees", async () => {
+  it("POSTs the Fee Type, note and amount and returns the Student's Fees", async () => {
     const fetchFn = answering(jsonResponse(STUDENT_FEES, 201));
 
-    const fees = await addFee(7, { purpose: "Visa processing", amount: 40000 }, fetchFn);
+    const fees = await addFee(7, { feeTypeId: 3, note: "", amount: 40000 }, fetchFn);
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/students/7/fees/");
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("POST");
-    expect(sentBody(fetchFn)).toEqual({ purpose: "Visa processing", amount: 40000 });
+    expect(sentBody(fetchFn)).toEqual({ fee_type: 3, note: "", amount: 40000 });
     expect(fees).toEqual(FRONTEND_FEES);
   });
 
   it("names refused fields", async () => {
     const fetchFn = answering(
-      jsonResponse({ purpose: ["Say what the fee is for."], amount: ["Too big."] }, 400),
+      jsonResponse({ fee_type: ["Choose a Fee Type."], amount: ["Too big."] }, 400),
     );
 
-    const failure = addFee(7, { purpose: "", amount: 0 }, fetchFn);
+    const failure = addFee(7, { feeTypeId: null, note: "", amount: 0 }, fetchFn);
 
     await expect(failure).rejects.toBeInstanceOf(InvalidFieldsError);
     await expect(failure).rejects.toMatchObject({
-      fieldErrors: { purpose: ["Say what the fee is for."], amount: ["Too big."] },
+      fieldErrors: { feeTypeId: ["Choose a Fee Type."], amount: ["Too big."] },
     });
   });
 
   it("passes on a refusal that is not about the fields", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Not your Student." }, 403));
 
-    await expect(addFee(7, { purpose: "Visa", amount: 1 }, fetchFn)).rejects.toBeInstanceOf(
+    await expect(addFee(7, { feeTypeId: 3, note: "", amount: 1 }, fetchFn)).rejects.toBeInstanceOf(
       ApiRequestError,
     );
   });
 });
 
 describe("changeFee", () => {
-  it("PUTs the new purpose and amount", async () => {
+  it("PUTs the new Fee Type, note and amount", async () => {
     const fetchFn = answering(jsonResponse(STUDENT_FEES));
 
-    await changeFee(31, { purpose: "Visa processing", amount: 45000 }, fetchFn);
+    await changeFee(31, { feeTypeId: 7, note: "embassy", amount: 45000 }, fetchFn);
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/fees/31/");
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("PUT");
-    expect(sentBody(fetchFn)).toEqual({ purpose: "Visa processing", amount: 45000 });
+    expect(sentBody(fetchFn)).toEqual({ fee_type: 7, note: "embassy", amount: 45000 });
   });
 
   it("names refused fields", async () => {
     const fetchFn = answering(jsonResponse({ amount: ["Enter a whole amount."] }, 400));
 
-    await expect(changeFee(31, { purpose: "Visa", amount: 0 }, fetchFn)).rejects.toMatchObject({
+    await expect(
+      changeFee(31, { feeTypeId: 3, note: "", amount: 0 }, fetchFn),
+    ).rejects.toMatchObject({
       fieldErrors: { amount: ["Enter a whole amount."] },
     });
   });

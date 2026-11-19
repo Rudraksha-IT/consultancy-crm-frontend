@@ -23,7 +23,7 @@ const TEXT = REPORTS_TEXT.money;
 /**
  * Money over the last 6 or 12 months (spec 97): money in (Payments and Commission received),
  * money out (Expenses) and what is left over; a monthly chart of in against out; where the money
- * came from and where it went.
+ * came from (each Fee Type, then Commission; issue 06) and where it went.
  */
 export function MoneyReport({ months }: { months: MonthCount }) {
   const load = useCallback(() => fetchMoneyReport(months), [months]);
@@ -36,7 +36,7 @@ export function MoneyReport({ months }: { months: MonthCount }) {
 }
 
 function MoneyCharts({ report, months }: { report: MoneyAnswer; months: MonthCount }) {
-  const { months: rows, moneyOutByCategory } = report;
+  const { months: rows, moneyOutByCategory, moneyInByFeeType } = report;
   const totals = moneyTotalsOf(rows);
   const isShort = totals.leftOver < 0;
   return (
@@ -83,8 +83,8 @@ function MoneyCharts({ report, months }: { report: MoneyAnswer; months: MonthCou
               label={TEXT.cameFrom}
               format={formatNpr}
               rows={[
-                { label: TEXT.studentFees, value: totals.fromStudents },
-                { label: TEXT.commission, value: totals.fromCommission },
+                ...fromStudentsRows(moneyInByFeeType, totals.fromStudents),
+                { key: "commission", label: TEXT.commission, value: totals.fromCommission },
               ]}
             />
           </Panel>
@@ -109,4 +109,16 @@ function MoneyCharts({ report, months }: { report: MoneyAnswer; months: MonthCou
       </div>
     </>
   );
+}
+
+/** Payments from Students by Fee Type, largest first; one "Student fees" row when there are none. */
+function fromStudentsRows(byFeeType: MoneyAnswer["moneyInByFeeType"], fromStudents: number) {
+  if (byFeeType.length === 0) {
+    return [{ key: "students", label: TEXT.studentFees, value: fromStudents }];
+  }
+  return byFeeType.map((row) => ({
+    key: `fee-type-${String(row.feeType.id)}`,
+    label: row.feeType.name,
+    value: row.amount,
+  }));
 }

@@ -329,8 +329,24 @@ export { assignCounsellor, setStage, transferStudent } from "./students/studentJ
 export { addVisaLetter, changeVisaStatus, setVisaDates, startVisa } from "./applications/visas";
 export type { NewVisaLetter } from "./applications/visas";
 export type { VisaDatesChange } from "./applications/visas";
-export { changePayment, deletePayment, fetchPayments, recordPayment } from "./money/payments";
+export {
+  changePayment,
+  deletePayment,
+  fetchPayments,
+  paymentFilterQuery,
+  recordPayment,
+} from "./money/payments";
 export { addFee, changeFee, deleteFee, fetchOwingStudents, fetchStudentFees } from "./money/fees";
+export {
+  addFeeType,
+  changeFeeType,
+  deleteFeeType,
+  describeFeeType,
+  feeTypeRefusal,
+  fetchFeeTypes,
+  reorderFeeTypes,
+} from "./money/feeTypes";
+export type { FeeType, FeeTypeChange, FeeTypeRef } from "./money/feeTypes";
 export type { Fee, NewFee, OwingPage, OwingStudent, StudentFees } from "./money/fees";
 export { addExpense, changeExpense, deleteExpense, fetchExpenses } from "./money/expenses";
 export type { Expense, ExpensePage, NewExpense } from "./money/expenses";

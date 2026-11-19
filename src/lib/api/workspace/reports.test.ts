@@ -315,6 +315,7 @@ describe("fetchMoneyReport", () => {
           { category: "office_rent", amount: 85000 },
           { category: "internet", amount: 6500 },
         ],
+        money_in_by_fee_type: [{ fee_type: { id: 3, name: "Visa fee" }, amount: 180000 }],
       }),
     );
 
@@ -327,6 +328,7 @@ describe("fetchMoneyReport", () => {
         { category: "office_rent", amount: 85000 },
         { category: "internet", amount: 6500 },
       ],
+      moneyInByFeeType: [{ feeType: { id: 3, name: "Visa fee" }, amount: 180000 }],
     });
   });
 
@@ -341,8 +343,15 @@ describe("fetchMoneyReport", () => {
       { months: [], money_out_by_category: [{ category: "<b>bribes</b>", amount: 1 }] },
     ],
     ["no categories", { months: [MONEY_MONTH], money_out_by_category: undefined }],
+    ["no Fee Types", { months: [MONEY_MONTH], money_in_by_fee_type: undefined }],
+    [
+      "a Fee Type without a name",
+      { months: [], money_in_by_fee_type: [{ fee_type: { id: 1, name: "" }, amount: 1 }] },
+    ],
   ])("refuses an answer with %s", async (_, body) => {
-    const fetchFn = answering(jsonResponse({ money_out_by_category: [], ...body }));
+    const fetchFn = answering(
+      jsonResponse({ money_out_by_category: [], money_in_by_fee_type: [], ...body }),
+    );
 
     await expect(fetchMoneyReport(6, fetchFn)).rejects.toThrow();
   });

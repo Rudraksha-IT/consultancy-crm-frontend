@@ -26,7 +26,13 @@ import { FEE_TEXT } from "@/constants/fees";
 import { MESSAGES } from "@/constants/messages";
 import { PAYMENT_TEXT } from "@/constants/payments";
 import { ROUTES } from "@/constants/routes";
-import { fetchOwingStudents, fetchStudentFees, type OwingPage, type OwingStudent } from "@/lib/api";
+import {
+  describeFeeType,
+  fetchOwingStudents,
+  fetchStudentFees,
+  type OwingPage,
+  type OwingStudent,
+} from "@/lib/api";
 import { formatNpr, paidShare } from "@/lib/money";
 
 type Student = OwingStudent["student"];
@@ -287,7 +293,9 @@ function FeeDetailsDialog({ student, onClose, onAdd, onPayment }: FeeDetailsDial
               {state.data.fees.map((fee) => (
                 <RowItem
                   key={fee.id}
-                  title={<span className="wrap-anywhere">{fee.purpose}</span>}
+                  title={
+                    <span className="wrap-anywhere">{describeFeeType(fee.feeType, fee.note)}</span>
+                  }
                   right={
                     <span className="font-semibold whitespace-nowrap tabular-nums">
                       {formatNpr(fee.amount)}

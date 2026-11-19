@@ -9,7 +9,8 @@ const RECEIPT = {
   amount: 25000,
   paid_on: "2026-11-02",
   method: "esewa",
-  purpose: "Application processing fee",
+  fee_type: { id: 1, name: "Application fee" },
+  note: "first half",
   recorded_by: { name: "Ramesh KC" },
   recorded_at: "2026-11-02T10:15:00+05:45",
 };
@@ -18,7 +19,8 @@ const NEW_PAYMENT = {
   amount: 25000,
   paidOn: "2026-11-02",
   method: "esewa",
-  purpose: "Application processing fee",
+  feeTypeId: 1,
+  note: "first half",
 } as const;
 
 function answering(response: Response) {
@@ -38,7 +40,8 @@ describe("recordPayment", () => {
       amount: 25000,
       paid_on: "2026-11-02",
       method: "esewa",
-      purpose: "Application processing fee",
+      fee_type: 1,
+      note: "first half",
     });
     expect(receipt).toEqual({
       id: 412,
@@ -47,7 +50,8 @@ describe("recordPayment", () => {
       amount: 25000,
       paidOn: "2026-11-02",
       method: "esewa",
-      purpose: "Application processing fee",
+      feeType: { id: 1, name: "Application fee" },
+      note: "first half",
       recordedBy: { name: "Ramesh KC" },
     });
   });
@@ -97,7 +101,7 @@ describe("fetchPayments", () => {
     const fetchFn = answering(jsonResponse(PAGE));
 
     const page = await fetchPayments(
-      { from: "2026-10-01", to: "2026-11-02", search: "Sita", purpose: "", studentId: null },
+      { from: "2026-10-01", to: "2026-11-02", search: "Sita", feeTypeId: null, studentId: null },
       2,
       fetchFn,
     );
@@ -116,21 +120,17 @@ describe("fetchPayments", () => {
   it("asks for one Student's Payments", async () => {
     const fetchFn = answering(jsonResponse(PAGE));
 
-    await fetchPayments(
-      { from: "", to: "", search: "", purpose: "Visa", studentId: 7 },
-      1,
-      fetchFn,
-    );
+    await fetchPayments({ from: "", to: "", search: "", feeTypeId: 3, studentId: 7 }, 1, fetchFn);
 
     const [path] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/payments/?student=7&purpose=Visa&page=1");
+    expect(path).toBe("/api/payments/?student=7&fee_type=3&page=1");
   });
 
   it("refuses an answer that isn't a page of Payments", async () => {
     const fetchFn = answering(jsonResponse({ ...PAGE, total: "lots" }));
 
     await expect(
-      fetchPayments({ from: "", to: "", search: "", purpose: "", studentId: null }, 1, fetchFn),
+      fetchPayments({ from: "", to: "", search: "", feeTypeId: null, studentId: null }, 1, fetchFn),
     ).rejects.toBeInstanceOf(ApiRequestError);
   });
 
@@ -140,7 +140,7 @@ describe("fetchPayments", () => {
     );
 
     const failure = fetchPayments(
-      { from: "2026-11-02", to: "2026-11-01", search: "", purpose: "", studentId: null },
+      { from: "2026-11-02", to: "2026-11-01", search: "", feeTypeId: null, studentId: null },
       1,
       fetchFn,
     );
@@ -164,9 +164,26 @@ describe("changePayment", () => {
       amount: 30000,
       paid_on: "2026-11-02",
       method: "esewa",
-      purpose: "Application processing fee",
+      fee_type: 1,
+      note: "first half",
     });
     expect(receipt.amount).toBe(30000);
+  });
+
+  it("names a refused Fee Type and note by their form names", async () => {
+    const fetchFn = answering(
+      jsonResponse(
+        { fee_type: ["Choose a Fee Type."], note: ["Add a short note for Other."] },
+        400,
+      ),
+    );
+
+    await expect(changePayment(412, NEW_PAYMENT, fetchFn)).rejects.toEqual(
+      new InvalidFieldsError({
+        feeTypeId: ["Choose a Fee Type."],
+        note: ["Add a short note for Other."],
+      }),
+    );
   });
 
   it("names refused fields by their form names", async () => {

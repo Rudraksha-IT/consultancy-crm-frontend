@@ -25,13 +25,13 @@ export function usePaymentPage(
   version: number,
 ): PaymentPageState {
   const [state, setState] = useState<PaymentPageState>({ status: "loading" });
-  const { from, to, search, purpose, studentId } = filters;
+  const { from, to, search, feeTypeId, studentId } = filters;
 
   useEffect(() => {
     let isCancelled = false;
     async function load(): Promise<void> {
       try {
-        const found = await fetchPayments({ from, to, search, purpose, studentId }, page);
+        const found = await fetchPayments({ from, to, search, feeTypeId, studentId }, page);
         if (!isCancelled) setState({ status: "loaded", page: found });
       } catch (error) {
         if (isCancelled) return;
@@ -46,7 +46,7 @@ export function usePaymentPage(
     return () => {
       isCancelled = true;
     };
-  }, [from, to, search, purpose, studentId, page, version]);
+  }, [from, to, search, feeTypeId, studentId, page, version]);
 
   return state;
 }

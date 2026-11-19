@@ -2,6 +2,7 @@
 
 import { useId, useState, type SubmitEvent } from "react";
 
+import { useFeeTypeChoices } from "@/components/features/feeTypes/FeeTypeFields";
 import { SaveDialog } from "@/components/features/students/profile/SaveDialog";
 import { useFormSave } from "@/components/features/students/profile/useFormSave";
 import { HTTP_STATUS } from "@/constants/api";
@@ -27,12 +28,13 @@ export function TakePaymentDialog(props: TakePaymentDialogProps) {
   const formId = useId();
   const [paidOn, setPaidOn] = useState(() => todayIso());
   const { isSaving, fieldErrors, failure, save } = useFormSave(paymentFailure);
+  const choices = useFeeTypeChoices();
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     void save(async () => {
-      onRecorded(await recordPayment(studentId, readPayment(form, paidOn)));
+      onRecorded(await recordPayment(studentId, readPayment(form, paidOn, choices)));
     });
   }
 
@@ -47,7 +49,12 @@ export function TakePaymentDialog(props: TakePaymentDialogProps) {
       onClose={onClose}
     >
       <form id={formId} noValidate onSubmit={handleSubmit} className="grid gap-5">
-        <PaymentFields paidOn={paidOn} onPaidOn={setPaidOn} fieldErrors={fieldErrors} />
+        <PaymentFields
+          paidOn={paidOn}
+          onPaidOn={setPaidOn}
+          fieldErrors={fieldErrors}
+          choices={choices}
+        />
         <p className="text-small text-ink-2">
           {isAdmin
             ? PAYMENT_TEXT.afterSaving

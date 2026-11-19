@@ -4,6 +4,7 @@ import { API_PATHS } from "@/constants/api";
 
 import { getJson, postJson, putJson, sendWithoutBody } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
+import { FeeTypeRefSchema } from "./feeTypes";
 
 const Npr = z.number().int().nonnegative();
 
@@ -11,13 +12,15 @@ const Npr = z.number().int().nonnegative();
 const FeeSchema = z
   .object({
     id: z.number().int(),
-    purpose: z.string(),
+    fee_type: FeeTypeRefSchema,
+    note: z.string(),
     amount: z.number().int().positive(),
     added_by: z.object({ name: z.string() }),
   })
   .transform((fee) => ({
     id: fee.id,
-    purpose: fee.purpose,
+    feeType: fee.fee_type,
+    note: fee.note,
     amount: fee.amount,
     addedBy: { name: fee.added_by.name },
   }));
@@ -49,10 +52,18 @@ const StudentFeesSchema = z
 
 export type StudentFees = z.infer<typeof StudentFeesSchema>;
 
-/** A Fee as the form sends it: what it's for and whole NPR. */
-export type NewFee = { purpose: string; amount: number };
+/** A Fee as the form sends it: its Fee Type, a short note (needed for Other) and whole NPR. */
+export type NewFee = { feeTypeId: number | null; note: string; amount: number };
 
-const FEE_FIELDS: Record<keyof NewFee, string> = { purpose: "purpose", amount: "amount" };
+const FEE_FIELDS: Record<keyof NewFee, string> = {
+  feeTypeId: "fee_type",
+  note: "note",
+  amount: "amount",
+};
+
+function feeBody(fee: NewFee): Record<string, unknown> {
+  return { fee_type: fee.feeTypeId, note: fee.note, amount: fee.amount };
+}
 
 /** The Student's Fees, their total and (for Admins) the Balance (Accounts on). */
 export function fetchStudentFees(
@@ -72,20 +83,25 @@ export async function addFee(
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentFees> {
   try {
-    return await postJson(API_PATHS.studentFees(studentId), fee, StudentFeesSchema, fetchFn);
+    return await postJson(
+      API_PATHS.studentFees(studentId),
+      feeBody(fee),
+      StudentFeesSchema,
+      fetchFn,
+    );
   } catch (error) {
     throw toFieldErrors(error, FEE_FIELDS) ?? error;
   }
 }
 
-/** Replace a Fee's purpose and amount and return the Student's Fees. */
+/** Replace a Fee's Fee Type, note and amount and return the Student's Fees. */
 export async function changeFee(
   feeId: number,
   fee: NewFee,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentFees> {
   try {
-    return await putJson(API_PATHS.fee(feeId), fee, StudentFeesSchema, fetchFn);
+    return await putJson(API_PATHS.fee(feeId), feeBody(fee), StudentFeesSchema, fetchFn);
   } catch (error) {
     throw toFieldErrors(error, FEE_FIELDS) ?? error;
   }

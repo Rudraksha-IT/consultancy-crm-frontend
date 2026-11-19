@@ -2,6 +2,13 @@
 
 import { useId, useState, type SubmitEvent } from "react";
 
+import {
+  FeeTypeFields,
+  readFeeTypeChoice,
+  throwIfRefused,
+  useFeeTypeChoices,
+  type FeeTypeChoices,
+} from "@/components/features/feeTypes/FeeTypeFields";
 import { readField } from "@/components/features/students/profile/formData";
 import { SaveDialog } from "@/components/features/students/profile/SaveDialog";
 import { useFormSave } from "@/components/features/students/profile/useFormSave";
@@ -10,7 +17,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { IconName } from "@/components/ui/Icon";
 import { TextField } from "@/components/ui/TextField";
 import { HTTP_STATUS } from "@/constants/api";
-import { FEE_PURPOSE_SUGGESTIONS, FEE_TEXT } from "@/constants/fees";
+import { FEE_TEXT } from "@/constants/fees";
 import { MESSAGES } from "@/constants/messages";
 import { PAYMENT_MAX_AMOUNT } from "@/constants/payments";
 import {
@@ -18,7 +25,7 @@ import {
   ApiRequestError,
   changeFee,
   deleteFee,
-  InvalidFieldsError,
+  describeFeeType,
   type Fee,
   type NewFee,
   type StudentFees,
@@ -72,13 +79,14 @@ function formCopy(studentName: string, fee: Fee | null): FormCopy {
 function FeeForm({ student, fee, onClose, onSaved, onDelete }: FeeFormProps) {
   const formId = useId();
   const { isSaving, fieldErrors, failure, save } = useFormSave(feeFailure);
+  const choices = useFeeTypeChoices();
   const copy = formCopy(student.name, fee);
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     void save(async () => {
-      const details = readFee(form);
+      const details = readFee(form, choices);
       if (fee === null) onSaved(await addFee(student.id, details), FEE_TEXT.added);
       else onSaved(await changeFee(fee.id, details), FEE_TEXT.changesSaved);
     });
@@ -96,7 +104,7 @@ function FeeForm({ student, fee, onClose, onSaved, onDelete }: FeeFormProps) {
       {...(fee !== null && { sideAction: <DeleteButton onDelete={onDelete} /> })}
     >
       <form id={formId} noValidate onSubmit={handleSubmit} className="grid gap-5">
-        <FeeFields fee={fee} fieldErrors={fieldErrors} />
+        <FeeFields fee={fee} choices={choices} fieldErrors={fieldErrors} />
         <p className="text-small text-ink-2">{FEE_TEXT.isRecorded}</p>
       </form>
     </SaveDialog>
@@ -111,28 +119,24 @@ function DeleteButton({ onDelete }: { onDelete: () => void }) {
   );
 }
 
-type FeeFieldsProps = { fee: Fee | null; fieldErrors: Partial<Record<string, string[]>> };
+type FeeFieldsProps = {
+  fee: Fee | null;
+  choices: FeeTypeChoices;
+  fieldErrors: Partial<Record<string, string[]>>;
+};
 
-/** What it's for and the amount, empty for a new Fee. */
-function FeeFields({ fee, fieldErrors }: FeeFieldsProps) {
-  const start = fee === null ? { purpose: "", amount: "" } : { ...fee, amount: String(fee.amount) };
+/** The Fee Type, a note and the amount, empty for a new Fee. */
+function FeeFields({ fee, choices, fieldErrors }: FeeFieldsProps) {
   return (
     <>
-      <TextField
-        label={FEE_TEXT.purpose}
-        name="purpose"
-        placeholder={FEE_TEXT.purposePlaceholder}
-        suggestions={FEE_PURPOSE_SUGGESTIONS}
-        defaultValue={start.purpose}
-        errors={fieldErrors.purpose}
-      />
+      <FeeTypeFields choices={choices} initial={fee ?? undefined} fieldErrors={fieldErrors} />
       <TextField
         label={FEE_TEXT.amount}
         name="amount"
         type="number"
         inputMode="numeric"
         min="1"
-        defaultValue={start.amount}
+        defaultValue={fee === null ? "" : String(fee.amount)}
         errors={fieldErrors.amount}
       />
     </>
@@ -144,7 +148,7 @@ type DeleteFeeDialogProps = Pick<FeeDialogProps, "onClose" | "onSaved"> & { fee:
 function DeleteFeeDialog({ fee, onClose, onSaved }: DeleteFeeDialogProps) {
   return (
     <ConfirmDialog
-      title={FEE_TEXT.confirmDeleteTitle(fee.purpose)}
+      title={FEE_TEXT.confirmDeleteTitle(describeFeeType(fee.feeType, fee.note))}
       actionLabel={FEE_TEXT.confirmDeleteButton}
       onClose={onClose}
       onConfirm={async () => {
@@ -155,7 +159,7 @@ function DeleteFeeDialog({ fee, onClose, onSaved }: DeleteFeeDialogProps) {
     >
       <div className="grid gap-3">
         <p className="text-ink wrap-anywhere">
-          {FEE_TEXT.confirmDelete(fee.purpose, formatNpr(fee.amount))}
+          {FEE_TEXT.confirmDelete(describeFeeType(fee.feeType, fee.note), formatNpr(fee.amount))}
         </p>
         <p className="text-small">{FEE_TEXT.deletionIsRecorded}</p>
       </div>
@@ -164,17 +168,16 @@ function DeleteFeeDialog({ fee, onClose, onSaved }: DeleteFeeDialogProps) {
 }
 
 /**
- * The Fee typed into the form. Throws `InvalidFieldsError` when the amount isn't a whole number
- * in range or nothing says what it's for, so nothing is sent.
+ * The Fee typed into the form. Throws `InvalidFieldsError` when no Fee Type is chosen, Other has
+ * no note, or the amount isn't a whole number in range, so nothing is sent.
  */
-export function readFee(form: FormData): NewFee {
-  const purpose = readField(form, "purpose").trim();
-  const amount = readField(form, "amount").trim();
+export function readFee(form: FormData, choices: FeeTypeChoices): NewFee {
   const errors: Partial<Record<keyof NewFee, string[]>> = {};
-  if (purpose === "") errors.purpose = [FEE_TEXT.purposeRefused];
+  const forWhat = readFeeTypeChoice(form, choices, errors);
+  const amount = readField(form, "amount").trim();
   if (!isWholeAmount(amount)) errors.amount = [AMOUNT_MESSAGE];
-  if (Object.keys(errors).length > 0) throw new InvalidFieldsError(errors);
-  return { purpose, amount: Number(amount) };
+  throwIfRefused(errors);
+  return { ...forWhat, amount: Number(amount) };
 }
 
 function isWholeAmount(text: string): boolean {

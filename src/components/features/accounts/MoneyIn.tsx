@@ -2,6 +2,11 @@
 
 import { useCallback, useId, useState, type SubmitEvent } from "react";
 
+import { ExportButton } from "@/components/features/exports/ExportButton";
+import {
+  useFeeTypeChoices,
+  type FeeTypeChoices,
+} from "@/components/features/feeTypes/FeeTypeFields";
 import { useLoaded, type Loaded } from "@/components/features/home/useLoaded";
 import { DateField } from "@/components/ui/DateField";
 import { useDates, type Dates } from "@/components/features/shell/dateDisplay";
@@ -19,12 +24,20 @@ import { TileGrid } from "@/components/ui/TileGrid";
 import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { SearchBox } from "@/components/ui/SearchBox";
-import { TextField } from "@/components/ui/TextField";
+import { SelectField } from "@/components/ui/SelectField";
 import { COMMISSION_TEXT } from "@/constants/commission";
 import { MESSAGES } from "@/constants/messages";
-import { ACCOUNTS_TEXT, PAYMENT_PURPOSE_SUGGESTIONS, PAYMENT_TEXT } from "@/constants/payments";
-import { fetchReceivedCommission, type PaymentFilters, type ReceivedCommission } from "@/lib/api";
+import { EXPORT_TEXT } from "@/constants/exports";
+import { FEE_TYPE_TEXT } from "@/constants/feeTypes";
+import { ACCOUNTS_TEXT, PAYMENT_TEXT } from "@/constants/payments";
+import {
+  fetchReceivedCommission,
+  paymentFilterQuery,
+  type PaymentFilters,
+  type ReceivedCommission,
+} from "@/lib/api";
 import { todayIso } from "@/lib/dates";
+import { describeFilters } from "@/lib/exports";
 import { formatNpr } from "@/lib/money";
 
 /** The first day of this month, "YYYY-MM-01": Money in starts on this month. */
@@ -34,16 +47,18 @@ function startOfMonth(): string {
 
 /**
  * Money in: every Payment from Students between two dates, by Student or receipt number and
- * purpose, with what they add up to (spec 74), plus Commission Received on those days (76e).
+ * Fee Type, with what they add up to (spec 74), plus Commission Received on those days (76e).
+ * The list can be exported as a CSV file (issue 06).
  */
 export function MoneyIn() {
   const [filters, setFilters] = useState<PaymentFilters>(() => ({
     from: startOfMonth(),
     to: todayIso(),
     search: "",
-    purpose: "",
+    feeTypeId: null,
     studentId: null,
   }));
+  const choices = useFeeTypeChoices();
   const [page, setPage] = useState(1);
   // Bumped after an edit or delete, so the list and its total load again.
   const [version, setVersion] = useState(0);
@@ -51,11 +66,20 @@ export function MoneyIn() {
 
   return (
     <section aria-label={ACCOUNTS_TEXT.moneyIn} className="grid gap-8">
-      <h2 className="text-section-title">{ACCOUNTS_TEXT.moneyIn}</h2>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-section-title">{ACCOUNTS_TEXT.moneyIn}</h2>
+        <ExportButton
+          list="payments"
+          count={state.status === "loaded" ? state.page.count : null}
+          filters={paymentFilterQuery(filters)}
+          filtersText={useFiltersText(filters, choices)}
+        />
+      </div>
       <Tiles state={state} filters={filters} />
       <Panel>
         <FilterForm
           filters={filters}
+          choices={choices}
           fieldErrors={state.status === "refused" ? state.fieldErrors : {}}
           onShow={(shown) => {
             setFilters(shown);
@@ -132,14 +156,35 @@ function period({ from, to }: PaymentFilters, dates: Dates): string {
   return ACCOUNTS_TEXT.allDates;
 }
 
+/** The Payments list's filters in words, for the export dialog. */
+function useFiltersText(filters: PaymentFilters, choices: FeeTypeChoices): string {
+  const dates = useDates();
+  const day = (iso: string): string => (iso === "" ? "" : dates.date(iso));
+  return describeFilters(
+    [
+      [ACCOUNTS_TEXT.from, day(filters.from)],
+      [ACCOUNTS_TEXT.to, day(filters.to)],
+      [ACCOUNTS_TEXT.feeType, feeTypeName(choices, filters.feeTypeId)],
+      [ACCOUNTS_TEXT.search, filters.search],
+    ],
+    EXPORT_TEXT.noFilters,
+  );
+}
+
+function feeTypeName(choices: FeeTypeChoices, id: number | null): string {
+  const types = Array.isArray(choices) ? choices : [];
+  return types.find((type) => type.id === id)?.name ?? "";
+}
+
 type FilterFormProps = {
   filters: PaymentFilters;
+  choices: FeeTypeChoices;
   fieldErrors: Partial<Record<string, string[]>>;
   onShow: (filters: PaymentFilters) => void;
 };
 
-/** From and to dates, a search and the purpose; "Show" applies them. */
-function FilterForm({ filters, fieldErrors, onShow }: FilterFormProps) {
+/** From and to dates, a search and the Fee Type; "Show" applies them. */
+function FilterForm({ filters, choices, fieldErrors, onShow }: FilterFormProps) {
   const dates = useDates();
   const formId = useId();
   const [search, setSearch] = useState(filters.search);
@@ -151,7 +196,7 @@ function FilterForm({ filters, fieldErrors, onShow }: FilterFormProps) {
       from: readField(form, "from"),
       to: readField(form, "to"),
       search,
-      purpose: readField(form, "purpose"),
+      feeTypeId: chosenId(readField(form, "feeTypeId")),
       studentId: null,
     });
   }
@@ -180,13 +225,19 @@ function FilterForm({ filters, fieldErrors, onShow }: FilterFormProps) {
         defaultValue={filters.to}
         errors={fieldErrors.to}
       />
-      <TextField
-        label={ACCOUNTS_TEXT.purpose}
-        name="purpose"
+      <SelectField
+        label={ACCOUNTS_TEXT.feeType}
+        name="feeTypeId"
+        options={[
+          { value: "", label: FEE_TYPE_TEXT.anyFeeType },
+          ...(Array.isArray(choices) ? choices : []).map((type) => ({
+            value: String(type.id),
+            label: type.name,
+          })),
+        ]}
         isOptional
-        suggestions={PAYMENT_PURPOSE_SUGGESTIONS}
-        defaultValue={filters.purpose}
-        errors={fieldErrors.purpose}
+        defaultValue={filters.feeTypeId === null ? "" : String(filters.feeTypeId)}
+        errors={fieldErrors.feeTypeId}
       />
       <div className="tablet:col-span-2 wide:col-span-3 flex flex-wrap items-center gap-3">
         <SearchBox
@@ -201,6 +252,10 @@ function FilterForm({ filters, fieldErrors, onShow }: FilterFormProps) {
       </div>
     </form>
   );
+}
+
+function chosenId(value: string): number | null {
+  return /^[0-9]+$/.test(value) ? Number(value) : null;
 }
 
 type PaymentsProps = {

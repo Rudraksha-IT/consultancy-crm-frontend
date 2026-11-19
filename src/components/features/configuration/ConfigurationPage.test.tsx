@@ -80,11 +80,11 @@ function partTitles(section: HTMLElement): (string | null)[] {
 const ALL_MODULES: StaffContext["modules"] = ["configuration", "communication", "clock_in"];
 
 describe("ConfigurationPage", () => {
-  it("has a menu of General, Documents and Exports, and opens on General", () => {
+  it("has a menu of General, Documents, Fees and Exports, and opens on General", () => {
     backend(on("GET", TYPES_PATH, NO_TYPES));
     renderPage(ADMIN);
 
-    expect(menuItems()).toEqual(["General", "Documents", "Exports"]);
+    expect(menuItems()).toEqual(["General", "Documents", "Fees", "Exports"]);
     const general = screen.getByRole("region", { name: "General" });
     expect(partTitles(general)).toEqual(["Office logo", "Office details", "Dates"]);
     expect(screen.queryByRole("region", { name: "Documents" })).not.toBeInTheDocument();
@@ -97,7 +97,7 @@ describe("ConfigurationPage", () => {
     backend(on("GET", TYPES_PATH, NO_TYPES));
     renderPage({ ...ADMIN, modules: ALL_MODULES });
 
-    expect(menuItems()).toEqual(["General", "Documents", "Working hours", "Exports"]);
+    expect(menuItems()).toEqual(["General", "Documents", "Fees", "Working hours", "Exports"]);
   });
 
   it("shows the Documents section with its lists", async () => {
@@ -124,6 +124,18 @@ describe("ConfigurationPage", () => {
       }),
     ).toHaveAttribute("aria-pressed", "true");
     expect(screen.queryByRole("region", { name: "General" })).not.toBeInTheDocument();
+  });
+
+  it("puts the Fee Types under Fees", async () => {
+    backend(
+      on("GET", "/api/fee-types/", {
+        results: [{ id: 7, name: "Other", hidden: false, other: true, uses: null }],
+      }),
+    );
+    renderPage(ADMIN);
+
+    const fees = await open("Fees");
+    expect(await within(fees).findByRole("list", { name: "Fee Types" })).toBeVisible();
   });
 
   it("puts the Working day, Holidays and the Office network under Working hours", async () => {
@@ -157,7 +169,7 @@ describe("ConfigurationPage", () => {
     backend(on("GET", TYPES_PATH, NO_TYPES));
     renderPage(ADMIN);
 
-    expect(menuItems()).toEqual(["General", "Documents", "Exports"]);
+    expect(menuItems()).toEqual(["General", "Documents", "Fees", "Exports"]);
     expect(screen.queryByRole("region", { name: "General" })).not.toBeInTheDocument();
 
     await open("Exports");

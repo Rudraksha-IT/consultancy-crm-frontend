@@ -6,9 +6,15 @@ import { StudentProfilePage } from "@/components/features/students/profile/Stude
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
-import { backend, callsTo, on } from "@/test/backend";
+import { backend as backendOnly, callsTo, on, type Answer } from "@/test/backend";
+import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
 import { consultancySummary } from "@/test/consultancy";
+
+/** The canned backend, always with the office's Fee Types for the form. */
+function backend(...answers: Answer[]) {
+  return backendOnly(...answers, onFeeTypes);
+}
 
 const FRONT_DESK: StaffContext = {
   staff: { id: 8, name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
@@ -34,7 +40,8 @@ const RECEIPT = {
   amount: 25000,
   paid_on: "2026-11-02",
   method: "esewa",
-  purpose: "Application processing fee",
+  fee_type: feeTypeRef(1),
+  note: "",
   recorded_by: { name: "Ramesh KC" },
   recorded_at: "2026-11-02T10:15:00+05:45",
 };
@@ -65,9 +72,9 @@ async function openPaymentDialog(): Promise<HTMLElement> {
 async function fillAndSave(dialog: HTMLElement): Promise<void> {
   await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "25000");
   await userEvent.selectOptions(within(dialog).getByLabelText("Method"), "esewa");
-  await userEvent.type(
-    within(dialog).getByLabelText("What it's for"),
-    "Application processing fee",
+  await userEvent.selectOptions(
+    await within(dialog).findByRole("combobox", { name: "Fee Type" }),
+    await within(dialog).findByRole("option", { name: "Application fee" }),
   );
   await userEvent.click(within(dialog).getByRole("button", { name: "Save and show receipt" }));
 }
@@ -136,7 +143,8 @@ describe("taking a payment", () => {
       amount: 25000,
       paid_on: "2026-11-02",
       method: "esewa",
-      purpose: "Application processing fee",
+      fee_type: 1,
+      note: "",
     });
     expect(screen.getByText("Payment recorded")).toBeInTheDocument();
     expect(
@@ -148,7 +156,7 @@ describe("taking a payment", () => {
       "2 Nov 2026",
       "16 Kartik 2083 BS",
       "Sita Gurung, 9841000001",
-      "Application processing fee",
+      "Application fee",
       "eSewa",
       "NPR 25,000",
       "Rupees Twenty-Five Thousand only",
@@ -196,17 +204,17 @@ describe("taking a payment", () => {
   });
 
   it("shows text the person typed as text, never as HTML", async () => {
-    const purpose = "<img src=x onerror=alert(1)>";
+    const note = "<img src=x onerror=alert(1)>";
     backend(
       on("GET", "/api/students/7/", DESK_PROFILE),
-      on("POST", PAYMENTS, { ...RECEIPT, purpose }, 201),
+      on("POST", PAYMENTS, { ...RECEIPT, note }, 201),
     );
     renderPage();
 
     await fillAndSave(await openPaymentDialog());
 
     const receipt = await screen.findByRole("dialog", { name: "Receipt" });
-    expect(within(receipt).getByText(purpose)).toBeInTheDocument();
+    expect(within(receipt).getByText(`Application fee (${note})`)).toBeInTheDocument();
     expect(receipt.querySelector("img")).toBeNull();
   });
 
@@ -234,7 +242,10 @@ describe("taking a payment", () => {
 
       if (amount !== "")
         await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), amount);
-      await userEvent.type(within(dialog).getByLabelText("What it's for"), "Visa fee");
+      await userEvent.selectOptions(
+        await within(dialog).findByRole("combobox", { name: "Fee Type" }),
+        await within(dialog).findByRole("option", { name: "Visa fee" }),
+      );
       await userEvent.click(within(dialog).getByRole("button", { name: "Save and show receipt" }));
 
       expect(
@@ -243,6 +254,69 @@ describe("taking a payment", () => {
       expect(callsTo(fetchFn, "POST", PAYMENTS)).toHaveLength(0);
     },
   );
+
+  it("offers the Fee Types in order without the hidden ones, and asks for one", async () => {
+    const fetchFn = backend(on("GET", "/api/students/7/", DESK_PROFILE));
+    renderPage();
+    const dialog = await openPaymentDialog();
+    const picker = await within(dialog).findByRole("combobox", { name: "Fee Type" });
+    await within(dialog).findByRole("option", { name: "Visa fee" });
+
+    expect(
+      within(picker)
+        .getAllByRole("option")
+        .map((option) => option.textContent),
+    ).toEqual([
+      "Choose a Fee Type",
+      "Application fee",
+      "College / tuition fee",
+      "Visa fee",
+      "IELTS class",
+      "Documentation / other services",
+      "Other",
+    ]);
+    await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "500");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save and show receipt" }));
+
+    expect(within(dialog).getByText("Choose a Fee Type.")).toBeInTheDocument();
+    expect(callsTo(fetchFn, "POST", PAYMENTS)).toHaveLength(0);
+  });
+
+  it("needs a note for Other before sending, and sends it", async () => {
+    const fetchFn = backend(
+      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("POST", PAYMENTS, { ...RECEIPT, fee_type: feeTypeRef(7), note: "SOP check" }, 201),
+    );
+    renderPage();
+    const dialog = await openPaymentDialog();
+    await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "500");
+    await userEvent.selectOptions(
+      await within(dialog).findByRole("combobox", { name: "Fee Type" }),
+      await within(dialog).findByRole("option", { name: "Other" }),
+    );
+    expect(within(dialog).getByText("Needed for Other: say what it is for.")).toBeInTheDocument();
+
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save and show receipt" }));
+    expect(within(dialog).getByText("Add a short note for Other.")).toBeInTheDocument();
+    expect(callsTo(fetchFn, "POST", PAYMENTS)).toHaveLength(0);
+
+    await userEvent.type(within(dialog).getByLabelText("Note"), "  SOP check ");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save and show receipt" }));
+
+    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
+    expect(sentBody(fetchFn)).toMatchObject({ fee_type: 7, note: "SOP check" });
+    expect(within(receipt).getByText("Other (SOP check)")).toBeInTheDocument();
+  });
+
+  it("says so when the Fee Types can't be loaded", async () => {
+    backendOnly(on("GET", "/api/students/7/", DESK_PROFILE));
+    renderPage();
+    const dialog = await openPaymentDialog();
+
+    expect(
+      await within(dialog).findByText("We couldn't load the Fee Types. Please refresh the page."),
+    ).toBeInTheDocument();
+  });
 
   it("says so when the save isn't allowed", async () => {
     backend(

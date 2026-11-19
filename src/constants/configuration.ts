@@ -11,6 +11,10 @@ export const CONFIGURATION_SECTIONS_TEXT = {
     description:
       "What every Student needs, the extra documents asked for only sometimes, and what each country asks for.",
   },
+  fees: {
+    title: "Fees",
+    description: "What Fees and Payments can be for, in the order staff see them.",
+  },
   workingHours: {
     title: "Working hours",
     description: "How long a working day is, the holidays, and where staff can clock in.",

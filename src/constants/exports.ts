@@ -1,5 +1,5 @@
 /** The lists that can be exported as CSV files (spec 31b), and the Clock-in team (issue 56). */
-export const EXPORT_LISTS = ["students", "applications", "visas", "clock_in"] as const;
+export const EXPORT_LISTS = ["students", "applications", "visas", "clock_in", "payments"] as const;
 export type ExportList = (typeof EXPORT_LISTS)[number];
 
 /** At most this many rows in one export; the server refuses more too. */
@@ -10,6 +10,7 @@ export const EXPORT_LIST_LABELS: Record<ExportList, string> = {
   applications: "Applications",
   visas: "Visas",
   clock_in: "Clock-in",
+  payments: "Payments",
 };
 
 /** The fixed columns of each export, as the server writes them. */
@@ -59,6 +60,16 @@ export const EXPORT_COLUMNS: Record<ExportList, readonly string[]> = {
     "Short days",
     "No clock-out",
     "Corrected",
+  ],
+  payments: [
+    "Date",
+    "Receipt",
+    "Student",
+    "Fee Type",
+    "Note",
+    "Amount (NPR)",
+    "Method",
+    "Taken by",
   ],
 };
 

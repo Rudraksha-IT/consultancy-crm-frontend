@@ -5,6 +5,7 @@ import { PAYMENT_METHODS, type PaymentMethod } from "@/constants/payments";
 
 import { getJson, postJson, putJson, sendWithoutBody } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
+import { FeeTypeRefSchema } from "./feeTypes";
 
 /** A Payment's receipt as the API answers it (spec 72). Dates are AD, "YYYY-MM-DD". */
 export const ReceiptSchema = z
@@ -15,7 +16,8 @@ export const ReceiptSchema = z
     amount: z.number().int().positive(),
     paid_on: z.iso.date(),
     method: z.enum(PAYMENT_METHODS),
-    purpose: z.string(),
+    fee_type: FeeTypeRefSchema,
+    note: z.string(),
     recorded_by: z.object({ name: z.string() }),
   })
   .transform((receipt) => ({
@@ -25,18 +27,23 @@ export const ReceiptSchema = z
     amount: receipt.amount,
     paidOn: receipt.paid_on,
     method: receipt.method,
-    purpose: receipt.purpose,
+    feeType: receipt.fee_type,
+    note: receipt.note,
     recordedBy: { name: receipt.recorded_by.name },
   }));
 
 export type Receipt = z.infer<typeof ReceiptSchema>;
 
-/** A Payment as the form sends it: whole NPR, the day paid (AD), how, and what for. */
+/**
+ * A Payment as the form sends it: whole NPR, the day paid (AD), how, its Fee Type and a short
+ * note (needed for Other).
+ */
 export type NewPayment = {
   amount: number;
   paidOn: string;
   method: PaymentMethod;
-  purpose: string;
+  feeTypeId: number | null;
+  note: string;
 };
 
 type PaymentField = keyof NewPayment;
@@ -45,7 +52,8 @@ const API_FIELDS: Record<PaymentField, string> = {
   amount: "amount",
   paidOn: "paid_on",
   method: "method",
-  purpose: "purpose",
+  feeTypeId: "fee_type",
+  note: "note",
 };
 
 function apiBody(payment: NewPayment): Record<string, unknown> {
@@ -53,7 +61,8 @@ function apiBody(payment: NewPayment): Record<string, unknown> {
     amount: payment.amount,
     paid_on: payment.paidOn,
     method: payment.method,
-    purpose: payment.purpose,
+    fee_type: payment.feeTypeId,
+    note: payment.note,
   };
 }
 
@@ -103,27 +112,28 @@ export type PaymentFilters = {
   to: string;
   /** A Student's name or phone, or a receipt number. */
   search: string;
-  purpose: string;
+  feeTypeId: number | null;
   studentId: number | null;
 };
 
-type FilterField = "from" | "to" | "search" | "purpose";
+type FilterField = "from" | "to" | "search" | "feeTypeId";
 
 const FILTER_FIELDS: Record<FilterField, string> = {
   from: "from",
   to: "to",
   search: "q",
-  purpose: "purpose",
+  feeTypeId: "fee_type",
 };
 
 /** The filters that are set, by their API names; the Student first. */
-function filterQuery(filters: PaymentFilters): URLSearchParams {
-  const query = new URLSearchParams();
-  if (filters.studentId !== null) query.set("student", String(filters.studentId));
-  for (const field of ["from", "to", "search", "purpose"] as const) {
+export function paymentFilterQuery(filters: PaymentFilters): Record<string, string> {
+  const query: Record<string, string> = {};
+  if (filters.studentId !== null) query.student = String(filters.studentId);
+  for (const field of ["from", "to", "search"] as const) {
     const value = filters[field].trim();
-    if (value !== "") query.set(FILTER_FIELDS[field], value);
+    if (value !== "") query[FILTER_FIELDS[field]] = value;
   }
+  if (filters.feeTypeId !== null) query[FILTER_FIELDS.feeTypeId] = String(filters.feeTypeId);
   return query;
 }
 
@@ -136,7 +146,7 @@ export async function fetchPayments(
   page: number,
   fetchFn: typeof fetch = fetch,
 ): Promise<PaymentPage> {
-  const query = filterQuery(filters);
+  const query = new URLSearchParams(paymentFilterQuery(filters));
   query.set("page", String(page));
   try {
     return await getJson(`${API_PATHS.payments}?${query.toString()}`, PaymentPageSchema, fetchFn);
@@ -146,7 +156,7 @@ export async function fetchPayments(
 }
 
 /**
- * Replace a Payment's amount, date, method and purpose (Admins; spec 75) and return its
+ * Replace a Payment's amount, date, method, Fee Type and note (Admins; spec 75) and return its
  * receipt. Rejects with `InvalidFieldsError` for refused fields.
  */
 export async function changePayment(

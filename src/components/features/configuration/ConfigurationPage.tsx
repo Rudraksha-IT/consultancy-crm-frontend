@@ -19,6 +19,7 @@ import { SUPPORT_TEXT } from "@/constants/supportAccess";
 import { DatesSettings } from "./DatesSettings";
 import { DocumentsSettings } from "./DocumentsSettings";
 import { ExportsSettings } from "./ExportsSettings";
+import { FeeTypesSettings } from "./FeeTypesSettings";
 import { OfficeNetworkSettings } from "./OfficeNetworkSettings";
 import { OfficeDetailsSettings } from "./OfficeDetailsSettings";
 import { OfficeLogoSettings } from "./OfficeLogoSettings";
@@ -27,9 +28,10 @@ import { WorkingDaySettings } from "./WorkingDaySettings";
 
 /**
  * The Consultancy's own settings, for Admins only, one section at a time (issue 96): General
- * (Office logo, Office details, Dates), Documents, Working hours while Clock-in is on, and
- * Exports. Email needs no settings: it goes from the product's own account (ADR 0023). A Platform Admin inside the
- * office also has the Platform controls, last (issue 27).
+ * (Office logo, Office details, Dates), Documents, Fees (Fee Types, issue 06), Working hours
+ * while Clock-in is on, and Exports. Email needs no settings: it goes from the product's own
+ * account (ADR 0023). A Platform Admin inside the office also has the Platform controls, last
+ * (issue 27).
  */
 export function ConfigurationPage() {
   const { staff, modules, supportAccess } = useCurrentStaff();
@@ -62,6 +64,7 @@ export function ConfigurationPage() {
       ...TEXT.documents,
       content: <DocumentsSettings />,
     },
+    { id: "fees", ...TEXT.fees, content: <FeeTypesSettings /> },
   ];
   if (modules.includes(Module.ClockIn)) {
     sections.push({ id: "workingHours", ...TEXT.workingHours, content: <ClockInSettings /> });

@@ -8,10 +8,24 @@ import { StudentProfilePage } from "@/components/features/students/profile/Stude
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
-import { backend, callsTo, on, onEach, type Answer } from "@/test/backend";
+import { backend as backendOnly, callsTo, on, onEach, type Answer } from "@/test/backend";
+import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { consultancySummary } from "@/test/consultancy";
+
+/** The canned backend, always with the office's Fee Types for the forms. */
+function backend(...answers: Answer[]) {
+  return backendOnly(...answers, onFeeTypes);
+}
+
+/** Pick a Fee Type in an open form, once the list has loaded. */
+async function pickFeeType(dialog: HTMLElement, name: string): Promise<void> {
+  await userEvent.selectOptions(
+    within(dialog).getByRole("combobox", { name: "Fee Type" }),
+    await within(dialog).findByRole("option", { name }),
+  );
+}
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
@@ -54,12 +68,19 @@ const NO_EXPENSES = {
 
 const VISA_FEE = {
   id: 31,
-  purpose: "Visa processing",
+  fee_type: feeTypeRef(3),
+  note: "processing",
   amount: 40000,
   added_by: { name: "Bikash Thapa" },
   added_at: "2026-11-03T10:15:00+05:45",
 };
-const APPLICATION_FEE = { ...VISA_FEE, id: 32, purpose: "Application processing", amount: 25000 };
+const APPLICATION_FEE = {
+  ...VISA_FEE,
+  id: 32,
+  fee_type: feeTypeRef(1),
+  note: "",
+  amount: 25000,
+};
 
 function feesOf(fees: unknown[], balance: unknown) {
   return { fees, total: 65000, balance };
@@ -144,7 +165,7 @@ describe("the Fees tab, for an Admin", () => {
     expect(within(tile("Paid so far")).getByText("NPR 15,000")).toBeInTheDocument();
     expect(within(tile("Still to pay")).getByText("NPR 50,000")).toHaveClass("text-warn");
     const list = screen.getByRole("list", { name: "What they agreed to pay" });
-    expect(within(list).getByText("Visa processing")).toBeInTheDocument();
+    expect(within(list).getByText("Visa fee (processing)")).toBeInTheDocument();
     expect(within(list).getByText("NPR 40,000")).toBeInTheDocument();
     expect(within(list).getAllByText("Added by Bikash Thapa")).toHaveLength(2);
     expect(await screen.findByRole("heading", { name: "Payments received" })).toBeInTheDocument();
@@ -229,12 +250,12 @@ describe("the Fees tab, for an Admin", () => {
     const html = "<b>Visa</b><script>alert(1)</script>";
     backend(
       on("GET", "/api/students/7/", PROFILE),
-      on("GET", FEES_URL, { ...ADMIN_FEES, fees: [{ ...VISA_FEE, purpose: html }] }),
+      on("GET", FEES_URL, { ...ADMIN_FEES, fees: [{ ...VISA_FEE, note: html }] }),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
     await openFeesTab();
 
-    expect(await screen.findByText(html)).toBeInTheDocument();
+    expect(await screen.findByText(`Visa fee (${html})`)).toBeInTheDocument();
     const list = screen.getByRole("list", { name: "What they agreed to pay" });
     expect(list.querySelector("b, script")).toBeNull();
   });
@@ -248,7 +269,7 @@ describe("adding a fee", () => {
     return screen.getByRole("dialog", { name: "Add a fee for Sita Gurung" });
   }
 
-  it("opens with focus in what it's for, saves, says so and shows the new fee", async () => {
+  it("opens with focus on the Fee Type, saves, says so and shows the new fee", async () => {
     const fetchFn = backend(
       changingAfter(
         FEES_URL,
@@ -262,21 +283,23 @@ describe("adding a fee", () => {
     await openFeesTab();
     const dialog = await openAdd();
 
-    expect(within(dialog).getByLabelText("What it's for")).toHaveFocus();
-    await userEvent.type(within(dialog).getByLabelText("What it's for"), "Visa processing");
+    expect(within(dialog).getByRole("combobox", { name: "Fee Type" })).toHaveFocus();
+    await pickFeeType(dialog, "Visa fee");
+    await userEvent.type(within(dialog).getByLabelText(/^Note/), "processing");
     await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "40000");
     await userEvent.click(within(dialog).getByRole("button", { name: "Add fee" }));
 
     expect(await screen.findByText("Fee added")).toBeInTheDocument();
     expect(sentBody(fetchFn, "POST", FEES_URL)).toEqual({
-      purpose: "Visa processing",
+      fee_type: 3,
+      note: "processing",
       amount: 40000,
     });
-    expect(await screen.findByText("Visa processing")).toBeInTheDocument();
+    expect(await screen.findByText("Visa fee (processing)")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("refuses an empty purpose and a bad amount without sending them", async () => {
+  it("refuses a missing Fee Type and a bad amount without sending them", async () => {
     const fetchFn = backend(
       on("GET", "/api/students/7/", PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
@@ -288,7 +311,7 @@ describe("adding a fee", () => {
     await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "12.5");
     await userEvent.click(within(dialog).getByRole("button", { name: "Add fee" }));
 
-    expect(await within(dialog).findByText("Say what the fee is for.")).toBeInTheDocument();
+    expect(await within(dialog).findByText("Choose a Fee Type.")).toBeInTheDocument();
     expect(
       within(dialog).getByText("Enter a whole amount from NPR 1 to NPR 10,00,00,000."),
     ).toBeInTheDocument();
@@ -300,12 +323,12 @@ describe("adding a fee", () => {
       on("GET", "/api/students/7/", PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
-      on("POST", FEES_URL, { purpose: ["Use at most 200 characters."] }, 400),
+      on("POST", FEES_URL, { note: ["Use at most 200 characters."] }, 400),
     );
     await openFeesTab();
     const dialog = await openAdd();
 
-    await userEvent.type(within(dialog).getByLabelText("What it's for"), "Visa");
+    await pickFeeType(dialog, "Visa fee");
     await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "100");
     await userEvent.click(within(dialog).getByRole("button", { name: "Add fee" }));
 
@@ -322,7 +345,7 @@ describe("adding a fee", () => {
     await openFeesTab();
     const dialog = await openAdd();
 
-    await userEvent.type(within(dialog).getByLabelText("What it's for"), "Visa");
+    await pickFeeType(dialog, "Visa fee");
     await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "100");
     await userEvent.click(within(dialog).getByRole("button", { name: "Add fee" }));
 
@@ -352,7 +375,9 @@ describe("changing and deleting a fee", () => {
   const AFTER = feesOf([APPLICATION_FEE], { paid: 15000, still_to_pay: 10000, overpaid: 0 });
 
   async function openEdit() {
-    await userEvent.click(await screen.findByRole("button", { name: "Edit fee: Visa processing" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Edit fee: Visa fee (processing)" }),
+    );
     return screen.getByRole("dialog", { name: "Edit fee" });
   }
 
@@ -367,7 +392,8 @@ describe("changing and deleting a fee", () => {
     await openFeesTab();
     const dialog = await openEdit();
 
-    expect(within(dialog).getByLabelText("What it's for")).toHaveValue("Visa processing");
+    expect(within(dialog).getByRole("combobox", { name: "Fee Type" })).toHaveValue("3");
+    expect(within(dialog).getByLabelText(/^Note/)).toHaveValue("processing");
     expect(within(dialog).getByLabelText("Amount (NPR)")).toHaveValue(40000);
     await userEvent.clear(within(dialog).getByLabelText("Amount (NPR)"));
     await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "45000");
@@ -375,7 +401,8 @@ describe("changing and deleting a fee", () => {
 
     expect(await screen.findByText("Changes saved")).toBeInTheDocument();
     expect(sentBody(fetchFn, "PUT", "/api/fees/31/")).toEqual({
-      purpose: "Visa processing",
+      fee_type: 3,
+      note: "processing",
       amount: 45000,
     });
     expect(await screen.findByText("NPR 45,000")).toBeInTheDocument();
@@ -395,13 +422,15 @@ describe("changing and deleting a fee", () => {
     const dialog = await openEdit();
 
     await userEvent.click(within(dialog).getByRole("button", { name: "Delete fee" }));
-    const confirm = screen.getByRole("dialog", { name: "Delete the Visa processing fee?" });
-    expect(within(confirm).getByText("Visa processing, NPR 40,000.")).toBeInTheDocument();
+    const confirm = screen.getByRole("dialog", {
+      name: "Delete the fee for Visa fee (processing)?",
+    });
+    expect(within(confirm).getByText("Visa fee (processing), NPR 40,000.")).toBeInTheDocument();
     await userEvent.click(within(confirm).getByRole("button", { name: "Delete fee" }));
 
     expect(await screen.findByText("Fee deleted")).toBeInTheDocument();
     expect(callsTo(fetchFn, "DELETE", "/api/fees/31/")).toHaveLength(1);
-    expect(screen.queryByText("Visa processing")).not.toBeInTheDocument();
+    expect(screen.queryByText("Visa fee (processing)")).not.toBeInTheDocument();
   });
 
   it("deletes nothing when the confirmation is cancelled", async () => {
@@ -413,14 +442,16 @@ describe("changing and deleting a fee", () => {
     await openFeesTab();
     const dialog = await openEdit();
     await userEvent.click(within(dialog).getByRole("button", { name: "Delete fee" }));
-    const confirm = screen.getByRole("dialog", { name: "Delete the Visa processing fee?" });
+    const confirm = screen.getByRole("dialog", {
+      name: "Delete the fee for Visa fee (processing)?",
+    });
     expect(within(confirm).getByRole("button", { name: "Cancel" })).toHaveFocus();
 
     await userEvent.click(within(confirm).getByRole("button", { name: "Cancel" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(callsTo(fetchFn, "DELETE", "/api/fees/31/")).toHaveLength(0);
-    expect(screen.getByText("Visa processing")).toBeInTheDocument();
+    expect(screen.getByText("Visa fee (processing)")).toBeInTheDocument();
   });
 
   it("keeps the confirmation open when deleting fails", async () => {
@@ -432,7 +463,9 @@ describe("changing and deleting a fee", () => {
     await openFeesTab();
     const dialog = await openEdit();
     await userEvent.click(within(dialog).getByRole("button", { name: "Delete fee" }));
-    const confirm = screen.getByRole("dialog", { name: "Delete the Visa processing fee?" });
+    const confirm = screen.getByRole("dialog", {
+      name: "Delete the fee for Visa fee (processing)?",
+    });
 
     await userEvent.click(within(confirm).getByRole("button", { name: "Delete fee" }));
 
@@ -452,7 +485,7 @@ describe("the Fees tab, for the Student's counsellor", () => {
     );
     await openFeesTab(COUNSELLOR);
 
-    expect(await screen.findByText("Visa processing")).toBeInTheDocument();
+    expect(await screen.findByText("Visa fee (processing)")).toBeInTheDocument();
     expect(
       screen.getByText("Payments and what is still to pay stay with the Admin."),
     ).toBeInTheDocument();
@@ -470,7 +503,7 @@ describe("the Fees tab, for the Student's counsellor", () => {
     );
     await openFeesTab(ADMIN);
 
-    expect(await screen.findByText("Visa processing")).toBeInTheDocument();
+    expect(await screen.findByText("Visa fee (processing)")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Add a fee" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Edit fee/ })).not.toBeInTheDocument();
   });
@@ -533,19 +566,19 @@ describe("Accounts -> Student fees", () => {
       await screen.findByRole("button", { name: "Fee details for Aarav Sharma" }),
     );
     const details = screen.getByRole("dialog", { name: "Fees for Aarav Sharma" });
-    expect(await within(details).findByText("Visa processing")).toBeInTheDocument();
+    expect(await within(details).findByText("Visa fee (processing)")).toBeInTheDocument();
     expect(within(details).getByRole("link", { name: "Open their profile" })).toHaveAttribute(
       "href",
       "/students/7",
     );
     await userEvent.click(within(details).getByRole("button", { name: "Add a fee" }));
     const add = screen.getByRole("dialog", { name: "Add a fee for Aarav Sharma" });
-    await userEvent.type(within(add).getByLabelText("What it's for"), "PTE class");
+    await pickFeeType(add, "IELTS class");
     await userEvent.type(within(add).getByLabelText("Amount (NPR)"), "18000");
     await userEvent.click(within(add).getByRole("button", { name: "Add fee" }));
 
     expect(await screen.findByText("Fee added")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", FEES_URL)).toEqual({ purpose: "PTE class", amount: 18000 });
+    expect(sentBody(fetchFn, "POST", FEES_URL)).toEqual({ fee_type: 4, note: "", amount: 18000 });
     expect(callsTo(fetchFn, "GET", OWING_URL).length).toBeGreaterThan(1);
   });
 
@@ -701,7 +734,7 @@ describe.each(THEME_CASES)("Fees in the $name Theme", ({ config, mode }) => {
 
     await openFeesTab();
 
-    expect(await screen.findByText("Visa processing")).toBeInTheDocument();
+    expect(await screen.findByText("Visa fee (processing)")).toBeInTheDocument();
     expect(document.documentElement.dataset.theme).toBe(mode);
   });
 });

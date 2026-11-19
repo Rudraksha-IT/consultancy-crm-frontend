@@ -25,7 +25,11 @@ type StudentPaymentsProps = {
 /** The Payments one Student has made, on their Fees tab (Admins only; spec 74-75). */
 export function StudentPayments({ studentId, onChanged, aside }: StudentPaymentsProps) {
   const [page, setPage] = useState(1);
-  const state = usePaymentPage({ from: "", to: "", search: "", purpose: "", studentId }, page, 0);
+  const state = usePaymentPage(
+    { from: "", to: "", search: "", feeTypeId: null, studentId },
+    page,
+    0,
+  );
 
   return (
     <Section title={PAYMENT_TEXT.paymentsReceived} aside={aside}>

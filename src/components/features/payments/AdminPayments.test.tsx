@@ -7,9 +7,15 @@ import { StudentProfilePage } from "@/components/features/students/profile/Stude
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
-import { backend, callsTo, on, onEach, type Answer } from "@/test/backend";
+import { backend as backendOnly, callsTo, on, onEach, type Answer } from "@/test/backend";
+import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
 import { consultancySummary } from "@/test/consultancy";
+
+/** The canned backend, always with the office's Fee Types for the forms and the filter. */
+function backend(...answers: Answer[]) {
+  return backendOnly(...answers, onFeeTypes);
+}
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
@@ -35,7 +41,8 @@ const PAYMENT = {
   amount: 25000,
   paid_on: "2026-11-01",
   method: "esewa",
-  purpose: "Visa processing fee",
+  fee_type: feeTypeRef(3),
+  note: "first half",
   recorded_by: { name: "Ramesh KC" },
   recorded_at: "2026-11-01T10:15:00+05:45",
 };
@@ -137,7 +144,7 @@ describe("Accounts", () => {
     const cells = within(row);
     expect(cells.getByText("1 Nov 2026")).toBeInTheDocument();
     expect(cells.getByText("eSewa")).toBeInTheDocument();
-    expect(cells.getByText("Visa processing fee")).toBeInTheDocument();
+    expect(cells.getByText("Visa fee (first half)")).toBeInTheDocument();
     expect(cells.getByText("NPR 25,000")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
@@ -187,16 +194,16 @@ describe("Accounts", () => {
   });
 
   it("shows typed text as text", async () => {
-    const purpose = "<script>alert(1)</script>";
-    backend(on("GET", THIS_MONTH, pageOf([{ ...PAYMENT, purpose }])));
+    const note = "<script>alert(1)</script>";
+    backend(on("GET", THIS_MONTH, pageOf([{ ...PAYMENT, note }])));
     await showMoneyIn();
 
-    expect(await screen.findByText(purpose)).toBeInTheDocument();
+    expect(await screen.findByText(`Visa fee (${note})`)).toBeInTheDocument();
     expect(document.querySelector("script")).toBeNull();
   });
 
-  it("filters by dates, Student or receipt number and purpose", async () => {
-    const filtered = "/api/payments/?from=2026-10-01&to=2026-10-31&q=Sita&purpose=Visa&page=1";
+  it("filters by dates, Student or receipt number and Fee Type", async () => {
+    const filtered = "/api/payments/?from=2026-10-01&to=2026-10-31&q=Sita&fee_type=3&page=1";
     const fetchFn = backend(
       on("GET", THIS_MONTH, pageOf([PAYMENT])),
       on("GET", filtered, pageOf([])),
@@ -209,7 +216,10 @@ describe("Accounts", () => {
     await userEvent.clear(within(form).getByLabelText(/^To/));
     await userEvent.type(within(form).getByLabelText(/^To/), "2026-10-31");
     await userEvent.type(within(form).getByLabelText("Student or receipt number"), "Sita");
-    await userEvent.type(within(form).getByLabelText(/^What it's for/), "Visa");
+    await userEvent.selectOptions(
+      within(form).getByRole("combobox", { name: /^Fee Type/ }),
+      await within(form).findByRole("option", { name: "Visa fee" }),
+    );
     await userEvent.click(within(form).getByRole("button", { name: "Show" }));
 
     expect(await screen.findByText("No payments match these filters.")).toBeInTheDocument();
@@ -303,8 +313,32 @@ describe("editing a Payment", () => {
     expect(within(dialog).getByLabelText("Amount (NPR)")).toHaveValue(25000);
     expect(within(dialog).getByLabelText("Date")).toHaveValue("2026-11-01");
     expect(within(dialog).getByLabelText("Method")).toHaveValue("esewa");
-    expect(within(dialog).getByLabelText("What it's for")).toHaveValue("Visa processing fee");
+    expect(within(dialog).getByRole("combobox", { name: "Fee Type" })).toHaveValue("3");
+    expect(within(dialog).getByLabelText(/^Note/)).toHaveValue("first half");
     expect(within(dialog).getByText("The change is recorded in History.")).toBeInTheDocument();
+  });
+
+  it("keeps a hidden Fee Type the Payment already has, and offers no other hidden one", async () => {
+    backend(on("GET", THIS_MONTH, pageOf([{ ...PAYMENT, fee_type: feeTypeRef(5), note: "" }])));
+    await showMoneyIn();
+
+    const dialog = await openEdit();
+    const picker = within(dialog).getByRole("combobox", { name: "Fee Type" });
+    await within(dialog).findByRole("option", { name: "Visa fee" });
+
+    expect(picker).toHaveValue("5");
+    expect(within(picker).getAllByRole("option", { name: "PTE class" })).toHaveLength(1);
+  });
+
+  it("exports the filtered list", async () => {
+    backend(on("GET", THIS_MONTH, pageOf([PAYMENT])));
+    await showMoneyIn();
+    await screen.findByText("1 payment, 1 Nov 2026 to 2 Nov 2026");
+
+    await userEvent.click(screen.getByRole("button", { name: "Export" }));
+
+    const dialog = screen.getByRole("dialog");
+    expect(within(dialog).getByText("From: 1 Nov 2026, To: 2 Nov 2026")).toBeInTheDocument();
   });
 
   it("saves the change, says so and loads the list again", async () => {
@@ -325,7 +359,8 @@ describe("editing a Payment", () => {
       amount: 30000,
       paid_on: "2026-11-01",
       method: "esewa",
-      purpose: "Visa processing fee",
+      fee_type: 3,
+      note: "first half",
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(await screen.findAllByText("NPR 30,000")).not.toHaveLength(0);
@@ -407,7 +442,7 @@ describe("deleting a Payment", () => {
     const dialog = await openDelete();
 
     expect(
-      within(dialog).getByText("000412, NPR 25,000 from Sita Gurung for Visa processing fee."),
+      within(dialog).getByText("000412, NPR 25,000 from Sita Gurung for Visa fee (first half)."),
     ).toBeInTheDocument();
     expect(
       within(dialog).getByText(
@@ -468,7 +503,7 @@ describe("the Fees tab on a Student", () => {
     await userEvent.click(await screen.findByRole("tab", { name: "Fees" }));
 
     expect(await screen.findByRole("heading", { name: "Payments received" })).toBeInTheDocument();
-    expect(await screen.findByText("Visa processing fee")).toBeInTheDocument();
+    expect(await screen.findByText("Visa fee (first half)")).toBeInTheDocument();
     expect(screen.queryByRole("columnheader", { name: "Student" })).not.toBeInTheDocument();
     expect(screen.getByText("1 payment")).toBeInTheDocument();
   });
@@ -498,7 +533,7 @@ describe("the Fees tab on a Student", () => {
   });
 
   it("loads the list again after an edit", async () => {
-    const changed = { ...PAYMENT, purpose: "IELTS class fee" };
+    const changed = { ...PAYMENT, fee_type: feeTypeRef(4), note: "" };
     backend(
       listChangingAfter(STUDENT_PAYMENTS, pageOf([changed])),
       on("GET", "/api/students/7/", PROFILE),
@@ -509,11 +544,14 @@ describe("the Fees tab on a Student", () => {
     await userEvent.click(await screen.findByRole("tab", { name: "Fees" }));
     const dialog = await openEdit();
 
-    await userEvent.clear(within(dialog).getByLabelText("What it's for"));
-    await userEvent.type(within(dialog).getByLabelText("What it's for"), "IELTS class fee");
+    await userEvent.selectOptions(
+      within(dialog).getByRole("combobox", { name: "Fee Type" }),
+      await within(dialog).findByRole("option", { name: "IELTS class" }),
+    );
+    await userEvent.clear(within(dialog).getByLabelText(/^Note/));
     await userEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
 
-    expect(await screen.findByText("IELTS class fee")).toBeInTheDocument();
+    expect(await screen.findByText("IELTS class")).toBeInTheDocument();
   });
 
   it.each([

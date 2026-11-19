@@ -7,7 +7,7 @@ import { DetailList } from "@/components/ui/DetailList";
 import { Dialog } from "@/components/ui/Dialog";
 import { LABELS } from "@/constants/messages";
 import { PAYMENT_METHOD_LABELS, PAYMENT_TEXT } from "@/constants/payments";
-import type { OfficeLogo, Receipt } from "@/lib/api";
+import { describeFeeType, type OfficeLogo, type Receipt } from "@/lib/api";
 import { formatBsDate } from "@/lib/dates";
 import { amountInWords, formatNpr } from "@/lib/money";
 
@@ -74,7 +74,7 @@ export function ReceiptDialog({ receipt, officeName, officeLogo, onClose }: Rece
               label: PAYMENT_TEXT.receivedFrom,
               value: `${receipt.student.name}, ${receipt.student.phone}`,
             },
-            { label: PAYMENT_TEXT.for, value: receipt.purpose },
+            { label: PAYMENT_TEXT.for, value: describeFeeType(receipt.feeType, receipt.note) },
             { label: PAYMENT_TEXT.paidBy, value: PAYMENT_METHOD_LABELS[receipt.method] },
           ]}
         />

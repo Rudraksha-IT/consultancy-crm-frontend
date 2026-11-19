@@ -53,6 +53,7 @@ const MONEY = {
     { category: "office_rent", amount: 85000 },
     { category: "internet", amount: 9000 },
   ],
+  money_in_by_fee_type: [],
 };
 
 function month(key: string, counts: Record<string, number> = {}) {
@@ -160,6 +161,7 @@ const EVERYTHING = [
   on("GET", MONEY_TWELVE, {
     months: [moneyMonth("2025-12", 1000, 0, 0), ...MONEY.months],
     money_out_by_category: MONEY.money_out_by_category,
+    money_in_by_fee_type: [],
   }),
   on("GET", CLASSES, {
     batches: [
@@ -770,12 +772,36 @@ describe("Money", () => {
     ]);
   });
 
+  it("splits the money from Students by Fee Type, largest first", async () => {
+    backend(
+      on("GET", SIX_MONTHS, { months: MONTHS }),
+      on("GET", MONEY_SIX, {
+        ...MONEY,
+        money_in_by_fee_type: [
+          { fee_type: { id: 3, name: "Visa fee" }, amount: 400000 },
+          { fee_type: { id: 4, name: "<b>IELTS class</b>" }, amount: 218000 },
+        ],
+      }),
+    );
+    renderReports(WITH_ACCOUNTS);
+
+    await openTab("Money");
+
+    const came = within(await screen.findByRole("list", { name: "Where the money came from" }));
+    expect(came.getAllByRole("listitem").map((row) => row.textContent)).toEqual([
+      "Visa feeNPR 4,00,000",
+      "<b>IELTS class</b>NPR 2,18,000",
+      "University commissionNPR 2,90,000",
+    ]);
+  });
+
   it("says how much it is short by, in red, when more went out than came in", async () => {
     backend(
       on("GET", SIX_MONTHS, { months: MONTHS }),
       on("GET", MONEY_SIX, {
         months: [moneyMonth("2026-11", 1000, 0, 5000)],
         money_out_by_category: [{ category: "other", amount: 5000 }],
+        money_in_by_fee_type: [],
       }),
     );
     renderReports(WITH_ACCOUNTS);
@@ -789,7 +815,11 @@ describe("Money", () => {
   it("says when nothing went out", async () => {
     backend(
       on("GET", SIX_MONTHS, { months: MONTHS }),
-      on("GET", MONEY_SIX, { months: [moneyMonth("2026-11")], money_out_by_category: [] }),
+      on("GET", MONEY_SIX, {
+        months: [moneyMonth("2026-11")],
+        money_out_by_category: [],
+        money_in_by_fee_type: [],
+      }),
     );
     renderReports(WITH_ACCOUNTS);
 

@@ -51,7 +51,7 @@ async function loadThisMonth(): Promise<ThisMonth> {
   const days = { from: startOfMonth(), to: todayIso() };
   // Expenses use the server's this month; one page is enough for its total.
   const [payments, commissionReceived, expenses, commission] = await Promise.all([
-    fetchPayments({ ...days, search: "", purpose: "", studentId: null }, 1),
+    fetchPayments({ ...days, search: "", feeTypeId: null, studentId: null }, 1),
     fetchReceivedCommission(days),
     fetchExpenses(null, 1),
     fetchCommission(1),

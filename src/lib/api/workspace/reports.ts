@@ -8,6 +8,7 @@ import { COUNTRIES, SOURCES } from "@/constants/students";
 
 import { getJson } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
+import { FeeTypeRefSchema } from "../money/feeTypes";
 
 const Count = z.number().int().nonnegative();
 /** Whole NPR. */
@@ -89,13 +90,21 @@ const MoneyReportSchema = z
     money_out_by_category: z.array(
       z.object({ category: z.enum(EXPENSE_CATEGORIES), amount: Amount }),
     ),
+    money_in_by_fee_type: z.array(z.object({ fee_type: FeeTypeRefSchema, amount: Amount })),
   })
   .transform((answer) => ({
     months: answer.months,
     moneyOutByCategory: answer.money_out_by_category,
+    moneyInByFeeType: answer.money_in_by_fee_type.map((row) => ({
+      feeType: row.fee_type,
+      amount: row.amount,
+    })),
   }));
 
-/** Money in and out each month, and what the money out went on over all the months. */
+/**
+ * Money in and out each month, what the money out went on, and where the money from Students
+ * came from (by Fee Type) over all the months.
+ */
 export type MoneyReport = z.infer<typeof MoneyReportSchema>;
 
 const SourceReportSchema = z.object({
