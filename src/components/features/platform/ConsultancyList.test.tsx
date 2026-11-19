@@ -119,7 +119,7 @@ describe("ConsultancyList", () => {
     const acme = within(rowFor("Acme Education"));
     expect(acme.getByText(testHost("acme"))).toBeInTheDocument();
     expect(acme.getByText("Active")).toBeInTheDocument();
-    expect(featuresOf("Acme Education")).toEqual(["Test-prep classes", "Email and SMS"]);
+    expect(featuresOf("Acme Education")).toEqual(["Test-prep classes", "Email"]);
     const cedar = within(rowFor("Cedar Abroad"));
     expect(cedar.getByText("Only the standard features")).toBeVisible();
     expect(cedar.getByText("Evaluation, ends 12 Nov 2099")).toBeInTheDocument();
@@ -280,7 +280,7 @@ describe("ConsultancyList", () => {
         ),
       ).toBeInTheDocument();
       expect(dialog.getByRole("switch", { name: "Test-prep classes" })).toBeChecked();
-      expect(dialog.getByRole("switch", { name: "Email and SMS" })).toBeChecked();
+      expect(dialog.getByRole("switch", { name: "Email" })).toBeChecked();
       expect(dialog.getByRole("switch", { name: "Accounts" })).not.toBeChecked();
       expect(
         dialog.getByRole("switch", { name: "Reports and charts" }),
@@ -296,7 +296,7 @@ describe("ConsultancyList", () => {
         features: jsonResponse({ ...ACME, modules: ["students", "batches", "accounts"] }),
       });
 
-      await userEvent.click(screen.getByRole("switch", { name: "Email and SMS" }));
+      await userEvent.click(screen.getByRole("switch", { name: "Email" }));
       await userEvent.click(screen.getByRole("switch", { name: "Accounts" }));
       await userEvent.click(screen.getByRole("button", { name: "Save features" }));
 
@@ -329,7 +329,7 @@ describe("ConsultancyList", () => {
         "We couldn't save the features. Please try again.",
       );
       expect(dialog.getByRole("switch", { name: "Accounts" })).toBeChecked();
-      expect(featuresOf("Acme Education")).toEqual(["Test-prep classes", "Email and SMS"]);
+      expect(featuresOf("Acme Education")).toEqual(["Test-prep classes", "Email"]);
     });
 
     it("closes without saving on Cancel, and starts fresh when opened again", async () => {

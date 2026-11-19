@@ -93,17 +93,11 @@ describe("ConfigurationPage", () => {
     expect(within(dates).getByRole("group", { name: "Date display" })).toBeInTheDocument();
   });
 
-  it("puts Email and SMS and Working hours in their places while their Modules are on", () => {
+  it("puts Working hours in its place while its Module is on, and has no email settings", () => {
     backend(on("GET", TYPES_PATH, NO_TYPES));
     renderPage({ ...ADMIN, modules: ALL_MODULES });
 
-    expect(menuItems()).toEqual([
-      "General",
-      "Documents",
-      "Email and SMS",
-      "Working hours",
-      "Exports",
-    ]);
+    expect(menuItems()).toEqual(["General", "Documents", "Working hours", "Exports"]);
   });
 
   it("shows the Documents section with its lists", async () => {

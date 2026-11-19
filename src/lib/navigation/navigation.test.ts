@@ -22,7 +22,7 @@ describe("buildNavigation", () => {
       "Tasks",
       "Inbox",
       "Transfer requests",
-      "Email & SMS",
+      "Email",
       "Accounts",
       "Employees",
       "Reports",
@@ -42,7 +42,7 @@ describe("buildNavigation", () => {
       "Tasks",
       "Inbox",
       "Transfer requests",
-      "Email & SMS",
+      "Email",
     ]);
   });
 
@@ -56,7 +56,7 @@ describe("buildNavigation", () => {
       "Tasks",
       "Inbox",
       "Transfer requests",
-      "Email & SMS",
+      "Email",
     ]);
   });
 

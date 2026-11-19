@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
-import { SendMessageDialog } from "@/components/features/communication/SendMessageDialog";
+import { EmailComposer } from "@/components/features/communication/EmailComposer";
 import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
 import { TakePaymentDialog } from "@/components/features/payments/TakePaymentDialog";
 import { canMessageStudents } from "@/components/features/communication/canMessage";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
-import { Icon } from "@/components/ui/Icon";
+import { Icon, type IconName } from "@/components/ui/Icon";
 import { Menu, type MenuItem } from "@/components/ui/Menu";
 import { useToast } from "@/components/ui/useToast";
 import { COMMUNICATION_TEXT } from "@/constants/communication";
@@ -70,8 +70,9 @@ export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
         <HeaderActions profile={profile} onOpen={setOpen} />
       </div>
       {open === "message" && (
-        <SendMessageDialog
-          student={profile}
+        <EmailComposer
+          recipients={[profile]}
+          isBulk={false}
           onClose={() => {
             setOpen(null);
           }}
@@ -152,10 +153,13 @@ type HeaderActionsProps = {
 
 /**
  * "Assign a counsellor" when the Student has none, "Take a payment" (primary unless assigning is),
- * and the More menu of rarer actions.
+ * "Send email" (primary when it is the only one) and the More menu of rarer actions.
  */
 function HeaderActions({ profile, onOpen }: HeaderActionsProps) {
-  const items = menuItems(profile, useCanMessage(), onOpen);
+  const canMessage = useCanMessage();
+  const items = studentItems(profile, (dialog) => () => {
+    onOpen(dialog);
+  });
   const opens = (dialog: OpenDialog) => () => {
     onOpen(dialog);
   };
@@ -167,13 +171,14 @@ function HeaderActions({ profile, onOpen }: HeaderActionsProps) {
         </Button>
       )}
       {profile.canRecordPayment && (
-        <Button
-          variant={profile.canAssign ? "secondary" : "primary"}
-          icon="receipt"
-          onClick={opens("payment")}
-        >
+        <MainOrSecond isMain={!profile.canAssign} icon="receipt" onClick={opens("payment")}>
           {PAYMENT_TEXT.takeAPayment}
-        </Button>
+        </MainOrSecond>
+      )}
+      {canMessage && (
+        <MainOrSecond isMain={isOnlyAction(profile)} icon="message" onClick={opens("message")}>
+          {COMMUNICATION_TEXT.sendEmail}
+        </MainOrSecond>
       )}
       {items.length > 0 && <Menu label={LABELS.more} items={items} />}
     </div>
@@ -204,23 +209,30 @@ const DIALOGS: Record<
   lost: ({ profile, ...rest }) => <MarkLostDialog studentId={profile.id} {...rest} />,
 };
 
-/** Whether this person can send email or SMS: the Module is on and they aren't a Teacher. */
-function useCanMessage(): boolean {
-  return canMessageStudents(useCurrentStaff());
+type MainOrSecondProps = {
+  isMain: boolean;
+  icon: IconName;
+  onClick: () => void;
+  children: ReactNode;
+};
+
+/** A header action: primary when it is the main one, else secondary. */
+function MainOrSecond({ isMain, icon, onClick, children }: MainOrSecondProps) {
+  return (
+    <Button variant={isMain ? "primary" : "secondary"} icon={icon} onClick={onClick}>
+      {children}
+    </Button>
+  );
 }
 
-const MESSAGE_ITEM = { label: COMMUNICATION_TEXT.sendEmailOrSms, icon: "send" } as const;
+/** Send email is the main action only when there is no counsellor to assign or payment to take. */
+function isOnlyAction(profile: StudentProfile): boolean {
+  return !profile.canAssign && !profile.canRecordPayment;
+}
 
-function menuItems(
-  profile: StudentProfile,
-  canMessage: boolean,
-  open: (dialog: OpenDialog) => void,
-): MenuItem[] {
-  const opens = (dialog: OpenDialog) => () => {
-    open(dialog);
-  };
-  const message: MenuItem[] = canMessage ? [{ ...MESSAGE_ITEM, onSelect: opens("message") }] : [];
-  return [...message, ...studentItems(profile, opens)];
+/** Whether this person can email Students: the Module is on and they aren't a Teacher. */
+function useCanMessage(): boolean {
+  return canMessageStudents(useCurrentStaff());
 }
 
 /** The actions on the Student's record this person may take. */

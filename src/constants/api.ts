@@ -118,8 +118,6 @@ export const API_PATHS = {
   visitsToday: "/api/visits/today/",
   messages: "/api/messages/",
   bulkMessages: "/api/messages/bulk/",
-  communicationSettings: "/api/communication/settings/",
-  communicationTestSms: "/api/communication/settings/test-sms/",
   payments: "/api/payments/",
   payment: (id: number) => `/api/payments/${String(id)}/`,
   documentsPaperwork: "/api/documents/students/",

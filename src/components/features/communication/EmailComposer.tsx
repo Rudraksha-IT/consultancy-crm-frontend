@@ -1,0 +1,260 @@
+"use client";
+
+import clsx from "clsx";
+import { useId, useState, type SubmitEvent } from "react";
+
+import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
+import { Banner } from "@/components/ui/Banner";
+import { Button } from "@/components/ui/Button";
+import { Dialog } from "@/components/ui/Dialog";
+import { SubmitKeysHint, SubmitKeysScope } from "@/components/ui/SubmitKeys";
+import { TextAreaField } from "@/components/ui/TextAreaField";
+import { TextField } from "@/components/ui/TextField";
+import {
+  COMMUNICATION_TEXT as TEXT,
+  SUBJECT_MAX_LENGTH,
+  plainEmailText,
+} from "@/constants/communication";
+import { LABELS } from "@/constants/messages";
+import type { BulkResult, NewEmail } from "@/lib/api";
+
+import { PaneToggle, SendingFinished, ToRow, type Pane } from "./ComposerParts";
+import { composerWording, type ComposerWording } from "./composerWording";
+import { ContactEmailBanner } from "./ContactEmailBanner";
+import { EmailPreview } from "./EmailPreview";
+import type { EmailRecipient } from "./recipients";
+import { useEmailSend, type EmailSend } from "./useEmailSend";
+
+type EmailComposerProps = {
+  /** One Student, or the Students chosen for one email to many. */
+  recipients: readonly EmailRecipient[];
+  /** Each of many Students gets their own copy, starting "Dear Student,". */
+  isBulk: boolean;
+  onClose: () => void;
+  /** It was sent (or failed and recorded); the lists showing emails can load again. */
+  onSent?: () => void;
+  /** Go back to choosing the Students (many), keeping who is chosen. */
+  onChange?: () => void;
+};
+
+/**
+ * Write a Plain email (issue 04): who it's to, a subject line and the message, beside a live
+ * preview of what the Student receives. Near full screen; at narrow widths Write and Preview
+ * take turns. One Student's email is confirmed in a toast; many show Sending finished.
+ */
+export function EmailComposer(props: EmailComposerProps) {
+  const [result, setResult] = useState<BulkResult | null>(null);
+  if (result !== null) return <SendingFinished result={result} onClose={props.onClose} />;
+  return (
+    <Composer
+      {...props}
+      onBulkSent={(sent) => {
+        setResult(sent);
+        props.onSent?.();
+      }}
+    />
+  );
+}
+
+type ComposerProps = EmailComposerProps & { onBulkSent: (result: BulkResult) => void };
+
+function Composer({ recipients, isBulk, onClose, onSent, onChange, onBulkSent }: ComposerProps) {
+  const formId = useId();
+  const { consultancy } = useCurrentStaff();
+  const only = isBulk ? null : (recipients[0] ?? null);
+  const wording = composerWording(only, recipients, consultancy.name);
+  const sending = useEmailSend({ only, recipients, onSent, onBulkSent });
+  const draft = useDraft(wording);
+  const missingAddress = addressMissingFor(only);
+  const canSend = isSendable(consultancy.hasContactEmail, missingAddress, recipients);
+
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {
+    event.preventDefault();
+    if (!canSend) return;
+    const email = draft.checked(event.currentTarget);
+    if (email !== null) sending.send(email);
+  }
+
+  return (
+    <SubmitKeysScope>
+      <Dialog
+        isOpen
+        isFull
+        title={wording.title}
+        onClose={onClose}
+        headerAside={<PaneToggle pane={draft.pane} onPane={draft.setPane} />}
+        footer={
+          <ComposerFooter
+            formId={formId}
+            wording={wording}
+            isSaving={sending.isSaving}
+            canSend={canSend}
+            onClose={onClose}
+          />
+        }
+      >
+        <div className="tablet:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] grid h-full min-h-0">
+          <form
+            id={formId}
+            noValidate
+            onSubmit={handleSubmit}
+            className={clsx(
+              "phone:px-8 grid min-h-0 content-start gap-5 overflow-y-auto overscroll-contain px-4 py-6",
+              draft.pane === "preview" && "max-tablet:hidden",
+            )}
+          >
+            <ContactEmailBanner />
+            <ToRow recipients={recipients} isBulk={isBulk} onChange={onChange} />
+            <Problems missingAddress={missingAddress} students={sending.fieldErrors.students} />
+            <ComposerFields draft={draft} sending={sending} hint={wording.hint} />
+          </form>
+          <EmailPreview
+            subject={draft.subject}
+            body={draft.body}
+            toLine={wording.toLine}
+            whose={wording.whose}
+            isHiddenWhenNarrow={draft.pane === "write"}
+          />
+        </div>
+      </Dialog>
+    </SubmitKeysScope>
+  );
+}
+
+/** It can go once the office has a contact email and every Student chosen has an address. */
+function isSendable(
+  hasContactEmail: boolean,
+  missingAddress: string | null,
+  recipients: readonly EmailRecipient[],
+): boolean {
+  return hasContactEmail && missingAddress === null && recipients.length > 0;
+}
+
+/** The one Student's name when they have no email address, else null. */
+function addressMissingFor(only: EmailRecipient | null): string | null {
+  return only !== null && only.email === "" ? only.name : null;
+}
+
+type Draft = {
+  pane: Pane;
+  setPane: (pane: Pane) => void;
+  subject: string;
+  setSubject: (subject: string) => void;
+  subjectError: string | null;
+  body: string;
+  setBody: (body: string) => void;
+  /** The email to send, trimmed; or null, with the subject line marked and focused, if it is empty. */
+  checked: (form: HTMLFormElement) => NewEmail | null;
+};
+
+/** What is being written, starting from the Plain email's greeting and sign-off. */
+function useDraft(wording: ComposerWording): Draft {
+  const { staff, consultancy } = useCurrentStaff();
+  const [pane, setPane] = useState<Pane>("write");
+  const [subject, setSubject] = useState("");
+  const [subjectError, setSubjectError] = useState<string | null>(null);
+  const [body, setBody] = useState(() =>
+    plainEmailText(wording.greetingName, staff.name, consultancy.name),
+  );
+
+  function checked(form: HTMLFormElement): NewEmail | null {
+    const trimmed = subject.trim();
+    if (trimmed !== "") {
+      setSubjectError(null);
+      return { subject: trimmed, body: body.trim() };
+    }
+    setSubjectError(TEXT.writeSubject);
+    setPane("write");
+    focusField(form, "subject");
+    return null;
+  }
+
+  return { pane, setPane, subject, setSubject, subjectError, body, setBody, checked };
+}
+
+type ComposerFieldsProps = { draft: Draft; sending: EmailSend; hint: string };
+
+/** The subject line and the message, with what the server refused and why sending failed. */
+function ComposerFields({ draft, sending, hint }: ComposerFieldsProps) {
+  const { fieldErrors, failure } = sending;
+  return (
+    <>
+      <TextField
+        label={TEXT.subject}
+        name="subject"
+        placeholder={TEXT.subjectPlaceholder}
+        value={draft.subject}
+        onChange={(value) => {
+          draft.setSubject(value.slice(0, SUBJECT_MAX_LENGTH));
+        }}
+        errors={draft.subjectError === null ? fieldErrors.subject : [draft.subjectError]}
+      />
+      <TextAreaField
+        label={TEXT.message}
+        name="body"
+        rows={12}
+        placeholder={TEXT.messagePlaceholder}
+        defaultValue={draft.body}
+        onChange={draft.setBody}
+        hint={hint}
+        errors={fieldErrors.body}
+      />
+      {failure !== null && <Banner tone="problem">{failure}</Banner>}
+    </>
+  );
+}
+
+function focusField(form: HTMLFormElement, name: string): void {
+  const field = form.elements.namedItem(name);
+  if (field instanceof HTMLElement) field.focus();
+}
+
+type ProblemsProps = {
+  /** The name of the one Student, when they have no email address. */
+  missingAddress: string | null;
+  /** Why the server refused who it goes to, e.g. a Lost Student. */
+  students: string[] | undefined;
+};
+
+function Problems({ missingAddress, students }: ProblemsProps) {
+  return (
+    <>
+      {missingAddress !== null && (
+        <Banner tone="warning">{TEXT.noEmailAddress(missingAddress)}</Banner>
+      )}
+      {students !== undefined && <Banner tone="problem">{students.join(" ")}</Banner>}
+    </>
+  );
+}
+
+type ComposerFooterProps = {
+  formId: string;
+  wording: ComposerWording;
+  isSaving: boolean;
+  canSend: boolean;
+  onClose: () => void;
+};
+
+/** Who it is sent as (or how many get a copy), the keys hint, Cancel and Send. */
+function ComposerFooter({ formId, wording, isSaving, canSend, onClose }: ComposerFooterProps) {
+  return (
+    <>
+      <p className="text-secondary text-ink-2 max-phone:hidden mr-auto self-center">
+        {wording.footerLine}
+      </p>
+      <SubmitKeysHint action="send" />
+      <Button onClick={onClose}>{LABELS.cancel}</Button>
+      <Button
+        type="submit"
+        form={formId}
+        variant="primary"
+        icon="send"
+        isLoading={isSaving}
+        isDisabled={!canSend}
+        loadingLabel={TEXT.sending}
+      >
+        {wording.sendLabel}
+      </Button>
+    </>
+  );
+}

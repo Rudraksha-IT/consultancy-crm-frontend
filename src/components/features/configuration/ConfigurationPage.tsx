@@ -8,7 +8,6 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { SectionParts } from "@/components/ui/Section";
 import { SectionMenu, useSectionChoice, type MenuSection } from "@/components/ui/SectionMenu";
-import { COMMUNICATION_TEXT } from "@/constants/communication";
 import { CONFIGURATION_SECTIONS_TEXT as TEXT } from "@/constants/configuration";
 import { EXPORT_TEXT } from "@/constants/exports";
 import { LABELS, MESSAGES } from "@/constants/messages";
@@ -23,14 +22,13 @@ import { ExportsSettings } from "./ExportsSettings";
 import { OfficeNetworkSettings } from "./OfficeNetworkSettings";
 import { OfficeDetailsSettings } from "./OfficeDetailsSettings";
 import { OfficeLogoSettings } from "./OfficeLogoSettings";
-import { SmsEmailSettings } from "./SmsEmailSettings";
 import { HolidaySettings } from "./HolidaySettings";
 import { WorkingDaySettings } from "./WorkingDaySettings";
 
 /**
  * The Consultancy's own settings, for Admins only, one section at a time (issue 96): General
- * (Office logo, Office details, Dates), Documents, Email and SMS while the Communication
- * Module is on, Working hours while Clock-in is on, and Exports. A Platform Admin inside the
+ * (Office logo, Office details, Dates), Documents, Working hours while Clock-in is on, and
+ * Exports. Email needs no settings: it goes from the product's own account (ADR 0023). A Platform Admin inside the
  * office also has the Platform controls, last (issue 27).
  */
 export function ConfigurationPage() {
@@ -65,14 +63,6 @@ export function ConfigurationPage() {
       content: <DocumentsSettings />,
     },
   ];
-  if (modules.includes(Module.Communication)) {
-    sections.push({
-      id: "emailAndSms",
-      title: COMMUNICATION_TEXT.emailAndSms,
-      hasOwnTitle: true,
-      content: <SmsEmailSettings />,
-    });
-  }
   if (modules.includes(Module.ClockIn)) {
     sections.push({ id: "workingHours", ...TEXT.workingHours, content: <ClockInSettings /> });
   }

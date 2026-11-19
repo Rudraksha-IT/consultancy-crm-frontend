@@ -7,7 +7,7 @@ import { ExportButton } from "@/components/features/exports/ExportButton";
 import { SelectAllStrip } from "@/components/features/exports/SelectionCells";
 import { SelectionBar } from "@/components/features/exports/SelectionBar";
 import { useRowSelection, type RowSelection } from "@/components/features/exports/useRowSelection";
-import { BulkMessageDialog } from "@/components/features/communication/BulkMessageDialog";
+import { EmailFlow } from "@/components/features/communication/EmailFlow";
 import { canMessageStudents } from "@/components/features/communication/canMessage";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Banner } from "@/components/ui/Banner";
@@ -110,7 +110,7 @@ function StudentList({ role, initialSearch, initialStage }: StudentListProps) {
         setIsMessaging(true);
       }}
     >
-      {COMMUNICATION_TEXT.messageThisList}
+      {COMMUNICATION_TEXT.emailThisList}
     </Button>
   );
 
@@ -147,9 +147,9 @@ function StudentList({ role, initialSearch, initialStage }: StudentListProps) {
         />
       </Panel>
       {isMessaging && (
-        <MessageListDialog
-          filters={applied}
-          list={list}
+        <EmailFlow
+          mode="many"
+          preTick={{ kind: "students", filters: applied }}
           onClose={() => {
             setIsMessaging(false);
           }}
@@ -168,28 +168,6 @@ function StudentList({ role, initialSearch, initialStage }: StudentListProps) {
         />
       )}
     </>
-  );
-}
-
-type MessageListDialogProps = {
-  filters: StudentFilters;
-  list: StudentListState;
-  onClose: () => void;
-};
-
-/** Message this list (spec 90): everyone the filters show, on every page. */
-function MessageListDialog({ filters, list, onClose }: MessageListDialogProps) {
-  const title =
-    list.status === "loaded"
-      ? COMMUNICATION_TEXT.messageStudents(list.page.count)
-      : COMMUNICATION_TEXT.messageThisList;
-  return (
-    <BulkMessageDialog
-      recipients={{ kind: "students", filters }}
-      title={title}
-      subtitle={COMMUNICATION_TEXT.fromListFilters}
-      onClose={onClose}
-    />
   );
 }
 

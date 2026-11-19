@@ -13,13 +13,14 @@ import type { Message } from "@/lib/api";
 type MessageListProps = {
   label: string;
   messages: readonly Message[];
-  /** On the Messages page each row names its Student, linked to their page. */
+  /** On the Email page each row names its Student, linked to their page. */
   showsStudent: boolean;
 };
 
 /**
- * Messages, newest first: what was sent, when, by whom, and whether it went (spec 91). On a phone
- * a row is the name and status, the channel and time, and the message cut to two lines.
+ * Emails, newest first: the subject line (a past SMS shows its words), when, by whom, and whether
+ * it went (issue 04). On a phone a row is the name and status, the kind and time, and the subject
+ * line cut to two lines.
  */
 export function MessageList({ label, messages, showsStudent }: MessageListProps) {
   return (
@@ -36,18 +37,7 @@ function MessageRow({ message, showsStudent }: { message: Message; showsStudent:
   const channel = CHANNEL_LABELS[message.channel];
   return (
     <RowItem
-      title={
-        showsStudent ? (
-          <Link
-            href={ROUTES.student(message.student.id)}
-            className="text-accent min-h-control inline-flex items-center hover:underline"
-          >
-            {message.student.name}
-          </Link>
-        ) : (
-          channel
-        )
-      }
+      title={showsStudent ? <StudentLink student={message.student} /> : channel}
       meta={
         <>
           {showsStudent && <span>{channel}</span>}
@@ -56,18 +46,40 @@ function MessageRow({ message, showsStudent }: { message: Message; showsStudent:
         </>
       }
       keepsRightBesideOnPhone
-      right={
-        message.status === "sent" ? (
-          <Chip tone="good">{TEXT.sent}</Chip>
-        ) : (
-          <Chip tone="bad">{TEXT.failed}</Chip>
-        )
-      }
+      right={<StatusChip message={message} />}
     >
-      <p className="text-body text-ink max-phone:text-secondary max-phone:line-clamp-2 mt-2 max-w-prose break-words whitespace-pre-line">
-        {message.body}
-      </p>
+      <MessageWords message={message} />
       {message.error !== "" && <p className="text-secondary text-bad mt-1">{message.error}</p>}
     </RowItem>
   );
+}
+
+function StudentLink({ student }: { student: Message["student"] }) {
+  return (
+    <Link
+      href={ROUTES.student(student.id)}
+      className="text-accent min-h-control inline-flex items-center hover:underline"
+    >
+      {student.name}
+    </Link>
+  );
+}
+
+function StatusChip({ message }: { message: Message }) {
+  return message.status === "sent" ? (
+    <Chip tone="good">{TEXT.sent}</Chip>
+  ) : (
+    <Chip tone="bad">{TEXT.failed}</Chip>
+  );
+}
+
+const WORDS =
+  "text-body text-ink max-phone:text-secondary max-phone:line-clamp-2 mt-2 max-w-prose break-words";
+
+/** An email's subject line in bold; a past SMS's words. */
+function MessageWords({ message }: { message: Message }) {
+  if (message.channel === "email") {
+    return <p className={`${WORDS} font-semibold`}>{message.subject}</p>;
+  }
+  return <p className={`${WORDS} whitespace-pre-line`}>{message.body}</p>;
 }

@@ -15,7 +15,7 @@ import {
   type TimelineItem,
   type TimelineStage,
 } from "@/components/ui/Timeline";
-import { CHANNEL_LABELS } from "@/constants/communication";
+import { CHANNEL_LABELS, COMMUNICATION_TEXT } from "@/constants/communication";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Module } from "@/constants/modules";
 import { HistoryKind } from "@/constants/students";
@@ -319,14 +319,17 @@ function visitItem(key: string, visit: Visit, dates: Dates): TimelineItem {
   };
 }
 
+/** An email by its subject line; a past SMS (sent before there was only email) by its words. */
 function messageItem(key: string, message: Message, dates: Dates): TimelineItem {
-  const channel = CHANNEL_LABELS[message.channel];
+  const isEmail = message.channel === "email";
+  const kind = isEmail ? CHANNEL_LABELS.email : COMMUNICATION_TEXT.pastSms;
+  const words = isEmail ? message.subject : message.body;
   return {
     id: key,
     title:
       message.status === "sent"
-        ? LABELS.messageSent(channel, message.body)
-        : LABELS.messageFailed(channel, message.body),
+        ? LABELS.messageSent(kind, words)
+        : LABELS.messageFailed(kind, words),
     meta: LABELS.byWhen(message.sentBy.name, dates.dateTime(message.sentAt)),
     ...(message.error !== "" && { problem: message.error }),
     isContact: true,

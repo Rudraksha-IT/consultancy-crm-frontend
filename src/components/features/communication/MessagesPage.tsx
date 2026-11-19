@@ -12,23 +12,22 @@ import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { COMMUNICATION_TEXT as TEXT } from "@/constants/communication";
 import { LABELS, MESSAGES } from "@/constants/messages";
-import { Module } from "@/constants/modules";
-import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { fetchMessages } from "@/lib/api";
 
+import { canMessageStudents } from "./canMessage";
+import { ContactEmailBanner } from "./ContactEmailBanner";
+import { EmailFlow } from "./EmailFlow";
 import { MessageList } from "./MessageList";
-import { NewBulkMessageDialog } from "./NewBulkMessageDialog";
 import { useMessagePage } from "./useMessagePage";
 
 /**
- * Email & SMS (route /messages): every email and SMS sent to Students, newest first, sent or failed (spec 91), and New
- * Send email or SMS to many Students (spec 90). For Admins, counsellors and Front Desk while the
- * Communication Module is on.
+ * Email (route /messages): every email sent to Students, newest first, sent or failed, with past
+ * SMS still readable; Email a Student and Email many Students (issue 04). For Admins, Counsellors
+ * and Front Desk while the Communication Module is on.
  */
 export function MessagesPage() {
-  const { staff, modules } = useCurrentStaff();
-  if (staff.role === Role.Teacher || !modules.includes(Module.Communication)) {
+  if (!canMessageStudents(useCurrentStaff())) {
     return (
       <Panel>
         <EmptyState action={<ButtonLink href={ROUTES.home}>{LABELS.goHome}</ButtonLink>}>
@@ -37,35 +36,48 @@ export function MessagesPage() {
       </Panel>
     );
   }
-  return <Messages />;
+  return <Emails />;
 }
 
-function Messages() {
-  const [isWriting, setIsWriting] = useState(false);
+function Emails() {
+  const { consultancy } = useCurrentStaff();
+  const [writing, setWriting] = useState<"one" | "many" | null>(null);
   const [version, setVersion] = useState(0);
-  const newMessage = (
-    <Button
-      variant="primary"
-      icon="send"
-      onClick={() => {
-        setIsWriting(true);
-      }}
-    >
-      {TEXT.sendEmailOrSms}
-    </Button>
-  );
+  const contact = consultancy.officeDetails.contactEmail;
   return (
     <div className="grid gap-8">
       <PageHeader
-        title={TEXT.emailAndSmsPage}
-        subtitle={TEXT.emailAndSmsIntro}
-        actions={newMessage}
+        title={TEXT.emailPage}
+        subtitle={TEXT.emailIntro(contact === "" ? null : contact)}
+        actions={
+          <>
+            <Button
+              icon="message"
+              onClick={() => {
+                setWriting("one");
+              }}
+            >
+              {TEXT.emailAStudent}
+            </Button>
+            <Button
+              variant="primary"
+              icon="send"
+              onClick={() => {
+                setWriting("many");
+              }}
+            >
+              {TEXT.emailManyStudents}
+            </Button>
+          </>
+        }
       />
-      <AllMessages key={version} />
-      {isWriting && (
-        <NewBulkMessageDialog
+      <ContactEmailBanner />
+      <AllEmails key={version} />
+      {writing !== null && (
+        <EmailFlow
+          mode={writing}
           onClose={() => {
-            setIsWriting(false);
+            setWriting(null);
           }}
           onSent={() => {
             setVersion((current) => current + 1);
@@ -76,7 +88,7 @@ function Messages() {
   );
 }
 
-function AllMessages() {
+function AllEmails() {
   const [page, setPage] = useState(1);
   const state = useMessagePage(fetchMessages, page);
 
@@ -89,7 +101,7 @@ function AllMessages() {
         <EmptyState>{TEXT.noneSent}</EmptyState>
       ) : (
         <>
-          <MessageList label={TEXT.emailAndSmsPage} messages={rows} showsStudent />
+          <MessageList label={TEXT.emailPage} messages={rows} showsStudent />
           <Pager
             summary={TEXT.sentCount(count)}
             count={count}

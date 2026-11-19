@@ -124,28 +124,22 @@ export {
   sendWithoutBody,
 } from "./core/client";
 export {
-  fetchBulkCount,
+  NoContactEmailError,
+  fetchChoosable,
   fetchMessages,
-  fetchProviderSettings,
   fetchStudentMessages,
-  saveProviderSettings,
-  sendBulkMessage,
-  sendMessage,
-  sendTestSms,
+  sendBulkEmail,
+  sendEmail,
 } from "./office/communication";
 export type {
-  BulkCount,
-  BulkMessageField,
-  BulkRecipients,
+  BulkEmailField,
   BulkResult,
+  Choosable,
   Message,
   MessagePage,
-  NewMessage,
-  NewMessageField,
-  ProviderSettings,
-  ProviderSettingsField,
-  ProviderSettingsInput,
-  TestSmsResult,
+  NewEmail,
+  NewEmailField,
+  PreTickSource,
 } from "./office/communication";
 export {
   removeLogo,

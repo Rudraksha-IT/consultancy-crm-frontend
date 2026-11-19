@@ -49,8 +49,8 @@ export const FEATURES: Record<SwitchableModule, { label: string; description: st
     description: "IELTS, PTE and language classes, attendance and teachers.",
   },
   communication: {
-    label: "Email and SMS",
-    description: "Send email and SMS to Students from the office's own accounts.",
+    label: "Email",
+    description: "Email Students under the office's name; their replies go to its contact email.",
   },
   accounts: {
     label: "Accounts",

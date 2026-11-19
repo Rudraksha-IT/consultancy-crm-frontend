@@ -97,7 +97,7 @@ export const NAV_ENTRIES: readonly NavEntry[] = [
     roles: ALL_BUT_TEACHER,
   },
   {
-    label: "Email & SMS",
+    label: "Email",
     href: ROUTES.messages,
     icon: "send",
     group: "work",

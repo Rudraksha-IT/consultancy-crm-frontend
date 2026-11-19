@@ -35,7 +35,7 @@ describe("Navigation", () => {
       "Tasks",
       "Inbox",
       "Transfer requests",
-      "Email & SMS",
+      "Email",
       "Accounts",
       "Employees",
       "Reports",
@@ -64,11 +64,11 @@ describe("Navigation", () => {
       "Tasks",
       "Inbox",
       "Transfer requests",
-      "Email & SMS",
+      "Email",
     ]);
   });
 
-  it("hides Email & SMS when the Communication Module is off", () => {
+  it("hides Email when the Communication Module is off", () => {
     render(
       <Navigation
         role={Role.FrontDesk}

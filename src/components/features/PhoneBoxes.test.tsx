@@ -86,12 +86,13 @@ describe("Documents on a phone", () => {
   });
 });
 
-describe("Email & SMS on a phone", () => {
+describe("Email on a phone", () => {
   const MESSAGE: Message = {
     id: 1,
     student: { id: 7, name: "Aarav Sharma" },
     channel: "email",
-    body: "Your visa interview is on Monday.",
+    subject: "Your visa interview is on Monday.",
+    body: "Dear Aarav,",
     status: "sent",
     error: "",
     sentTo: "aarav@example.com",
@@ -99,12 +100,12 @@ describe("Email & SMS on a phone", () => {
     sentBy: { id: 2, name: "Sita Karki" },
   };
 
-  it("show name and status, channel and time, and the message cut to two lines", () => {
+  it("show name and status, kind and time, and the subject line cut to two lines", () => {
     inOffice(<MessageList label="Messages" messages={[MESSAGE]} showsStudent />);
 
     expect(isHiddenOnPhone(screen.getByText(/Sita Karki/))).toBe(true);
     expect(isHiddenOnPhone(screen.getByText("Email"))).toBe(false);
-    expect(screen.getByText(MESSAGE.body)).toHaveClass("max-phone:line-clamp-2");
+    expect(screen.getByText(MESSAGE.subject)).toHaveClass("max-phone:line-clamp-2");
     expect(screen.getByText("Sent").closest("li")).toHaveClass(
       "max-phone:grid-cols-[minmax(0,1fr)_auto]",
     );
