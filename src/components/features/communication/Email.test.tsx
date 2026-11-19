@@ -379,7 +379,10 @@ describe("The Email page", () => {
     renderIn(COUNSELLOR, <MessagesPage />);
 
     expect(await screen.findByRole("heading", { name: "Email", level: 1 })).toBeInTheDocument();
-    const rows = within(screen.getByRole("list", { name: "Email" })).getAllByRole("listitem");
+    // The title shows before the list has loaded: wait for the list itself.
+    const rows = within(await screen.findByRole("list", { name: "Email" })).getAllByRole(
+      "listitem",
+    );
     expect(rows[0]).toHaveTextContent("Your visit tomorrow");
     expect(rows[0]).toHaveTextContent("Sent");
     expect(rows[1]).toHaveTextContent("<script>alert(1)</script>");
