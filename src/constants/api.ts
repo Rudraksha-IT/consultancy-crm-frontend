@@ -200,6 +200,8 @@ export const API_PATHS = {
   platformJoinComplete: "/api/platform/auth/join/complete/",
   productBrand: "/api/platform/brand/",
   productLogo: "/api/platform/brand/logo/",
+  platformEmail: "/api/platform/email/",
+  platformTestEmail: "/api/platform/email/test/",
   platformConsultancies: "/api/platform/consultancies/",
   platformConsultancyAdmins: (id: number) => `/api/platform/consultancies/${String(id)}/admins/`,
   platformConsultancyStatus: (id: number) => `/api/platform/consultancies/${String(id)}/status/`,

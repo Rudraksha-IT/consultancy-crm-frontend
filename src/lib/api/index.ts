@@ -497,6 +497,12 @@ export type {
   PlatformAdminStatus,
   PlatformTeamField,
 } from "./platform/platformTeam";
+export {
+  fetchPlatformEmail,
+  sendTestEmail,
+  TooManyTestEmailsError,
+} from "./platform/platformEmail";
+export type { EmailState, PlatformEmail } from "./platform/platformEmail";
 export { nextLoginStep } from "./auth/loginStep";
 export type { LoginNext } from "./auth/loginStep";
 export {
