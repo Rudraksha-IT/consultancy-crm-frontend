@@ -15,20 +15,23 @@ import {
   changePayment,
   deletePayment,
   describeFeeType,
-  type Receipt,
+  type Payment,
 } from "@/lib/api";
 import { formatNpr } from "@/lib/money";
 
 import { PaymentFields, readPayment } from "./PaymentFields";
 
 type EditPaymentDialogProps = {
-  payment: Receipt;
+  payment: Payment;
   onClose: () => void;
-  onSaved: (payment: Receipt) => void;
+  onSaved: (payment: Payment) => void;
   onDeleted: () => void;
 };
 
-/** An Admin changes a Payment, or deletes it after confirming (spec 75-76). */
+/**
+ * An Admin changes one Payment, or deletes it after confirming (spec 75-76). It keeps its receipt
+ * number; the receipt then shows it as it is now.
+ */
 export function EditPaymentDialog({
   payment,
   onClose,
@@ -89,7 +92,9 @@ function EditForm({ payment, onClose, onSaved, onDelete }: EditFormProps) {
           choices={choices}
           initial={payment}
         />
-        <p className="text-small text-ink-2">{PAYMENT_TEXT.changeIsRecorded}</p>
+        <p className="text-small text-ink-2">
+          {PAYMENT_TEXT.keepsReceiptNumber(payment.receiptNumber)}
+        </p>
       </form>
     </SaveDialog>
   );

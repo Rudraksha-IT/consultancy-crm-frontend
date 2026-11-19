@@ -18,7 +18,7 @@ import {
   PAYMENT_TEXT,
   PaymentMethod,
 } from "@/constants/payments";
-import type { Receipt, NewPayment } from "@/lib/api";
+import type { NewPayment, Payment } from "@/lib/api";
 import { todayIso } from "@/lib/dates";
 import { formatNpr } from "@/lib/money";
 
@@ -28,7 +28,7 @@ const METHOD_OPTIONS = PAYMENT_METHODS.map((method) => ({
 }));
 
 // The same words the server uses, so a refusal reads the same wherever it comes from.
-const AMOUNT_MESSAGE = `Enter a whole amount from ${formatNpr(1)} to ${formatNpr(PAYMENT_MAX_AMOUNT)}.`;
+export const AMOUNT_MESSAGE = `Enter a whole amount from ${formatNpr(1)} to ${formatNpr(PAYMENT_MAX_AMOUNT)}.`;
 
 const WHOLE_NUMBER = /^[0-9]+$/;
 
@@ -40,7 +40,7 @@ type PaymentFieldsProps = {
   /** The office's Fee Types to pick from. */
   choices: FeeTypeChoices;
   /** The Payment as it is, when editing one. */
-  initial?: Pick<Receipt, "amount" | "method" | "feeType" | "note">;
+  initial?: Pick<Payment, "amount" | "method" | "feeType" | "note">;
 };
 
 /** Amount, date (with the other calendar under it), method, Fee Type and note: one Payment. */
@@ -101,6 +101,7 @@ export function readPayment(form: FormData, paidOn: string, choices: FeeTypeChoi
   return { amount: Number(amount), paidOn, method: method ?? PaymentMethod.Cash, ...forWhat };
 }
 
-function isWholeAmount(text: string): boolean {
+/** Whether the text is a whole amount the API takes: NPR 1 up to `PAYMENT_MAX_AMOUNT`. */
+export function isWholeAmount(text: string): boolean {
   return WHOLE_NUMBER.test(text) && Number(text) >= 1 && Number(text) <= PAYMENT_MAX_AMOUNT;
 }

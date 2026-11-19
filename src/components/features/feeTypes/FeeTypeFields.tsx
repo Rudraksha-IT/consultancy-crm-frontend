@@ -90,7 +90,8 @@ function startOf(initial: FeeTypeStart | undefined) {
   return { kept: initial.feeType, chosen: String(initial.feeType.id), note: initial.note };
 }
 
-function loadErrorsOf(choices: FeeTypeChoices): string[] | undefined {
+/** "We couldn't load the Fee Types" when they failed to load, to show under the picker. */
+export function loadErrorsOf(choices: FeeTypeChoices): string[] | undefined {
   return choices === "failed" ? [TEXT.typesFailed] : undefined;
 }
 
@@ -98,7 +99,7 @@ function loadErrorsOf(choices: FeeTypeChoices): string[] | undefined {
  * "Choose a Fee Type", then every Fee Type not hidden, in order. The record's own Fee Type stays
  * offered even when hidden (or missing from the list), so changing other fields keeps it.
  */
-function feeTypeOptions(choices: FeeTypeChoices, kept: FeeTypeRef | undefined) {
+export function feeTypeOptions(choices: FeeTypeChoices, kept?: FeeTypeRef) {
   const types = Array.isArray(choices) ? choices : [];
   const offered: FeeTypeRef[] = types.filter((type) => !type.hidden || type.id === kept?.id);
   if (kept !== undefined && !offered.some((type) => type.id === kept.id)) offered.push(kept);
@@ -109,11 +110,12 @@ function feeTypeOptions(choices: FeeTypeChoices, kept: FeeTypeRef | undefined) {
 }
 
 /** A chosen id, or null for none (or anything that isn't a whole number). */
-function idOf(value: string): number | null {
+export function idOf(value: string): number | null {
   return /^[0-9]+$/.test(value) ? Number(value) : null;
 }
 
-function isOtherId(choices: FeeTypeChoices, id: number | null): boolean {
+/** Whether `id` is the office's Other, which needs a note. */
+export function isOtherId(choices: FeeTypeChoices, id: number | null): boolean {
   return Array.isArray(choices) && choices.some((type) => type.isOther && type.id === id);
 }
 

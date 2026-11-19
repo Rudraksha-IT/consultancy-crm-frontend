@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
@@ -11,21 +11,21 @@ import { OneLine } from "@/components/ui/OneLine";
 import { useToast } from "@/components/ui/useToast";
 import { PAYMENT_METHOD_LABELS, PAYMENT_TEXT } from "@/constants/payments";
 import { ROUTES } from "@/constants/routes";
-import { describeFeeType, type Receipt } from "@/lib/api";
+import { describeFeeType, fetchReceipt, type Payment } from "@/lib/api";
 import { formatNpr } from "@/lib/money";
 
 import { EditPaymentDialog } from "./EditPaymentDialog";
-import { ReceiptDialog } from "./ReceiptDialog";
+import { ReceiptDialog, type ReceiptState } from "./ReceiptDialog";
 
 type PaymentTableProps = {
-  payments: readonly Receipt[];
+  payments: readonly Payment[];
   /** Show who paid (the Accounts list); a Student's own Fees tab doesn't need it. */
   showsStudent: boolean;
   /** A Payment was changed or deleted, so the list and its total should load again. */
   onChanged: () => void;
 };
 
-type Open = { kind: "receipt" | "edit"; payment: Receipt } | null;
+type Open = { kind: "receipt" | "edit"; payment: Payment } | null;
 
 const HEAD = "text-small text-ink-2 bg-fill px-6 py-3 text-left font-semibold";
 const CELL = "px-6 py-4 align-middle max-tablet:p-0";
@@ -85,7 +85,7 @@ export function PaymentTable({ payments, showsStudent, onChanged }: PaymentTable
 }
 
 type PaymentRowProps = {
-  payment: Receipt;
+  payment: Payment;
   showsStudent: boolean;
   onOpen: (open: Open) => void;
 };
@@ -165,8 +165,8 @@ function PaymentDialog({ open, onClose, onChanged }: PaymentDialogProps) {
   if (open === null) return null;
   if (open.kind === "receipt") {
     return (
-      <ReceiptDialog
-        receipt={open.payment}
+      <PaymentReceipt
+        paymentId={open.payment.id}
         officeName={consultancy.name}
         officeLogo={consultancy.logo}
         onClose={onClose}
@@ -189,4 +189,28 @@ function PaymentDialog({ open, onClose, onChanged }: PaymentDialogProps) {
       }}
     />
   );
+}
+
+type PaymentReceiptProps = Omit<Parameters<typeof ReceiptDialog>[0], "receipt"> & {
+  paymentId: number;
+};
+
+/** The receipt a Payment is on, loaded when opened so it shows every line as it is now. */
+function PaymentReceipt({ paymentId, ...dialog }: PaymentReceiptProps) {
+  const [receipt, setReceipt] = useState<ReceiptState>("loading");
+  useEffect(() => {
+    let isCancelled = false;
+    fetchReceipt(paymentId).then(
+      (loaded) => {
+        if (!isCancelled) setReceipt(loaded);
+      },
+      () => {
+        if (!isCancelled) setReceipt("failed");
+      },
+    );
+    return () => {
+      isCancelled = true;
+    };
+  }, [paymentId]);
+  return <ReceiptDialog receipt={receipt} {...dialog} />;
 }

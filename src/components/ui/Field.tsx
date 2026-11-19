@@ -124,7 +124,8 @@ function useOnFormSubmit(ref: RefObject<HTMLElement | null>, run: () => void): v
 
 type FieldLabelProps = { htmlFor: string; label: string; isOptional: boolean; isHidden: boolean };
 
-const LABEL_CLASSES = "text-secondary text-ink font-semibold";
+/** A field's visible label; also an empty spacer's, to line a button up with the controls. */
+export const LABEL_CLASSES = "text-secondary text-ink font-semibold";
 
 function FieldLabel({ htmlFor, label, isOptional, isHidden }: FieldLabelProps) {
   if (!isOptional) {

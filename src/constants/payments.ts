@@ -24,6 +24,9 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 /** The largest amount the API accepts (NPR 10 crore). */
 export const PAYMENT_MAX_AMOUNT = 100_000_000;
 
+/** The most lines (Payments) one receipt takes in one go (ticket 07). */
+export const MAX_PAYMENT_LINES = 10;
+
 export const PAYMENT_TEXT = {
   takeAPayment: "Take a payment",
   recordFrom: (name: string) => `Record a payment from ${name}`,
@@ -33,6 +36,18 @@ export const PAYMENT_TEXT = {
   afterSaving: "After saving you'll see the receipt.",
   othersStayWithAdmin: "Other Payments and totals stay with the Admin.",
   saveAndShowReceipt: "Save and show receipt",
+  // One visit split across Fee Types: a Payment per line, one receipt (spec 73).
+  whatItsFor: "What it's for",
+  splitHelp:
+    "Split one visit's money across Fee Types. Each line is its own Payment, all on one receipt.",
+  line: (place: number) => `Line ${String(place)}`,
+  removeLine: (place: number) => `Remove line ${String(place)}`,
+  addLine: "Add another line",
+  linesFull: `Up to ${String(MAX_PAYMENT_LINES)} lines on one receipt.`,
+  total: "Total",
+  totalOf: (amount: string) => `Total ${amount}`,
+  paidDifferently: (method: string, date: string) => `${method}, ${date}`,
+  receiptFailed: "We couldn't load the receipt. Please try again.",
   recorded: "Payment recorded",
   receipt: "Receipt",
   receiptNumber: "Receipt no.",
@@ -46,7 +61,8 @@ export const PAYMENT_TEXT = {
   closeAfterPrinting: "Print it now: once closed, only an Admin can open it again.",
   // Editing and deleting (Admins; spec 75-76).
   editTitle: (receiptNumber: string) => `Edit Payment ${receiptNumber}`,
-  changeIsRecorded: "The change is recorded in History.",
+  keepsReceiptNumber: (receiptNumber: string) =>
+    `It keeps receipt number ${receiptNumber}. The change is recorded in History.`,
   saveChanges: "Save changes",
   changesSaved: "Changes saved",
   deletePayment: "Delete payment",

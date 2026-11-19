@@ -334,7 +334,8 @@ export {
   deletePayment,
   fetchPayments,
   paymentFilterQuery,
-  recordPayment,
+  fetchReceipt,
+  recordPayments,
 } from "./money/payments";
 export { addFee, changeFee, deleteFee, fetchOwingStudents, fetchStudentFees } from "./money/fees";
 export {
@@ -362,7 +363,16 @@ export type {
   NewCommission,
   ReceivedCommission,
 } from "./money/commission";
-export type { NewPayment, PaymentFilters, PaymentPage, Receipt } from "./money/payments";
+export type {
+  NewPayment,
+  NewPaymentLine,
+  NewPayments,
+  Payment,
+  PaymentFilters,
+  PaymentPage,
+  Receipt,
+  ReceiptLine,
+} from "./money/payments";
 export { addStudent, fetchStudents } from "./students/students";
 export { fetchAttendanceDay, fetchStudentClasses, saveAttendanceDay } from "./classes/attendance";
 export type { AttendanceDay, DayMarks, StudentClass } from "./classes/attendance";

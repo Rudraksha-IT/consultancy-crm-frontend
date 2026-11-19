@@ -290,15 +290,59 @@ describe("Accounts", () => {
     ).toBeInTheDocument();
   });
 
-  it("opens a Payment's receipt", async () => {
-    backend(on("GET", THIS_MONTH, pageOf([PAYMENT])));
+  it("opens a Payment's receipt with every line recorded with it, as they are now", async () => {
+    const changedLater = {
+      id: 413,
+      fee_type: feeTypeRef(4),
+      note: "",
+      amount: 10000,
+      paid_on: "2026-11-02",
+      method: "cash",
+    };
+    backend(
+      on("GET", THIS_MONTH, pageOf([PAYMENT])),
+      on("GET", "/api/payments/412/", {
+        ...PAYMENT,
+        lines: [
+          {
+            id: 412,
+            fee_type: feeTypeRef(3),
+            note: "first half",
+            amount: 25000,
+            paid_on: "2026-11-01",
+            method: "esewa",
+          },
+          changedLater,
+        ],
+        total: 35000,
+      }),
+    );
     await showMoneyIn();
 
     await userEvent.click(await screen.findByRole("button", { name: "Receipt 000412" }));
 
-    const receipt = screen.getByRole("dialog", { name: "Receipt" });
-    expect(within(receipt).getByText("000412")).toBeInTheDocument();
+    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
+    expect(await within(receipt).findByText("000412")).toBeInTheDocument();
     expect(within(receipt).getByText("Received by Ramesh KC")).toBeInTheDocument();
+    const rows = within(within(receipt).getByRole("table")).getAllByRole("row");
+    expect(rows.map((row) => row.textContent)).toEqual([
+      "ForAmount",
+      "Visa fee (first half)NPR 25,000",
+      "IELTS classCash, 2 Nov 2026NPR 10,000",
+      "TotalNPR 35,000",
+    ]);
+  });
+
+  it("says when the receipt can't be loaded", async () => {
+    backend(on("GET", THIS_MONTH, pageOf([PAYMENT])), on("GET", "/api/payments/412/", {}, 500));
+    await showMoneyIn();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Receipt 000412" }));
+
+    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
+    expect(
+      await within(receipt).findByText("We couldn't load the receipt. Please try again."),
+    ).toBeInTheDocument();
   });
 });
 
@@ -315,7 +359,11 @@ describe("editing a Payment", () => {
     expect(within(dialog).getByLabelText("Method")).toHaveValue("esewa");
     expect(within(dialog).getByRole("combobox", { name: "Fee Type" })).toHaveValue("3");
     expect(within(dialog).getByLabelText(/^Note/)).toHaveValue("first half");
-    expect(within(dialog).getByText("The change is recorded in History.")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(
+        "It keeps receipt number 000412. The change is recorded in History.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("keeps a hidden Fee Type the Payment already has, and offers no other hidden one", async () => {
