@@ -56,7 +56,7 @@ export const READY_MADE: Record<ReadyMadeKind, { name: string; what: string }> =
   },
   payment_received: {
     name: "Payment received",
-    what: "Amount, Fee Type, date, method and receipt",
+    what: "Amount, Fee Type, date and method",
   },
   fee_reminder: { name: "Fee reminder", what: "Their fees, what they paid and what is left" },
   offer_received: {

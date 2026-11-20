@@ -61,16 +61,7 @@ export const EXPORT_COLUMNS: Record<ExportList, readonly string[]> = {
     "No clock-out",
     "Corrected",
   ],
-  payments: [
-    "Date",
-    "Receipt",
-    "Student",
-    "Fee Type",
-    "Note",
-    "Amount (NPR)",
-    "Method",
-    "Taken by",
-  ],
+  payments: ["Date", "Student", "Fee Type", "Note", "Amount (NPR)", "Method", "Taken by"],
 };
 
 const plural = (count: number, one: string, many: string): string =>

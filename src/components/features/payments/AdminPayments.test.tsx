@@ -90,8 +90,10 @@ function sentBody(fetchFn: ReturnType<typeof backend>, verb: string, path: strin
 }
 
 async function openEdit(): Promise<HTMLElement> {
-  await userEvent.click(await screen.findByRole("button", { name: "Edit Payment 000412" }));
-  return screen.getByRole("dialog", { name: "Edit Payment 000412" });
+  await userEvent.click(
+    await screen.findByRole("button", { name: /^Edit payment from Sita Gurung: / }),
+  );
+  return screen.getByRole("dialog", { name: "Edit payment" });
 }
 
 /**
@@ -202,7 +204,7 @@ describe("Accounts", () => {
     expect(document.querySelector("script")).toBeNull();
   });
 
-  it("filters by dates, Student or receipt number and Fee Type", async () => {
+  it("filters by dates, Student name or phone and Fee Type", async () => {
     const filtered = "/api/payments/?from=2026-10-01&to=2026-10-31&q=Sita&fee_type=3&page=1";
     const fetchFn = backend(
       on("GET", THIS_MONTH, pageOf([PAYMENT])),
@@ -215,7 +217,7 @@ describe("Accounts", () => {
     await userEvent.type(within(form).getByLabelText(/^From/), "2026-10-01");
     await userEvent.clear(within(form).getByLabelText(/^To/));
     await userEvent.type(within(form).getByLabelText(/^To/), "2026-10-31");
-    await userEvent.type(within(form).getByLabelText("Student or receipt number"), "Sita");
+    await userEvent.type(within(form).getByLabelText("Student name or phone"), "Sita");
     await userEvent.selectOptions(
       within(form).getByRole("combobox", { name: /^Fee Type/ }),
       await within(form).findByRole("option", { name: "Visa fee" }),
@@ -294,8 +296,14 @@ describe("Accounts", () => {
     backend(on("GET", THIS_MONTH, pageOf([PAYMENT])));
     await showMoneyIn();
 
-    expect(await screen.findByRole("button", { name: "Edit Payment 000412" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Receipt 000412" })).not.toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", {
+        name: "Edit payment from Sita Gurung: Visa fee (first half), NPR 25,000",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /receipt/i })).not.toBeInTheDocument();
+    // No receipt numbers are shown anywhere for now (2026-11-20).
+    expect(screen.queryByText(/000412/)).not.toBeInTheDocument();
   });
 });
 
@@ -312,11 +320,7 @@ describe("editing a Payment", () => {
     expect(within(dialog).getByLabelText("Method")).toHaveValue("esewa");
     expect(within(dialog).getByRole("combobox", { name: "Fee Type" })).toHaveValue("3");
     expect(within(dialog).getByLabelText(/^Note/)).toHaveValue("first half");
-    expect(
-      within(dialog).getByText(
-        "It keeps receipt number 000412. The change is recorded in History.",
-      ),
-    ).toBeInTheDocument();
+    expect(within(dialog).getByText("The change is recorded in History.")).toBeInTheDocument();
   });
 
   it("keeps a hidden Fee Type the Payment already has, and offers no other hidden one", async () => {
@@ -433,7 +437,7 @@ describe("deleting a Payment", () => {
   async function openDelete(): Promise<HTMLElement> {
     const edit = await openEdit();
     await userEvent.click(within(edit).getByRole("button", { name: "Delete payment" }));
-    return screen.getByRole("dialog", { name: "Delete Payment 000412?" });
+    return screen.getByRole("dialog", { name: "Delete this payment?" });
   }
 
   it("asks first, naming the Payment", async () => {
@@ -443,7 +447,7 @@ describe("deleting a Payment", () => {
     const dialog = await openDelete();
 
     expect(
-      within(dialog).getByText("000412, NPR 25,000 from Sita Gurung for Visa fee (first half)."),
+      within(dialog).getByText("NPR 25,000 from Sita Gurung for Visa fee (first half)."),
     ).toBeInTheDocument();
     expect(
       within(dialog).getByText(

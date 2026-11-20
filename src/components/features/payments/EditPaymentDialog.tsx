@@ -29,8 +29,8 @@ type EditPaymentDialogProps = {
 };
 
 /**
- * An Admin changes one Payment, or deletes it after confirming (spec 75-76). It keeps its receipt
- * number; the receipt then shows it as it is now.
+ * An Admin changes one Payment, or deletes it after confirming (spec 75-76). No receipt number is
+ * shown for now (2026-11-20).
  */
 export function EditPaymentDialog({
   payment,
@@ -72,7 +72,7 @@ function EditForm({ payment, onClose, onSaved, onDelete }: EditFormProps) {
 
   return (
     <SaveDialog
-      title={PAYMENT_TEXT.editTitle(payment.receiptNumber)}
+      title={PAYMENT_TEXT.editTitle}
       formId={formId}
       saveLabel={PAYMENT_TEXT.saveChanges}
       isSaving={isSaving}
@@ -92,9 +92,7 @@ function EditForm({ payment, onClose, onSaved, onDelete }: EditFormProps) {
           choices={choices}
           initial={payment}
         />
-        <p className="text-small text-ink-2">
-          {PAYMENT_TEXT.keepsReceiptNumber(payment.receiptNumber)}
-        </p>
+        <p className="text-small text-ink-2">{PAYMENT_TEXT.recordedInHistory}</p>
       </form>
     </SaveDialog>
   );
@@ -105,7 +103,7 @@ type DeletePaymentDialogProps = Pick<EditPaymentDialogProps, "payment" | "onClos
 function DeletePaymentDialog({ payment, onClose, onDeleted }: DeletePaymentDialogProps) {
   return (
     <ConfirmDialog
-      title={PAYMENT_TEXT.confirmDeleteTitle(payment.receiptNumber)}
+      title={PAYMENT_TEXT.confirmDeleteTitle}
       actionLabel={PAYMENT_TEXT.confirmDeleteButton}
       onClose={onClose}
       onConfirm={async () => {
@@ -117,7 +115,6 @@ function DeletePaymentDialog({ payment, onClose, onDeleted }: DeletePaymentDialo
       <div className="grid gap-3">
         <p className="text-ink wrap-anywhere">
           {PAYMENT_TEXT.confirmDelete(
-            payment.receiptNumber,
             formatNpr(payment.amount),
             payment.student.name,
             describeFeeType(payment.feeType, payment.note),

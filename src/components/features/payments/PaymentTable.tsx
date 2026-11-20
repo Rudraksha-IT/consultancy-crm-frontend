@@ -134,7 +134,13 @@ function PaymentRow({ payment, showsStudent, onOpen }: PaymentRowProps) {
             }}
           >
             <span aria-hidden="true">{PAYMENT_TEXT.edit}</span>
-            <span className="sr-only">{PAYMENT_TEXT.editFor(payment.receiptNumber)}</span>
+            <span className="sr-only">
+              {PAYMENT_TEXT.editFor(
+                payment.student.name,
+                describeFeeType(payment.feeType, payment.note),
+                formatNpr(payment.amount),
+              )}
+            </span>
           </Button>
         </div>
       </DataCell>

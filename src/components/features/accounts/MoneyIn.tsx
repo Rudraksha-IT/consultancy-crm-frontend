@@ -46,7 +46,7 @@ function startOfMonth(): string {
 }
 
 /**
- * Money in: every Payment from Students between two dates, by Student or receipt number and
+ * Money in: every Payment from Students between two dates, by Student name or phone and
  * Fee Type, with what they add up to (spec 74), plus Commission Received on those days (76e).
  * The list can be exported as a CSV file (issue 06).
  */
