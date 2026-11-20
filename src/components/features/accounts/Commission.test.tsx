@@ -22,6 +22,8 @@ const ADMIN: StaffContext = {
 };
 
 const OWING_URL = "/api/accounts/student-fees/?page=1";
+/** The Admin's Home leaves Lost Students out, as Fees by type does. */
+const HOME_OWING_URL = "/api/accounts/student-fees/?page=1&leave_out=lost";
 const LIST_URL = "/api/accounts/commission/";
 const PAGE_URL = "/api/accounts/commission/?page=1";
 const STATUS_URL = "/api/accounts/commission/702/status/";
@@ -455,7 +457,7 @@ describe("Received commission in Money in", () => {
 describe("Commission on the Admin's Home", () => {
   it("shows the commission to come, money in with commission, and the profit", async () => {
     backend(
-      on("GET", OWING_URL, {
+      on("GET", HOME_OWING_URL, {
         count: 0,
         page: 1,
         page_size: 25,
@@ -490,7 +492,7 @@ describe("Commission on the Admin's Home", () => {
 
   it("calls a month that spent more than it took in a loss", async () => {
     backend(
-      on("GET", OWING_URL, {
+      on("GET", HOME_OWING_URL, {
         count: 0,
         page: 1,
         page_size: 25,

@@ -89,6 +89,9 @@ export const API_PATHS = {
   studentFees: (id: number) => `/api/students/${String(id)}/fees/`,
   fee: (id: number) => `/api/fees/${String(id)}/`,
   accountsStudentFees: "/api/accounts/student-fees/",
+  /** Fees by type, and one Fee Type's Students (ticket 08). */
+  feesByType: "/api/accounts/fees-by-type/",
+  feeTypeStudents: (id: number) => `/api/accounts/fees-by-type/${String(id)}/`,
   expenses: "/api/accounts/expenses/",
   expense: (id: number) => `/api/accounts/expenses/${String(id)}/`,
   commission: "/api/accounts/commission/",

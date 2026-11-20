@@ -163,3 +163,18 @@ export function fetchOwingStudents(
 ): Promise<OwingPage> {
   return getJson(`${API_PATHS.accountsStudentFees}?page=${String(page)}`, OwingPageSchema, fetchFn);
 }
+
+/**
+ * One page of Students who still owe, leaving out Lost Students: the same rules as Fees by type,
+ * for the Admin's Home (spec 87, 91).
+ */
+export function fetchCountedOwingStudents(
+  page: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<OwingPage> {
+  return getJson(
+    `${API_PATHS.accountsStudentFees}?page=${String(page)}&leave_out=lost`,
+    OwingPageSchema,
+    fetchFn,
+  );
+}

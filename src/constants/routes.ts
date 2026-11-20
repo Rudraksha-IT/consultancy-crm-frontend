@@ -27,6 +27,11 @@ export const ROUTES = {
   batch: (id: number) => `/batches/${String(id)}`,
   messages: "/messages",
   accounts: "/accounts",
+  /** Fees by type, and one Fee Type's Students (ticket 08). */
+  feesByType: "/accounts/fees-by-type",
+  feeTypeStudents: (id: number) => `/accounts/fees-by-type/${String(id)}`,
+  /** One Student's page opened on their Fees tab. */
+  studentFees: (id: number) => `/students/${String(id)}?tab=fees`,
   reports: "/reports",
   catalogue: "/catalogue",
   /** One University's edit page: it and every Course, saved at once (issue 92). */

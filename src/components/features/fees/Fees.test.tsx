@@ -45,6 +45,8 @@ const COUNSELLOR: StaffContext = {
 const FEES_URL = "/api/students/7/fees/";
 const STUDENT_PAYMENTS = "/api/payments/?student=7&page=1";
 const OWING_URL = "/api/accounts/student-fees/?page=1";
+/** The Admin's Home leaves Lost Students out, as Fees by type does (spec 87, 91). */
+const HOME_OWING_URL = "/api/accounts/student-fees/?page=1&leave_out=lost";
 const THIS_MONTH = "/api/payments/?from=2026-11-01&to=2026-11-03&page=1";
 const MONEY_OUT = "/api/accounts/expenses/?page=1";
 const RECEIVED = "/api/accounts/commission/received/?from=2026-11-01&to=2026-11-03";
@@ -138,6 +140,36 @@ function changingAfter(path: string, before: unknown, after: unknown): Answer {
     return onEach("GET", path, () => (isChanged ? after : before))(calledPath, init);
   };
 }
+
+describe("opening a Student on their Fees tab", () => {
+  it("starts on Fees when asked", async () => {
+    backend(
+      on("GET", "/api/students/7/", PROFILE),
+      on("GET", FEES_URL, ADMIN_FEES),
+      on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
+    );
+    withProviders(ADMIN, <StudentProfilePage studentId={7} startTab="fees" />);
+
+    expect(await screen.findByRole("tab", { name: "Fees" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+    expect(await screen.findByText("Visa fee (processing)")).toBeInTheDocument();
+  });
+
+  it("starts on Applications when Fees isn't shown to them", async () => {
+    backend(on("GET", "/api/students/7/", PROFILE));
+    withProviders(
+      { ...ADMIN, modules: ["students", "payments"] },
+      <StudentProfilePage studentId={7} startTab="fees" />,
+    );
+
+    expect(await screen.findByRole("tab", { name: /^Applications/ })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+});
 
 async function openFeesTab(context: StaffContext = ADMIN) {
   withProviders(context, <StudentProfilePage studentId={7} />);
@@ -526,6 +558,10 @@ describe("Accounts -> Student fees", () => {
     expect(within(tile("Agreed fees")).getByText("4 Students")).toBeInTheDocument();
     expect(within(tile("Collected")).getByText("NPR 40,000")).toBeInTheDocument();
     expect(within(tile("Still to collect")).getByText("2 Students owe money")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "By Fee Type" })).toHaveAttribute(
+      "href",
+      "/accounts/fees-by-type",
+    );
     const [, sita, aarav] = screen.getAllByRole("row");
     if (sita === undefined || aarav === undefined) throw new Error("Expected two rows");
     expect(within(sita).getByRole("link", { name: "Sita Karki" })).toHaveAttribute(
@@ -612,7 +648,7 @@ describe("the Admin's Home money", () => {
 
   it("shows this month's money in and the fees still to collect, then who owes most", async () => {
     backend(
-      on("GET", OWING_URL, OWING),
+      on("GET", HOME_OWING_URL, OWING),
       on("GET", THIS_MONTH, MONTH),
       on("GET", MONEY_OUT, NO_EXPENSES),
       on("GET", RECEIVED, { total: 0, count: 0 }),
@@ -625,7 +661,13 @@ describe("the Admin's Home money", () => {
       await within(glance).findByText("NPR 58,000 from Students, NPR 0 commission"),
     ).toBeInTheDocument();
     expect(within(glance).getByText("NPR 1,30,000")).toHaveClass("text-warn");
-    expect(within(glance).getByText("2 Students owe money")).toBeInTheDocument();
+    expect(
+      within(glance).getByText("2 Students owe money. See it by Fee Type"),
+    ).toBeInTheDocument();
+    expect(within(glance).getByRole("link", { name: /Fees still to collect/ })).toHaveAttribute(
+      "href",
+      "/accounts/fees-by-type",
+    );
     expect(within(glance).getByRole("link", { name: "Open Accounts" })).toHaveAttribute(
       "href",
       "/accounts",
@@ -647,7 +689,7 @@ describe("the Admin's Home money", () => {
       still_to_pay: 1000,
     }));
     backend(
-      on("GET", OWING_URL, { ...OWING, count: 7, results: many }),
+      on("GET", HOME_OWING_URL, { ...OWING, count: 7, results: many }),
       on("GET", THIS_MONTH, MONTH),
       on("GET", MONEY_OUT, NO_EXPENSES),
       on("GET", RECEIVED, { total: 0, count: 0 }),
@@ -660,7 +702,7 @@ describe("the Admin's Home money", () => {
   });
 
   it("says when everyone has paid, and when the money can't be loaded", async () => {
-    backend(on("GET", OWING_URL, { ...OWING, count: 0, results: [] }));
+    backend(on("GET", HOME_OWING_URL, { ...OWING, count: 0, results: [] }));
     withProviders(ADMIN, <HomePage />);
 
     expect(await screen.findByText("Everyone has paid in full.")).toBeInTheDocument();

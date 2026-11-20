@@ -337,7 +337,22 @@ export {
   fetchReceipt,
   recordPayments,
 } from "./money/payments";
-export { addFee, changeFee, deleteFee, fetchOwingStudents, fetchStudentFees } from "./money/fees";
+export {
+  addFee,
+  changeFee,
+  deleteFee,
+  fetchCountedOwingStudents,
+  fetchOwingStudents,
+  fetchStudentFees,
+} from "./money/fees";
+export { fetchFeesByType, fetchFeeTypeStudents } from "./money/feesByType";
+export type {
+  FeesByType,
+  FeeTypeMoney,
+  FeeTypePart,
+  FeeTypeStudent,
+  FeeTypeStudents,
+} from "./money/feesByType";
 export {
   addFeeType,
   changeFeeType,

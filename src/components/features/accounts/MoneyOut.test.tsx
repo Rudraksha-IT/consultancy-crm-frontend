@@ -22,6 +22,8 @@ const ADMIN: StaffContext = {
 };
 
 const OWING_URL = "/api/accounts/student-fees/?page=1";
+/** The Admin's Home leaves Lost Students out, as Fees by type does. */
+const HOME_OWING_URL = "/api/accounts/student-fees/?page=1&leave_out=lost";
 const THIS_MONTH_URL = "/api/accounts/expenses/?month=2026-11&page=1";
 const OCTOBER_URL = "/api/accounts/expenses/?month=2026-10&page=1";
 const LIST_URL = "/api/accounts/expenses/";
@@ -448,7 +450,7 @@ describe("changing and deleting an expense", () => {
 describe("Money out on the Admin's Home", () => {
   it("shows this month's money out beside money in", async () => {
     backend(
-      on("GET", OWING_URL, OWING),
+      on("GET", HOME_OWING_URL, OWING),
       on("GET", PAYMENTS_THIS_MONTH, NO_PAYMENTS),
       on("GET", HOME_MONEY_OUT, monthOf("2026-11", [{ ...RENT, spent_on: "2026-11-01" }])),
       on("GET", RECEIVED_THIS_MONTH, { total: 0, count: 0 }),

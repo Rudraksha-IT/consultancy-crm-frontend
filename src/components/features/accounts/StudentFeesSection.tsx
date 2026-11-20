@@ -23,6 +23,7 @@ import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { useToast } from "@/components/ui/useToast";
 import { FEE_TEXT } from "@/constants/fees";
+import { FEES_BY_TYPE_TEXT } from "@/constants/feesByType";
 import { MESSAGES } from "@/constants/messages";
 import { PAYMENT_TEXT } from "@/constants/payments";
 import { ROUTES } from "@/constants/routes";
@@ -55,7 +56,12 @@ export function StudentFeesSection() {
 
   return (
     <section aria-label={FEE_TEXT.studentFees} className="grid gap-8">
-      <h2 className="text-section-title">{FEE_TEXT.studentFees}</h2>
+      <div className="min-h-control flex flex-wrap items-center justify-between gap-4">
+        <h2 className="text-section-title">{FEE_TEXT.studentFees}</h2>
+        <Link href={ROUTES.feesByType} className="min-h-control inline-flex items-center">
+          {FEES_BY_TYPE_TEXT.byFeeType}
+        </Link>
+      </div>
       <OwingBody
         state={state}
         onPage={setPage}

@@ -7,10 +7,10 @@ import { LABELS, MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { parseStudentId } from "@/lib/students";
 
-import { StudentProfilePage } from "./StudentProfilePage";
+import { profileTabFrom, StudentProfilePage } from "./StudentProfilePage";
 
 /** The Student page for the id in the address; an address that isn't an id finds nobody. */
-export function StudentProfileRoute({ idText }: { idText: string }) {
+export function StudentProfileRoute({ idText, tabText }: { idText: string; tabText?: string }) {
   const studentId = parseStudentId(idText);
   if (studentId === null) {
     return (
@@ -21,5 +21,12 @@ export function StudentProfileRoute({ idText }: { idText: string }) {
       </Panel>
     );
   }
-  return <StudentProfilePage key={studentId} studentId={studentId} />;
+  const startTab = profileTabFrom(tabText);
+  return (
+    <StudentProfilePage
+      key={studentId}
+      studentId={studentId}
+      {...(startTab !== undefined && { startTab })}
+    />
+  );
 }
