@@ -156,6 +156,17 @@ export const BACKEND_TIMEOUT_MS = 15_000;
  */
 export const UPDATE_RETRY = { totalMs: 20_000, firstWaitMs: 250, longestWaitMs: 2_000 } as const;
 
+/**
+ * Health checks (ticket 14): Django's, called only by this server's `/healthz` and Docker, and
+ * never forwarded from a browser.
+ */
+export const HEALTH = {
+  backendPath: "/api/health/",
+  /** Browser paths refused before forwarding: Django's health check, with or without the slash. */
+  refusedPath: /^\/api\/health\/?$/,
+  timeoutMs: 3_000,
+} as const;
+
 /** The answer's `code` when Django can't be reached because the app is being updated. */
 export const UPDATING_CODE = "updating";
 /**

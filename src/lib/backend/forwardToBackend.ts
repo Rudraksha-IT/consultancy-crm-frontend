@@ -10,6 +10,7 @@ import {
   type ForwardedMethod,
   COURSE_FILE_UPLOAD_PATH,
   DOCUMENT_EXAMPLE_UPLOAD_PATH,
+  HEALTH,
   LOGO_UPLOAD_PATH,
   MAX_COURSE_FILE_BODY_BYTES,
   MAX_LOGO_UPLOAD_BODY_BYTES,
@@ -67,6 +68,11 @@ function isFromOwnPage(request: Request, host: string): boolean {
   return URL.canParse(origin) && new URL(origin).host === host;
 }
 
+/** Django's health check is only for this server and Docker (ticket 14), never a browser. */
+function isHealthCheck(request: Request): boolean {
+  return HEALTH.refusedPath.test(new URL(request.url).pathname);
+}
+
 /** Calls carrying one file of at most 5 MB: a Course File (ticket 10), a Document Example (11). */
 const ONE_FILE_UPLOAD_PATHS = [COURSE_FILE_UPLOAD_PATH, DOCUMENT_EXAMPLE_UPLOAD_PATH];
 
@@ -100,7 +106,9 @@ export async function forwardToBackend(
     logger: options.logger ?? serverLogger,
     waited: { ms: 0 },
   };
-  const response = await answer(request, options, start);
+  const response = isHealthCheck(request)
+    ? refusal(HTTP_STATUS.notFound, PROXY_MESSAGES.notFound)
+    : await answer(request, options, start);
   // The path only: the query string, cookies, tokens and bodies are never logged.
   start.logger.api("API request", {
     url: new URL(request.url).pathname,

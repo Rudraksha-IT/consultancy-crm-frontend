@@ -992,6 +992,20 @@ describe("while the app is being updated (ticket 14)", () => {
   });
 });
 
+describe("Django's health check (ticket 14)", () => {
+  it.each(["/api/health/", "/api/health", "/api/health/?x=1"])(
+    "is never forwarded from the browser (%s)",
+    async (path) => {
+      const { fetchFn } = fakeBackend();
+
+      const response = await GET(incoming(path));
+
+      expect(response.status).toBe(404);
+      expect(fetchFn).not.toHaveBeenCalled();
+    },
+  );
+});
+
 describe("a login that has ended (ticket 14)", () => {
   it("is marked when the browser sent a login cookie", async () => {
     fakeBackend(() => Response.json({ detail: "Not logged in." }, { status: 401 }));
