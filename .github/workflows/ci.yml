@@ -2,16 +2,28 @@ name: CI
 
 # Pull requests run every check on every push (the gate before merging into dev or main). After a
 # merge, dev has exactly the code its pull request tested (branches must be up to date), so only
-# main runs again: the release check, and the image for the server.
+# main runs again: the release check, the image for the server, and the deploy (ticket 14).
+# deploy.yml also calls these checks on one chosen commit (`ref`) before building its image.
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_call:
+    inputs:
+      ref:
+        description: The commit to check (deploy.yml's chosen commit)
+        type: string
+        required: true
+      build_image:
+        description: Also build and push that commit's image (when the registry lacks it)
+        type: boolean
+        default: false
 
 jobs:
   # Every commit pushed or proposed must follow Conventional Commits and credit no AI as
   # co-author. The same check runs locally as the commit-msg hook; this one cannot be skipped.
   commit-messages:
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -44,6 +56,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -62,6 +76,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -76,6 +92,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -104,32 +122,77 @@ jobs:
           echo "lint, tests, build: $RESULTS"
           for result in $RESULTS; do [ "$result" = success ] || exit 1; done
 
-  # After the checks pass on main: build the slim image and push it to ECR, tagged with the
-  # commit. Deploy it on the server with deploy/deploy.sh <commit>. Needs the repository
-  # variables AWS_REGION and AWS_ROLE_ARN (an IAM role GitHub may assume through OIDC, allowed to
-  # push to the consultancy-crm-frontend ECR repository). No AWS keys are stored in GitHub.
+  # After the checks pass on main, or for deploy.yml's chosen commit: build the slim image and push
+  # it to GitHub's registry (ghcr.io/<owner>/consultancy-crm-frontend:<commit>) with this run's own
+  # token; the image stays private. No AWS (ticket 14, ADR 0024). Commit messages aren't checked
+  # again when deploy.yml calls this, so that job may be skipped then.
   image:
     needs: [commit-messages, checks]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: >-
+      !cancelled() && needs.checks.result == 'success'
+      && (needs.commit-messages.result == 'success' || (inputs.build_image && needs.commit-messages.result == 'skipped'))
+      && ((github.event_name == 'push' && github.ref == 'refs/heads/main') || inputs.build_image)
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      packages: write
+    outputs:
+      image: ${{ steps.name.outputs.image }}
     steps:
       - uses: actions/checkout@v4
-      - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-      - id: ecr
-        uses: aws-actions/amazon-ecr-login@v2
+          ref: ${{ inputs.ref }}
+      - id: name
+        name: Image name (the registry wants the owner in lower case)
+        env:
+          OWNER: ${{ github.repository_owner }}
+          COMMIT: ${{ inputs.ref || github.sha }}
+        run: echo "image=ghcr.io/${OWNER,,}/consultancy-crm-frontend:${COMMIT}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ steps.ecr.outputs.registry }}/consultancy-crm-frontend:${{ github.sha }}
+          tags: ${{ steps.name.outputs.image }}
+          # Links the package to this repository, so this repository's token may clean it up.
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
           # Unchanged layers (the dependencies) are reused, so most builds take a minute or two.
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
+
+  # Then deploy it (ticket 14): the server's deploy.sh switches to it only once it is healthy and
+  # goes back by itself if it isn't; this job fails if the deploy failed or was rolled back. It
+  # reaches the server with the `production` environment's locked SSH key, which can run nothing
+  # but ci-entry.sh. One deploy at a time per repository, never cancelled halfway; the server's
+  # lock also covers both repositories deploying at once.
+  deploy:
+    needs: image
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cloudflared (only when the server is reached through Cloudflare Access)
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+        run: .github/scripts/install-cloudflared.sh
+      - name: Deploy frontend ${{ github.sha }}
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          DEPLOY_REASON: Merged into main
+        run: .github/scripts/deploy-over-ssh.sh deploy frontend "$GITHUB_SHA"
