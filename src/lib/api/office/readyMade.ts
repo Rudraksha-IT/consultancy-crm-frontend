@@ -12,6 +12,7 @@ import {
 } from "@/constants/communication";
 
 import { getJson } from "../core/client";
+import { AttachableSchema } from "./attachments";
 
 /** Who the ready-made emails are for: one Student, or many (Plain email and Class details). */
 export type ReadyMadeTarget = { studentId: number } | "many";
@@ -40,9 +41,13 @@ export type ReadyMadeEntry = z.infer<typeof MenuSchema>[number];
 const DraftSchema = z.object({
   subject: z.string().max(SUBJECT_MAX_LENGTH),
   body: z.string().max(BODY_MAX_LENGTH),
+  attachments: z.array(AttachableSchema),
 });
 
-/** A ready-made email's starting subject line and message, filled in, as plain text. */
+/**
+ * A ready-made email's starting subject line and message, filled in, as plain text, and the
+ * files it suggests attaching (Documents needed: the missing Documents' examples).
+ */
 export type ReadyMadeDraft = z.infer<typeof DraftSchema>;
 
 /** The ready-made emails offered for one Student, or for an email to many. */

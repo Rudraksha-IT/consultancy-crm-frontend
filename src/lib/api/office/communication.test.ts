@@ -1,4 +1,5 @@
 import {
+  FilesNotFetchedError,
   NoContactEmailError,
   fetchChoosable,
   fetchMessages,
@@ -18,10 +19,12 @@ const MESSAGE = {
   status: "failed",
   error: "The email couldn't be sent. Try again in a few minutes.",
   sent_to: "sita@example.test",
+  attachments: ["brochure.pdf"],
   sent_at: "2026-11-02T10:04:00+05:45",
   sent_by: { id: 2, name: "Ram Counsellor" },
 };
 
+const FILES = [{ kind: "course_file" as const, id: 3 }];
 const PAGE = { count: 1, page: 1, page_size: 25, results: [MESSAGE] };
 const NO_CONTACT = {
   detail: "Your Admin needs to add the office's contact email in Configuration first.",
@@ -55,6 +58,7 @@ describe("fetchMessages and fetchStudentMessages", () => {
       status: "failed",
       error: "The email couldn't be sent. Try again in a few minutes.",
       sentTo: "sita@example.test",
+      attachments: ["brochure.pdf"],
       sentAt: "2026-11-02T10:04:00+05:45",
       sentBy: { id: 2, name: "Ram Counsellor" },
     });
@@ -74,6 +78,8 @@ describe("fetchMessages and fetchStudentMessages", () => {
     ["an unknown channel", { channel: "whatsapp" }],
     ["no subject", { subject: undefined }],
     ["an unknown status", { status: "queued" }],
+    ["no attachments", { attachments: undefined }],
+    ["an empty attachment name", { attachments: [""] }],
   ])("refuses an answer with %s", async (_, change) => {
     const fetchFn = answering(jsonResponse({ ...PAGE, results: [{ ...MESSAGE, ...change }] }));
 
@@ -85,12 +91,16 @@ describe("sendEmail", () => {
   it("POSTs the subject line and message", async () => {
     const fetchFn = answering(jsonResponse({ ...MESSAGE, status: "sent", error: "" }, 201));
 
-    const message = await sendEmail(7, { subject: "Your visit", body: "Dear Sita," }, fetchFn);
+    const message = await sendEmail(
+      7,
+      { subject: "Your visit", body: "Dear Sita,", attachments: FILES },
+      fetchFn,
+    );
 
     expect(sent(fetchFn)).toEqual({
       path: "/api/students/7/messages/",
       method: "POST",
-      body: { subject: "Your visit", body: "Dear Sita," },
+      body: { subject: "Your visit", body: "Dear Sita,", attachments: FILES },
     });
     expect(message.status).toBe("sent");
   });
@@ -98,7 +108,7 @@ describe("sendEmail", () => {
   it("names the refused fields", async () => {
     const fetchFn = answering(jsonResponse({ subject: ["Write a subject line."] }, 400));
 
-    const refusal = sendEmail(7, { subject: "", body: "Hi" }, fetchFn);
+    const refusal = sendEmail(7, { subject: "", body: "Hi", attachments: [] }, fetchFn);
 
     await expect(refusal).rejects.toEqual(
       new InvalidFieldsError({ subject: ["Write a subject line."] }),
@@ -108,9 +118,37 @@ describe("sendEmail", () => {
   it("says when the office has no contact email yet", async () => {
     const fetchFn = answering(jsonResponse(NO_CONTACT, 400));
 
-    await expect(sendEmail(7, { subject: "Hi", body: "Hi" }, fetchFn)).rejects.toBeInstanceOf(
-      NoContactEmailError,
+    await expect(
+      sendEmail(7, { subject: "Hi", body: "Hi", attachments: [] }, fetchFn),
+    ).rejects.toBeInstanceOf(NoContactEmailError);
+  });
+});
+
+describe("attachments", () => {
+  const TOO_BIG = {
+    attachments: [
+      "The files add up to 10.5 MB, more than the 10 MB one email can carry. Remove a.pdf or another file.",
+    ],
+  };
+
+  it("names a refused file list as an attachments field error", async () => {
+    const email = { subject: "Hi", body: "Hi", attachments: FILES };
+
+    await expect(sendEmail(7, email, answering(jsonResponse(TOO_BIG, 400)))).rejects.toEqual(
+      new InvalidFieldsError(TOO_BIG),
     );
+    await expect(sendBulkEmail([7], email, answering(jsonResponse(TOO_BIG, 400)))).rejects.toEqual(
+      new InvalidFieldsError(TOO_BIG),
+    );
+  });
+
+  it("says when the files couldn't be got", async () => {
+    const email = { subject: "Hi", body: "Hi", attachments: FILES };
+    const down = () =>
+      answering(jsonResponse({ detail: "We couldn't get the attached files." }, 503));
+
+    await expect(sendEmail(7, email, down())).rejects.toBeInstanceOf(FilesNotFetchedError);
+    await expect(sendBulkEmail([7], email, down())).rejects.toBeInstanceOf(FilesNotFetchedError);
   });
 });
 
@@ -119,7 +157,7 @@ describe("other failures", () => {
     ["a server error", () => jsonResponse({}, 500)],
     ["a refusal that isn't about the fields", () => jsonResponse({ detail: "No." }, 400)],
   ])("passes on %s as it is", async (_, response) => {
-    const email = { subject: "Hi", body: "Hi" };
+    const email = { subject: "Hi", body: "Hi", attachments: [] };
 
     await expect(sendEmail(7, email, answering(response()))).rejects.toBeInstanceOf(
       ApiRequestError,
@@ -177,14 +215,14 @@ describe("sendBulkEmail", () => {
 
     const result = await sendBulkEmail(
       [7, 9],
-      { subject: "Closed", body: "Dear Student," },
+      { subject: "Closed", body: "Dear Student,", attachments: FILES },
       fetchFn,
     );
 
     expect(sent(fetchFn)).toEqual({
       path: "/api/messages/bulk/",
       method: "POST",
-      body: { subject: "Closed", body: "Dear Student,", students: [7, 9] },
+      body: { subject: "Closed", body: "Dear Student,", attachments: FILES, students: [7, 9] },
     });
     expect(result.sent).toBe(1);
     expect(result.failedMessages[0]?.student.name).toBe("Sita Gurung");
@@ -193,16 +231,16 @@ describe("sendBulkEmail", () => {
   it("names who can't be chosen as a students field error", async () => {
     const fetchFn = answering(jsonResponse({ students: ["Lost Students can't be chosen."] }, 400));
 
-    await expect(sendBulkEmail([7], { subject: "Hi", body: "Hi" }, fetchFn)).rejects.toEqual(
-      new InvalidFieldsError({ students: ["Lost Students can't be chosen."] }),
-    );
+    await expect(
+      sendBulkEmail([7], { subject: "Hi", body: "Hi", attachments: [] }, fetchFn),
+    ).rejects.toEqual(new InvalidFieldsError({ students: ["Lost Students can't be chosen."] }));
   });
 
   it("says when the office has no contact email yet", async () => {
     const fetchFn = answering(jsonResponse(NO_CONTACT, 400));
 
-    await expect(sendBulkEmail([7], { subject: "Hi", body: "Hi" }, fetchFn)).rejects.toBeInstanceOf(
-      NoContactEmailError,
-    );
+    await expect(
+      sendBulkEmail([7], { subject: "Hi", body: "Hi", attachments: [] }, fetchFn),
+    ).rejects.toBeInstanceOf(NoContactEmailError);
   });
 });

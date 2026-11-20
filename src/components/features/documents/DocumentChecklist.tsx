@@ -55,6 +55,8 @@ type DocumentChecklistProps = {
   onDelete: (deleting: Deleting) => void;
   /** Who is looking, for what is in the Bin (issue 79). */
   bin: BinViewer;
+  /** Email a type's examples to the Student (ticket 12); absent when they can't be emailed. */
+  emailExamples?: { firstName: string; onEmail: (item: ChecklistItem) => void } | undefined;
 };
 
 /** A Document, or one of its files, being deleted, with the name the dialog shows. */
@@ -86,13 +88,23 @@ export function DocumentChecklist(props: DocumentChecklistProps) {
 const STILL_TO_COME: readonly DocumentState[] = [DocumentState.NotReceived, DocumentState.Rejected];
 
 /** The type's Document Example, while the Student's paper is still to come. */
-function ItemExample({ item }: { item: ChecklistItem }) {
+function ItemExample({ item, emailExamples }: Pick<ItemActionsProps, "item" | "emailExamples">) {
   if (!STILL_TO_COME.includes(item.state)) return null;
   return (
     <DocumentExampleLine
       typeName={item.documentType.name}
       instruction={item.instruction}
       examples={item.examples}
+      email={
+        emailExamples === undefined
+          ? undefined
+          : {
+              firstName: emailExamples.firstName,
+              onEmail: () => {
+                emailExamples.onEmail(item);
+              },
+            }
+      }
     />
   );
 }
@@ -119,7 +131,7 @@ function ChecklistRow(props: ItemActionsProps) {
         )}
         {item.state === DocumentState.Rejected && <RejectionReason document={document} />}
         <BinnedDocuments {...bin} typeName={typeName} documents={item.inBin} />
-        <ItemExample item={item} />
+        <ItemExample item={item} emailExamples={props.emailExamples} />
       </div>
       {canChange && (
         <div className="tablet:col-start-auto tablet:justify-end col-start-2 flex flex-wrap gap-3">

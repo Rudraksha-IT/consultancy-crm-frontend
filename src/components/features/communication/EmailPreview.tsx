@@ -4,11 +4,16 @@ import clsx from "clsx";
 import Image from "next/image";
 
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
+import { Icon } from "@/components/ui/Icon";
 import { COMMUNICATION_TEXT as TEXT } from "@/constants/communication";
+import type { Attachable } from "@/lib/api";
+import { formatFileSize } from "@/lib/catalogue";
 
 type EmailPreviewProps = {
   subject: string;
   body: string;
+  /** The files going with it, shown under the sender as an inbox shows them. */
+  files: readonly Attachable[];
   /** Who it is shown as going to, e.g. "to Sita Gurung" or "to each Student, one by one". */
   toLine: string;
   /** Whose copy this is, e.g. "Sita" or "each Student". */
@@ -25,6 +30,7 @@ type EmailPreviewProps = {
 export function EmailPreview({
   subject,
   body,
+  files,
   toLine,
   whose,
   isHiddenWhenNarrow,
@@ -39,6 +45,7 @@ export function EmailPreview({
     >
       <p className="text-small text-ink-2 font-semibold">{TEXT.previewOf(whose)}</p>
       <Envelope subject={subject} toLine={toLine} />
+      <AttachedNames files={files} />
       <article className="bg-paper border-rule rounded-panel mt-4 overflow-hidden border">
         <div className="bg-accent h-1" aria-hidden />
         <div className="border-rule border-b px-6 py-4">
@@ -73,6 +80,25 @@ function Envelope({ subject, toLine }: { subject: string; toLine: string }) {
         {contact === "" ? toLine : `${toLine} · ${TEXT.repliesGoTo(contact)}`}
       </p>
     </div>
+  );
+}
+
+/** The files attached, each with its size, read-only. */
+function AttachedNames({ files }: { files: readonly Attachable[] }) {
+  if (files.length === 0) return null;
+  return (
+    <ul aria-label={TEXT.attachedFiles} className="mt-3 flex flex-wrap gap-2">
+      {files.map((file) => (
+        <li
+          key={`${file.kind}-${String(file.id)}`}
+          className="rounded-chip bg-paper border-rule text-small flex max-w-full min-w-0 items-center gap-2 border px-2.5 py-1"
+        >
+          <Icon name="file" size="sm" />
+          <span className="text-ink min-w-0 truncate">{file.fileName}</span>
+          <span className="text-ink-2 flex-none">{formatFileSize(file.size)}</span>
+        </li>
+      ))}
+    </ul>
   );
 }
 

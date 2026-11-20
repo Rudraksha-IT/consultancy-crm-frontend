@@ -68,18 +68,22 @@ const BULK_MENU = {
 const WELCOME = {
   subject: "Welcome to Acme Education",
   body: "Dear Sita,\n\nThank you for choosing Acme Education.\n\nKind regards,\nBikash Thapa\nAcme Education",
+  attachments: [],
 };
 const PAID_12 = {
   subject: "Payment received: receipt 000012",
   body: "Dear Sita,\n\nAmount: NPR 40,000\n\nKind regards,\nBikash Thapa\nAcme Education",
+  attachments: [],
 };
 const PAID_9 = {
   subject: "Payment received: receipt 000009",
   body: "Dear Sita,\n\nAmount: NPR 10,000\n\nKind regards,\nBikash Thapa\nAcme Education",
+  attachments: [],
 };
 const CLASS = {
   subject: "Your class: IELTS Morning",
   body: "Dear Student,\n\nClass: IELTS Morning\n\nKind regards,\nBikash Thapa\nAcme Education",
+  attachments: [],
 };
 
 const draftPath = (path: string, kind: string, record?: number) =>
@@ -219,6 +223,7 @@ describe("Ready-made emails to one Student", () => {
     expect(typeof body === "string" ? JSON.parse(body) : null).toEqual({
       subject: WELCOME.subject,
       body: `${WELCOME.body}\nSee you on Sunday.`,
+      attachments: [],
     });
   });
 
@@ -259,6 +264,7 @@ describe("Ready-made emails to one Student", () => {
     const plain = {
       subject: "",
       body: "Dear Sita,\n\nKind regards,\nBikash Thapa\nAcme Education",
+      attachments: [],
     };
     oneStudentBackend(on("GET", draftPath(DRAFT_PATH, "plain"), plain));
     const { kind, subject, message } = renderComposer({
@@ -278,7 +284,11 @@ describe("Ready-made emails to one Student", () => {
   });
 
   it("uses the given words only once: choosing another email replaces them", async () => {
-    const plain = { subject: "", body: "Dear Sita,\n\nKind regards,\nBikash Thapa" };
+    const plain = {
+      subject: "",
+      body: "Dear Sita,\n\nKind regards,\nBikash Thapa",
+      attachments: [],
+    };
     oneStudentBackend(on("GET", draftPath(DRAFT_PATH, "plain"), plain));
     const { kind, subject, message } = renderComposer({
       startWith: { kind: "plain", text: { subject: "Brochures", line: "Here they are." } },
@@ -381,7 +391,11 @@ describe("Ready-made emails to many Students", () => {
   });
 
   it("asks the backend for the Plain email when it is chosen", async () => {
-    const plain = { subject: "", body: "Dear Student,\n\n\n\nKind regards,\nBikash Thapa" };
+    const plain = {
+      subject: "",
+      body: "Dear Student,\n\n\n\nKind regards,\nBikash Thapa",
+      attachments: [],
+    };
     backend(
       on("GET", BULK_MENU_PATH, BULK_MENU),
       on("GET", draftPath(BULK_DRAFT_PATH, "class_details", 3), CLASS),
@@ -430,6 +444,7 @@ function sentMessage() {
     status: "sent",
     error: "",
     sent_to: "sita@example.test",
+    attachments: [],
     sent_at: "2026-11-02T10:04:00+05:45",
     sent_by: { id: 5, name: "Bikash Thapa" },
   };

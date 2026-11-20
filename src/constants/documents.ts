@@ -402,6 +402,13 @@ export const EXAMPLE_TEXT = {
   changeFailed: "We couldn't change the examples. Try again.",
   linkFailed: "We couldn't open the file. Try again.",
   // A Student's checklist
+  emailExamples: (count: number, firstName: string) =>
+    `Email ${count === 1 ? "the example" : "the examples"} to ${firstName}`,
+  exampleSubject: (typeName: string) => `An example of the ${typeName} we need`,
+  exampleLine: (typeName: string, instruction: string) =>
+    instruction === ""
+      ? `Here is an example of the ${typeName} we need.`
+      : `Here is an example of the ${typeName} we need. ${instruction}`,
   seeWhat: "See what it should look like.",
   see: (count: number) => (count === 1 ? "See the example" : `See ${String(count)} examples`),
   seeFor: (count: number, name: string) =>

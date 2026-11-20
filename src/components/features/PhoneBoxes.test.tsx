@@ -96,6 +96,7 @@ describe("Email on a phone", () => {
     status: "sent",
     error: "",
     sentTo: "aarav@example.com",
+    attachments: [],
     sentAt: "2026-11-10T09:20:00+05:45",
     sentBy: { id: 2, name: "Sita Karki" },
   };

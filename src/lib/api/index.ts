@@ -136,6 +136,7 @@ export {
   sendWithoutBody,
 } from "./core/client";
 export {
+  FilesNotFetchedError,
   NoContactEmailError,
   fetchChoosable,
   fetchMessages,
@@ -153,6 +154,8 @@ export type {
   NewEmailField,
   PreTickSource,
 } from "./office/communication";
+export { fetchAttachable, refsOf } from "./office/attachments";
+export type { Attachable, AttachableFiles, AttachmentRef } from "./office/attachments";
 export { fetchReadyMade, fetchReadyMadeDraft } from "./office/readyMade";
 export type { ReadyMadeDraft, ReadyMadeEntry, ReadyMadeTarget } from "./office/readyMade";
 export {

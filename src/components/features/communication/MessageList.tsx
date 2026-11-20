@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
 import { Chip } from "@/components/ui/Chip";
+import { Icon } from "@/components/ui/Icon";
 import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { CHANNEL_LABELS, COMMUNICATION_TEXT as TEXT } from "@/constants/communication";
@@ -49,6 +50,12 @@ function MessageRow({ message, showsStudent }: { message: Message; showsStudent:
       right={<StatusChip message={message} />}
     >
       <MessageWords message={message} />
+      {message.attachments.length > 0 && (
+        <p className="text-small text-ink-2 mt-1 flex min-w-0 items-start gap-1.5 break-words">
+          <Icon name="clip" size="sm" />
+          <span className="min-w-0">{TEXT.attachmentsOf(message.attachments.join(", "))}</span>
+        </p>
+      )}
       {message.error !== "" && <p className="text-secondary text-bad mt-1">{message.error}</p>}
     </RowItem>
   );

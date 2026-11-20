@@ -2,6 +2,7 @@
 
 import { useState, type ReactNode } from "react";
 
+import { canMessageStudents } from "@/components/features/communication/canMessage";
 import { StudentFees } from "@/components/features/fees/StudentFees";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Banner } from "@/components/ui/Banner";
@@ -296,6 +297,23 @@ function documentLinks(profile: StudentProfile): DocumentLinkOption[] {
   ];
 }
 
+/** The checklist, with "Email the examples" when this person can email the Student (ticket 12). */
+function ProfileDocuments({ profile, onUpdate, onRefresh }: TabContentProps) {
+  const canEmail = canMessageStudents(useCurrentStaff()) && profile.email !== "";
+  return (
+    <DocumentsSection
+      studentId={profile.id}
+      studentName={profile.name}
+      emailTo={canEmail ? profile : undefined}
+      links={documentLinks(profile)}
+      onProgress={(documents) => {
+        onUpdate((current) => ({ ...current, documents }));
+        void onRefresh();
+      }}
+    />
+  );
+}
+
 /** The open tab's section. */
 function TabContent(props: TabContentProps) {
   return TAB_CONTENT[props.tab](props);
@@ -303,17 +321,7 @@ function TabContent(props: TabContentProps) {
 
 const TAB_CONTENT: Record<Tab, (props: TabContentProps) => ReactNode> = {
   applications: ({ profile, onSaved }) => <ApplicationsTab profile={profile} onSaved={onSaved} />,
-  documents: ({ profile, onUpdate, onRefresh }) => (
-    <DocumentsSection
-      studentId={profile.id}
-      studentName={profile.name}
-      links={documentLinks(profile)}
-      onProgress={(documents) => {
-        onUpdate((current) => ({ ...current, documents }));
-        void onRefresh();
-      }}
-    />
-  ),
+  documents: (props) => <ProfileDocuments {...props} />,
   tasks: ({ profile, onRefresh }) => (
     <StudentTasks
       student={{

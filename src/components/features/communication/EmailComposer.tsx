@@ -16,14 +16,16 @@ import {
   plainEmailText,
 } from "@/constants/communication";
 import { LABELS } from "@/constants/messages";
-import type { BulkResult } from "@/lib/api";
+import { refsOf, type Attachable, type BulkResult, type ReadyMadeTarget } from "@/lib/api";
 
+import { AttachmentsArea } from "./AttachmentsArea";
 import { PaneToggle, SendingFinished, ToRow } from "./ComposerParts";
 import { composerWording, type ComposerWording } from "./composerWording";
 import { ContactEmailBanner } from "./ContactEmailBanner";
 import { EmailPreview } from "./EmailPreview";
 import { ReadyMadeRow } from "./ReadyMadeRow";
 import type { EmailRecipient } from "./recipients";
+import { useAttachments, type Attachments } from "./useAttachments";
 import { useComposerText, type ComposerText, type StartWith } from "./useComposerText";
 import { useEmailSend, type EmailSend } from "./useEmailSend";
 
@@ -42,10 +44,10 @@ type EmailComposerProps = {
 };
 
 /**
- * Write an email (issues 04, 09): who it's to, the ready-made email it starts from (and the
- * record it is about), a subject line and the message, beside a live preview of what the Student
- * receives. Near full screen; at narrow widths Write and Preview take turns. One Student's email
- * is confirmed in a toast; many show Sending finished.
+ * Write an email (issues 04, 09, 12): who it's to, the ready-made email it starts from (and the
+ * record it is about), a subject line, the message and the files attached, beside a live preview
+ * of what the Student receives. Near full screen; at narrow widths Write and Preview take turns.
+ * One Student's email is confirmed in a toast; many show Sending finished.
  */
 export function EmailComposer(props: EmailComposerProps) {
   const [result, setResult] = useState<BulkResult | null>(null);
@@ -77,19 +79,22 @@ function Composer({
   const only = isBulk ? null : (recipients[0] ?? null);
   const wording = composerWording(only, recipients, consultancy.name);
   const sending = useEmailSend({ only, recipients, onSent, onBulkSent });
+  const target: ReadyMadeTarget = only === null ? "many" : { studentId: only.id };
+  const attachments = useAttachments(target, filesOf(startWith));
   const draft = useComposerText({
-    target: only === null ? "many" : { studentId: only.id },
+    target,
     startWith,
     firstBody: plainEmailText(wording.greetingName, staff.name, consultancy.name),
+    onSuggested: attachments.suggest,
   });
   const missingAddress = addressMissingFor(only);
-  const canSend = isSendable(consultancy.hasContactEmail, missingAddress, recipients);
+  const canSend = isSendable(consultancy.hasContactEmail, missingAddress, recipients, attachments);
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
     if (!canSend) return;
     const email = draft.checked(event.currentTarget);
-    if (email !== null) sending.send(email);
+    if (email !== null) sending.send({ ...email, attachments: refsOf(attachments.files) });
   }
 
   return (
@@ -125,10 +130,16 @@ function Composer({
             <Problems missingAddress={missingAddress} students={sending.fieldErrors.students} />
             <ReadyMadeRow text={draft} />
             <ComposerFields draft={draft} sending={sending} hint={wording.hint} />
+            <AttachmentsArea
+              attachments={attachments}
+              isBulk={isBulk}
+              errors={sending.fieldErrors.attachments}
+            />
           </form>
           <EmailPreview
             subject={draft.subject}
             body={draft.body}
+            files={attachments.files}
             toLine={wording.toLine}
             whose={wording.whose}
             isHiddenWhenNarrow={draft.pane === "write"}
@@ -139,13 +150,23 @@ function Composer({
   );
 }
 
-/** It can go once the office has a contact email and every Student chosen has an address. */
+/**
+ * It can go once the office has a contact email, every Student chosen has an address and the
+ * files fit in one email.
+ */
 function isSendable(
   hasContactEmail: boolean,
   missingAddress: string | null,
   recipients: readonly EmailRecipient[],
+  attachments: Attachments,
 ): boolean {
-  return hasContactEmail && missingAddress === null && recipients.length > 0;
+  const hasSomeone = missingAddress === null && recipients.length > 0;
+  return hasContactEmail && hasSomeone && !attachments.isOver;
+}
+
+/** The files the email opens with, if any. */
+function filesOf(startWith: StartWith | undefined): readonly Attachable[] {
+  return startWith?.files ?? [];
 }
 
 /** The one Student's name when they have no email address, else null. */

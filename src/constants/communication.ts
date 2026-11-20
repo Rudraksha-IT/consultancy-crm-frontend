@@ -79,6 +79,14 @@ export const READY_MADE_RECORD_LABELS: Record<ReadyMadeRecord, string> = {
   batch: "Class",
 };
 
+/** Where an attached file comes from; values match the API (ticket 12). */
+export const ATTACHMENT_KINDS = ["course_file", "document_example", "document_file"] as const;
+export type AttachmentKind = (typeof ATTACHMENT_KINDS)[number];
+
+/** The most one email carries (spec story 49), and how many files may be named at once. */
+export const EMAIL_MAX_BYTES = 10 * 1024 * 1024;
+export const MAX_ATTACHMENTS = 20;
+
 /** The longest record label and reason the API sends. */
 export const RECORD_LABEL_MAX_LENGTH = 1000;
 export const UNAVAILABLE_MAX_LENGTH = 200;
@@ -176,4 +184,25 @@ export const COMMUNICATION_TEXT = {
     "Each email is in that Student's Activity, with whether it was sent or failed.",
   failedLine: (name: string, reason: string) => `${name}: ${reason}`,
   done: "Done",
+  attachFiles: "Attach files",
+  attachedFiles: "Attached files",
+  upToTen: "Up to 10 MB in all",
+  sizeOfTen: (size: string) => `${size} of 10 MB`,
+  overTen: (size: string, biggest: string) =>
+    `The files add up to ${size}, more than the 10 MB one email can carry. Remove ${biggest} or another file.`,
+  removeFile: (name: string) => `Remove ${name}`,
+  attachFrom: "Attach files from the app",
+  whereFrom: "Where the file comes from",
+  courseFiles: "Course Files",
+  documentExamples: "Document Examples",
+  theirDocuments: "Their Documents",
+  nothingHere: "Nothing here yet.",
+  noDocumentsYet: "No Documents uploaded yet.",
+  pickOneFrom: "Course Files, Document Examples and this Student's own Documents.",
+  pickManyFrom: "Only Course Files and Document Examples can go to many Students.",
+  filesLoading: "Loading the files…",
+  filesFailed: "The files couldn't be loaded. Try again.",
+  filesNotFetched: "We couldn't get the attached files. Try again.",
+  fileLine: (group: string, size: string) => `${group} · ${size}`,
+  attachmentsOf: (names: string) => `Attached: ${names}`,
 } as const;

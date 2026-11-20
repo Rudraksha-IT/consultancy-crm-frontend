@@ -53,7 +53,11 @@ describe("fetchReadyMade", () => {
 
 describe("fetchReadyMadeDraft", () => {
   it("asks for one Student's draft about a record", async () => {
-    const draft = { subject: "Payment received: receipt 000012", body: "Dear Sita," };
+    const draft = {
+      subject: "Payment received: receipt 000012",
+      body: "Dear Sita,",
+      attachments: [],
+    };
     const fetchFn = answering(jsonResponse(draft));
 
     const answer = await fetchReadyMadeDraft({ studentId: 7 }, "payment_received", 12, fetchFn);
@@ -63,7 +67,9 @@ describe("fetchReadyMadeDraft", () => {
   });
 
   it("asks for an email to many without a record", async () => {
-    const fetchFn = answering(jsonResponse({ subject: "", body: "Dear Student," }));
+    const fetchFn = answering(
+      jsonResponse({ subject: "", body: "Dear Student,", attachments: [] }),
+    );
 
     await fetchReadyMadeDraft("many", "plain", null, fetchFn);
 
@@ -71,9 +77,45 @@ describe("fetchReadyMadeDraft", () => {
   });
 
   it("refuses a subject line too long to send", async () => {
-    const fetchFn = answering(jsonResponse({ subject: "x".repeat(151), body: "" }));
+    const fetchFn = answering(
+      jsonResponse({ subject: "x".repeat(151), body: "", attachments: [] }),
+    );
 
     await expect(fetchReadyMadeDraft("many", "plain", null, fetchFn)).rejects.toThrow();
+  });
+
+  it("reads the files it suggests attaching", async () => {
+    const example = {
+      kind: "document_example",
+      id: 4,
+      name: "sample.pdf",
+      file_name: "sample.pdf",
+      size: 2048,
+      group: "Bank Statement",
+    };
+    const fetchFn = answering(jsonResponse({ subject: "Docs", body: "", attachments: [example] }));
+
+    const draft = await fetchReadyMadeDraft({ studentId: 7 }, "documents_needed", null, fetchFn);
+
+    expect(draft.attachments).toEqual([
+      {
+        kind: "document_example",
+        id: 4,
+        name: "sample.pdf",
+        fileName: "sample.pdf",
+        size: 2048,
+        group: "Bank Statement",
+      },
+    ]);
+  });
+
+  it.each([
+    [{ subject: "", body: "" }],
+    [{ subject: "", body: "", attachments: [{ kind: "computer_file", id: 1 }] }],
+  ])("refuses a damaged list of suggested files %#", async (body) => {
+    await expect(
+      fetchReadyMadeDraft("many", "plain", null, answering(jsonResponse(body))),
+    ).rejects.toThrow();
   });
 
   it("passes a refusal on", async () => {

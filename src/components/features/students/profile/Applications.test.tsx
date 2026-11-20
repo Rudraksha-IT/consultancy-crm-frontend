@@ -343,6 +343,7 @@ describe("Course brochures under an Application (ticket 10)", () => {
   const PLAIN = {
     subject: "",
     body: "Dear Sita,\n\nKind regards,\nBikash Thapa\nAcme Education",
+    attachments: [],
   };
 
   it("lists the Course's PDFs under its Application, and nothing under a Course with none", async () => {
@@ -410,6 +411,9 @@ describe("Course brochures under an Application (ticket 10)", () => {
     expect(within(dialog).getByRole("textbox", { name: "Message" })).toHaveValue(
       "Dear Sita,\n\nHere are the brochures for Master of IT at Deakin University.\n\nKind regards,\nBikash Thapa\nAcme Education",
     );
+    const attached = within(dialog).getAllByRole("list", { name: "Attached files" })[0];
+    expect(attached).toHaveTextContent(BROCHURE.file_name);
+    expect(attached).toHaveTextContent(FEES.file_name);
   });
 });
 

@@ -4,6 +4,7 @@ import { useFormSave } from "@/components/features/students/profile/useFormSave"
 import { useToast } from "@/components/ui/useToast";
 import { COMMUNICATION_TEXT as TEXT } from "@/constants/communication";
 import {
+  FilesNotFetchedError,
   NoContactEmailError,
   sendBulkEmail,
   sendEmail,
@@ -64,5 +65,6 @@ function toastFor(student: EmailRecipient, message: Message): string {
 }
 
 function describeFailure(error: unknown): string {
-  return error instanceof NoContactEmailError ? TEXT.noContactStaff : TEXT.couldntSend;
+  if (error instanceof NoContactEmailError) return TEXT.noContactStaff;
+  return error instanceof FilesNotFetchedError ? TEXT.filesNotFetched : TEXT.couldntSend;
 }

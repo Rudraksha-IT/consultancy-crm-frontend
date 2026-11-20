@@ -55,6 +55,7 @@ const SENT = {
   status: "sent",
   error: "",
   sent_to: "sita@example.test",
+  attachments: [],
   sent_at: "2026-11-02T10:04:00+05:45",
   sent_by: { id: 5, name: "Bikash Thapa" },
 };
@@ -194,6 +195,7 @@ describe("EmailComposer to one Student", () => {
     expect(sentBody(fetchFn, "POST", SEND_PATH)).toEqual({
       subject: "Hello",
       body: "Dear Sita,\n\n\n\nKind regards,\nBikash Thapa\nAcme Education",
+      attachments: [],
     });
     expect(onSent).toHaveBeenCalledOnce();
   });
@@ -391,6 +393,18 @@ describe("The Email page", () => {
     expect(rows[2]).toHaveTextContent("SMS (no longer available)");
     expect(rows[2]).toHaveTextContent("Namaste, class at 7.");
     expect(screen.getByText(/replies go to info@acme.test\.$/)).toBeInTheDocument();
+  });
+
+  it("names the files each email carried (ticket 12)", async () => {
+    const withFiles = { ...SENT, attachments: ["brochure.pdf", "<b>fees</b>.pdf"] };
+    backend(list([withFiles, FAILED]));
+    renderIn(COUNSELLOR, <MessagesPage />);
+
+    const rows = within(await screen.findByRole("list", { name: "Email" })).getAllByRole(
+      "listitem",
+    );
+    expect(rows[0]).toHaveTextContent("Attached: brochure.pdf, <b>fees</b>.pdf");
+    expect(rows[1]).not.toHaveTextContent("Attached:");
   });
 
   it("says when none have been sent", async () => {
@@ -649,6 +663,21 @@ describe("On a Student's page", () => {
       within(timeline).getByText("Email failed: “<script>alert(1)</script>”"),
     ).toBeInTheDocument();
   });
+
+  it("names the files an email carried in their Activity (ticket 12)", async () => {
+    backend(
+      profile,
+      history,
+      visits,
+      studentMessages([{ ...SENT, attachments: ["brochure.pdf", "sample.pdf"] }]),
+    );
+    renderIn(COUNSELLOR, <StudentProfilePage studentId={7} />);
+
+    await userEvent.click(await screen.findByRole("tab", { name: "Activity" }));
+
+    const timeline = await screen.findByRole("list", { name: "Activity" });
+    expect(within(timeline).getByText("Attached: brochure.pdf, sample.pdf")).toBeInTheDocument();
+  });
 });
 
 describe("Pre-ticked from a list or a class", () => {
@@ -718,7 +747,11 @@ describe("Pre-ticked from a list or a class", () => {
       { id: 2, label: "PTE Evening, 5 PM" },
       { id: 1, label: "IELTS Morning, 7 AM" },
     ];
-    const details = { subject: "Your class: IELTS Morning", body: "Dear Student," };
+    const details = {
+      subject: "Your class: IELTS Morning",
+      body: "Dear Student,",
+      attachments: [],
+    };
     backend(
       CLASS,
       on("GET", `${BULK}?batch=1`, choosable),

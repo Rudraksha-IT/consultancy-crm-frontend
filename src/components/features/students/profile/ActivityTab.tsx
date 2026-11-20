@@ -331,9 +331,16 @@ function messageItem(key: string, message: Message, dates: Dates): TimelineItem 
         ? LABELS.messageSent(kind, words)
         : LABELS.messageFailed(kind, words),
     meta: LABELS.byWhen(message.sentBy.name, dates.dateTime(message.sentAt)),
+    ...attachedNames(message),
     ...(message.error !== "" && { problem: message.error }),
     isContact: true,
   };
+}
+
+/** "Attached: brochure.pdf, passport.pdf" under an email that carried files (ticket 12). */
+function attachedNames(message: Message): { detail?: string } {
+  if (message.attachments.length === 0) return {};
+  return { detail: COMMUNICATION_TEXT.attachmentsOf(message.attachments.join(", ")) };
 }
 
 function historyItem(key: string, entry: HistoryEntry, dates: Dates): TimelineItem {

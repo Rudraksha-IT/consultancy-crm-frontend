@@ -2,6 +2,7 @@
 
 import { useState, type ComponentProps } from "react";
 
+import { firstNameOf, type EmailRecipient } from "@/components/features/communication/recipients";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -31,6 +32,7 @@ import {
 import { AddFileDialog } from "./AddFileDialog";
 import { DocumentChecklist, type AddingTo, type Deleting } from "./DocumentChecklist";
 import { DocumentPickerDialog } from "./DocumentPickerDialog";
+import { ExamplesComposer } from "./ExamplesComposer";
 import { RejectDocumentDialog } from "./RejectDocumentDialog";
 import { UploadDocumentDialog } from "./UploadDocumentDialog";
 import { binFailure, useBinActions } from "./useBinActions";
@@ -46,6 +48,8 @@ type DocumentsSectionProps = {
   links?: readonly DocumentLinkOption[];
   /** Told the new count after an upload or a check, e.g. for the profile's tab. */
   onProgress?: (progress: DocumentProgress) => void;
+  /** Who "Email the examples" goes to (ticket 12); absent when the Student can't be emailed. */
+  emailTo?: EmailRecipient | undefined;
 };
 
 /**
@@ -53,7 +57,7 @@ type DocumentsSectionProps = {
  * (spec 68-69) and private file links.
  */
 export function DocumentsSection(props: DocumentsSectionProps) {
-  const { studentId, studentName, links = [], onProgress } = props;
+  const { studentId, studentName, links = [], onProgress, emailTo } = props;
   const { state, replace } = useChecklist(studentId);
   if (state.status === "loading") return <p className="text-ink-2">{DOCUMENT_TEXT.loading}</p>;
   if (state.status === "failed") return <Banner tone="problem">{DOCUMENT_TEXT.failed}</Banner>;
@@ -61,6 +65,7 @@ export function DocumentsSection(props: DocumentsSectionProps) {
     <LoadedSection
       studentId={studentId}
       studentName={studentName}
+      emailTo={emailTo}
       links={links}
       checklist={state.checklist}
       onChanged={(checklist) => {
@@ -74,14 +79,16 @@ export function DocumentsSection(props: DocumentsSectionProps) {
 type LoadedSectionProps = {
   studentId: number;
   studentName: string;
+  emailTo: EmailRecipient | undefined;
   links: readonly DocumentLinkOption[];
   checklist: Checklist;
   onChanged: (checklist: Checklist) => void;
 };
 
 function LoadedSection(props: LoadedSectionProps) {
-  const { studentId, studentName, links, checklist, onChanged } = props;
+  const { studentId, studentName, emailTo, links, checklist, onChanged } = props;
   const { showToast } = useToast();
+  const examples = useExamplesEmail(emailTo);
   const [uploadingTypeId, setUploadingTypeId] = useState<number | null>(null);
   const [addingTo, setAddingTo] = useState<AddingTo | null>(null);
   const [isAsking, setIsAsking] = useState(false);
@@ -125,7 +132,9 @@ function LoadedSection(props: LoadedSectionProps) {
         onAsk={() => {
           setIsAsking(true);
         }}
+        emailExamples={examples.offer}
       />
+      <ExamplesComposer item={examples.emailing} student={emailTo} onClose={examples.stop} />
       <DeleteDialog
         deleting={deleting}
         studentName={studentName}
@@ -209,6 +218,21 @@ function LoadedSection(props: LoadedSectionProps) {
 }
 
 /** The toast after an upload: one file, or several as one Document. */
+/** "Email the examples" (ticket 12): offered only when there is a Student who can be emailed. */
+function useExamplesEmail(emailTo: EmailRecipient | undefined) {
+  const [emailing, setEmailing] = useState<ChecklistItem | null>(null);
+  return {
+    emailing,
+    offer:
+      emailTo === undefined
+        ? undefined
+        : { firstName: firstNameOf(emailTo.name), onEmail: setEmailing },
+    stop: () => {
+      setEmailing(null);
+    },
+  };
+}
+
 function uploadedWords(fileCount: number): string {
   return fileCount > 1 ? DOCUMENT_TEXT.uploadedMany(fileCount) : DOCUMENT_TEXT.uploaded;
 }

@@ -1,11 +1,11 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
-import { backend, on, onEach } from "@/test/backend";
+import { backend, callsTo, on, onEach } from "@/test/backend";
 import { CHECKLIST, PASSPORT_DOCUMENT, item } from "@/test/documents";
 import { PROFILE } from "@/test/studentProfile";
 
@@ -193,5 +193,101 @@ describe("the profile's Documents tab", () => {
 
     const list = await screen.findByRole("list", { name: "Documents for Deakin University" });
     expect(within(list).getByText("Bank Statement")).toBeVisible();
+  });
+});
+
+describe("emailing a Document Type's examples from the checklist (ticket 12)", () => {
+  const EMAILING: StaffContext = {
+    ...COUNSELLOR,
+    consultancy: { ...COUNSELLOR.consultancy, hasContactEmail: true },
+    modules: ["students", "documents", "communication"],
+  };
+  const SAMPLE = {
+    id: 52,
+    file_name: "sample-bank-statement.pdf",
+    content_type: "application/pdf",
+    size: 1_157_120,
+    uploaded_at: "2026-11-20T10:00:00+05:45",
+  };
+  const INSTRUCTION = "Last 6 months, with the bank's stamp on every page.";
+  const WITH_EXAMPLE = {
+    ...CHECKLIST,
+    items: CHECKLIST.items.map((one) =>
+      one.document_type.id === 4 ? { ...one, instruction: INSTRUCTION, examples: [SAMPLE] } : one,
+    ),
+  };
+  const PLAIN = {
+    subject: "",
+    body: "Dear Sita,\n\nKind regards,\nBikash Thapa\nAcme Education",
+    attachments: [],
+  };
+
+  function renderWith(context: StaffContext) {
+    render(
+      <StaffContextContext value={context}>
+        <ToastProvider>
+          <StudentProfilePage studentId={7} />
+        </ToastProvider>
+      </StaffContextContext>,
+    );
+  }
+
+  async function openExamples() {
+    await userEvent.click(await screen.findByRole("tab", { name: "Documents 1/8" }));
+    await userEvent.click(
+      await screen.findByRole("button", { name: "See the example of Bank Statement" }),
+    );
+    return screen.getByRole("dialog", { name: "Bank Statement: what it should look like" });
+  }
+
+  it("opens the Plain email with the Document Type, its instruction and the example attached", async () => {
+    const fetchFn = backend(
+      on("GET", "/api/students/7/", PROFILE),
+      on("GET", CHECKLIST_PATH, WITH_EXAMPLE),
+      on("GET", "/api/students/7/emails/ready-made/", {
+        kinds: [{ kind: "plain", record: null, records: [], unavailable: null }],
+      }),
+      on("GET", "/api/students/7/emails/draft/?kind=plain", PLAIN),
+    );
+    renderWith(EMAILING);
+
+    const examples = await openExamples();
+    await userEvent.click(
+      within(examples).getByRole("button", { name: "Email the example to Sita" }),
+    );
+
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() => {
+      expect(within(dialog).getByRole("textbox", { name: "Subject" })).toHaveValue(
+        "An example of the Bank Statement we need",
+      );
+    });
+    expect(within(dialog).getByRole("textbox", { name: "Message" })).toHaveValue(
+      `Dear Sita,\n\nHere is an example of the Bank Statement we need. ${INSTRUCTION}\n\nKind regards,\nBikash Thapa\nAcme Education`,
+    );
+    const attached = within(dialog).getAllByRole("list", { name: "Attached files" })[0];
+    expect(attached).toHaveTextContent("sample-bank-statement.pdf");
+    expect(callsTo(fetchFn, "GET", "/api/students/7/emails/attachable/")).toHaveLength(0);
+  });
+
+  it("isn't offered when Email is off", async () => {
+    backend(on("GET", "/api/students/7/", PROFILE), on("GET", CHECKLIST_PATH, WITH_EXAMPLE));
+    renderWith(COUNSELLOR);
+
+    const examples = await openExamples();
+
+    expect(within(examples).queryByRole("button", { name: /^Email the example/ })).toBeNull();
+  });
+
+  it("isn't offered when the Student has no email address", async () => {
+    backend(
+      on("GET", "/api/students/7/", { ...PROFILE, email: "" }),
+      on("GET", CHECKLIST_PATH, WITH_EXAMPLE),
+    );
+    renderWith(EMAILING);
+
+    const examples = await openExamples();
+
+    expect(within(examples).queryByRole("button", { name: /^Email the example/ })).toBeNull();
   });
 });

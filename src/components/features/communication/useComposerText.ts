@@ -6,23 +6,29 @@ import { COMMUNICATION_TEXT as TEXT, type ReadyMadeKind } from "@/constants/comm
 import {
   fetchReadyMade,
   fetchReadyMadeDraft,
+  type Attachable,
   type NewEmail,
+  type ReadyMadeDraft,
   type ReadyMadeEntry,
   type ReadyMadeTarget,
 } from "@/lib/api";
 
 import type { Pane } from "./ComposerParts";
 
-/** The ready-made email to open on, e.g. Payment received from a receipt. */
 /**
- * The ready-made email to open on, the record it is about, and words to start from instead of
- * its own: a subject line, and a line added under the greeting (a Course's brochures, ticket 10).
+ * The ready-made email to open on, the record it is about, words to start from instead of its
+ * own (a subject line, and a line added under the greeting: a Course's brochures, ticket 10), and
+ * the files it opens with (the brochures, or a Document Type's examples; ticket 12).
  */
 export type StartWith = {
   kind: ReadyMadeKind;
   record?: number;
   text?: { subject: string; line: string };
+  files?: readonly Attachable[];
 };
+
+/** The subject line and message, trimmed, as they are sent. */
+export type EmailText = Omit<NewEmail, "attachments">;
 
 /** The ready-made emails offered, while they load, or that they couldn't load. */
 export type ReadyMadeMenu =
@@ -56,7 +62,7 @@ export type ComposerText = {
   /** The chosen email couldn't be filled in (the text stays as it was). */
   hasDraftFailed: boolean;
   /** The email to send, trimmed; or null, with the subject line marked and focused, if it is empty. */
-  checked: (form: HTMLFormElement) => NewEmail | null;
+  checked: (form: HTMLFormElement) => EmailText | null;
 };
 
 type ComposerTextOptions = {
@@ -64,6 +70,8 @@ type ComposerTextOptions = {
   startWith: StartWith | undefined;
   /** The Plain email's greeting and sign-off, shown until the ready-made emails arrive. */
   firstBody: string;
+  /** Each filled-in email's suggested files (Documents needed: the examples). */
+  onSuggested: (files: readonly Attachable[]) => void;
 };
 
 /**
@@ -76,6 +84,7 @@ export function useComposerText({
   target,
   startWith,
   firstBody,
+  onSuggested,
 }: ComposerTextOptions): ComposerText {
   const [pane, setPane] = useState<Pane>("write");
   const [subject, setSubjectText] = useState("");
@@ -97,6 +106,7 @@ export function useComposerText({
     setBodyText(text === undefined ? draft.body : withLine(draft.body, text.line));
     setSubjectError(null);
     setEdited(false);
+    onSuggested(draft.attachments);
   });
 
   function ask(next: ReadyMadeChoice): void {
@@ -109,7 +119,7 @@ export function useComposerText({
     setEdited(true);
   }
 
-  function checked(form: HTMLFormElement): NewEmail | null {
+  function checked(form: HTMLFormElement): EmailText | null {
     const trimmed = subject.trim();
     if (trimmed !== "") {
       setSubjectError(null);
@@ -188,7 +198,7 @@ function useMenu(
 function useDraft(
   target: ReadyMadeTarget,
   request: DraftRequest | null,
-  onDraft: (draft: { subject: string; body: string }) => void,
+  onDraft: (draft: ReadyMadeDraft) => void,
 ): DraftRequest | null {
   const [failed, setFailed] = useState<DraftRequest | null>(null);
   const [fixed] = useState(() => ({ target, onDraft }));

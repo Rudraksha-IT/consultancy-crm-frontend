@@ -218,8 +218,8 @@ function BrochuresComposer({ emailing, profile, onClose, onSent }: BrochuresComp
 }
 
 /**
- * "Email it to <first name>" (ticket 10): the Plain email about the Course's brochures. The files
- * are attached once emails carry attachments (ticket 12).
+ * "Email it to <first name>" (tickets 10, 12): the Plain email about the Course's brochures, with
+ * the brochures attached.
  */
 function brochuresEmail(application: Application): StartWith {
   const { course, university, courseFiles } = application;
@@ -229,6 +229,14 @@ function brochuresEmail(application: Application): StartWith {
       subject: CATALOGUE_TEXT.brochureSubject(course.name, university.name),
       line: CATALOGUE_TEXT.brochureLine(courseFiles.length, course.name, university.name),
     },
+    files: courseFiles.map((file) => ({
+      kind: "course_file",
+      id: file.id,
+      name: file.name,
+      fileName: file.fileName,
+      size: file.size,
+      group: `${university.name}, ${course.name}`,
+    })),
   };
 }
 

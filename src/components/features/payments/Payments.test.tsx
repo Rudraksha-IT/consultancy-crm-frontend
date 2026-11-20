@@ -227,7 +227,11 @@ describe("taking a payment", () => {
   });
 
   it("emails the receipt's Payment from the receipt, as Payment received", async () => {
-    const draft = { subject: "Payment received: receipt 000412", body: "Dear Sita," };
+    const draft = {
+      subject: "Payment received: receipt 000412",
+      body: "Dear Sita,",
+      attachments: [],
+    };
     const menu = {
       kinds: [
         {

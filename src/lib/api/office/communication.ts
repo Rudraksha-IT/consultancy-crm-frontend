@@ -13,12 +13,21 @@ import { studentFilterValues, type StudentFilters } from "@/lib/students";
 import { getJson, postJson } from "../core/client";
 import { ApiRequestError } from "../core/errors";
 import { toFieldErrors } from "../core/fieldErrors";
+import type { AttachmentRef } from "./attachments";
 
 /** The office has no contact email yet, so nothing can be sent to Students (ADR 0023). */
 export class NoContactEmailError extends Error {
   constructor() {
     super("No contact email");
     this.name = "NoContactEmailError";
+  }
+}
+
+/** Storage couldn't give back a file to attach, so nothing was sent (503). */
+export class FilesNotFetchedError extends Error {
+  constructor() {
+    super("Files not fetched");
+    this.name = "FilesNotFetchedError";
   }
 }
 
@@ -36,6 +45,7 @@ export const MessageSchema = z
     status: z.enum(MESSAGE_STATUSES),
     error: z.string(),
     sent_to: z.string(),
+    attachments: z.array(z.string().min(1)),
     sent_at: z.iso.datetime({ offset: true }),
     sent_by: z.object({ id: z.number().int().nullable(), name: z.string().min(1) }),
   })
@@ -48,6 +58,7 @@ export const MessageSchema = z
     status: message.status,
     error: message.error,
     sentTo: message.sent_to,
+    attachments: message.attachments,
     sentAt: message.sent_at,
     sentBy: message.sent_by,
   }));
@@ -88,21 +99,27 @@ export function fetchStudentMessages(
   return getJson(withPage(API_PATHS.studentMessages(studentId), page), MessagePageSchema, fetchFn);
 }
 
-/** The subject line and message Staff wrote. */
-export type NewEmail = { subject: string; body: string };
+/** The subject line and message Staff wrote, and the files to attach (by kind and id). */
+export type NewEmail = { subject: string; body: string; attachments: AttachmentRef[] };
 export type NewEmailField = keyof NewEmail;
-const EMAIL_FIELDS: Record<NewEmailField, string> = { subject: "subject", body: "body" };
+const EMAIL_FIELDS: Record<NewEmailField, string> = {
+  subject: "subject",
+  body: "body",
+  attachments: "attachments",
+};
 
-/** The API's "add the contact email first" refusal, as its own error. */
-function noContactEmail(error: unknown): NoContactEmailError | null {
-  if (!(error instanceof ApiRequestError) || error.status !== HTTP_STATUS.badRequest) return null;
+/** The API's "add the contact email first" refusal, or a file it couldn't get, as its own error. */
+function knownFailure(error: unknown): NoContactEmailError | FilesNotFetchedError | null {
+  if (!(error instanceof ApiRequestError)) return null;
+  if (error.status === HTTP_STATUS.serviceUnavailable) return new FilesNotFetchedError();
+  if (error.status !== HTTP_STATUS.badRequest) return null;
   return NoContactAnswerSchema.safeParse(error.body).success ? new NoContactEmailError() : null;
 }
 
 /**
  * Email one Student. Resolves with the email, sent or failed; rejects with
- * `NoContactEmailError` while the office has no contact email, or `InvalidFieldsError` naming
- * `subject` or `body`.
+ * `NoContactEmailError` while the office has no contact email, `FilesNotFetchedError` when a file
+ * couldn't be got, or `InvalidFieldsError` naming `subject`, `body` or `attachments`.
  */
 export async function sendEmail(
   studentId: number,
@@ -112,7 +129,7 @@ export async function sendEmail(
   try {
     return await postJson(API_PATHS.studentMessages(studentId), email, MessageSchema, fetchFn);
   } catch (error) {
-    throw noContactEmail(error) ?? toFieldErrors(error, EMAIL_FIELDS) ?? error;
+    throw knownFailure(error) ?? toFieldErrors(error, EMAIL_FIELDS) ?? error;
   }
 }
 
@@ -168,8 +185,8 @@ export type BulkEmailField = NewEmailField | "students";
 
 /**
  * Email each of the Students chosen their own copy, one by one; resolves with how it went.
- * Rejects with `NoContactEmailError`, or `InvalidFieldsError` naming `subject`, `body` or
- * `students` (nobody, too many, Lost or unknown Students).
+ * Rejects with `NoContactEmailError`, `FilesNotFetchedError`, or `InvalidFieldsError` naming
+ * `subject`, `body`, `attachments` or `students` (nobody, too many, Lost or unknown Students).
  */
 export async function sendBulkEmail(
   studentIds: readonly number[],
@@ -181,7 +198,7 @@ export async function sendBulkEmail(
     return await postJson(API_PATHS.bulkMessages, body, BulkResultSchema, fetchFn);
   } catch (error) {
     throw (
-      noContactEmail(error) ??
+      knownFailure(error) ??
       toFieldErrors<BulkEmailField>(error, { ...EMAIL_FIELDS, students: "students" }) ??
       error
     );
