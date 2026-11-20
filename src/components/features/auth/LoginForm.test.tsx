@@ -183,6 +183,24 @@ describe("LoginForm: the password", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it("says the app is being updated, keeping the password typed (ticket 14)", async () => {
+    backend(
+      answer(
+        { detail: "The app is being updated. Please try again in a moment.", code: "updating" },
+        503,
+      ),
+    );
+    render(<LoginForm />);
+
+    await logInWith("sita@acme.test", "Kathmandu!2026");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The app is being updated. Please try again in a moment.",
+    );
+    expect(screen.getByLabelText("Password")).toHaveValue("Kathmandu!2026");
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it("says why when the office's Status refuses the login", async () => {
     const detail = "Your office's trial has ended. Ask your Admin to contact the CRM team.";
     backend(answer({ detail, status: "evaluation" }, 403));

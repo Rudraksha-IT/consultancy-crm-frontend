@@ -4,10 +4,12 @@ import { useState } from "react";
 import { z } from "zod";
 
 import { MESSAGES } from "@/constants/messages";
+import { SESSION_TEXT } from "@/constants/session";
 import { ROUTES } from "@/constants/routes";
 import { useFullPageNavigation } from "@/hooks/useFullPageNavigation";
 import {
   InvalidCredentialsError,
+  isUpdatingError,
   logIn,
   restrictionOfError,
   type Credentials,
@@ -57,9 +59,13 @@ export function useLogin(
   return { isSubmitting, error, submit };
 }
 
-/** Wrong credentials, the office's Status in the server's words (issue 42), or a general failure. */
+/**
+ * Wrong credentials, the office's Status in the server's words (issue 42), the app being updated
+ * (ticket 14), or a general failure.
+ */
 function loginErrorMessage(error: unknown): string {
   if (error instanceof InvalidCredentialsError) return MESSAGES.invalidCredentials;
+  if (isUpdatingError(error)) return SESSION_TEXT.updating;
   return restrictionOfError(error)?.message ?? MESSAGES.loginFailed;
 }
 

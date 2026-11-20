@@ -11,7 +11,7 @@ import {
   InvalidCredentialsError,
   InvalidFieldsError,
   isNotLoggedInFailure,
-  NotLoggedInError,
+  notLoggedInErrorOf,
 } from "../core/errors";
 import {
   ConsultancyOverviewSchema,
@@ -92,7 +92,7 @@ export async function fetchPlatformAdmin(fetchFn: typeof fetch = fetch): Promise
   try {
     return await getJson(API_PATHS.platformMe, PlatformAdminAnswerSchema, fetchFn);
   } catch (error) {
-    throw isNotLoggedInFailure(error) ? new NotLoggedInError() : error;
+    throw isNotLoggedInFailure(error) ? notLoggedInErrorOf(error) : error;
   }
 }
 

@@ -39,7 +39,7 @@ export type ForwardOptions = {
 };
 
 /** What every call has before it is checked: its correlation ID and where it is logged. */
-type Start = { correlationId: string; logger: ServerLogger };
+type Start = { correlationId: string; logger: ServerLogger; waited: { ms: number } };
 
 const METHODS: readonly string[] = FORWARDED_METHODS;
 const CHANGING: readonly string[] = CHANGING_METHODS;
@@ -98,6 +98,7 @@ export async function forwardToBackend(
   const start: Start = {
     correlationId: crypto.randomUUID(),
     logger: options.logger ?? serverLogger,
+    waited: { ms: 0 },
   };
   const response = await answer(request, options, start);
   // The path only: the query string, cookies, tokens and bodies are never logged.
@@ -107,6 +108,7 @@ export async function forwardToBackend(
     status: response.status,
     timeTaken: `${String(Date.now() - started)}ms`,
     correlationId: start.correlationId,
+    ...(start.waited.ms > 0 ? { waited: `${String(start.waited.ms)}ms` } : {}),
   });
   return response;
 }

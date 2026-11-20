@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useState, type SubmitEvent } from "react";
 
+import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { TextField } from "@/components/ui/TextField";
 import { LABELS, MESSAGES } from "@/constants/messages";
+import { SESSION_TEXT } from "@/constants/session";
 import { ROUTES } from "@/constants/routes";
 import { useFullPageNavigation } from "@/hooks/useFullPageNavigation";
 import { HTTP_STATUS } from "@/constants/api";
@@ -25,6 +27,8 @@ type LoginFormProps = {
   initialEmail?: string;
   /** Good news shown above the fields, e.g. that the password was just changed (issue 63). */
   notice?: string | null;
+  /** The person's login ended (ticket 14): an info banner says they were logged out. */
+  hasLoginEnded?: boolean;
   /** Two-step login is on (issue 61): show its step instead of opening `homePath`. */
   onTwoFactor?: (step: TwoFactorStep) => void;
   /** A Staff member on their office (default), or a Platform Admin on the Platform (66). */
@@ -46,6 +50,7 @@ export function LoginForm({
   forgotPasswordPath = ROUTES.forgotPassword,
   initialEmail = "",
   notice,
+  hasLoginEnded,
   onTwoFactor,
   side = "staff",
 }: LoginFormProps) {
@@ -54,6 +59,7 @@ export function LoginForm({
 
   return (
     <div className="grid gap-5.5">
+      <LoginEndedNotice isShown={hasLoginEnded} />
       <LoginNotice text={notice} />
       {isPasswordStep ? (
         <PasswordStep
@@ -231,6 +237,16 @@ function stepAfterFailure(error: unknown): "invalid" | "password" {
   return error instanceof ApiRequestError && error.status === HTTP_STATUS.badRequest
     ? "invalid"
     : "password";
+}
+
+/** "You've been logged out" (ticket 14), as an info banner; nothing unless the login ended. */
+function LoginEndedNotice({ isShown }: { isShown: boolean | undefined }) {
+  if (isShown !== true) return null;
+  return (
+    <Banner tone="info" icon="info">
+      {SESSION_TEXT.loggedOut}
+    </Banner>
+  );
 }
 
 /** Good news above the fields (a status, so screen readers announce it); nothing without it. */

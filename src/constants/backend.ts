@@ -1,5 +1,7 @@
 /** How the Next.js server forwards the browser's `/api/...` calls to Django (ADR 0002). */
 
+export { SESSION_ENDED_HEADER } from "./session";
+
 /** The only methods the API answers; anything else is 405. */
 export const FORWARDED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 export type ForwardedMethod = (typeof FORWARDED_METHODS)[number];
@@ -146,6 +148,16 @@ export const UPLOAD_PATH =
   /^\/api\/students\/[0-9]{1,10}\/(?:documents\/(?:[0-9]{1,18}\/files\/)?|offer-letters\/|visas\/[0-9]{1,18}\/letter\/)$/;
 /** How long to wait for Django before answering 504. */
 export const BACKEND_TIMEOUT_MS = 15_000;
+
+/**
+ * While a new version is switched in (ticket 14), Django can't be reached for a few seconds. A
+ * read (GET) is tried again after short waits that grow, for up to 20 seconds in all; a change is
+ * never tried again, so nothing is saved twice.
+ */
+export const UPDATE_RETRY = { totalMs: 20_000, firstWaitMs: 250, longestWaitMs: 2_000 } as const;
+
+/** The answer's `code` when Django can't be reached because the app is being updated. */
+export const UPDATING_CODE = "updating";
 /**
  * A message to many Students (issue 26) is sent one by one while the call waits: Django stops
  * after 60 seconds (BULK_SEND_SECONDS), so it gets longer, still under Cloudflare's 100 seconds.
@@ -187,7 +199,7 @@ export const PROXY_MESSAGES = {
   badRequest: "Bad request.",
   methodNotAllowed: "Method not allowed.",
   tooLarge: "The request is too large.",
-  unreachable: "The server can't be reached.",
+  updating: "The app is being updated. Please try again in a moment.",
   timedOut: "The server took too long to answer.",
   misconfigured: "Something went wrong.",
   unexpectedAnswer: "Something went wrong.",

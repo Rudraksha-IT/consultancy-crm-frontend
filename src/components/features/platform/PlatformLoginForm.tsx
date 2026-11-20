@@ -6,8 +6,10 @@ import { useState } from "react";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
+import { LOGIN_RETURN_PARAMS } from "@/constants/session";
 import { useFullPageNavigation } from "@/hooks/useFullPageNavigation";
 import { logInToPlatform, type TwoFactorStep } from "@/lib/api";
+import { isLoginEndedAddress, safeNextPath } from "@/lib/loginReturn";
 
 import { LoginForm } from "@/components/features/auth/LoginForm";
 import { TwoFactorSetup } from "@/components/features/twoFactor/TwoFactorSetup";
@@ -31,9 +33,11 @@ export function PlatformLoginForm() {
   const params = useSearchParams();
   const navigate = useFullPageNavigation();
   const [step, setStep] = useState<TwoFactorStep | null>(null);
+  // After a login ended (ticket 14): the page the Platform Admin was on, if it is on this site.
+  const homePath = safeNextPath(params.get(LOGIN_RETURN_PARAMS.next)) ?? ROUTES.platformHome;
 
   function openPlatform(): void {
-    navigate(ROUTES.platformHome);
+    navigate(homePath);
   }
 
   function startAgain(): void {
@@ -54,10 +58,11 @@ export function PlatformLoginForm() {
   return (
     <LoginForm
       logIn={logInToPlatform}
-      homePath={ROUTES.platformHome}
+      homePath={homePath}
       forgotPasswordPath={ROUTES.platformForgotPassword}
       side="platform"
       notice={noticeFor(params.get("password"))}
+      hasLoginEnded={isLoginEndedAddress(params)}
       onTwoFactor={setStep}
     />
   );

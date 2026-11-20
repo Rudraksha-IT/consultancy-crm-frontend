@@ -13,8 +13,10 @@ export class ApiRequestError extends Error {
   readonly path: string;
   readonly status: number | null;
   readonly body: unknown;
+  /** A "not logged in" answer to a browser that had a login, which has now ended (ticket 14). */
+  readonly hasLoginEnded: boolean;
 
-  constructor(path: string, status: number | null, body?: unknown) {
+  constructor(path: string, status: number | null, body?: unknown, hasLoginEnded = false) {
     super(
       `API request to ${path} failed${status === null ? "" : ` with status ${String(status)}`}`,
     );
@@ -22,6 +24,7 @@ export class ApiRequestError extends Error {
     this.path = path;
     this.status = status;
     this.body = body;
+    this.hasLoginEnded = hasLoginEnded;
   }
 }
 
@@ -76,12 +79,23 @@ export class TooManyCodesError extends Error {
   }
 }
 
-/** Nobody is logged in on this subdomain (or the session has ended). */
+/**
+ * Nobody is logged in on this subdomain. `hasLoginEnded`: this browser had a login that has ended
+ * (ticket 14), rather than a visitor who never logged in or logged out themselves.
+ */
 export class NotLoggedInError extends Error {
-  constructor() {
+  readonly hasLoginEnded: boolean;
+
+  constructor(hasLoginEnded = false) {
     super("Not logged in");
     this.name = "NotLoggedInError";
+    this.hasLoginEnded = hasLoginEnded;
   }
+}
+
+/** The "not logged in" error for a failed call, keeping whether a login has ended. */
+export function notLoggedInErrorOf(error: unknown): NotLoggedInError {
+  return new NotLoggedInError(error instanceof ApiRequestError && error.hasLoginEnded);
 }
 
 /** The API refused a form's input; `fieldErrors` maps each field (frontend naming) to its messages. */

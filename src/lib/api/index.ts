@@ -550,6 +550,13 @@ export {
 export type { TransferRequestPage } from "./students/transferRequests";
 export type { TransferRequest } from "./students/transferRequestTypes";
 export { onUnexpectedError, reportUnexpectedError, unexpectedErrorOf } from "./core/unexpected";
+export { onLoginEnded, reportLoginEnded } from "./core/loginEnded";
+export {
+  isAppUpdating,
+  isUpdatingError,
+  onUpdatingChange,
+  reportServerAnswer,
+} from "./core/updating";
 export {
   PLATFORM_ADMIN_STATUSES,
   checkPlatformJoinCode,

@@ -5,7 +5,7 @@ import {
   ApiRequestError,
   InvalidCredentialsError,
   isNotLoggedInFailure,
-  NotLoggedInError,
+  notLoggedInErrorOf,
 } from "../core/errors";
 import { StaffLoginOutcomeSchema, type StaffLoginOutcome } from "./staffLogin";
 import { StaffContextSchema, type Credentials, type StaffContext } from "../core/types";
@@ -38,6 +38,6 @@ export async function fetchStaffContext(fetchFn: typeof fetch = fetch): Promise<
   try {
     return await getJson(API_PATHS.staffContext, StaffContextSchema, fetchFn);
   } catch (error) {
-    throw isNotLoggedInFailure(error) ? new NotLoggedInError() : error;
+    throw isNotLoggedInFailure(error) ? notLoggedInErrorOf(error) : error;
   }
 }

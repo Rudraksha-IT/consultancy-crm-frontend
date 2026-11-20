@@ -2,7 +2,9 @@ import { z } from "zod";
 
 import { getJson, postJson, postWithoutBody, putJson } from "./client";
 import { ApiRequestError } from "./errors";
+import { onLoginEnded } from "./loginEnded";
 import { jsonResponse } from "./test-helpers";
+import { isAppUpdating, isUpdatingError, onUpdatingChange, reportServerAnswer } from "./updating";
 
 const ThingSchema = z.object({ name: z.string() });
 
@@ -139,5 +141,101 @@ describe("putJson", () => {
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify({ a: 1 }),
     });
+  });
+});
+
+describe("while the app is being updated (ticket 14)", () => {
+  const UPDATING = {
+    detail: "The app is being updated. Please try again in a moment.",
+    code: "updating",
+  };
+
+  afterEach(() => {
+    reportServerAnswer(false);
+  });
+
+  it("reports it on the updating answer, and the error says so", async () => {
+    const heard = vi.fn();
+    const stop = onUpdatingChange(heard);
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(UPDATING, 503));
+
+    const error: unknown = await postJson("/api/thing/", {}, ThingSchema, fetchFn).catch(
+      (caught: unknown) => caught,
+    );
+    stop();
+
+    expect(isAppUpdating()).toBe(true);
+    expect(isUpdatingError(error)).toBe(true);
+    expect(heard).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops once the server answers again, telling listeners once", async () => {
+    const updating = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(UPDATING, 503));
+    await getJson("/api/thing/", ThingSchema, updating).catch(() => undefined);
+    const heard = vi.fn();
+    const stop = onUpdatingChange(heard);
+    const back = vi
+      .fn<typeof fetch>()
+      .mockImplementation(() => Promise.resolve(jsonResponse({ name: "Acme" })));
+
+    await getJson("/api/thing/", ThingSchema, back);
+    await getJson("/api/thing/", ThingSchema, back);
+    stop();
+
+    expect(isAppUpdating()).toBe(false);
+    expect(heard).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([
+    { body: { detail: "The files can't be fetched right now." }, status: 503 },
+    { body: UPDATING, status: 500 },
+    { body: { detail: "x", code: "other" }, status: 503 },
+  ])("is not said for another failure ($status)", async ({ body, status }) => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(body, status));
+
+    const error: unknown = await getJson("/api/thing/", ThingSchema, fetchFn).catch(
+      (caught: unknown) => caught,
+    );
+
+    expect(isUpdatingError(error)).toBe(false);
+    expect(isAppUpdating()).toBe(false);
+  });
+});
+
+describe("a login that ended in the middle of work (ticket 14)", () => {
+  it("is reported on a 401, saying whether this browser's login ended", async () => {
+    const heard = vi.fn<(hasLoginEnded: boolean) => void>();
+    const stop = onLoginEnded(heard);
+    const ended = new Response(JSON.stringify({ detail: "Not logged in." }), {
+      status: 401,
+      headers: { "content-type": "application/json", "x-session-ended": "1" },
+    });
+    const visitor = jsonResponse({ detail: "Not logged in." }, 401);
+
+    await postJson(
+      "/api/thing/",
+      {},
+      ThingSchema,
+      vi.fn<typeof fetch>().mockResolvedValue(ended),
+    ).catch(() => undefined);
+    await getJson(
+      "/api/thing/",
+      ThingSchema,
+      vi.fn<typeof fetch>().mockResolvedValue(visitor),
+    ).catch(() => undefined);
+    stop();
+
+    expect(heard.mock.calls).toEqual([[true], [false]]);
+  });
+
+  it.each([403, 404, 500])("is not reported on a %s", async (status) => {
+    const heard = vi.fn();
+    const stop = onLoginEnded(heard);
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ detail: "no" }, status));
+
+    await getJson("/api/thing/", ThingSchema, fetchFn).catch(() => undefined);
+    stop();
+
+    expect(heard).not.toHaveBeenCalled();
   });
 });

@@ -9,6 +9,8 @@ import type { TwoFactorStep } from "@/lib/api";
 
 type StaffSecondStepProps = {
   step: TwoFactorStep;
+  /** Where to go once it passes: Home, or the page the person was on (ticket 14). */
+  homePath?: string;
   /** Back to the password (or the login page), after the sign-in has timed out or was used. */
   onStartAgain: () => void;
 };
@@ -18,11 +20,15 @@ type StaffSecondStepProps = {
  * or setting the app up first. It follows the password, joining with an Invite Code and a reset
  * by Code alike, and opens Home once it passes.
  */
-export function StaffSecondStep({ step, onStartAgain }: StaffSecondStepProps) {
+export function StaffSecondStep({
+  step,
+  homePath = ROUTES.home,
+  onStartAgain,
+}: StaffSecondStepProps) {
   const navigate = useFullPageNavigation();
 
   function openHome(): void {
-    navigate(ROUTES.home);
+    navigate(homePath);
   }
 
   if (step === "verify") {

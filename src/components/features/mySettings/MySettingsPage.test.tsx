@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { SetMyNameContext } from "@/components/features/shell/myName";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
-import type { StaffContext } from "@/lib/api";
+import { reportServerAnswer, type StaffContext } from "@/lib/api";
 import { formatAdDate } from "@/lib/dates";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
@@ -465,6 +465,36 @@ describe("MySettingsPage", () => {
       expect(await within(details).findByRole("alert")).toHaveTextContent(
         "That didn't save. Try again in a moment.",
       );
+    });
+
+    it("says the app is being updated, keeping what was typed and the focus (ticket 14)", async () => {
+      backend(
+        on("GET", ME_PATH, ME),
+        on(
+          "PATCH",
+          ME_PATH,
+          { detail: "The app is being updated. Please try again in a moment.", code: "updating" },
+          503,
+        ),
+      );
+      renderPage();
+      const details = await screen.findByRole("region", { name: "My Details" });
+      await userEvent.click(await within(details).findByRole("button", { name: "Edit details" }));
+      const name = within(details).getByLabelText("Full Name");
+      await userEvent.clear(name);
+      await userEvent.type(name, "Sita Rai");
+      const save = within(details).getByRole("button", { name: "Save details" });
+
+      await userEvent.click(save);
+
+      expect(
+        await within(details).findByText("The app is being updated. Please try again in a moment."),
+      ).toBeInTheDocument();
+      expect(within(details).queryByText("That didn't save. Try again in a moment.")).toBeNull();
+      expect(within(details).queryByRole("alert")).toBeNull();
+      expect(within(details).getByLabelText("Full Name")).toHaveValue("Sita Rai");
+      expect(save).toHaveFocus();
+      reportServerAnswer(false);
     });
 
     it("says so when changing the password fails for another reason", async () => {

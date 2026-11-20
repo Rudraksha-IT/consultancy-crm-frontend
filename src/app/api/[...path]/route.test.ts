@@ -144,6 +144,26 @@ function silenceStdout() {
 
 let stdout: ReturnType<typeof silenceStdout>;
 
+/**
+ * Answer a call that waits for Django to come back (ticket 14) without the real 20 seconds:
+ * fake timers, moved on by `ms`, are used for it and put back afterwards.
+ */
+async function afterWaiting(call: () => Promise<Response>, ms = 20_000): Promise<Response> {
+  vi.useFakeTimers();
+  try {
+    const pending = call();
+    await vi.advanceTimersByTimeAsync(ms);
+    return await pending;
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
+const UPDATING = {
+  detail: "The app is being updated. Please try again in a moment.",
+  code: "updating",
+};
+
 beforeEach(() => {
   stdout = silenceStdout();
   vi.stubEnv("BACKEND_BASE_URL", BACKEND);
@@ -794,17 +814,17 @@ describe("refused calls", () => {
     }
   });
 
-  it("says the server can't be reached, without revealing its address", async () => {
+  it("says the app is being updated when Django can't be reached, without its address", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => Promise.reject(new TypeError(`fetch failed: connect ECONNREFUSED ${BACKEND}`))),
     );
 
-    const response = await GET(incoming("/api/context/"));
+    const response = await afterWaiting(() => GET(incoming("/api/context/")));
     const text = await response.text();
 
-    expect(response.status).toBe(502);
-    expect(JSON.parse(text)).toEqual({ detail: "The server can't be reached." });
+    expect(response.status).toBe(503);
+    expect(JSON.parse(text)).toEqual(UPDATING);
     expect(text).not.toContain("backend");
     expect(text).not.toContain(TOKEN);
   });
@@ -820,6 +840,193 @@ describe("refused calls", () => {
     expect(JSON.parse(text)).toEqual({ detail: "Something went wrong." });
     expect(text).not.toContain("INTERNAL_API_TOKEN");
     expect(fetchFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("while the app is being updated (ticket 14)", () => {
+  const down = () => Promise.reject(new TypeError(`fetch failed: connect ECONNREFUSED ${BACKEND}`));
+
+  it("tries a read again while Django is down and answers once it is back", async () => {
+    let tries = 0;
+    const fetchFn = vi.fn(() => {
+      tries += 1;
+      return tries < 4 ? down() : Promise.resolve(Response.json({ ok: true }));
+    });
+    vi.stubGlobal("fetch", fetchFn);
+
+    const response = await afterWaiting(() => GET(incoming("/api/students/")), 5_000);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    expect(fetchFn).toHaveBeenCalledTimes(4);
+  });
+
+  it("waits longer each time, up to 2 seconds between tries", async () => {
+    const times: number[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        times.push(Date.now());
+        return down();
+      }),
+    );
+
+    await afterWaiting(() => GET(incoming("/api/students/")));
+
+    const gaps = times.slice(1).map((time, index) => time - (times[index] ?? 0));
+    expect(gaps.slice(0, 4)).toEqual([250, 500, 1000, 2000]);
+    expect(Math.max(...gaps)).toBe(2000);
+  });
+
+  it("gives up after 20 seconds with the updating answer", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchFn = vi.fn(down);
+      vi.stubGlobal("fetch", fetchFn);
+      let isAnswered = false;
+
+      const pending = GET(incoming("/api/students/")).then((response) => {
+        isAnswered = true;
+        return response;
+      });
+      await vi.advanceTimersByTimeAsync(17_000);
+      expect(isAnswered).toBe(false);
+      await vi.advanceTimersByTimeAsync(3_000);
+      const response = await pending;
+
+      expect(response.status).toBe(503);
+      expect(response.headers.get("cache-control")).toBe("no-store");
+      expect(await response.json()).toEqual(UPDATING);
+      expect(fetchFn.mock.calls.length).toBeGreaterThan(5);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each(["POST", "PUT", "PATCH", "DELETE"])(
+    "never tries a change (%s) again, so nothing is saved twice",
+    async (method) => {
+      const fetchFn = vi.fn(down);
+      vi.stubGlobal("fetch", fetchFn);
+
+      const response = await afterWaiting(() =>
+        POST(incoming("/api/students/7/", { method, body: "{}", tokens: newTokens() })),
+      );
+
+      expect(response.status).toBe(503);
+      expect(await response.json()).toEqual(UPDATING);
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each([
+    { status: 502, body: "<html>Bad gateway</html>" },
+    { status: 504, body: "<html>Gateway timeout</html>" },
+    { status: 503, body: "<html>Service unavailable</html>" },
+  ])("treats a $status from something other than Django like no answer", async (answer) => {
+    let tries = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        tries += 1;
+        return Promise.resolve(
+          tries === 1
+            ? new Response(answer.body, { status: answer.status })
+            : Response.json({ ok: true }),
+        );
+      }),
+    );
+
+    const response = await afterWaiting(() => GET(incoming("/api/students/")), 1_000);
+
+    expect(response.status).toBe(200);
+    expect(tries).toBe(2);
+  });
+
+  it("relays Django's own 503 refusal at once (e.g. files can't be fetched)", async () => {
+    const { fetchFn } = fakeBackend(() =>
+      Response.json({ detail: "The files can't be fetched right now." }, { status: 503 }),
+    );
+
+    const response = await GET(incoming("/api/messages/attachable/"));
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ detail: "The files can't be fetched right now." });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs the path, the status and how long it waited, never a token or a body", async () => {
+    let tries = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        tries += 1;
+        return tries < 3 ? down() : Promise.resolve(Response.json({ secret: "student-data" }));
+      }),
+    );
+    const tokens = newTokens();
+
+    await afterWaiting(() => GET(incoming("/api/students/?q=sita", { tokens })), 2_000);
+
+    expect(loggedOfType("api")).toEqual([
+      expect.objectContaining({
+        url: "/api/students/",
+        method: "GET",
+        status: 200,
+        waited: "750ms",
+      }),
+    ]);
+    const text = JSON.stringify(logged());
+    expect(text).not.toContain(tokens.access);
+    expect(text).not.toContain("student-data");
+    expect(text).not.toContain("sita");
+    expect(text).not.toContain(BACKEND);
+  });
+
+  it("adds no wait to the log of a call Django answered at once", async () => {
+    fakeBackend();
+
+    await GET(incoming("/api/students/"));
+
+    expect(loggedOfType("api")[0]).not.toHaveProperty("waited");
+  });
+});
+
+describe("a login that has ended (ticket 14)", () => {
+  it("is marked when the browser sent a login cookie", async () => {
+    fakeBackend(() => Response.json({ detail: "Not logged in." }, { status: 401 }));
+
+    const response = await GET(incoming("/api/context/", { tokens: newTokens() }));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("x-session-ended")).toBe("1");
+  });
+
+  it("is marked when the cookie no longer opens (a changed key)", async () => {
+    fakeBackend(() => Response.json({ detail: "Not logged in." }, { status: 401 }));
+    const request = incoming("/api/context/");
+    request.headers.append("cookie", "crm_auth=v1.not-a-sealed-value");
+
+    const response = await GET(request);
+
+    expect(response.headers.get("x-session-ended")).toBe("1");
+  });
+
+  it("is not marked for a visitor who never logged in", async () => {
+    fakeBackend(() => Response.json({ detail: "Not logged in." }, { status: 401 }));
+
+    const response = await GET(incoming("/api/context/"));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("x-session-ended")).toBeNull();
+  });
+
+  it("is not marked on other refusals", async () => {
+    fakeBackend(() => Response.json({ detail: "Forbidden." }, { status: 403 }));
+
+    const response = await GET(incoming("/api/context/", { tokens: newTokens() }));
+
+    expect(response.headers.get("x-session-ended")).toBeNull();
   });
 });
 
@@ -890,9 +1097,9 @@ describe("logging", () => {
       vi.fn(() => Promise.reject(new TypeError(`fetch failed: connect ECONNREFUSED ${BACKEND}`))),
     );
 
-    await GET(incoming("/api/context/"));
+    await afterWaiting(() => GET(incoming("/api/context/")));
 
-    expect(loggedOfType("api")[0]).toMatchObject({ status: 502 });
+    expect(loggedOfType("api")[0]).toMatchObject({ status: 503 });
     expect(loggedOfType("error")[0]).toMatchObject({
       level: 50,
       url: "/api/context/",
@@ -908,7 +1115,7 @@ describe("logging", () => {
       vi.fn(() => Promise.reject(new TypeError(`fetch failed: connect ECONNREFUSED ${BACKEND}`))),
     );
 
-    await GET(incoming("/api/context/"));
+    await afterWaiting(() => GET(incoming("/api/context/")));
 
     const [entry] = loggedOfType("error");
     expect(entry?.correlationId).toBe(loggedOfType("api")[0]?.correlationId);
@@ -1273,7 +1480,7 @@ describe("an expired access token", () => {
 
     const response = await GET(incoming("/api/context/", { tokens: newTokens() }));
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(503);
     expect(response.headers.getSetCookie()).toEqual([]);
   });
 
@@ -1379,7 +1586,7 @@ describe("logging out", () => {
       incoming("/api/auth/logout/", { method: "POST", tokens: newTokens() }),
     );
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(503);
     expect(clearsTheCookie(response)).toBe(true);
   });
 
@@ -1550,7 +1757,7 @@ describe("changing my password or signing out my other devices (issue 38)", () =
       incoming("/api/me/password/", { method: "POST", body: "{}", tokens: newTokens() }),
     );
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(503);
     expect(cookieTokens(response)?.access).toBe("renewed-acc");
   });
 });
