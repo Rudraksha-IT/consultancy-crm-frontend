@@ -4,6 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { HomeGreeting } from "@/components/features/home/HomeGreeting";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { SESSION_TEXT } from "@/constants/session";
 import type { StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
@@ -242,6 +243,20 @@ describe("HomeClock", () => {
     await user.click(within(await clockRegion()).getByRole("button", { name: "Clock in" }));
 
     expect(await screen.findByText("You're already clocked in.")).toBeInTheDocument();
+  });
+
+  it("while the app is being updated, the toast says so, not that it didn't work (ticket 14)", async () => {
+    const user = userEvent.setup();
+    backend(
+      on("GET", CLOCK, NOT_IN),
+      on("POST", "/api/clock/in/", { detail: SESSION_TEXT.updating, code: "updating" }, 503),
+    );
+    renderGreeting();
+
+    await user.click(within(await clockRegion()).getByRole("button", { name: "Clock in" }));
+
+    expect(await screen.findByText(SESSION_TEXT.updating)).toBeInTheDocument();
+    expect(screen.queryByText("That didn't work. Try again.")).not.toBeInTheDocument();
   });
 
   it("an Admin is told they can clock in anywhere, and needs no Work from home", async () => {

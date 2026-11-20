@@ -5,6 +5,7 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { TaskCountContext } from "@/components/features/shell/taskCount";
 import { StudentProfilePage } from "@/components/features/students/profile/StudentProfilePage";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { SESSION_TEXT } from "@/constants/session";
 import type { StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
@@ -234,6 +235,20 @@ describe("Tasks page", () => {
     expect(
       await screen.findByText("Only the person it's for, who gave it, or an Admin can tick it."),
     ).toBeInTheDocument();
+  });
+
+  it("says the app is being updated when that is why ticking failed (ticket 14)", async () => {
+    backend(
+      on("GET", MINE, pageOf([TASK])),
+      on("PATCH", "/api/tasks/31/", { detail: SESSION_TEXT.updating, code: "updating" }, 503),
+    );
+    renderTasks();
+
+    await userEvent.click(
+      await screen.findByRole("checkbox", { name: `Mark done: ${TASK.title}` }),
+    );
+
+    expect(await screen.findByText(SESSION_TEXT.updating)).toBeInTheDocument();
   });
 
   it("can't tick a Task the API says I may not", async () => {

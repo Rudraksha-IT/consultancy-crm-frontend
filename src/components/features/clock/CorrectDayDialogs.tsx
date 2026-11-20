@@ -20,6 +20,7 @@ import {
   setMissingClockOut,
   type ClockDay,
   type ClockSession,
+  updatingOr,
 } from "@/lib/api";
 import { durationText, hoursText, officeHhMm, officeTime } from "@/lib/clock";
 import { formatMonth } from "@/lib/dates";
@@ -385,7 +386,7 @@ function refusedFields(error: unknown): Errors {
 /** A rule the day breaks, in the server's words; nothing when a field was refused instead. */
 function failureOf(error: unknown): string | null {
   if (error instanceof InvalidFieldsError) return null;
-  return error instanceof ClockRefusedError ? error.message : TEXT.failed;
+  return error instanceof ClockRefusedError ? error.message : updatingOr(error, TEXT.failed);
 }
 
 function missingOf(isAdding: boolean, values: Values): Errors {

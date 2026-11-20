@@ -2,7 +2,12 @@
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { PLATFORM_TEAM_TEXT as TEXT } from "@/constants/platformTeam";
-import { deactivatePlatformAdmin, InvalidFieldsError, type PlatformAdminRow } from "@/lib/api";
+import {
+  deactivatePlatformAdmin,
+  InvalidFieldsError,
+  type PlatformAdminRow,
+  updatingOr,
+} from "@/lib/api";
 
 type DeactivateDialogProps = {
   admin: PlatformAdminRow;
@@ -31,5 +36,5 @@ export function DeactivateDialog({ admin, onDone, onClose }: DeactivateDialogPro
 /** The server's own reason, e.g. "At least one active Platform Admin must stay." */
 function refusalOf(error: unknown): string {
   const [reason] = error instanceof InvalidFieldsError ? (error.fieldErrors.detail ?? []) : [];
-  return reason ?? TEXT.changeFailed;
+  return reason ?? updatingOr(error, TEXT.changeFailed);
 }

@@ -13,7 +13,7 @@ import { useToast } from "@/components/ui/useToast";
 import { HTTP_STATUS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
 import { TASK_TEXT, TaskPriority, TaskTiming } from "@/constants/tasks";
-import { ApiRequestError, setTaskDone, type Task } from "@/lib/api";
+import { ApiRequestError, setTaskDone, type Task, updatingOr } from "@/lib/api";
 import { localDayIso } from "@/lib/dates";
 
 type TaskListProps = {
@@ -95,7 +95,7 @@ function useToggle(task: Task, onChanged: () => void) {
       refreshCount();
     } catch (error) {
       const isRefused = error instanceof ApiRequestError && error.status === HTTP_STATUS.forbidden;
-      showToast(isRefused ? TASK_TEXT.cantTick : TASK_TEXT.tickFailed);
+      showToast(isRefused ? TASK_TEXT.cantTick : updatingOr(error, TASK_TEXT.tickFailed));
     } finally {
       setIsBusy(false);
     }

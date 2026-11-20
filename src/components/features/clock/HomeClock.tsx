@@ -15,7 +15,7 @@ import { CLOCK_TEXT as TEXT } from "@/constants/clock";
 import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { WORK_FROM_HOME_TEXT as WFH } from "@/constants/workFromHome";
-import { ClockRefusedError, clockIn, clockOut, type MyClock } from "@/lib/api";
+import { ClockRefusedError, clockIn, clockOut, type MyClock, updatingOr } from "@/lib/api";
 import { durationText, elapsedMinutes, officeTime } from "@/lib/clock";
 
 import { AskWorkFromHomeDialog } from "./AskWorkFromHomeDialog";
@@ -179,7 +179,7 @@ function useClockAction(clock: MyClock, onAnswer: (clock: MyClock) => void) {
       setRefusal({ message: error.message, isNoNetwork: clock.officeNetwork === "none" });
       return;
     }
-    showToast(error instanceof ClockRefusedError ? error.message : TEXT.failed);
+    showToast(error instanceof ClockRefusedError ? error.message : updatingOr(error, TEXT.failed));
   }
 
   return {
