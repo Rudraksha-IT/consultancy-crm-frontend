@@ -13,6 +13,7 @@ import {
 import type { BinTarget, ChecklistItem, DocumentLinkedTo, StoredDocument } from "@/lib/api";
 
 import { BinnedDocuments, BinnedFileItems, type BinViewer } from "./ChecklistBin";
+import { DocumentExampleLine } from "./DocumentExampleLine";
 import { OpenFileButton } from "./OpenFileButton";
 import type { LinkAction } from "./useDocumentLink";
 
@@ -81,6 +82,21 @@ export function DocumentChecklist(props: DocumentChecklistProps) {
   );
 }
 
+/** States still waiting for the Student's paper: they show the type's Document Example (ticket 11). */
+const STILL_TO_COME: readonly DocumentState[] = [DocumentState.NotReceived, DocumentState.Rejected];
+
+/** The type's Document Example, while the Student's paper is still to come. */
+function ItemExample({ item }: { item: ChecklistItem }) {
+  if (!STILL_TO_COME.includes(item.state)) return null;
+  return (
+    <DocumentExampleLine
+      typeName={item.documentType.name}
+      instruction={item.instruction}
+      examples={item.examples}
+    />
+  );
+}
+
 /** One type: its state in words, what it is for, its files and why it was rejected. */
 function ChecklistRow(props: ItemActionsProps) {
   const { item, canChange, onShow, onDelete, bin } = props;
@@ -103,6 +119,7 @@ function ChecklistRow(props: ItemActionsProps) {
         )}
         {item.state === DocumentState.Rejected && <RejectionReason document={document} />}
         <BinnedDocuments {...bin} typeName={typeName} documents={item.inBin} />
+        <ItemExample item={item} />
       </div>
       {canChange && (
         <div className="tablet:col-start-auto tablet:justify-end col-start-2 flex flex-wrap gap-3">

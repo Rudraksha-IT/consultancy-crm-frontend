@@ -133,6 +133,12 @@ export const MAX_COURSE_FILE_BODY_BYTES = 5 * 1024 * 1024 + 64 * 1024;
 /** Where a Course File is uploaded: one Course's files. */
 export const COURSE_FILE_UPLOAD_PATH = /^\/api\/catalogue\/courses\/[0-9]{1,18}\/files\/$/;
 /**
+ * Where a Document Example (ticket 11) is uploaded: added to a Document Type, or in place of one.
+ * One file of at most 5 MB, like a Course File.
+ */
+export const DOCUMENT_EXAMPLE_UPLOAD_PATH =
+  /^\/api\/configuration\/(?:document-types\/[0-9]{1,18}\/examples|document-examples\/[0-9]{1,18}\/replace)\/$/;
+/**
  * The only calls that may carry an upload: a Student's Document (issue 16), files added to one
  * (issue 78), an Offer Letter (issue 76) and a visa letter (issue 77).
  */

@@ -190,6 +190,18 @@ export {
   uploadDocument,
 } from "./documents/documents";
 export type { UploadField } from "./documents/documents";
+export {
+  addDocumentExample,
+  deleteDocumentExampleForGood,
+  ExampleRefusedError,
+  fetchBinDocumentExampleLink,
+  fetchDocumentExampleLink,
+  removeDocumentExample,
+  replaceDocumentExample,
+  restoreDocumentExample,
+  setDocumentInstruction,
+} from "./documents/documentExamples";
+export type { ExampleField } from "./documents/documentExamples";
 export type {
   BinEntry,
   BinItem,
@@ -197,6 +209,7 @@ export type {
   BinPage,
   BinTarget,
   BinnedDocument,
+  BinnedDocumentExample,
   BinnedFile,
   Checklist,
   ChecklistItem,
@@ -205,6 +218,7 @@ export type {
   CountryList,
   CountryListRow,
   DocumentCheck,
+  DocumentExample,
   DocumentLinkedTo,
   DocumentLinkOption,
   DocumentType,

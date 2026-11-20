@@ -146,6 +146,8 @@ describe("fetchChecklist", () => {
         uploadedBy: { id: 5, name: "Bikash Thapa" },
       },
       inBin: [],
+      instruction: "",
+      examples: [],
     });
   });
 
@@ -465,6 +467,9 @@ describe("Document Types", () => {
         neededByEveryone: true,
         usualGroup: "applying",
         usedBy: { countries: 2, courses: 6, students: 1, documents: 4 },
+        instruction: "",
+        examples: [],
+        exampleCount: 0,
       },
     ]);
   });

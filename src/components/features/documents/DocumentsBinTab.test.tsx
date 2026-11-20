@@ -61,6 +61,13 @@ const BROCHURE = {
   ...NOTE,
   reason: "Deleted from the Catalogue",
 };
+const OLD_SAMPLE = {
+  kind: "document_example",
+  document_example: { id: 56, file_name: "old-sample-statement.pdf" },
+  document_type: { id: 7, name: "Bank Statement" },
+  ...NOTE,
+  reason: "Replaced",
+};
 const BIN = { count: 2, page: 1, page_size: 25, results: [WHOLE, ONE_FILE] };
 const EMPTY = { count: 0, page: 1, page_size: 25, results: [] };
 const PAPERWORK = {
@@ -278,6 +285,103 @@ describe("the Bin tab (Admins, issue 79)", () => {
 
     expect(await screen.findByText("Deakin IT brochure deleted for good")).toBeVisible();
     expect(callsTo(fetchFn, "DELETE", "/api/documents/bin/course-files/31/")).toHaveLength(1);
+  });
+
+  it("lists a Document Example with its kind and Document Type (ticket 11)", async () => {
+    backend(on("GET", BIN_PATH, { ...BIN, count: 2, results: [OLD_SAMPLE, WHOLE] }));
+    renderPage("admin");
+
+    const row = await itemFor("old-sample-statement.pdf");
+    expect(within(row).getByText("Document Example")).toBeVisible();
+    expect(row).toHaveTextContent("Bank Statement");
+    expect(row).toHaveTextContent("Why: Replaced");
+    expect(within(row).queryByRole("link")).toBeNull();
+  });
+
+  it("opens a Document Example through its own Bin link", async () => {
+    const tab = { opener: {}, location: { replace: vi.fn() }, close: vi.fn() };
+    openBlankTab.mockReturnValue(tab);
+    backend(
+      on("GET", BIN_PATH, { ...BIN, count: 1, results: [OLD_SAMPLE] }),
+      on("GET", "/api/documents/bin/document-examples/56/link/?action=open", {
+        url: "https://files.test/e?sig=1",
+        expires_in: 300,
+      }),
+    );
+    renderPage("admin");
+
+    await userEvent.click(
+      within(await itemFor("old-sample-statement.pdf")).getByRole("button", {
+        name: "Open old-sample-statement.pdf",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(tab.location.replace).toHaveBeenCalledWith("https://files.test/e?sig=1");
+    });
+  });
+
+  it("restores a Document Example to its Document Type", async () => {
+    const fetchFn = backend(
+      on("GET", BIN_PATH, { ...BIN, count: 1, results: [OLD_SAMPLE] }),
+      on("POST", "/api/documents/bin/document-examples/56/restore/", {
+        id: 56,
+        file_name: "old-sample-statement.pdf",
+        content_type: "application/pdf",
+        size: 1000,
+        uploaded_at: "2026-11-19T10:00:00+05:45",
+      }),
+    );
+    renderPage("admin");
+
+    await userEvent.click(
+      within(await itemFor("old-sample-statement.pdf")).getByRole("button", {
+        name: "Restore old-sample-statement.pdf",
+      }),
+    );
+
+    expect(await screen.findByText("old-sample-statement.pdf restored")).toBeVisible();
+    expect(
+      callsTo(fetchFn, "POST", "/api/documents/bin/document-examples/56/restore/"),
+    ).toHaveLength(1);
+  });
+
+  it("says why a Document Example can't be restored to a type that has 3", async () => {
+    const reason = "This document already has 3 example files. Remove one first.";
+    backend(
+      on("GET", BIN_PATH, { ...BIN, count: 1, results: [OLD_SAMPLE] }),
+      on("POST", "/api/documents/bin/document-examples/56/restore/", { detail: reason }, 400),
+    );
+    renderPage("admin");
+
+    await userEvent.click(
+      within(await itemFor("old-sample-statement.pdf")).getByRole("button", {
+        name: "Restore old-sample-statement.pdf",
+      }),
+    );
+
+    expect(await screen.findByText(reason)).toBeVisible();
+  });
+
+  it("deletes a Document Example for good after asking", async () => {
+    const fetchFn = backend(
+      on("GET", BIN_PATH, { ...BIN, count: 1, results: [OLD_SAMPLE] }),
+      (path, init) =>
+        init?.method === "DELETE" && path === "/api/documents/bin/document-examples/56/"
+          ? new Response(null, { status: 204 })
+          : undefined,
+    );
+    renderPage("admin");
+
+    await userEvent.click(
+      within(await itemFor("old-sample-statement.pdf")).getByRole("button", {
+        name: "Delete old-sample-statement.pdf for good",
+      }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Delete for good" }));
+
+    expect(await screen.findByText("old-sample-statement.pdf deleted for good")).toBeVisible();
+    expect(callsTo(fetchFn, "DELETE", "/api/documents/bin/document-examples/56/")).toHaveLength(1);
   });
 
   it("says when the Bin is empty", async () => {

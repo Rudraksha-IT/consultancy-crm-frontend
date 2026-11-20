@@ -635,6 +635,21 @@ describe("request bodies", () => {
     expect(tooBig.status).toBe(413);
   });
 
+  it.each([
+    ["adding an example", "/api/configuration/document-types/4/examples/"],
+    ["replacing an example", "/api/configuration/document-examples/9/replace/"],
+  ])("may be as large as a Document Example when %s (ticket 11)", async (_case, path) => {
+    const { sent } = fakeBackend();
+    const size = 5 * 1024 * KIB + 64 * KIB;
+
+    const response = await POST(incoming(path, { method: "POST", body: new Uint8Array(size) }));
+    const tooBig = await POST(incoming(path, { method: "POST", body: new Uint8Array(size + 1) }));
+
+    expect(response.status).toBe(200);
+    expect((await sentBody(sent)).length).toBe(size);
+    expect(tooBig.status).toBe(413);
+  });
+
   it("are refused over the logo limit on the logo path", async () => {
     const { fetchFn } = fakeBackend();
 
@@ -661,6 +676,13 @@ describe("request bodies", () => {
     ["another method", "PUT", UPLOAD_PATH],
     ["a Course File's rename", "POST", "/api/catalogue/course-files/3/"],
     ["a path that only looks like a Course's files", "POST", "/api/catalogue/courses/x/files/"],
+    ["a Document Type's instruction", "PUT", "/api/configuration/document-types/4/instruction/"],
+    ["an example's own path", "POST", "/api/configuration/document-examples/9/"],
+    [
+      "a path that only looks like examples",
+      "POST",
+      "/api/configuration/document-types/x/examples/",
+    ],
   ])("keep the usual limit for %s", async (_case, method, path) => {
     const { fetchFn } = fakeBackend();
 

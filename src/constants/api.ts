@@ -143,6 +143,19 @@ export const API_PATHS = {
   reportsBatches: "/api/reports/batches/",
   documentTypes: "/api/configuration/document-types/",
   documentType: (id: number) => `/api/configuration/document-types/${String(id)}/`,
+  documentInstruction: (id: number) =>
+    `/api/configuration/document-types/${String(id)}/instruction/`,
+  documentExamples: (typeId: number) =>
+    `/api/configuration/document-types/${String(typeId)}/examples/`,
+  documentExample: (id: number) => `/api/configuration/document-examples/${String(id)}/`,
+  replaceDocumentExample: (id: number) =>
+    `/api/configuration/document-examples/${String(id)}/replace/`,
+  documentExampleLink: (id: number) => `/api/documents/examples/${String(id)}/link/`,
+  binDocumentExample: (id: number) => `/api/documents/bin/document-examples/${String(id)}/`,
+  binDocumentExampleRestore: (id: number) =>
+    `/api/documents/bin/document-examples/${String(id)}/restore/`,
+  binDocumentExampleLink: (id: number) =>
+    `/api/documents/bin/document-examples/${String(id)}/link/`,
   countryLists: "/api/configuration/document-lists/",
   countryList: (country: string) => `/api/configuration/document-lists/${country}/`,
   countryListNewDocument: (country: string) =>

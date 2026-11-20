@@ -38,6 +38,34 @@ export const DocumentTypeListSchema = z
 
 const CountSchema = z.number().int().nonnegative();
 
+/**
+ * One example file of a Document Type (Document Example, ticket 11): what it should look like.
+ * Never a Student's Document.
+ */
+export const DocumentExampleSchema = z
+  .object({
+    id: z.number().int(),
+    file_name: z.string(),
+    content_type: z.string(),
+    size: CountSchema,
+    uploaded_at: z.iso.datetime({ offset: true }),
+  })
+  .transform(({ id, file_name, content_type, size, uploaded_at }) => ({
+    id,
+    fileName: file_name,
+    contentType: content_type,
+    size,
+    uploadedAt: uploaded_at,
+  }));
+
+export type DocumentExample = z.infer<typeof DocumentExampleSchema>;
+
+/** A Document Type's instruction and example files in use (ticket 11); none when left out. */
+const ExampleFields = {
+  instruction: z.string().default(""),
+  examples: z.array(DocumentExampleSchema).default([]),
+};
+
 /** A Document Type in Configuration, with where it is used (issues 40, 80). */
 export const ConfiguredDocumentTypeSchema = z
   .object({
@@ -51,12 +79,16 @@ export const ConfiguredDocumentTypeSchema = z
       students: CountSchema,
       documents: CountSchema,
     }),
+    ...ExampleFields,
+    /** Every example file, counting the Bin: a type with any is never removed. */
+    example_count: CountSchema.default(0),
   })
-  .transform(({ needed_by_everyone, usual_group, used_by, ...rest }) => ({
+  .transform(({ needed_by_everyone, usual_group, used_by, example_count, ...rest }) => ({
     ...rest,
     neededByEveryone: needed_by_everyone,
     usualGroup: usual_group,
     usedBy: used_by,
+    exampleCount: example_count,
   }));
 
 export type ConfiguredDocumentType = z.infer<typeof ConfiguredDocumentTypeSchema>;
@@ -202,6 +234,8 @@ const ChecklistItemSchema = z
     document: StoredDocumentSchema.nullable(),
     /** The type's Documents waiting in the Bin, newest first (issue 79). */
     in_bin: z.array(BinnedDocumentSchema).default([]),
+    /** What it should look like (Document Example, ticket 11). */
+    ...ExampleFields,
   })
   .transform((item) => ({
     documentType: item.document_type,
@@ -212,6 +246,8 @@ const ChecklistItemSchema = z
     state: item.state,
     document: item.document,
     inBin: item.in_bin,
+    instruction: item.instruction,
+    examples: item.examples,
   }));
 
 export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
@@ -345,8 +381,28 @@ const BinItemSchema = z
 
 export type BinItem = z.infer<typeof BinItemSchema>;
 
-/** Anything on the Bin tab: a Document, one of its files, or a Course File (ticket 10). */
-export type BinEntry = BinItem | BinnedCourseFile;
+/** An example file in the Bin (ticket 11): its name and its Document Type. */
+export const BinnedDocumentExampleSchema = z
+  .object({
+    kind: z.literal("document_example"),
+    document_example: z.object({ id: z.number().int(), file_name: z.string() }),
+    document_type: PersonSchema,
+    ...BinNoteSchema.shape,
+  })
+  .transform(({ kind, document_example, document_type, by, at, reason }) => ({
+    kind,
+    example: { id: document_example.id, fileName: document_example.file_name },
+    documentType: document_type,
+    bin: { by, at, reason },
+  }));
+
+export type BinnedDocumentExample = z.infer<typeof BinnedDocumentExampleSchema>;
+
+/**
+ * Anything on the Bin tab: a Document, one of its files, a Course File (ticket 10) or a Document
+ * Example (ticket 11).
+ */
+export type BinEntry = BinItem | BinnedCourseFile | BinnedDocumentExample;
 
 /** One page of the Bin tab, newest first. */
 export const BinPageSchema = z
@@ -354,7 +410,7 @@ export const BinPageSchema = z
     count: z.number().int().nonnegative(),
     page: z.number().int().positive(),
     page_size: z.number().int().positive(),
-    results: z.array(z.union([BinItemSchema, BinnedCourseFileSchema])),
+    results: z.array(z.union([BinItemSchema, BinnedCourseFileSchema, BinnedDocumentExampleSchema])),
   })
   .transform(({ page_size, results, ...rest }) => ({
     ...rest,

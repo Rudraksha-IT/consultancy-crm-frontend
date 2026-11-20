@@ -17,14 +17,18 @@ import { useFullPageNavigation } from "@/hooks/useFullPageNavigation";
 import { Chip } from "@/components/ui/Chip";
 import {
   deleteCourseFileForGood,
+  deleteDocumentExampleForGood,
   deleteForGood,
   fetchBinCourseFileLink,
+  fetchBinDocumentExampleLink,
   fetchBinFileLink,
   restoreCourseFile,
+  restoreDocumentExample,
   restoreFromBin,
   type BinEntry,
   type BinItem,
   type BinnedCourseFile,
+  type BinnedDocumentExample,
   type BinPage,
   type BinTarget,
 } from "@/lib/api";
@@ -83,9 +87,13 @@ export function BinTab({ state, onPage, onChanged }: BinTabProps) {
   );
 }
 
-/** A whole Document is named by its type, one file by its own name, a Course File by its name. */
+/**
+ * A whole Document is named by its type, one file by its own name, a Course File by its name, an
+ * example file by its own name.
+ */
 function itemName(item: BinEntry): string {
   if (item.kind === "course_file") return item.courseFile.name;
+  if (item.kind === "document_example") return item.example.fileName;
   const file = binnedFile(item);
   return file === null ? item.document.name : file.fileName;
 }
@@ -93,6 +101,7 @@ function itemName(item: BinEntry): string {
 /** Stays the same for an item while the Bin is shown. */
 function keyOf(item: BinEntry): string {
   if (item.kind === "course_file") return `course-file-${String(item.courseFile.id)}`;
+  if (item.kind === "document_example") return `example-${String(item.example.id)}`;
   return `${item.kind}-${String(targetOf(item).fileId ?? item.document.id)}`;
 }
 
@@ -130,8 +139,7 @@ function useBinTabActions(onChanged: () => void) {
     restore: async (item: BinEntry) => {
       setProblem(null);
       try {
-        if (item.kind === "course_file") await restoreCourseFile(item.courseFile.id);
-        else await restoreFromBin(item.student.id, targetOf(item));
+        await restoreEntry(item);
         showToast(BIN_TEXT.restored(itemName(item)));
         onChanged();
       } catch (error) {
@@ -139,12 +147,23 @@ function useBinTabActions(onChanged: () => void) {
       }
     },
     deleteForGood: async (item: BinEntry) => {
-      if (item.kind === "course_file") await deleteCourseFileForGood(item.courseFile.id);
-      else await deleteForGood(item.student.id, targetOf(item));
+      await deleteEntryForGood(item);
       showToast(BIN_TEXT.deletedForGood(itemName(item)));
       onChanged();
     },
   };
+}
+
+async function restoreEntry(item: BinEntry): Promise<void> {
+  if (item.kind === "course_file") await restoreCourseFile(item.courseFile.id);
+  else if (item.kind === "document_example") await restoreDocumentExample(item.example.id);
+  else await restoreFromBin(item.student.id, targetOf(item));
+}
+
+async function deleteEntryForGood(item: BinEntry): Promise<void> {
+  if (item.kind === "course_file") await deleteCourseFileForGood(item.courseFile.id);
+  else if (item.kind === "document_example") await deleteDocumentExampleForGood(item.example.id);
+  else await deleteForGood(item.student.id, targetOf(item));
 }
 
 type BinContentProps = {
@@ -166,13 +185,9 @@ function BinContent({ state, onPage, ...actions }: BinContentProps) {
         <EmptyState>{BIN_TEXT.binEmpty}</EmptyState>
       ) : (
         <ul aria-label={BIN_TEXT.tabBin} className="divide-rule divide-y">
-          {page.items.map((item) =>
-            item.kind === "course_file" ? (
-              <CourseFileRow key={keyOf(item)} item={item} {...actions} />
-            ) : (
-              <BinRow key={keyOf(item)} item={item} {...actions} />
-            ),
-          )}
+          {page.items.map((item) => (
+            <EntryRow key={keyOf(item)} item={item} {...actions} />
+          ))}
         </ul>
       )}
       <BinPager page={page} onPage={onPage} />
@@ -181,6 +196,13 @@ function BinContent({ state, onPage, ...actions }: BinContentProps) {
 }
 
 type RowActions = Omit<BinContentProps, "state" | "onPage">;
+
+/** The row for each kind of item. */
+function EntryRow({ item, ...actions }: RowActions & { item: BinEntry }) {
+  if (item.kind === "course_file") return <CourseFileRow item={item} {...actions} />;
+  if (item.kind === "document_example") return <ExampleRow item={item} {...actions} />;
+  return <BinRow item={item} {...actions} />;
+}
 type BinRowProps = RowActions & { item: BinItem };
 
 /** One item: what, whose, who and when, why, its files to open, and Restore or Delete for good. */
@@ -257,6 +279,42 @@ function CourseFileRow({
             fileName={courseFile.fileName}
             onOpen={() => {
               onOpen(() => fetchBinCourseFileLink(courseFile.id));
+            }}
+          />
+        </div>
+      </div>
+      <RowButtons item={item} onRestore={onRestore} onDelete={onDelete} />
+    </li>
+  );
+}
+
+/** A Document Example (ticket 11): its file, its Document Type, who and when, why. */
+function ExampleRow({
+  item,
+  onOpen,
+  onRestore,
+  onDelete,
+}: RowActions & { item: BinnedDocumentExample }) {
+  const dates = useDates();
+  const { example } = item;
+  return (
+    <li className="tablet:grid-cols-[minmax(0,1fr)_auto] grid items-start gap-x-6 gap-y-4 px-6 py-5">
+      <div className="grid min-w-0 gap-1">
+        <span className="text-body text-ink font-semibold break-all">{example.fileName}</span>
+        <div className="text-secondary text-ink-2 min-h-control flex flex-wrap items-center gap-x-2">
+          <Chip hasDot={false}>{BIN_TEXT.kindDocumentExample}</Chip>
+          <span className="break-words">{item.documentType.name}</span>
+          <span aria-hidden="true">·</span>
+          <span>{BIN_TEXT.itemLine(item.bin.by.name, dates.dateTime(item.bin.at))}</span>
+        </div>
+        <p className="text-ink break-words">
+          <span className="font-semibold">{BIN_TEXT.why}</span> {item.bin.reason}
+        </p>
+        <div className="text-secondary">
+          <OpenFileButton
+            fileName={example.fileName}
+            onOpen={() => {
+              onOpen(() => fetchBinDocumentExampleLink(example.id));
             }}
           />
         </div>
