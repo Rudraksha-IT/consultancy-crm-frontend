@@ -15,7 +15,7 @@ const ADMIN: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["catalogue"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

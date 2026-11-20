@@ -8,7 +8,7 @@ const CONTEXT = {
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "counsellor",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: { name: "Acme Education" },
   modules: ["students"],

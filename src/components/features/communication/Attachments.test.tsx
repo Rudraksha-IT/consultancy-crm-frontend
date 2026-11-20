@@ -26,7 +26,7 @@ const COUNSELLOR: StaffContext = {
   },
   modules: ["students", "communication"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

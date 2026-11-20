@@ -20,7 +20,7 @@ const VISITOR: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["students", "batches", "accounts"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: { platformAdminName: "Ramesh", platformHost: testHost("admin") },
   theme: DEFAULT_THEME,
 };

@@ -26,7 +26,7 @@ const CONTEXT = {
     name: "Ram Thapa",
     email: "ram@acme.test",
     role: "teacher",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: { name: "Acme Education" },
   modules: ["students", "tasks", "batches"],

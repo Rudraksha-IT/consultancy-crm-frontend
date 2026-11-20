@@ -17,7 +17,7 @@ const CONTEXT = {
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "counsellor",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: {
     name: "Acme Education",
@@ -59,7 +59,7 @@ const SESSION = {
   },
   modules: ["students", "tasks"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   pageSwipe: false,
   supportAccess: null,
   theme: THEME,

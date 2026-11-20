@@ -32,7 +32,7 @@ const COUNSELLOR: StaffContext = {
   consultancy: OFFICE,
   modules: ["students", "communication", "batches"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

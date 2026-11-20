@@ -16,17 +16,11 @@ function saver() {
 }
 
 describe("useSavedColourMode", () => {
-  it("follows the device while the person's choice is the device", () => {
-    const isDark = { value: true };
-    const media = preferDarkDevice(isDark);
-    const { result } = renderHook(() => useSavedColourMode("device", saver()));
+  it("starts light on a dark device until the person picks dark (2026-11-20)", () => {
+    preferDarkDevice({ value: true });
 
-    expect(result.current.mode).toBe("dark");
+    const { result } = renderHook(() => useSavedColourMode("light", saver()));
 
-    isDark.value = false;
-    act(() => {
-      media.emitChange();
-    });
     expect(result.current.mode).toBe("light");
   });
 
@@ -41,7 +35,7 @@ describe("useSavedColourMode", () => {
   it("switches at once and saves the choice for the person", () => {
     preferDarkDevice({ value: false });
     const save = saver();
-    const { result } = renderHook(() => useSavedColourMode("device", save));
+    const { result } = renderHook(() => useSavedColourMode("light", save));
 
     act(() => {
       result.current.toggleMode();

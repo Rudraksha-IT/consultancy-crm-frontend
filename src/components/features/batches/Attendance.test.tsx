@@ -20,7 +20,7 @@ const TEACHER: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["students", "tasks", "batches"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

@@ -16,7 +16,7 @@ const ADMIN: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["clock_in"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

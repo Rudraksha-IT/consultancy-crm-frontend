@@ -22,7 +22,7 @@ const ADMIN: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["configuration"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

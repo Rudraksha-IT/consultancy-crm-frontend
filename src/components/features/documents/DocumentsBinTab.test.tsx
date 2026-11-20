@@ -23,7 +23,7 @@ function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
     consultancy: consultancySummary(),
     modules: ["documents"],
     dateDisplay: "AD",
-    colourMode: "device",
+    colourMode: "light",
     supportAccess: null,
     theme: DEFAULT_THEME,
   };

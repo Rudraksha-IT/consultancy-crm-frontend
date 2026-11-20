@@ -15,7 +15,7 @@ const ADMIN: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["students", "applications", "visas"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

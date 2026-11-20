@@ -11,14 +11,13 @@ function preferDarkDevice(isDark: { value: boolean }) {
 }
 
 describe("useColourMode", () => {
-  it("follows the device until the person chooses", () => {
+  it("is light until the person chooses, even on a dark device (2026-11-20)", () => {
     const isDark = { value: true };
     const media = preferDarkDevice(isDark);
     const { result } = renderHook(() => useColourMode("staff-1"));
 
-    expect(result.current.mode).toBe("dark");
+    expect(result.current.mode).toBe("light");
 
-    isDark.value = false;
     act(() => {
       media.emitChange();
     });
@@ -69,18 +68,18 @@ describe("useColourMode", () => {
 });
 
 describe("useColourMode on a dark device", () => {
-  it("switches to light and back", () => {
+  it("switches to dark and back, the device never deciding", () => {
     preferDarkDevice({ value: true });
     const { result } = renderHook(() => useColourMode("staff-9"));
 
     act(() => {
       result.current.toggleMode();
     });
-    expect(result.current.mode).toBe("light");
+    expect(result.current.mode).toBe("dark");
 
     act(() => {
       result.current.toggleMode();
     });
-    expect(result.current.mode).toBe("dark");
+    expect(result.current.mode).toBe("light");
   });
 });

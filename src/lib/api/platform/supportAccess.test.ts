@@ -30,7 +30,7 @@ const CONTEXT = {
     name: "Ramesh",
     email: "ramesh@platform.test",
     role: "admin",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: {
     name: "Acme Education",

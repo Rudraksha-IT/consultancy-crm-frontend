@@ -15,7 +15,7 @@ const COUNSELLOR: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["students", "clock_in"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

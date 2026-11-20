@@ -21,7 +21,7 @@ const COUNSELLOR: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -33,7 +33,7 @@ const ME = {
   job_title: "Senior Counsellor",
   role: "counsellor",
   joined_on: "2026-11-01",
-  colour_mode: "device",
+  colour_mode: "light",
   page_swipe: false,
   notifications: { task_given: true, task_due_tomorrow: true, morning_summary: false },
 };

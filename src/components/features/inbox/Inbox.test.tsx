@@ -20,7 +20,7 @@ const SITA: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["students", "tasks"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

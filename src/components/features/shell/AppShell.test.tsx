@@ -34,7 +34,7 @@ const TEACHER_CONTEXT = {
     name: "Ram Thapa",
     email: "ram@acme.test",
     role: "teacher",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: { name: "Acme Education" },
   modules: ["students", "tasks", "batches"],
@@ -50,7 +50,7 @@ const ADMIN_CONTEXT = {
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "admin",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   modules: ["students", "tasks", "documents", "configuration"],
 };
