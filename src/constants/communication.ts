@@ -26,12 +26,62 @@ export const TO_CHIPS_SHOWN = 4;
 
 /**
  * The Plain email's starting text: the greeting and the sign-off, with room between. To many
- * Students it says "Dear Student," (no names). Ticket 09 moves the starting text to the backend.
+ * Students it says "Dear Student," (no names). Shown only until the ready-made emails have loaded
+ * (or if they couldn't); the backend writes every ready-made email's starting text (ticket 09).
  */
 export function plainEmailText(firstName: string | null, sender: string, office: string): string {
   const greeting = firstName === null ? "Dear Student," : `Dear ${firstName},`;
   return `${greeting}\n\n\n\nKind regards,\n${sender}\n${office}`;
 }
+
+/** The eight ready-made emails (ticket 09), in the order offered; values match the API. */
+export const READY_MADE_KINDS = [
+  "welcome",
+  "documents_needed",
+  "payment_received",
+  "fee_reminder",
+  "offer_received",
+  "visa_result",
+  "class_details",
+  "plain",
+] as const;
+export type ReadyMadeKind = (typeof READY_MADE_KINDS)[number];
+
+/** Each ready-made email's name and what it says (prototype: the composer's Email row). */
+export const READY_MADE: Record<ReadyMadeKind, { name: string; what: string }> = {
+  welcome: { name: "Welcome", what: "Greets them by name and names their counsellor" },
+  documents_needed: {
+    name: "Documents needed",
+    what: "The documents still missing from their checklist",
+  },
+  payment_received: {
+    name: "Payment received",
+    what: "Amount, Fee Type, date, method and receipt",
+  },
+  fee_reminder: { name: "Fee reminder", what: "Their fees, what they paid and what is left" },
+  offer_received: {
+    name: "Offer received",
+    what: "The University, Course and Intake of an offer",
+  },
+  visa_result: { name: "Visa result", what: "Granted or Refused, in the right tone" },
+  class_details: { name: "Class details", what: "A class's days, time and start date" },
+  plain: { name: "Plain email", what: "Only the greeting and sign-off" },
+};
+
+/** What a ready-made email is about, picked beside it; values match the API. */
+export const READY_MADE_RECORDS = ["payment", "offer", "visa", "batch"] as const;
+export type ReadyMadeRecord = (typeof READY_MADE_RECORDS)[number];
+
+export const READY_MADE_RECORD_LABELS: Record<ReadyMadeRecord, string> = {
+  payment: "Payment",
+  offer: "Offer letter",
+  visa: "Visa",
+  batch: "Class",
+};
+
+/** The longest record label and reason the API sends. */
+export const RECORD_LABEL_MAX_LENGTH = 1000;
+export const UNAVAILABLE_MAX_LENGTH = 200;
 
 /** The words of the Email screens (prototype: Email, the composer, the Student picker). */
 export const COMMUNICATION_TEXT = {
@@ -88,6 +138,15 @@ export const COMMUNICATION_TEXT = {
   couldntSend: "The email couldn't be sent. Try again.",
   noEmailAddress: (name: string) => `${name} has no email address. Add one in Edit details first.`,
   writeSubject: "Write a subject line.",
+  readyMade: "Email",
+  readyMadeOption: (name: string, unavailable: string | null) =>
+    unavailable === null ? name : `${name} (${unavailable.toLowerCase()})`,
+  readyMadeHint: (what: string) =>
+    `${what}. Choosing another email replaces the subject line and message.`,
+  startAgain: "Start again",
+  readyMadeFailed:
+    "The ready-made emails couldn't be loaded. You can still write the email yourself.",
+  draftFailed: "That email couldn't be filled in. Try again, or write it yourself.",
   skippedOrFailed: "Skipped or failed",
   noContactAdmin:
     "Add the office's contact email in Configuration first. Emails can't go to Students until it's set, because that's where their replies go.",

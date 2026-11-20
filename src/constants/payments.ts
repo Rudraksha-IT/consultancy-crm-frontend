@@ -56,6 +56,7 @@ export const PAYMENT_TEXT = {
   paidBy: "Paid by",
   receivedBy: (name: string) => `Received by ${name}`,
   stamp: "Received",
+  emailIt: "Email it",
   printReceipt: "Print receipt",
   cannotTakePayments: "You can't take payments any more. Refresh the page to see why.",
   closeAfterPrinting: "Print it now: once closed, only an Admin can open it again.",

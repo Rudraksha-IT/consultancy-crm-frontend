@@ -226,6 +226,47 @@ describe("taking a payment", () => {
     expect(print).toHaveBeenCalledOnce();
   });
 
+  it("emails the receipt's Payment from the receipt, as Payment received", async () => {
+    const draft = { subject: "Payment received: receipt 000412", body: "Dear Sita," };
+    const menu = {
+      kinds: [
+        {
+          kind: "payment_received",
+          record: "payment",
+          records: [{ id: 412, label: "Receipt 000412: Application fee, NPR 25,000" }],
+          unavailable: null,
+        },
+        { kind: "plain", record: null, records: [], unavailable: null },
+      ],
+    };
+    backend(
+      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("POST", PAYMENTS, RECEIPT, 201),
+      on("GET", "/api/students/7/emails/ready-made/", menu),
+      on("GET", "/api/students/7/emails/draft/?kind=payment_received&record=412", draft),
+    );
+    renderPage({ ...FRONT_DESK, modules: ["students", "communication"] });
+    await fillAndSave(await openPaymentDialog());
+    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
+
+    await userEvent.click(within(receipt).getByRole("button", { name: "Email it" }));
+
+    const composer = await screen.findByRole("dialog", { name: "New email" });
+    expect(await within(composer).findByDisplayValue(draft.subject)).toBeInTheDocument();
+    expect(within(composer).getByRole("combobox", { name: "Payment" })).toHaveValue("412");
+    expect(screen.queryByRole("dialog", { name: "Receipt" })).toBeNull();
+  });
+
+  it("offers no Email it while Email is switched off", async () => {
+    backend(on("GET", "/api/students/7/", DESK_PROFILE), on("POST", PAYMENTS, RECEIPT, 201));
+    renderPage();
+    await fillAndSave(await openPaymentDialog());
+
+    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
+
+    expect(within(receipt).queryByRole("button", { name: "Email it" })).toBeNull();
+  });
+
   it("closes the receipt with Escape", async () => {
     backend(on("GET", "/api/students/7/", DESK_PROFILE), on("POST", PAYMENTS, RECEIPT, 201));
     renderPage();

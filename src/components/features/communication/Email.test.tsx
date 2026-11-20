@@ -713,6 +713,36 @@ describe("Pre-ticked from a list or a class", () => {
     expect(picker).toHaveTextContent("3 Students can be chosen. The first 2 are ticked");
   });
 
+  it("Email the class opens on Class details for that class", async () => {
+    const classes = [
+      { id: 2, label: "PTE Evening, 5 PM" },
+      { id: 1, label: "IELTS Morning, 7 AM" },
+    ];
+    const details = { subject: "Your class: IELTS Morning", body: "Dear Student," };
+    backend(
+      CLASS,
+      on("GET", `${BULK}?batch=1`, choosable),
+      on("GET", "/api/students/", LIST),
+      on("GET", "/api/messages/bulk/ready-made/", {
+        kinds: [
+          { kind: "class_details", record: "batch", records: classes, unavailable: null },
+          { kind: "plain", record: null, records: [], unavailable: null },
+        ],
+      }),
+      on("GET", "/api/messages/bulk/draft/?kind=class_details&record=1", details),
+    );
+    renderIn(COUNSELLOR, <BatchPage batchId={1} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Email the class" }));
+    const picker = await screen.findByRole("dialog", { name: "Email many Students" });
+    await within(picker).findByText(/Students? chosen/);
+
+    await userEvent.click(within(picker).getByRole("button", { name: "Next: write the email" }));
+
+    const composer = await screen.findByRole("dialog", { name: "Email many Students" });
+    expect(await within(composer).findByDisplayValue(details.subject)).toBeInTheDocument();
+    expect(within(composer).getByRole("combobox", { name: "Class" })).toHaveValue("1");
+  });
+
   const EMAIL_OFF: StaffContext = { ...COUNSELLOR, modules: ["students", "batches"] };
   const TEACHER: StaffContext = { ...COUNSELLOR, staff: { ...COUNSELLOR.staff, role: "teacher" } };
 

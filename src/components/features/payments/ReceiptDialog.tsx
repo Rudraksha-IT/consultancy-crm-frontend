@@ -22,6 +22,8 @@ type ReceiptDialogProps = {
   /** The office logo beside the name (issue 39), or none for the initials. */
   officeLogo: OfficeLogo | null;
   onClose: () => void;
+  /** Email it to the Student as Payment received; left out where it can't be emailed. */
+  onEmail?: (() => void) | undefined;
 };
 
 /**
@@ -29,7 +31,13 @@ type ReceiptDialogProps = {
  * are now, and the total. Its date is in the office's calendar with the other one under it, so
  * an AD receipt always carries the BS date too (spec 101).
  */
-export function ReceiptDialog({ receipt, officeName, officeLogo, onClose }: ReceiptDialogProps) {
+export function ReceiptDialog({
+  receipt,
+  officeName,
+  officeLogo,
+  onClose,
+  onEmail,
+}: ReceiptDialogProps) {
   return (
     <Dialog
       isOpen
@@ -37,7 +45,9 @@ export function ReceiptDialog({ receipt, officeName, officeLogo, onClose }: Rece
       isPrintable
       title={PAYMENT_TEXT.receipt}
       onClose={onClose}
-      footer={<ReceiptFooter canPrint={typeof receipt !== "string"} onClose={onClose} />}
+      footer={
+        <ReceiptFooter canPrint={typeof receipt !== "string"} onClose={onClose} onEmail={onEmail} />
+      }
     >
       {typeof receipt === "string" ? (
         <ReceiptNotShown state={receipt} />
@@ -51,11 +61,18 @@ export function ReceiptDialog({ receipt, officeName, officeLogo, onClose }: Rece
   );
 }
 
-/** Close, and Print receipt once there is one to print. */
-function ReceiptFooter({ canPrint, onClose }: { canPrint: boolean; onClose: () => void }) {
+type ReceiptFooterProps = Pick<ReceiptDialogProps, "onClose" | "onEmail"> & { canPrint: boolean };
+
+/** Close, Email it (where it can be emailed), and Print receipt once there is one to print. */
+function ReceiptFooter({ canPrint, onClose, onEmail }: ReceiptFooterProps) {
   return (
     <>
       <Button onClick={onClose}>{LABELS.close}</Button>
+      {canPrint && onEmail !== undefined && (
+        <Button icon="message" onClick={onEmail}>
+          {PAYMENT_TEXT.emailIt}
+        </Button>
+      )}
       {canPrint && (
         <Button
           variant="primary"

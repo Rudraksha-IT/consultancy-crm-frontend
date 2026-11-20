@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { useId, useState, type SubmitEvent } from "react";
+import { useId, useRef, useState, type SubmitEvent } from "react";
 
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Banner } from "@/components/ui/Banner";
@@ -16,13 +16,15 @@ import {
   plainEmailText,
 } from "@/constants/communication";
 import { LABELS } from "@/constants/messages";
-import type { BulkResult, NewEmail } from "@/lib/api";
+import type { BulkResult } from "@/lib/api";
 
-import { PaneToggle, SendingFinished, ToRow, type Pane } from "./ComposerParts";
+import { PaneToggle, SendingFinished, ToRow } from "./ComposerParts";
 import { composerWording, type ComposerWording } from "./composerWording";
 import { ContactEmailBanner } from "./ContactEmailBanner";
 import { EmailPreview } from "./EmailPreview";
+import { ReadyMadeRow } from "./ReadyMadeRow";
 import type { EmailRecipient } from "./recipients";
+import { useComposerText, type ComposerText, type StartWith } from "./useComposerText";
 import { useEmailSend, type EmailSend } from "./useEmailSend";
 
 type EmailComposerProps = {
@@ -35,12 +37,15 @@ type EmailComposerProps = {
   onSent?: () => void;
   /** Go back to choosing the Students (many), keeping who is chosen. */
   onChange?: () => void;
+  /** The ready-made email (and record) to open on, e.g. Payment received from a receipt. */
+  startWith?: StartWith | undefined;
 };
 
 /**
- * Write a Plain email (issue 04): who it's to, a subject line and the message, beside a live
- * preview of what the Student receives. Near full screen; at narrow widths Write and Preview
- * take turns. One Student's email is confirmed in a toast; many show Sending finished.
+ * Write an email (issues 04, 09): who it's to, the ready-made email it starts from (and the
+ * record it is about), a subject line and the message, beside a live preview of what the Student
+ * receives. Near full screen; at narrow widths Write and Preview take turns. One Student's email
+ * is confirmed in a toast; many show Sending finished.
  */
 export function EmailComposer(props: EmailComposerProps) {
   const [result, setResult] = useState<BulkResult | null>(null);
@@ -58,13 +63,25 @@ export function EmailComposer(props: EmailComposerProps) {
 
 type ComposerProps = EmailComposerProps & { onBulkSent: (result: BulkResult) => void };
 
-function Composer({ recipients, isBulk, onClose, onSent, onChange, onBulkSent }: ComposerProps) {
+function Composer({
+  recipients,
+  isBulk,
+  onClose,
+  onSent,
+  onChange,
+  onBulkSent,
+  startWith,
+}: ComposerProps) {
   const formId = useId();
-  const { consultancy } = useCurrentStaff();
+  const { staff, consultancy } = useCurrentStaff();
   const only = isBulk ? null : (recipients[0] ?? null);
   const wording = composerWording(only, recipients, consultancy.name);
   const sending = useEmailSend({ only, recipients, onSent, onBulkSent });
-  const draft = useDraft(wording);
+  const draft = useComposerText({
+    target: only === null ? "many" : { studentId: only.id },
+    startWith,
+    firstBody: plainEmailText(wording.greetingName, staff.name, consultancy.name),
+  });
   const missingAddress = addressMissingFor(only);
   const canSend = isSendable(consultancy.hasContactEmail, missingAddress, recipients);
 
@@ -106,6 +123,7 @@ function Composer({ recipients, isBulk, onClose, onSent, onChange, onBulkSent }:
             <ContactEmailBanner />
             <ToRow recipients={recipients} isBulk={isBulk} onChange={onChange} />
             <Problems missingAddress={missingAddress} students={sending.fieldErrors.students} />
+            <ReadyMadeRow text={draft} />
             <ComposerFields draft={draft} sending={sending} hint={wording.hint} />
           </form>
           <EmailPreview
@@ -135,48 +153,12 @@ function addressMissingFor(only: EmailRecipient | null): string | null {
   return only !== null && only.email === "" ? only.name : null;
 }
 
-type Draft = {
-  pane: Pane;
-  setPane: (pane: Pane) => void;
-  subject: string;
-  setSubject: (subject: string) => void;
-  subjectError: string | null;
-  body: string;
-  setBody: (body: string) => void;
-  /** The email to send, trimmed; or null, with the subject line marked and focused, if it is empty. */
-  checked: (form: HTMLFormElement) => NewEmail | null;
-};
-
-/** What is being written, starting from the Plain email's greeting and sign-off. */
-function useDraft(wording: ComposerWording): Draft {
-  const { staff, consultancy } = useCurrentStaff();
-  const [pane, setPane] = useState<Pane>("write");
-  const [subject, setSubject] = useState("");
-  const [subjectError, setSubjectError] = useState<string | null>(null);
-  const [body, setBody] = useState(() =>
-    plainEmailText(wording.greetingName, staff.name, consultancy.name),
-  );
-
-  function checked(form: HTMLFormElement): NewEmail | null {
-    const trimmed = subject.trim();
-    if (trimmed !== "") {
-      setSubjectError(null);
-      return { subject: trimmed, body: body.trim() };
-    }
-    setSubjectError(TEXT.writeSubject);
-    setPane("write");
-    focusField(form, "subject");
-    return null;
-  }
-
-  return { pane, setPane, subject, setSubject, subjectError, body, setBody, checked };
-}
-
-type ComposerFieldsProps = { draft: Draft; sending: EmailSend; hint: string };
+type ComposerFieldsProps = { draft: ComposerText; sending: EmailSend; hint: string };
 
 /** The subject line and the message, with what the server refused and why sending failed. */
 function ComposerFields({ draft, sending, hint }: ComposerFieldsProps) {
   const { fieldErrors, failure } = sending;
+  const startAgainRow = useRef<HTMLDivElement>(null);
   return (
     <>
       <TextField
@@ -194,18 +176,34 @@ function ComposerFields({ draft, sending, hint }: ComposerFieldsProps) {
         name="body"
         rows={12}
         placeholder={TEXT.messagePlaceholder}
-        defaultValue={draft.body}
+        value={draft.body}
         onChange={draft.setBody}
         hint={hint}
         errors={fieldErrors.body}
       />
+      {draft.isEdited && (
+        <div ref={startAgainRow} className="-mt-3 flex justify-end">
+          <Button
+            size="sm"
+            variant="ghost"
+            icon="restore"
+            onClick={() => {
+              draft.startAgain();
+              // The button goes once the text is back: focus moves to the message (rule 8).
+              focusField(startAgainRow.current?.closest("form") ?? null, "body");
+            }}
+          >
+            {TEXT.startAgain}
+          </Button>
+        </div>
+      )}
       {failure !== null && <Banner tone="problem">{failure}</Banner>}
     </>
   );
 }
 
-function focusField(form: HTMLFormElement, name: string): void {
-  const field = form.elements.namedItem(name);
+function focusField(form: HTMLFormElement | null, name: string): void {
+  const field = form?.elements.namedItem(name);
   if (field instanceof HTMLElement) field.focus();
 }
 

@@ -141,6 +141,8 @@ export type {
   NewEmailField,
   PreTickSource,
 } from "./office/communication";
+export { fetchReadyMade, fetchReadyMadeDraft } from "./office/readyMade";
+export type { ReadyMadeDraft, ReadyMadeEntry, ReadyMadeTarget } from "./office/readyMade";
 export {
   removeLogo,
   saveOfficeDetails,

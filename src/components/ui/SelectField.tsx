@@ -2,7 +2,12 @@ import type { ChangeEvent } from "react";
 
 import { Field, type FieldProps } from "./Field";
 
-export type SelectOption = { value: string; label: string };
+export type SelectOption = {
+  value: string;
+  label: string;
+  /** Shown but can't be chosen; the label should say why. */
+  isDisabled?: boolean;
+};
 
 type SelectFieldProps = FieldProps & {
   name: string;
@@ -37,7 +42,7 @@ export function SelectField({
           onChange={onChange && handleChange}
         >
           {options.map((option) => (
-            <option key={option.value} value={option.value}>
+            <option key={option.value} value={option.value} disabled={option.isDisabled}>
               {option.label}
             </option>
           ))}

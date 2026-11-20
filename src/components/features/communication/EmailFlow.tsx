@@ -8,6 +8,7 @@ import { fetchChoosable, type PreTickSource } from "@/lib/api";
 import { EmailComposer } from "./EmailComposer";
 import type { EmailRecipient } from "./recipients";
 import { StudentPicker } from "./StudentPicker";
+import type { StartWith } from "./useComposerText";
 
 type EmailFlowProps = {
   /** One Student (a click picks them) or many (tick, then write). */
@@ -26,7 +27,7 @@ type Step =
 
 /**
  * Email a Student, or many (issue 04): choose who it goes to, then write it. Change goes back to
- * the choice with everyone still ticked.
+ * the choice with everyone still ticked. A class's email opens on its Class details (ticket 09).
  */
 export function EmailFlow({ mode, preTick, onClose, onSent }: EmailFlowProps) {
   const [step, setStep] = useState<Step>(
@@ -61,6 +62,7 @@ export function EmailFlow({ mode, preTick, onClose, onSent }: EmailFlowProps) {
       isBulk={isBulk}
       onClose={onClose}
       onSent={sent}
+      startWith={startWithFor(preTick)}
       {...(isBulk && {
         onChange: () => {
           setStep({ kind: "picking", chosen: step.chosen, note: step.note });
@@ -68,6 +70,11 @@ export function EmailFlow({ mode, preTick, onClose, onSent }: EmailFlowProps) {
       })}
     />
   );
+}
+
+/** A class's email opens on its Class details; other emails on the first that can be used. */
+function startWithFor(source: PreTickSource | undefined): StartWith | undefined {
+  return source?.kind === "batch" ? { kind: "class_details", record: source.batchId } : undefined;
 }
 
 /** Load who is ticked first, then hand them over, with a note when there were more than allowed. */

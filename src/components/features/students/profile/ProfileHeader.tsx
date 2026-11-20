@@ -110,25 +110,24 @@ export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
 }
 
 type PaymentFlowProps = {
-  profile: Pick<StudentProfile, "id" | "name">;
+  /** With an email address, the receipt can be emailed to them (ticket 09). */
+  profile: Pick<StudentProfile, "id" | "name"> & { email?: string };
   onClose: () => void;
-  /** The Payment was saved; History has a new entry. */
+  /** The Payment was saved; History has a new entry. Also after it was emailed (Activity). */
   onRecorded: () => void;
 };
 
-/** Take a payment, then show its receipt (spec 71-72). Closing the receipt ends it. */
+/**
+ * Take a payment, then show its receipt (spec 71-72), which can be emailed to the Student as
+ * Payment received (ticket 09). Closing the receipt or the email ends it.
+ */
 export function PaymentFlow({ profile, onClose, onRecorded }: PaymentFlowProps) {
-  const { staff, consultancy } = useCurrentStaff();
+  const { staff } = useCurrentStaff();
   const { showToast } = useToast();
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   if (receipt !== null) {
     return (
-      <ReceiptDialog
-        receipt={receipt}
-        officeName={consultancy.name}
-        officeLogo={consultancy.logo}
-        onClose={onClose}
-      />
+      <ReceiptStep receipt={receipt} profile={profile} onClose={onClose} onRecorded={onRecorded} />
     );
   }
   return (
@@ -142,6 +141,47 @@ export function PaymentFlow({ profile, onClose, onRecorded }: PaymentFlowProps) 
         setReceipt(recorded);
         onRecorded();
       }}
+    />
+  );
+}
+
+/** The receipt just recorded; "Email it" opens Payment received for its Payment. */
+function ReceiptStep({
+  receipt,
+  profile,
+  onClose,
+  onRecorded,
+}: PaymentFlowProps & { receipt: Receipt }) {
+  const { consultancy } = useCurrentStaff();
+  const canEmail = useCanMessage() && profile.email !== undefined;
+  const [isEmailing, setEmailing] = useState(false);
+  if (isEmailing) {
+    return (
+      <EmailComposer
+        recipients={[{ id: profile.id, name: profile.name, email: profile.email ?? "" }]}
+        isBulk={false}
+        startWith={{ kind: "payment_received", record: receipt.id }}
+        onClose={onClose}
+        onSent={() => {
+          onRecorded();
+          onClose();
+        }}
+      />
+    );
+  }
+  return (
+    <ReceiptDialog
+      receipt={receipt}
+      officeName={consultancy.name}
+      officeLogo={consultancy.logo}
+      onClose={onClose}
+      onEmail={
+        canEmail
+          ? () => {
+              setEmailing(true);
+            }
+          : undefined
+      }
     />
   );
 }
