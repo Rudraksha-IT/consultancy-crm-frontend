@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { API_PATHS } from "@/constants/api";
 import {
   APPOINTMENTS,
@@ -16,8 +17,8 @@ import { StudentProfileSchema, type StudentProfile } from "../core/types";
  * `InvalidFieldsError` when it can't be added, and `ApiRequestError` when not allowed.
  */
 export async function startVisa(
-  studentId: number,
-  applicationId: number,
+  studentId: RecordId,
+  applicationId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
   try {
@@ -37,8 +38,8 @@ export async function startVisa(
  * moved with it (spec 60-61).
  */
 export async function changeVisaStatus(
-  studentId: number,
-  visaId: number,
+  studentId: RecordId,
+  visaId: RecordId,
   status: VisaStatus,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
@@ -70,8 +71,8 @@ const DATE_FIELDS: Record<Appointment, string> = {
  * refused date rejects with `InvalidFieldsError` under its appointment.
  */
 export async function setVisaDates(
-  studentId: number,
-  visaId: number,
+  studentId: RecordId,
+  visaId: RecordId,
   change: VisaDatesChange,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
@@ -105,8 +106,8 @@ const VISA_LETTER_FIELDS = { result: "result", file: "file" } as const;
  * Student's profile. Rejects with `InvalidFieldsError` naming the refused field.
  */
 export async function addVisaLetter(
-  studentId: number,
-  visaId: number,
+  studentId: RecordId,
+  visaId: RecordId,
   letter: NewVisaLetter,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {

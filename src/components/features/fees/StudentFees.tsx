@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useCallback, useState } from "react";
 
 import { useLoaded } from "@/components/features/home/useLoaded";
@@ -24,7 +25,7 @@ import { formatNpr } from "@/lib/money";
 
 import { FeeDialog } from "./FeeDialog";
 
-type Student = { id: number; name: string };
+type Student = { id: RecordId; name: string };
 
 type StudentFeesProps = {
   student: Student;

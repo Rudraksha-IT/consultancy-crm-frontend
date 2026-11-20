@@ -13,6 +13,7 @@ import { BatchSchema } from "@/lib/api/classes/batches";
 import type { Message, PaperworkRow, StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Ramesh Adhikari", email: "admin@office.com", role: "admin" },
@@ -39,7 +40,7 @@ function isHiddenOnPhone(element: Element | null | undefined): boolean {
 function paperworkRow(counts: Partial<PaperworkRow>): PaperworkRow {
   return {
     student: {
-      id: 7,
+      id: uid(7),
       name: "Aarav Sharma",
       stage: Stage.Applying,
       country: Country.Australia,
@@ -88,8 +89,8 @@ describe("Documents on a phone", () => {
 
 describe("Email on a phone", () => {
   const MESSAGE: Message = {
-    id: 1,
-    student: { id: 7, name: "Aarav Sharma" },
+    id: uid(1),
+    student: { id: uid(7), name: "Aarav Sharma" },
     channel: "email",
     subject: "Your visa interview is on Monday.",
     body: "Dear Aarav,",

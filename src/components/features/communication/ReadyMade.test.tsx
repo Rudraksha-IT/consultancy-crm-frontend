@@ -10,6 +10,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { EmailComposer } from "./EmailComposer";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
   staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
@@ -31,14 +32,14 @@ const COUNSELLOR: StaffContext = {
   theme: DEFAULT_THEME,
 };
 
-const SITA = { id: 7, name: "Sita Gurung", email: "sita@example.test" };
-const HARI = { id: 8, name: "Hari Thapa", email: "hari@example.test" };
+const SITA = { id: uid(7), name: "Sita Gurung", email: "sita@example.test" };
+const HARI = { id: uid(8), name: "Hari Thapa", email: "hari@example.test" };
 
-const MENU_PATH = "/api/students/7/emails/ready-made/";
-const DRAFT_PATH = "/api/students/7/emails/draft/";
+const MENU_PATH = `/api/students/${uid(7)}/emails/ready-made/`;
+const DRAFT_PATH = `/api/students/${uid(7)}/emails/draft/`;
 const BULK_MENU_PATH = "/api/messages/bulk/ready-made/";
 const BULK_DRAFT_PATH = "/api/messages/bulk/draft/";
-const SEND_PATH = "/api/students/7/messages/";
+const SEND_PATH = `/api/students/${uid(7)}/messages/`;
 
 const PAYMENTS = [
   { id: 12, label: "Receipt 000012: Visa fee, NPR 40,000, 2 Nov 2026" },
@@ -436,8 +437,8 @@ describe.each(THEME_CASES)("Ready-made emails in the $name Theme", ({ config, mo
 
 function sentMessage() {
   return {
-    id: 4,
-    student: { id: 7, name: "Sita Gurung" },
+    id: uid(4),
+    student: { id: uid(7), name: "Sita Gurung" },
     channel: "email",
     subject: WELCOME.subject,
     body: WELCOME.body,

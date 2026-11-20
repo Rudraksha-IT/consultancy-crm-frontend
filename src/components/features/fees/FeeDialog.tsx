@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import {
@@ -37,7 +38,7 @@ const AMOUNT_MESSAGE = `Enter a whole amount from ${formatNpr(1)} to ${formatNpr
 const WHOLE_NUMBER = /^[0-9]+$/;
 
 type FeeDialogProps = {
-  student: { id: number; name: string };
+  student: { id: RecordId; name: string };
   /** The Fee being changed; null to add a new one. */
   fee: Fee | null;
   onClose: () => void;

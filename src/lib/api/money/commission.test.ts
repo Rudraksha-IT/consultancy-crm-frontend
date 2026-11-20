@@ -6,10 +6,11 @@ import {
   fetchReceivedCommission,
 } from "./commission";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const COMMISSION = {
   id: 702,
-  student: { id: 2, name: "Sita Karki" },
+  student: { id: uid(2), name: "Sita Karki" },
   university: { id: 4, name: "Federation University" },
   intake: "2027-02",
   amount: 290000,
@@ -19,7 +20,7 @@ const COMMISSION = {
 
 const FRONTEND_COMMISSION = {
   id: 702,
-  student: { id: 2, name: "Sita Karki" },
+  student: { id: uid(2), name: "Sita Karki" },
   university: { id: 4, name: "Federation University" },
   intake: "2027-02",
   amount: 290000,
@@ -80,7 +81,7 @@ describe("fetchCommission", () => {
 });
 
 describe("addCommission", () => {
-  const NEW = { studentId: 2, universityId: 4, intake: "2027-02", amount: 290000 };
+  const NEW = { studentId: uid(2), universityId: 4, intake: "2027-02", amount: 290000 };
 
   it("POSTs it in API naming and returns it", async () => {
     const fetchFn = answering(jsonResponse(COMMISSION, 201));
@@ -90,7 +91,7 @@ describe("addCommission", () => {
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/accounts/commission/");
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("POST");
     expect(sentBody(fetchFn)).toEqual({
-      student: 2,
+      student: uid(2),
       university: 4,
       intake: "2027-02",
       amount: 290000,

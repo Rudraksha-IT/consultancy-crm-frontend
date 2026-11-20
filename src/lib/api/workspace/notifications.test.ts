@@ -1,6 +1,7 @@
 import { ApiRequestError } from "../core/errors";
 import { fetchNotifications, markAllNotificationsRead, setNotificationRead } from "./notifications";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const GIVEN = {
   id: 3,
@@ -9,7 +10,7 @@ const GIVEN = {
   is_read: false,
   task: { id: 31, title: "First counselling call with Manisha", due_on: "2026-11-03" },
   by: { id: 4, name: "Ramesh KC" },
-  student: { id: 7, name: "Manisha Rai" },
+  student: { id: uid(7), name: "Manisha Rai" },
   transfer_request: null,
 };
 
@@ -20,7 +21,7 @@ const GIVEN_IN_FRONTEND_NAMING = {
   isRead: false,
   task: { id: 31, title: "First counselling call with Manisha", dueOn: "2026-11-03" },
   by: { id: 4, name: "Ramesh KC" },
-  student: { id: 7, name: "Manisha Rai" },
+  student: { id: uid(7), name: "Manisha Rai" },
   transferRequest: null,
   bin: null,
   workFromHome: null,

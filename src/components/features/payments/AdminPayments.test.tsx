@@ -11,6 +11,7 @@ import { backend as backendOnly, callsTo, on, onEach, type Answer } from "@/test
 import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 /** The canned backend, always with the office's Fee Types for the forms and the filter. */
 function backend(...answers: Answer[]) {
@@ -35,9 +36,9 @@ const COUNSELLOR: StaffContext = {
 };
 
 const PAYMENT = {
-  id: 412,
+  id: uid(412),
   receipt_number: "000412",
-  student: { id: 7, name: "Sita Gurung", phone: "9841000001" },
+  student: { id: uid(7), name: "Sita Gurung", phone: "9841000001" },
   amount: 25000,
   paid_on: "2026-11-01",
   method: "esewa",
@@ -52,7 +53,7 @@ function pageOf(results: unknown[], total = 25000) {
 }
 
 const THIS_MONTH = "/api/payments/?from=2026-11-01&to=2026-11-02&page=1";
-const STUDENT_PAYMENTS = "/api/payments/?student=7&page=1";
+const STUDENT_PAYMENTS = `/api/payments/?student=${uid(7)}&page=1`;
 
 function renderAccounts(context: StaffContext = ADMIN) {
   return render(
@@ -71,13 +72,13 @@ async function showMoneyIn(context: StaffContext = ADMIN) {
 }
 
 const NO_FEES = { fees: [], total: 0, balance: { paid: 0, still_to_pay: 0, overpaid: 0 } };
-const STUDENT_FEES = on("GET", "/api/students/7/fees/", NO_FEES);
+const STUDENT_FEES = on("GET", `/api/students/${uid(7)}/fees/`, NO_FEES);
 
 function renderProfile(context: StaffContext = ADMIN) {
   return render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -150,7 +151,7 @@ describe("Accounts", () => {
     expect(cells.getByText("NPR 25,000")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
   });
 
@@ -350,7 +351,7 @@ describe("editing a Payment", () => {
     const changed = { ...PAYMENT, amount: 30000 };
     const fetchFn = backend(
       listChangingAfter(THIS_MONTH, pageOf([changed], 30000)),
-      on("PUT", "/api/payments/412/", changed),
+      on("PUT", `/api/payments/${uid(412)}/`, changed),
     );
     await showMoneyIn();
     const dialog = await openEdit();
@@ -360,7 +361,7 @@ describe("editing a Payment", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
 
     expect(await screen.findByText("Changes saved")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PUT", "/api/payments/412/")).toEqual({
+    expect(sentBody(fetchFn, "PUT", `/api/payments/${uid(412)}/`)).toEqual({
       amount: 30000,
       paid_on: "2026-11-01",
       method: "esewa",
@@ -382,13 +383,18 @@ describe("editing a Payment", () => {
     expect(
       within(dialog).getByText("Enter a whole amount from NPR 1 to NPR 10,00,00,000."),
     ).toBeInTheDocument();
-    expect(callsTo(fetchFn, "PUT", "/api/payments/412/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "PUT", `/api/payments/${uid(412)}/`)).toHaveLength(0);
   });
 
   it("shows the server's refusal of a field", async () => {
     backend(
       on("GET", THIS_MONTH, pageOf([PAYMENT])),
-      on("PUT", "/api/payments/412/", { paid_on: ["Enter a date from 1 Jan 2000 to today."] }, 400),
+      on(
+        "PUT",
+        `/api/payments/${uid(412)}/`,
+        { paid_on: ["Enter a date from 1 Jan 2000 to today."] },
+        400,
+      ),
     );
     await showMoneyIn();
     const dialog = await openEdit();
@@ -405,7 +411,7 @@ describe("editing a Payment", () => {
       on("GET", THIS_MONTH, pageOf([PAYMENT])),
       on(
         "PUT",
-        "/api/payments/412/",
+        `/api/payments/${uid(412)}/`,
         { detail: "Only an Admin can change or delete a Payment." },
         403,
       ),
@@ -458,7 +464,7 @@ describe("deleting a Payment", () => {
 
   it("deletes it, says so and loads the list again", async () => {
     const fetchFn = backend(listChangingAfter(THIS_MONTH, pageOf([], 0)), (path, init) =>
-      init?.method === "DELETE" && path === "/api/payments/412/"
+      init?.method === "DELETE" && path === `/api/payments/${uid(412)}/`
         ? new Response(null, { status: 204 })
         : undefined,
     );
@@ -468,7 +474,7 @@ describe("deleting a Payment", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Delete Payment" }));
 
     expect(await screen.findByText("Payment deleted")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", "/api/payments/412/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "DELETE", `/api/payments/${uid(412)}/`)).toHaveLength(1);
     expect(await screen.findByText("No payments match these filters.")).toBeInTheDocument();
   });
 
@@ -492,14 +498,14 @@ describe("deleting a Payment", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", "/api/payments/412/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "DELETE", `/api/payments/${uid(412)}/`)).toHaveLength(0);
   });
 });
 
 describe("the Fees tab on a Student", () => {
   it("shows an Admin the Student's Payments", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       STUDENT_FEES,
       on("GET", STUDENT_PAYMENTS, pageOf([PAYMENT])),
     );
@@ -515,7 +521,7 @@ describe("the Fees tab on a Student", () => {
 
   it("says when there are none yet", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       STUDENT_FEES,
       on("GET", STUDENT_PAYMENTS, pageOf([], 0)),
     );
@@ -527,7 +533,7 @@ describe("the Fees tab on a Student", () => {
   });
 
   it("says when they can't be loaded", async () => {
-    backend(on("GET", "/api/students/7/", PROFILE), STUDENT_FEES);
+    backend(on("GET", `/api/students/${uid(7)}/`, PROFILE), STUDENT_FEES);
     renderProfile();
 
     await userEvent.click(await screen.findByRole("tab", { name: "Fees" }));
@@ -541,9 +547,9 @@ describe("the Fees tab on a Student", () => {
     const changed = { ...PAYMENT, fee_type: feeTypeRef(4), note: "" };
     backend(
       listChangingAfter(STUDENT_PAYMENTS, pageOf([changed])),
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       STUDENT_FEES,
-      on("PUT", "/api/payments/412/", changed),
+      on("PUT", `/api/payments/${uid(412)}/`, changed),
     );
     renderProfile();
     await userEvent.click(await screen.findByRole("tab", { name: "Fees" }));
@@ -563,7 +569,7 @@ describe("the Fees tab on a Student", () => {
     ["a Counsellor who isn't theirs", COUNSELLOR],
     ["an Admin without Accounts", ADMIN_WITHOUT_ACCOUNTS],
   ])("isn't shown to %s", async (_, context) => {
-    backend(on("GET", "/api/students/7/", { ...PROFILE, can_change_fees: false }));
+    backend(on("GET", `/api/students/${uid(7)}/`, { ...PROFILE, can_change_fees: false }));
     renderProfile(context);
 
     expect(await screen.findByRole("tab", { name: "Activity" })).toBeInTheDocument();
@@ -579,28 +585,28 @@ describe("the Activity tab", () => {
       detail: "Receipt 000412",
     };
     backend(
-      on("GET", "/api/students/7/", PROFILE),
-      on("GET", "/api/students/7/visits/?page=1", {
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
+      on("GET", `/api/students/${uid(7)}/visits/?page=1`, {
         count: 0,
         page: 1,
         page_size: 50,
         results: [],
       }),
-      on("GET", "/api/students/7/history/", {
+      on("GET", `/api/students/${uid(7)}/history/`, {
         count: 2,
         page: 1,
         page_size: 50,
         results: [
           {
             ...entry,
-            id: 5,
+            id: uid(5),
             kind: "payment_deleted",
             before: "NPR 30,000, Visa fee, eSewa, 1 Nov 2026",
             after: "",
           },
           {
             ...entry,
-            id: 4,
+            id: uid(4),
             kind: "payment_edited",
             before: "Amount NPR 25,000",
             after: "Amount NPR 30,000",

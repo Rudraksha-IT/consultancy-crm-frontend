@@ -1,6 +1,7 @@
 import { fetchCountedOwingStudents } from "./fees";
 import { fetchFeesByType, fetchFeeTypeStudents } from "./feesByType";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 function answering(response: Response) {
   return vi.fn<typeof fetch>().mockResolvedValueOnce(response);
@@ -55,7 +56,7 @@ describe("fetchFeesByType", () => {
 
 describe("fetchFeeTypeStudents", () => {
   const ROW = {
-    student: { id: 9, name: "Hari Lama", stage: "lost" },
+    student: { id: uid(9), name: "Hari Lama", stage: "lost" },
     lost_reason: "Went with another office",
     fee: 40000,
     paid: 15000,
@@ -87,7 +88,7 @@ describe("fetchFeeTypeStudents", () => {
       pageSize: 25,
       rows: [
         {
-          student: { id: 9, name: "Hari Lama", stage: "lost" },
+          student: { id: uid(9), name: "Hari Lama", stage: "lost" },
           lostReason: "Went with another office",
           fee: 40000,
           paid: 15000,

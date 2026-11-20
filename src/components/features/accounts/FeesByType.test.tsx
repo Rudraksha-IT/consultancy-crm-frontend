@@ -11,6 +11,7 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { FeesByTypePage } from "./FeesByTypePage";
 import { FeeTypeStudentsPage } from "./FeeTypeStudentsPage";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
@@ -58,21 +59,21 @@ function page(part: "counted" | "lost", results: unknown[], extra: object = {}) 
 }
 
 const AARAV = {
-  student: { id: 7, name: "Aarav Sharma", stage: "applying" },
+  student: { id: uid(7), name: "Aarav Sharma", stage: "applying" },
   lost_reason: "",
   fee: 40000,
   paid: 10000,
   still_to_pay: 30000,
 };
 const SITA = {
-  student: { id: 8, name: "Sita Karki", stage: "offer" },
+  student: { id: uid(8), name: "Sita Karki", stage: "offer" },
   lost_reason: "",
   fee: 40000,
   paid: 41000,
   still_to_pay: 0,
 };
 const HARI = {
-  student: { id: 9, name: "Hari Lama", stage: "lost" },
+  student: { id: uid(9), name: "Hari Lama", stage: "lost" },
   lost_reason: "Went with another office",
   fee: 40000,
   paid: 15000,
@@ -177,7 +178,7 @@ describe("One Fee Type's Students", () => {
     const table = screen.getByRole("table", { name: "Students" });
     expect(within(table).getByRole("link", { name: "Aarav Sharma" })).toHaveAttribute(
       "href",
-      "/students/7?tab=fees",
+      `/students/${uid(7)}?tab=fees`,
     );
     const sita = within(table).getByRole("row", { name: /Sita Karki/ });
     expect(within(sita).getByText("Paid in full")).toBeInTheDocument();
@@ -202,7 +203,7 @@ describe("One Fee Type's Students", () => {
     expect(within(row).getByText("NPR 25,000")).toBeInTheDocument();
     expect(within(row).getByRole("link", { name: "Hari Lama" })).toHaveAttribute(
       "href",
-      "/students/9?tab=fees",
+      `/students/${uid(9)}?tab=fees`,
     );
   });
 
@@ -221,7 +222,7 @@ describe("One Fee Type's Students", () => {
   it("pages through the counted Students and keeps focus on the pager", async () => {
     const many = Array.from({ length: 25 }, (_, index) => ({
       ...AARAV,
-      student: { ...AARAV.student, id: 100 + index, name: `Student ${String(index)}` },
+      student: { ...AARAV.student, id: uid(100 + index), name: `Student ${String(index)}` },
     }));
     const second = "/api/accounts/fees-by-type/3/?part=counted&page=2";
     const fetchFn = backend(

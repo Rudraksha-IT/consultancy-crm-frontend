@@ -8,12 +8,13 @@ import { CHECKLIST, checklistRow } from "@/test/documents";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { DocumentsSection } from "./DocumentsSection";
+import { uid } from "@/test/ids";
 
 const { openBlankTab } = vi.hoisted(() => ({ openBlankTab: vi.fn<() => BlankTab | null>() }));
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => vi.fn() }));
 vi.mock("@/lib/documents/tab", () => ({ openBlankTab }));
 
-const CHECKLIST_PATH = "/api/students/7/documents/";
+const CHECKLIST_PATH = `/api/students/${uid(7)}/documents/`;
 const SAMPLE = {
   id: 52,
   file_name: "sample-bank-statement.pdf",
@@ -36,7 +37,12 @@ function renderSection(body: unknown) {
   backend(on("GET", CHECKLIST_PATH, body));
   render(
     <ToastProvider>
-      <DocumentsSection studentId={7} studentName="Sita Gurung" links={[]} onProgress={vi.fn()} />
+      <DocumentsSection
+        studentId={uid(7)}
+        studentName="Sita Gurung"
+        links={[]}
+        onProgress={vi.fn()}
+      />
     </ToastProvider>,
   );
 }
@@ -132,7 +138,12 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
     );
     render(
       <ToastProvider>
-        <DocumentsSection studentId={7} studentName="Sita Gurung" links={[]} onProgress={vi.fn()} />
+        <DocumentsSection
+          studentId={uid(7)}
+          studentName="Sita Gurung"
+          links={[]}
+          onProgress={vi.fn()}
+        />
       </ToastProvider>,
     );
     const see = within(await rowFor("Bank Statement")).getByRole("button", {
@@ -168,7 +179,12 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
     );
     render(
       <ToastProvider>
-        <DocumentsSection studentId={7} studentName="Sita Gurung" links={[]} onProgress={vi.fn()} />
+        <DocumentsSection
+          studentId={uid(7)}
+          studentName="Sita Gurung"
+          links={[]}
+          onProgress={vi.fn()}
+        />
       </ToastProvider>,
     );
     await userEvent.click(

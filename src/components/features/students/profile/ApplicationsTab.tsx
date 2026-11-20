@@ -121,7 +121,7 @@ function ApplicationsSection({ profile, onSaved }: ApplicationsTabProps) {
                     <SelectField
                       label={APPLICATION_TEXT.statusOf(application.university.name)}
                       isLabelHidden
-                      name={`status-${String(application.id)}`}
+                      name={`status-${application.id}`}
                       options={STATUS_OPTIONS}
                       value={application.status}
                       onChange={(value) => {

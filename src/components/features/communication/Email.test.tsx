@@ -14,6 +14,7 @@ import { PROFILE } from "@/test/studentProfile";
 
 import { EmailComposer } from "./EmailComposer";
 import { MessagesPage } from "./MessagesPage";
+import { uid } from "@/test/ids";
 
 const OFFICE = {
   ...consultancySummary(),
@@ -42,13 +43,13 @@ const ADMIN: StaffContext = {
 };
 const NO_CONTACT = { ...consultancySummary(), hasContactEmail: false };
 
-const SITA = { id: 7, name: "Sita Gurung", email: "sita@example.test" };
-const HARI = { id: 8, name: "Hari Thapa", email: "hari@example.test" };
-const GITA = { id: 9, name: "Gita Rai", email: "gita@example.test" };
+const SITA = { id: uid(7), name: "Sita Gurung", email: "sita@example.test" };
+const HARI = { id: uid(8), name: "Hari Thapa", email: "hari@example.test" };
+const GITA = { id: uid(9), name: "Gita Rai", email: "gita@example.test" };
 
 const SENT = {
-  id: 4,
-  student: { id: 7, name: "Sita Gurung" },
+  id: uid(4),
+  student: { id: uid(7), name: "Sita Gurung" },
   channel: "email",
   subject: "Your visit tomorrow",
   body: "Dear Sita,",
@@ -61,22 +62,22 @@ const SENT = {
 };
 const FAILED = {
   ...SENT,
-  id: 3,
-  student: { id: 8, name: "Hari Thapa" },
+  id: uid(3),
+  student: { id: uid(8), name: "Hari Thapa" },
   subject: "<script>alert(1)</script>",
   status: "failed",
   error: "The email couldn't be sent. Try again in a few minutes.",
 };
 const OLD_SMS = {
   ...SENT,
-  id: 2,
+  id: uid(2),
   channel: "sms",
   subject: "",
   body: "Namaste, class at 7.",
   sent_to: "9841000001",
 };
 
-const SEND_PATH = "/api/students/7/messages/";
+const SEND_PATH = `/api/students/${uid(7)}/messages/`;
 const BULK = "/api/messages/bulk/";
 
 function page(results: unknown[], count = results.length) {
@@ -85,7 +86,7 @@ function page(results: unknown[], count = results.length) {
 
 function row(id: number, name: string, email: string, stage = "counselling") {
   return {
-    id,
+    id: uid(id),
     name,
     phone: "9841000001",
     email,
@@ -301,9 +302,9 @@ describe("EmailComposer to many Students", () => {
           SITA,
           HARI,
           GITA,
-          { id: 12, name: "Ram KC", email: "ram@x.test" },
+          { id: uid(12), name: "Ram KC", email: "ram@x.test" },
           {
-            id: 13,
+            id: uid(13),
             name: "Mina Rai",
             email: "mina@x.test",
           },
@@ -344,7 +345,7 @@ describe("EmailComposer to many Students", () => {
     const finished = await screen.findByRole("dialog", { name: "Sending finished" });
     expect(sentBody(fetchFn, "POST", BULK)).toMatchObject({
       subject: "Closed",
-      students: [7, 8, 9, 12, 13],
+      students: [uid(7), uid(8), uid(9), uid(12), uid(13)],
     });
     expect(finished).toHaveTextContent(
       "Hari Thapa: The email couldn't be sent. Try again in a few minutes.",
@@ -620,15 +621,18 @@ describe("When things go wrong", () => {
 });
 
 describe("On a Student's page", () => {
-  const profile = on("GET", "/api/students/7/", PROFILE);
-  const history = on("GET", "/api/students/7/history/", { ...page([]), page_size: 50 });
-  const visits = on("GET", "/api/students/7/visits/?page=1", { ...page([]), page_size: 50 });
+  const profile = on("GET", `/api/students/${uid(7)}/`, PROFILE);
+  const history = on("GET", `/api/students/${uid(7)}/history/`, { ...page([]), page_size: 50 });
+  const visits = on("GET", `/api/students/${uid(7)}/visits/?page=1`, {
+    ...page([]),
+    page_size: 50,
+  });
   const studentMessages = (results: unknown[]) =>
-    on("GET", "/api/students/7/messages/?page=1", page(results));
+    on("GET", `/api/students/${uid(7)}/messages/?page=1`, page(results));
 
   it("has Send email as its own button, which opens the composer to them", async () => {
     backend(profile, history);
-    renderIn(COUNSELLOR, <StudentProfilePage studentId={7} />);
+    renderIn(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Send email" }));
 
@@ -640,7 +644,7 @@ describe("On a Student's page", () => {
 
   it("doesn't offer it while the Module is off", async () => {
     backend(profile, history);
-    renderIn({ ...COUNSELLOR, modules: ["students"] }, <StudentProfilePage studentId={7} />);
+    renderIn({ ...COUNSELLOR, modules: ["students"] }, <StudentProfilePage studentId={uid(7)} />);
 
     expect(await screen.findByRole("heading", { name: "Sita Gurung" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Send email" })).not.toBeInTheDocument();
@@ -653,7 +657,7 @@ describe("On a Student's page", () => {
       visits,
       studentMessages([SENT, { ...FAILED, student: SENT.student }]),
     );
-    renderIn(COUNSELLOR, <StudentProfilePage studentId={7} />);
+    renderIn(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("tab", { name: "Activity" }));
 
@@ -671,7 +675,7 @@ describe("On a Student's page", () => {
       visits,
       studentMessages([{ ...SENT, attachments: ["brochure.pdf", "sample.pdf"] }]),
     );
-    renderIn(COUNSELLOR, <StudentProfilePage studentId={7} />);
+    renderIn(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("tab", { name: "Activity" }));
 
@@ -683,8 +687,8 @@ describe("On a Student's page", () => {
 describe("Pre-ticked from a list or a class", () => {
   const choosable = {
     students: [
-      { id: 7, name: "Sita Gurung", email: "sita@example.test", stage: "counselling" },
-      { id: 8, name: "Hari Thapa", email: "hari@example.test", stage: "lead" },
+      { id: uid(7), name: "Sita Gurung", email: "sita@example.test", stage: "counselling" },
+      { id: uid(8), name: "Hari Thapa", email: "hari@example.test", stage: "lead" },
     ],
     count: 2,
     max: 200,
@@ -705,8 +709,8 @@ describe("Pre-ticked from a list or a class", () => {
     attendance_taken_today: false,
     can_change: true,
     students: [
-      { id: 7, name: "Sita Gurung", attended_percent: null },
-      { id: 8, name: "Hari Thapa", attended_percent: 92 },
+      { id: uid(7), name: "Sita Gurung", attended_percent: null },
+      { id: uid(8), name: "Hari Thapa", attended_percent: 92 },
     ],
   });
 

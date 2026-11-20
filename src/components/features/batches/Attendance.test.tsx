@@ -14,6 +14,7 @@ import { BatchPage } from "./BatchPage";
 import { ClassesToday } from "./ClassesToday";
 import { StudentClasses } from "./StudentClasses";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const TEACHER: StaffContext = {
   staff: { id: 9, name: "Gita Lama", email: "gita@acme.test", role: "teacher" },
@@ -49,8 +50,8 @@ const MORNING = {
   can_change: false,
 };
 
-const SITA = { id: 7, name: "Sita Gurung", attended_percent: null };
-const RAM = { id: 8, name: "Ram Shrestha", attended_percent: 92 };
+const SITA = { id: uid(7), name: "Sita Gurung", attended_percent: null };
+const RAM = { id: uid(8), name: "Ram Shrestha", attended_percent: 92 };
 const MORNING_WITH_STUDENTS = { ...MORNING, students: [RAM, SITA] };
 
 const ONE = "/api/batches/1/";
@@ -61,8 +62,8 @@ function dayAnswer(marks: Record<number, string | null>, canMark = true, day = "
     day,
     can_mark: canMark,
     marks: [
-      { student: 8, mark: marks[8] ?? null },
-      { student: 7, mark: marks[7] ?? null },
+      { student: uid(8), mark: marks[8] ?? null },
+      { student: uid(7), mark: marks[7] ?? null },
     ],
   };
 }
@@ -143,9 +144,10 @@ describe("Taking attendance on a class's page", () => {
 
     expect(await screen.findByText("Attendance saved for 2 Nov 2026")).toBeInTheDocument();
     expect(sentBody(fetchFn, "PUT", TODAY)).toEqual({
+      // In the order they were marked: Ram first, then Sita.
       marks: [
-        { student: 7, mark: "present" },
-        { student: 8, mark: "absent" },
+        { student: uid(8), mark: "absent" },
+        { student: uid(7), mark: "present" },
       ],
     });
     expect(await screen.findByText("Attended 100% of classes")).toBeInTheDocument();
@@ -224,7 +226,7 @@ describe("Taking attendance on a class's page", () => {
     ).toBeInTheDocument();
     expect(section.getByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
   });
 

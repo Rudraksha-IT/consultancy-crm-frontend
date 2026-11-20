@@ -8,6 +8,7 @@ import {
   setTaskDone,
 } from "./tasks";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const TASK = {
   id: 31,
@@ -20,7 +21,7 @@ const TASK = {
   done_at: null,
   assignee: { id: 5, name: "Bikash Thapa" },
   created_by: { id: 4, name: "Ramesh KC" },
-  student: { id: 7, name: "Sita Gurung" },
+  student: { id: uid(7), name: "Sita Gurung" },
   can_mark_done: true,
 };
 
@@ -35,7 +36,7 @@ const TASK_IN_FRONTEND_NAMING = {
   doneAt: null,
   assignee: { id: 5, name: "Bikash Thapa" },
   createdBy: { id: 4, name: "Ramesh KC" },
-  student: { id: 7, name: "Sita Gurung" },
+  student: { id: uid(7), name: "Sita Gurung" },
   canMarkDone: true,
 };
 
@@ -69,7 +70,7 @@ describe("fetchMyTasks", () => {
     const page = await fetchMyTasks("done", 1, {}, fetchFn);
 
     expect(page.tasks.map((task) => [task.isDone, task.doneAt, task.student])).toEqual([
-      [true, "2026-11-02T10:00:00+05:45", { id: 7, name: "Sita Gurung" }],
+      [true, "2026-11-02T10:00:00+05:45", { id: uid(7), name: "Sita Gurung" }],
       [false, null, null],
     ]);
   });
@@ -128,9 +129,9 @@ describe("fetchStudentTasks", () => {
   it("GETs the Student's open Tasks", async () => {
     const fetchFn = answering(jsonResponse(pageOf([TASK])));
 
-    const page = await fetchStudentTasks(7, 1, fetchFn);
+    const page = await fetchStudentTasks(uid(7), 1, fetchFn);
 
-    expect(sent(fetchFn).path).toBe("/api/students/7/tasks/?page=1");
+    expect(sent(fetchFn).path).toBe(`/api/students/${uid(7)}/tasks/?page=1`);
     expect(page.tasks).toEqual([TASK_IN_FRONTEND_NAMING]);
   });
 });
@@ -144,7 +145,7 @@ describe("createTask", () => {
         title: "Call Sita",
         dueOn: "2026-11-03",
         assigneeId: 5,
-        studentId: 7,
+        studentId: uid(7),
         priority: "high",
         isOnlyMe: false,
       },
@@ -158,7 +159,7 @@ describe("createTask", () => {
       title: "Call Sita",
       due_on: "2026-11-03",
       assignee: 5,
-      student: 7,
+      student: uid(7),
       priority: "high",
       only_me: false,
     });

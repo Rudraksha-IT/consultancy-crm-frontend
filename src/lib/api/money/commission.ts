@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { COMMISSION_STATUSES, type CommissionStatus } from "@/constants/commission";
 
@@ -13,7 +15,7 @@ const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 const CommissionSchema = z
   .object({
     id: z.number().int(),
-    student: z.object({ id: z.number().int(), name: z.string() }),
+    student: z.object({ id: RecordIdSchema, name: z.string() }),
     university: z.object({ id: z.number().int(), name: z.string() }),
     intake: z.string().regex(MONTH),
     amount: z.number().int().positive(),
@@ -59,7 +61,7 @@ export type ReceivedCommission = z.infer<typeof ReceivedSchema>;
 
 /** Commission as the form sends it. */
 export type NewCommission = {
-  studentId: number;
+  studentId: RecordId;
   universityId: number;
   intake: string;
   amount: number;

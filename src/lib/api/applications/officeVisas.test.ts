@@ -3,12 +3,13 @@ import { defaultVisaFilters } from "@/lib/visas";
 
 import { fetchVisaFilterChoices, fetchVisas } from "./officeVisas";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const TODAY = "2026-11-05";
 
 const ROW = {
-  id: 21,
-  student: { id: 2, name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
+  id: uid(21),
+  student: { id: uid(2), name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
   university: { id: 3, name: "University of Toronto", country: "canada" },
   course: { id: 4, name: "Master of IT", level: "master" },
   intake: "2027-09",
@@ -36,7 +37,7 @@ describe("fetchVisas", () => {
       pageSize: 25,
       visas: [
         {
-          id: 21,
+          id: uid(21),
           student: ROW.student,
           university: ROW.university,
           course: ROW.course,

@@ -8,10 +8,11 @@ import {
   fetchTransferRequestCount,
   fetchTransferRequests,
 } from "./transferRequests";
+import { uid } from "@/test/ids";
 
 const WAITING = {
   id: 801,
-  student: { id: 13, name: "Sarina Khadka" },
+  student: { id: uid(13), name: "Sarina Khadka" },
   asked_by: { id: 3, name: "Anjali Gurung" },
   reason: "Her sister is my Student.",
   asked_at: "2026-10-27T10:35:00+00:00",
@@ -27,7 +28,7 @@ const WAITING = {
 
 const WAITING_IN_FRONTEND_NAMING = {
   id: 801,
-  student: { id: 13, name: "Sarina Khadka" },
+  student: { id: uid(13), name: "Sarina Khadka" },
   askedBy: { id: 3, name: "Anjali Gurung" },
   reason: "Her sister is my Student.",
   askedAt: "2026-10-27T10:35:00+00:00",
@@ -120,10 +121,10 @@ describe("askToTakeStudent", () => {
   it("POSTs the reason for the Student and returns the request", async () => {
     const fetchFn = answering(jsonResponse(WAITING, 201));
 
-    const sent = await askToTakeStudent(13, "Her sister is my Student.", fetchFn);
+    const sent = await askToTakeStudent(uid(13), "Her sister is my Student.", fetchFn);
 
     const [path, init] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/students/13/transfer-requests/");
+    expect(path).toBe(`/api/students/${uid(13)}/transfer-requests/`);
     expect(init?.method).toBe("POST");
     expect(sentJson(init)).toEqual({ reason: "Her sister is my Student." });
     expect(sent.id).toBe(801);
@@ -134,7 +135,7 @@ describe("askToTakeStudent", () => {
       jsonResponse({ reason: ["Say why you should take this Student."] }, 400),
     );
 
-    const asking = askToTakeStudent(13, "", fetchFn);
+    const asking = askToTakeStudent(uid(13), "", fetchFn);
 
     await expect(asking).rejects.toBeInstanceOf(InvalidFieldsError);
     await expect(asking).rejects.toMatchObject({
@@ -145,7 +146,7 @@ describe("askToTakeStudent", () => {
   it("keeps a conflict as an API error", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Someone has already asked." }, 409));
 
-    const asking = askToTakeStudent(13, "x", fetchFn);
+    const asking = askToTakeStudent(uid(13), "x", fetchFn);
 
     await expect(asking).rejects.toBeInstanceOf(ApiRequestError);
     await expect(asking).rejects.toMatchObject({ status: 409 });

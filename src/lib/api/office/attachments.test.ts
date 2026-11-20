@@ -1,5 +1,6 @@
 import { fetchAttachable, refsOf } from "./attachments";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const BROCHURE = {
   kind: "course_file",
@@ -42,9 +43,9 @@ describe("fetchAttachable", () => {
   it("reads what can go to one Student, in frontend naming", async () => {
     const fetchFn = answering(jsonResponse(ANSWER));
 
-    const files = await fetchAttachable({ studentId: 7 }, fetchFn);
+    const files = await fetchAttachable({ studentId: uid(7) }, fetchFn);
 
-    expect(pathOf(fetchFn)).toBe("/api/students/7/emails/attachable/");
+    expect(pathOf(fetchFn)).toBe(`/api/students/${uid(7)}/emails/attachable/`);
     expect(files.courseFiles).toEqual([
       {
         kind: "course_file",
@@ -78,7 +79,7 @@ describe("fetchAttachable", () => {
     "files",
   ])("refuses a damaged answer %#", async (body) => {
     await expect(
-      fetchAttachable({ studentId: 7 }, answering(jsonResponse(body))),
+      fetchAttachable({ studentId: uid(7) }, answering(jsonResponse(body))),
     ).rejects.toThrow();
   });
 });

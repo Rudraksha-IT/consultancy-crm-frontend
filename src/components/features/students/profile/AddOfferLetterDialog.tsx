@@ -40,7 +40,7 @@ export function AddOfferLetterDialog(props: AddOfferLetterDialogProps) {
   const { profile, applications, onClose, onSaved } = props;
   const { showToast } = useToast();
   const formId = useId();
-  const [applicationId, setApplicationId] = useState(String(applications[0]?.id ?? ""));
+  const [applicationId, setApplicationId] = useState(applications[0]?.id ?? "");
   const [kind, setKind] = useState<OfferKind>(OfferKind.Conditional);
   const [file, setFile] = useState<File | null>(null);
   const [fileProblem, setFileProblem] = useState<string | null>(null);
@@ -50,7 +50,7 @@ export function AddOfferLetterDialog(props: AddOfferLetterDialogProps) {
     event.preventDefault();
     const problem = documentFileProblem(file);
     setFileProblem(problem);
-    const application = applications.find((one) => String(one.id) === applicationId);
+    const application = applications.find((one) => one.id === applicationId);
     if (problem !== null || file === null || application === undefined) return;
     void save(async () => {
       const saved = await addOfferLetter(profile.id, {
@@ -80,7 +80,7 @@ export function AddOfferLetterDialog(props: AddOfferLetterDialogProps) {
           label={OFFER_TEXT.whichApplication}
           name="application"
           options={applications.map((one) => ({
-            value: String(one.id),
+            value: one.id,
             label: OFFER_TEXT.applicationOption(one.university.name, one.course.name),
           }))}
           value={applicationId}

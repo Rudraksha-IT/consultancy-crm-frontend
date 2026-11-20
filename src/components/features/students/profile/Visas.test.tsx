@@ -11,6 +11,7 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { StudentProfilePage } from "./StudentProfilePage";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
   staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
@@ -23,7 +24,7 @@ const COUNSELLOR: StaffContext = {
 };
 
 const DEAKIN = {
-  id: 11,
+  id: uid(11),
   university: { id: 3, name: "Deakin University" },
   course: { id: 4, name: "Master of IT", level: "master" },
   intake: "2027-03",
@@ -35,7 +36,7 @@ const DEAKIN = {
   documents: [],
 };
 const RMIT = {
-  id: 12,
+  id: uid(12),
   university: { id: 6, name: "RMIT University" },
   course: { id: 9, name: "Master of Data Science", level: "master" },
   intake: "2027-07",
@@ -48,8 +49,8 @@ const RMIT = {
 };
 type VisaDates = { biometrics_at?: string; medical_at?: string; interview_at?: string };
 const visa = (id: number, status: string, startedOn = "2026-10-12", dates: VisaDates = {}) => ({
-  id,
-  application_id: 11,
+  id: uid(id),
+  application_id: uid(11),
   university: { id: 3, name: "Deakin University" },
   course: { id: 4, name: "Master of IT", level: "master" },
   status,
@@ -65,7 +66,7 @@ const AT_OFFER = {
   stage: "offer",
   applications: [DEAKIN, RMIT],
   visas: [],
-  chosen_offer_id: 11,
+  chosen_offer_id: uid(11),
 };
 const AT_VISA = { ...AT_OFFER, stage: "visa" };
 const APPLIED = { ...AT_VISA, visas: [visa(21, "applied")] };
@@ -91,7 +92,7 @@ function on(verb: string, path: string, body: unknown, status = 200): Answer {
     method(init) === verb && calledPath === path ? jsonResponse(body, status) : undefined;
 }
 
-const profile = (body: unknown = AT_VISA): Answer => on("GET", "/api/students/7/", body);
+const profile = (body: unknown = AT_VISA): Answer => on("GET", `/api/students/${uid(7)}/`, body);
 
 function sentBody(fetchFn: ReturnType<typeof backend>, verb: string, path: string): unknown {
   const call = fetchFn.mock.calls.find(([p, init]) => method(init) === verb && p === path);
@@ -103,7 +104,7 @@ function renderPage() {
   return render(
     <StaffContextContext value={COUNSELLOR}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -230,7 +231,10 @@ describe("Visa applied", () => {
   });
 
   it("adds the Visa as Applied, and the journey moves to Visa", async () => {
-    const fetchFn = backend(profile(AT_OFFER), on("POST", "/api/students/7/visas/", APPLIED, 201));
+    const fetchFn = backend(
+      profile(AT_OFFER),
+      on("POST", `/api/students/${uid(7)}/visas/`, APPLIED, 201),
+    );
     renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: APPLY }));
@@ -238,7 +242,9 @@ describe("Visa applied", () => {
     expect(
       await screen.findByText("Visa applied for Deakin University. Stage is now Visa."),
     ).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/students/7/visas/")).toEqual({ application: 11 });
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/visas/`)).toEqual({
+      application: uid(11),
+    });
     expect(screen.getByRole("list", { name: "Stage: Visa" })).toBeInTheDocument();
     expect(
       within(await visaList()).getByRole("combobox", { name: "Status of Deakin University visa" }),
@@ -249,7 +255,7 @@ describe("Visa applied", () => {
     const message = "A visa can only be applied for on the chosen offer.";
     backend(
       profile(AT_OFFER),
-      on("POST", "/api/students/7/visas/", { application: [message] }, 400),
+      on("POST", `/api/students/${uid(7)}/visas/`, { application: [message] }, 400),
     );
     renderPage();
 
@@ -262,7 +268,10 @@ describe("Visa applied", () => {
 describe("changing a Visa's Status", () => {
   it("saves it, and the journey follows when the Stage moves", async () => {
     const refused = { ...APPLIED, stage: "offer", visas: [visa(21, "refused")] };
-    const fetchFn = backend(profile(APPLIED), on("PATCH", "/api/students/7/visas/21/", refused));
+    const fetchFn = backend(
+      profile(APPLIED),
+      on("PATCH", `/api/students/${uid(7)}/visas/${uid(21)}/`, refused),
+    );
     renderPage();
 
     await userEvent.selectOptions(
@@ -274,7 +283,9 @@ describe("changing a Visa's Status", () => {
       await screen.findByText("Deakin University visa: Refused. Stage is now Offer."),
     ).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Stage: Offer" })).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PATCH", "/api/students/7/visas/21/")).toEqual({ status: "refused" });
+    expect(sentBody(fetchFn, "PATCH", `/api/students/${uid(7)}/visas/${uid(21)}/`)).toEqual({
+      status: "refused",
+    });
   });
 
   it("says only the Status when the Stage stays, and Granted ticks the whole journey", async () => {
@@ -283,7 +294,7 @@ describe("changing a Visa's Status", () => {
       visas: [visa(21, "granted")],
       progress: { percent: 100, next_step: "Visa granted.", is_done: true },
     };
-    backend(profile(APPLIED), on("PATCH", "/api/students/7/visas/21/", saved));
+    backend(profile(APPLIED), on("PATCH", `/api/students/${uid(7)}/visas/${uid(21)}/`, saved));
     renderPage();
 
     await userEvent.selectOptions(
@@ -297,7 +308,7 @@ describe("changing a Visa's Status", () => {
   it("says a Lost Student's Stage wasn't moved", async () => {
     const lost = { ...APPLIED, stage: "lost", lost_reason: "Moved away." };
     const saved = { ...lost, visas: [visa(21, "refused")] };
-    backend(profile(lost), on("PATCH", "/api/students/7/visas/21/", saved));
+    backend(profile(lost), on("PATCH", `/api/students/${uid(7)}/visas/${uid(21)}/`, saved));
     renderPage();
 
     await userEvent.selectOptions(
@@ -315,7 +326,12 @@ describe("changing a Visa's Status", () => {
   it("says when the change is no longer allowed, and keeps the stored Status", async () => {
     backend(
       profile(APPLIED),
-      on("PATCH", "/api/students/7/visas/21/", { detail: "Not your Student." }, 403),
+      on(
+        "PATCH",
+        `/api/students/${uid(7)}/visas/${uid(21)}/`,
+        { detail: "Not your Student." },
+        403,
+      ),
     );
     renderPage();
     const select = within(await visaList()).getByRole("combobox", {
@@ -340,7 +356,7 @@ describe("changing a Visa's Status", () => {
 });
 
 describe("the visa dates", () => {
-  const DATES_URL = "/api/students/7/visas/21/dates/";
+  const DATES_URL = `/api/students/${uid(7)}/visas/${uid(21)}/dates/`;
   const BOOKED = {
     ...AT_VISA,
     visas: [
@@ -508,9 +524,9 @@ describe("the visa dates", () => {
 describe("Documents linked to a Visa", () => {
   it("lists them under the Visa", async () => {
     const grant = {
-      id: 42,
+      id: uid(42),
       document_type: { id: 10, name: "Visa grant" },
-      files: [{ id: 62, file_name: "grant.pdf" }],
+      files: [{ id: uid(62), file_name: "grant.pdf" }],
       verification: "pending",
     };
     backend(profile({ ...AT_VISA, visas: [{ ...visa(21, "granted"), documents: [grant] }] }));
@@ -525,13 +541,13 @@ describe("Documents linked to a Visa", () => {
 });
 
 describe("Upload visa letter", () => {
-  const LETTER_URL = "/api/students/7/visas/21/letter/";
+  const LETTER_URL = `/api/students/${uid(7)}/visas/${uid(21)}/letter/`;
   const UPLOAD = "Upload visa letter for the Deakin University visa";
   const pdf = () => new File(["%PDF-1.7"], "visa-grant.pdf", { type: "application/pdf" });
   const letterDocument = {
-    id: 43,
+    id: uid(43),
     document_type: { id: 12, name: "Visa letter" },
-    files: [{ id: 63, file_name: "visa-grant.pdf" }],
+    files: [{ id: uid(63), file_name: "visa-grant.pdf" }],
     verification: "pending",
   };
 

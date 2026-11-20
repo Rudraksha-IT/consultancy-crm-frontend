@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useState } from "react";
 
 import type { TaskPriority, TaskView } from "@/constants/tasks";
@@ -8,7 +9,7 @@ import { fetchMyTasks, fetchStudentTasks, type TaskPage } from "@/lib/api";
 /** Which Tasks to load: a view of my Tasks (maybe of one priority), or one Student's open Tasks. */
 export type TaskSource =
   | { view: TaskView; priority?: TaskPriority | undefined; studentId?: never }
-  | { studentId: number; view?: never; priority?: never };
+  | { studentId: RecordId; view?: never; priority?: never };
 
 export type TaskPageState =
   { status: "loading" } | { status: "loaded"; page: TaskPage } | { status: "failed" };

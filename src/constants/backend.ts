@@ -140,12 +140,16 @@ export const COURSE_FILE_UPLOAD_PATH = /^\/api\/catalogue\/courses\/[0-9]{1,18}\
  */
 export const DOCUMENT_EXAMPLE_UPLOAD_PATH =
   /^\/api\/configuration\/(?:document-types\/[0-9]{1,18}\/examples|document-examples\/[0-9]{1,18}\/replace)\/$/;
+// A record's UUID as the server writes it, in lower case (ADR 0027).
+const UUID_PART = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 /**
  * The only calls that may carry an upload: a Student's Document (issue 16), files added to one
- * (issue 78), an Offer Letter (issue 76) and a visa letter (issue 77).
+ * (issue 78), an Offer Letter (issue 76) and a visa letter (issue 77). Students, Documents and
+ * Visas are named by UUID (ADR 0027).
  */
-export const UPLOAD_PATH =
-  /^\/api\/students\/[0-9]{1,10}\/(?:documents\/(?:[0-9]{1,18}\/files\/)?|offer-letters\/|visas\/[0-9]{1,18}\/letter\/)$/;
+export const UPLOAD_PATH = new RegExp(
+  `^/api/students/${UUID_PART}/(?:documents/(?:${UUID_PART}/files/)?|offer-letters/|visas/${UUID_PART}/letter/)$`,
+);
 /** How long to wait for Django before answering 504. */
 export const BACKEND_TIMEOUT_MS = 15_000;
 

@@ -12,6 +12,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { PROFILE } from "@/test/studentProfile";
 
 import { TransferRequestsPage } from "./TransferRequestsPage";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
   staff: { id: 3, name: "Anjali Gurung", email: "anjali@acme.test", role: "counsellor" },
@@ -27,14 +28,14 @@ function as(role: StaffContext["staff"]["role"], id = 9): StaffContext {
   return { ...COUNSELLOR, staff: { ...COUNSELLOR.staff, id, name: "Someone Else", role } };
 }
 
-const STUDENT = "/api/students/7/";
-const ASK = "/api/students/7/transfer-requests/";
+const STUDENT = `/api/students/${uid(7)}/`;
+const ASK = `/api/students/${uid(7)}/transfer-requests/`;
 const LIST = "/api/transfer-requests/";
 const REASON = "Her sister Rojina is my Student, and the family wants one counsellor.";
 
 const WAITING = {
   id: 801,
-  student: { id: 7, name: "Sita Gurung" },
+  student: { id: uid(7), name: "Sita Gurung" },
   asked_by: { id: 3, name: "Anjali Gurung" },
   reason: REASON,
   asked_at: "2026-10-27T10:35:00+00:00",
@@ -103,7 +104,7 @@ describe("Asking to take a Student", () => {
         201,
       ),
     );
-    renderWith(COUNSELLOR, <StudentProfilePage studentId={7} />);
+    renderWith(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Ask to take this Student" }));
     const dialog = screen.getByRole("dialog", { name: "Ask to take Sita Gurung" });
@@ -131,7 +132,7 @@ describe("Asking to take a Student", () => {
       on("GET", STUDENT, { ...VIEW_ONLY, can_ask_transfer: true }),
       on("POST", ASK, WAITING, 201),
     );
-    renderWith(COUNSELLOR, <StudentProfilePage studentId={7} />);
+    renderWith(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Ask to take this Student" }));
     const dialog = screen.getByRole("dialog", { name: "Ask to take Sita Gurung" });
@@ -149,7 +150,7 @@ describe("Asking to take a Student", () => {
     backend(
       on("GET", STUDENT, { ...VIEW_ONLY, assigned_counsellor: null, can_ask_transfer: true }),
     );
-    renderWith(COUNSELLOR, <StudentProfilePage studentId={7} />);
+    renderWith(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Ask to take this Student" }));
 
@@ -163,7 +164,7 @@ describe("Asking to take a Student", () => {
       on("GET", STUDENT, { ...VIEW_ONLY, can_ask_transfer: true }),
       on("POST", ASK, { reason: ["Say why you should take this Student."] }, 400),
     );
-    renderWith(COUNSELLOR, <StudentProfilePage studentId={7} />);
+    renderWith(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Ask to take this Student" }));
     await userEvent.click(screen.getByRole("button", { name: "Send request" }));
@@ -177,7 +178,7 @@ describe("Asking to take a Student", () => {
       on("GET", STUDENT, { ...VIEW_ONLY, can_ask_transfer: true }),
       on("POST", ASK, { detail: "Someone has already asked to take this Student." }, 409),
     );
-    renderWith(COUNSELLOR, <StudentProfilePage studentId={7} />);
+    renderWith(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Ask to take this Student" }));
     await userEvent.type(screen.getByLabelText("Why should you take this Student?"), "x");
@@ -190,7 +191,7 @@ describe("Asking to take a Student", () => {
 
   it("isn't offered when the profile says I can't ask", async () => {
     backend(on("GET", STUDENT, { ...VIEW_ONLY, can_ask_transfer: false }));
-    renderWith(as("front_desk"), <StudentProfilePage studentId={7} />);
+    renderWith(as("front_desk"), <StudentProfilePage studentId={uid(7)} />);
 
     expect(await screen.findByText(/View only/)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ask to take this Student" })).toBeNull();
@@ -210,7 +211,7 @@ describe("Asking to take a Student", () => {
         return { ...WAITING, status: "cancelled", answered_at: "2026-10-28T09:00:00+00:00" };
       }),
     );
-    renderWith(COUNSELLOR, <StudentProfilePage studentId={7} />, refresh);
+    renderWith(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />, refresh);
 
     await userEvent.click(await screen.findByRole("button", { name: "Cancel request" }));
     const dialog = screen.getByRole("dialog", { name: "Cancel this request?" });
@@ -229,7 +230,7 @@ describe("Asking to take a Student", () => {
 describe("Cancelling needs the popup", () => {
   it("keeps the request when the popup is cancelled", async () => {
     const fetchFn = backend(on("GET", STUDENT, { ...VIEW_ONLY, transfer_request: WAITING }));
-    renderWith(COUNSELLOR, <StudentProfilePage studentId={7} />);
+    renderWith(COUNSELLOR, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Cancel request" }));
     await userEvent.click(
@@ -248,7 +249,7 @@ describe("Answering on the profile", () => {
 
   it("shows who asked, when and why, with Approve and Decline", async () => {
     backend(on("GET", STUDENT, { ...MINE, transfer_request: FOR_ME }));
-    renderWith(BIKASH, <StudentProfilePage studentId={7} />);
+    renderWith(BIKASH, <StudentProfilePage studentId={uid(7)} />);
 
     const name = await screen.findByText("Anjali Gurung");
     const banner = screen.getAllByRole("status").find((status) => status.contains(name));
@@ -261,7 +262,7 @@ describe("Answering on the profile", () => {
     backend(
       on("GET", STUDENT, { ...VIEW_ONLY, transfer_request: { ...FOR_ME, can_answer: false } }),
     );
-    renderWith(as("counsellor", 11), <StudentProfilePage studentId={7} />);
+    renderWith(as("counsellor", 11), <StudentProfilePage studentId={uid(7)} />);
 
     expect(await screen.findByText(/Waiting for Bikash Thapa or an Admin\./)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
@@ -282,7 +283,7 @@ describe("Answering on the profile", () => {
         return { ...FOR_ME, status: "approved", can_answer: false };
       }),
     );
-    renderWith(BIKASH, <StudentProfilePage studentId={7} />, refresh);
+    renderWith(BIKASH, <StudentProfilePage studentId={uid(7)} />, refresh);
 
     await userEvent.click(await screen.findByRole("button", { name: "Approve" }));
     const dialog = screen.getByRole("dialog", { name: "Approve this request?" });
@@ -309,7 +310,7 @@ describe("Answering on the profile", () => {
         409,
       ),
     );
-    renderWith(BIKASH, <StudentProfilePage studentId={7} />);
+    renderWith(BIKASH, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Approve" }));
     await userEvent.click(screen.getByRole("button", { name: "Approve and transfer" }));
@@ -328,7 +329,7 @@ describe("Answering on the profile", () => {
         can_answer: false,
       }),
     );
-    renderWith(BIKASH, <StudentProfilePage studentId={7} />);
+    renderWith(BIKASH, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Decline" }));
     const dialog = screen.getByRole("dialog", { name: "Decline Anjali Gurung's request?" });
@@ -351,7 +352,7 @@ describe("Answering on the profile", () => {
         can_answer: false,
       }),
     );
-    renderWith(BIKASH, <StudentProfilePage studentId={7} />);
+    renderWith(BIKASH, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Decline" }));
     const dialog = screen.getByRole("dialog", { name: "Decline Anjali Gurung's request?" });
@@ -366,7 +367,7 @@ describe("Answering on the profile", () => {
 
   it("closes a dialog with Escape, moving focus into it first", async () => {
     backend(on("GET", STUDENT, { ...MINE, transfer_request: FOR_ME }));
-    renderWith(BIKASH, <StudentProfilePage studentId={7} />);
+    renderWith(BIKASH, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Decline" }));
     expect(screen.getByLabelText("Reason (optional)")).toHaveFocus();
@@ -378,7 +379,7 @@ describe("Answering on the profile", () => {
   it("shows typed reasons as text, never as HTML", async () => {
     const reason = "<img src=x onerror=alert(1)>";
     backend(on("GET", STUDENT, { ...MINE, transfer_request: { ...FOR_ME, reason } }));
-    renderWith(BIKASH, <StudentProfilePage studentId={7} />);
+    renderWith(BIKASH, <StudentProfilePage studentId={uid(7)} />);
 
     expect(await screen.findByText(`“${reason}”`, { exact: false })).toBeInTheDocument();
     expect(document.querySelector("img[src=x]")).toBeNull();
@@ -389,7 +390,7 @@ describe("The Transfer requests page", () => {
   const DECLINED = {
     ...WAITING,
     id: 804,
-    student: { id: 9, name: "Asmita Rai" },
+    student: { id: uid(9), name: "Asmita Rai" },
     status: "declined",
     answered_by: { name: "Bikash Thapa", is_platform_admin: false },
     answer_reason: "Let's ask again after her PTE.",
@@ -402,7 +403,7 @@ describe("The Transfer requests page", () => {
   const APPROVED = {
     ...DECLINED,
     id: 805,
-    student: { id: 10, name: "Dipesh Rana" },
+    student: { id: uid(10), name: "Dipesh Rana" },
     status: "approved",
     answer_reason: "",
     counsellor: { id: 3, name: "Anjali Gurung" },
@@ -421,7 +422,7 @@ describe("The Transfer requests page", () => {
     expect(row).toHaveTextContent(`“${REASON}”`);
     expect(screen.getByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(screen.getByRole("button", { name: "Waiting for me, 1" })).toHaveAttribute(
       "aria-pressed",

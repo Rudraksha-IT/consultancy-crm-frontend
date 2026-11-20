@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { ROLES } from "@/constants/roles";
 import { PROGRESS_CHANGE_KINDS, PROGRESS_COUNTS } from "@/constants/staffProgress";
@@ -32,7 +34,7 @@ const ChangeSchema = z.object({
   before: z.string(),
   after: z.string(),
   detail: z.string(),
-  student: z.object({ id: z.number().int().positive(), name: z.string() }).nullable(),
+  student: z.object({ id: RecordIdSchema, name: z.string() }).nullable(),
 });
 
 /** One change they made: a History kind, or a Visit, Application, Visa or class day. */

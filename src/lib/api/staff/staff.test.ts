@@ -12,6 +12,7 @@ import {
   setEmployeeTwoFactor,
 } from "./staff";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const SITA = {
   id: 7,
@@ -202,16 +203,18 @@ describe("fetchCounsellorChoices", () => {
 
 describe("fetchAssignedStudents", () => {
   it("returns the Students someone still counsels", async () => {
-    const fetchFn = answering(jsonResponse([{ id: 3, name: "Sita Karki", stage: "applying" }]));
+    const fetchFn = answering(
+      jsonResponse([{ id: uid(3), name: "Sita Karki", stage: "applying" }]),
+    );
 
     const students = await fetchAssignedStudents(7, fetchFn);
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/staff/7/assigned-students/");
-    expect(students).toEqual([{ id: 3, name: "Sita Karki", stage: "applying" }]);
+    expect(students).toEqual([{ id: uid(3), name: "Sita Karki", stage: "applying" }]);
   });
 
   it("refuses a Stage it doesn't know", async () => {
-    const fetchFn = answering(jsonResponse([{ id: 3, name: "Sita Karki", stage: "gone" }]));
+    const fetchFn = answering(jsonResponse([{ id: uid(3), name: "Sita Karki", stage: "gone" }]));
 
     await expect(fetchAssignedStudents(7, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { useFeeTypeChoices } from "@/components/features/feeTypes/FeeTypeFields";
@@ -28,7 +29,7 @@ const METHOD_OPTIONS = PAYMENT_METHODS.map((method) => ({
 }));
 
 type TakePaymentDialogProps = {
-  studentId: number;
+  studentId: RecordId;
   studentName: string;
   /** Admins see every Payment, so they aren't told the others stay with the Admin. */
   isAdmin: boolean;

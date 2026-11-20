@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 
 import { getJson, postJson, putJson, sendWithoutBody } from "../core/client";
@@ -11,7 +13,7 @@ const Npr = z.number().int().nonnegative();
 /** One Fee as the API answers it (spec 76a). */
 const FeeSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     fee_type: FeeTypeRefSchema,
     note: z.string(),
     amount: z.number().int().positive(),
@@ -67,7 +69,7 @@ function feeBody(fee: NewFee): Record<string, unknown> {
 
 /** The Student's Fees, their total and (for Admins) the Balance (Accounts on). */
 export function fetchStudentFees(
-  studentId: number,
+  studentId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentFees> {
   return getJson(API_PATHS.studentFees(studentId), StudentFeesSchema, fetchFn);
@@ -78,7 +80,7 @@ export function fetchStudentFees(
  * Rejects with `InvalidFieldsError` for refused fields.
  */
 export async function addFee(
-  studentId: number,
+  studentId: RecordId,
   fee: NewFee,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentFees> {
@@ -96,7 +98,7 @@ export async function addFee(
 
 /** Replace a Fee's Fee Type, note and amount and return the Student's Fees. */
 export async function changeFee(
-  feeId: number,
+  feeId: RecordId,
   fee: NewFee,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentFees> {
@@ -108,7 +110,7 @@ export async function changeFee(
 }
 
 /** Delete a Fee. History keeps it. */
-export function deleteFee(feeId: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function deleteFee(feeId: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.fee(feeId), fetchFn);
 }
 
@@ -127,7 +129,7 @@ const OwingPageSchema = z
     }),
     results: z.array(
       z.object({
-        student: z.object({ id: z.number().int(), name: z.string() }),
+        student: z.object({ id: RecordIdSchema, name: z.string() }),
         fees: Npr,
         paid: Npr,
         still_to_pay: Npr,

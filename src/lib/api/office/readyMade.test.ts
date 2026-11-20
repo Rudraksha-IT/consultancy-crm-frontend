@@ -1,6 +1,7 @@
 import { fetchReadyMade, fetchReadyMadeDraft } from "./readyMade";
 import { ApiRequestError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const MENU = {
   kinds: [
@@ -25,9 +26,9 @@ describe("fetchReadyMade", () => {
   it("reads one Student's ready-made emails with the records to pick", async () => {
     const fetchFn = answering(jsonResponse(MENU));
 
-    const kinds = await fetchReadyMade({ studentId: 7 }, fetchFn);
+    const kinds = await fetchReadyMade({ studentId: uid(7) }, fetchFn);
 
-    expect(pathOf(fetchFn)).toBe("/api/students/7/emails/ready-made/");
+    expect(pathOf(fetchFn)).toBe(`/api/students/${uid(7)}/emails/ready-made/`);
     expect(kinds).toEqual(MENU.kinds);
   });
 
@@ -47,7 +48,9 @@ describe("fetchReadyMade", () => {
     { kinds: [{ ...MENU.kinds[0], unavailable: "x".repeat(201) }] },
     { kinds: "welcome" },
   ])("refuses a damaged answer %#", async (body) => {
-    await expect(fetchReadyMade({ studentId: 7 }, answering(jsonResponse(body)))).rejects.toThrow();
+    await expect(
+      fetchReadyMade({ studentId: uid(7) }, answering(jsonResponse(body))),
+    ).rejects.toThrow();
   });
 });
 
@@ -60,9 +63,16 @@ describe("fetchReadyMadeDraft", () => {
     };
     const fetchFn = answering(jsonResponse(draft));
 
-    const answer = await fetchReadyMadeDraft({ studentId: 7 }, "payment_received", 12, fetchFn);
+    const answer = await fetchReadyMadeDraft(
+      { studentId: uid(7) },
+      "payment_received",
+      12,
+      fetchFn,
+    );
 
-    expect(pathOf(fetchFn)).toBe("/api/students/7/emails/draft/?kind=payment_received&record=12");
+    expect(pathOf(fetchFn)).toBe(
+      `/api/students/${uid(7)}/emails/draft/?kind=payment_received&record=12`,
+    );
     expect(answer).toEqual(draft);
   });
 
@@ -95,7 +105,12 @@ describe("fetchReadyMadeDraft", () => {
     };
     const fetchFn = answering(jsonResponse({ subject: "Docs", body: "", attachments: [example] }));
 
-    const draft = await fetchReadyMadeDraft({ studentId: 7 }, "documents_needed", null, fetchFn);
+    const draft = await fetchReadyMadeDraft(
+      { studentId: uid(7) },
+      "documents_needed",
+      null,
+      fetchFn,
+    );
 
     expect(draft.attachments).toEqual([
       {
@@ -122,7 +137,7 @@ describe("fetchReadyMadeDraft", () => {
     const fetchFn = answering(jsonResponse({ record: ["Choose a Payment."] }, 400));
 
     await expect(
-      fetchReadyMadeDraft({ studentId: 7 }, "payment_received", 99, fetchFn),
+      fetchReadyMadeDraft({ studentId: uid(7) }, "payment_received", 99, fetchFn),
     ).rejects.toBeInstanceOf(ApiRequestError);
   });
 });

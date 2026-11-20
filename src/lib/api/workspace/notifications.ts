@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { NOTIFICATION_KINDS } from "@/constants/notifications";
 import { TRANSFER_REQUEST_STATUSES } from "@/constants/transferRequests";
@@ -7,7 +9,7 @@ import { WORK_FROM_HOME_STATUSES } from "@/constants/workFromHome";
 
 import { getJson, patchJson, postJson } from "../core/client";
 
-const PersonSchema = z.object({ id: z.number().int(), name: z.string() });
+const StudentRefSchema = z.object({ id: RecordIdSchema, name: z.string() });
 /** Who did it; a Platform Admin who answered a Transfer Request has no Staff id. */
 const ActorSchema = z.object({ id: z.number().int().nullable(), name: z.string() });
 
@@ -25,7 +27,7 @@ export const NotificationSchema = z
     /** Who gave the Task ("assigned"), or who asked or answered a Transfer Request. */
     by: ActorSchema.nullable(),
     /** Never sent to Teachers, who don't see Students. */
-    student: PersonSchema.nullable(),
+    student: StudentRefSchema.nullable(),
     /** The Transfer Request it's about; null for a Task. */
     transfer_request: z
       .object({ id: z.number().int(), status: z.enum(TRANSFER_REQUEST_STATUSES) })

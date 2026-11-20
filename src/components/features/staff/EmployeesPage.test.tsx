@@ -10,6 +10,7 @@ import { DEFAULT_THEME } from "@/lib/theme";
 import { EmployeesPage } from "./EmployeesPage";
 import { consultancySummary } from "@/test/consultancy";
 import { testHost } from "@/test/hosts";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
@@ -453,8 +454,8 @@ describe("EmployeesPage", () => {
     it("lists the Students still assigned to them before confirming", async () => {
       const fetchFn = listing({
         "GET /api/staff/2/assigned-students/": jsonResponse([
-          { id: 4, name: "Rohan Bhandari", stage: "counselling" },
-          { id: 1, name: "Sita Karki", stage: "applying" },
+          { id: uid(4), name: "Rohan Bhandari", stage: "counselling" },
+          { id: uid(1), name: "Sita Karki", stage: "applying" },
         ]),
         "POST /api/staff/2/deactivate/": jsonResponse({ ...RAM, status: "deactivated" }),
       });
@@ -474,7 +475,7 @@ describe("EmployeesPage", () => {
       ).toBeInTheDocument();
       expect(within(confirm).getByRole("link", { name: "Rohan Bhandari" })).toHaveAttribute(
         "href",
-        "/students/4",
+        `/students/${uid(4)}`,
       );
       expect(within(confirm).getByText(/, Applying$/)).toBeInTheDocument();
       await userEvent.click(within(confirm).getByRole("button", { name: "Deactivate anyway" }));
@@ -486,7 +487,7 @@ describe("EmployeesPage", () => {
     it("names one Student in the singular", async () => {
       listing({
         "GET /api/staff/2/assigned-students/": jsonResponse([
-          { id: 4, name: "Rohan Bhandari", stage: "lead" },
+          { id: uid(4), name: "Rohan Bhandari", stage: "lead" },
         ]),
       });
       renderPage();

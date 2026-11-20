@@ -27,6 +27,7 @@ import {
   TARGET_LEVELS,
 } from "@/constants/students";
 import { PASSWORD_RULE_IDS, type PasswordRuleId } from "@/lib/password";
+import { RecordIdSchema } from "@/lib/recordId";
 import { normaliseThemeConfig, type ThemeConfig } from "@/lib/theme";
 
 import { CourseFileSchema } from "../catalogue/courseFileTypes";
@@ -325,7 +326,7 @@ export type CounsellorChoice = z.infer<typeof CounsellorChoiceSchema>;
 const AssignedCounsellorSchema = z.object({ id: z.number().int(), name: z.string() }).nullable();
 
 const StudentRowFields = {
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   phone: z.string(),
   email: z.string(),
@@ -434,7 +435,7 @@ export const NEW_STUDENT_API_FIELDS = {
 /** One qualification in a Student's academic history, in frontend naming. */
 export const AcademicRecordSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     level: z.enum(QUALIFICATIONS),
     institution: z.string(),
     finished_year: z.number().int().nullable(),
@@ -447,7 +448,7 @@ export type AcademicRecord = z.infer<typeof AcademicRecordSchema>;
 /** One English test result, in frontend naming. The overall score is text, e.g. "6.5". */
 export const TestScoreSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     test: z.enum(ENGLISH_TESTS),
     overall: z.string().regex(/^\d{1,3}\.\d$/),
     taken_on: z.iso.date().nullable(),
@@ -473,7 +474,7 @@ const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 /** One job a Student has had (spec 35e), months as "YYYY-MM"; no end month means still there. */
 export const WorkExperienceSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     employer: z.string(),
     job_title: z.string(),
     started_on: z.string().regex(MONTH),
@@ -496,7 +497,7 @@ const PERCENT_MAX = 100;
  */
 export const ApplicationSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     university: z.object({ id: z.number().int(), name: z.string() }),
     course: z.object({ id: z.number().int(), name: z.string(), level: z.enum(COURSE_LEVELS) }),
     intake: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
@@ -504,7 +505,7 @@ export const ApplicationSchema = z
     offer_kind: z.enum(OFFER_KINDS).or(z.literal("")),
     offered_on: z.iso.date().nullable(),
     offer_letter: z
-      .object({ id: z.number().int(), files: z.array(NamedFileSchema).nonempty() })
+      .object({ id: RecordIdSchema, files: z.array(NamedFileSchema).nonempty() })
       .nullable(),
     documents: z.array(LinkedDocumentSchema),
     /** The Course's PDF brochures in use (ticket 10). */
@@ -527,8 +528,8 @@ export const APPOINTMENT_AT = z
 /** One Visa: its Application, Status, the day it was applied for (AD) and its appointments. */
 export const VisaSchema = z
   .object({
-    id: z.number().int(),
-    application_id: z.number().int(),
+    id: RecordIdSchema,
+    application_id: RecordIdSchema,
     university: z.object({ id: z.number().int(), name: z.string() }),
     course: z.object({ id: z.number().int(), name: z.string(), level: z.enum(COURSE_LEVELS) }),
     status: z.enum(VISA_STATUSES),
@@ -569,7 +570,7 @@ export type DocumentProgress = z.infer<typeof DocumentProgressSchema>;
 /** One change in a Student's History, in frontend naming. */
 export const HistoryEntrySchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     kind: z.enum(HISTORY_KINDS),
     at: z.iso.datetime({ offset: true }),
     by: z.object({ name: z.string(), is_platform_admin: z.boolean() }),
@@ -622,7 +623,7 @@ export const StudentProfileSchema = z
     }),
     applications: z.array(ApplicationSchema),
     /** The Application the Student goes ahead with (GLOSSARY: Chosen Offer), if any. */
-    chosen_offer_id: z.number().int().nullable(),
+    chosen_offer_id: RecordIdSchema.nullable(),
     visas: z.array(VisaSchema),
     documents: DocumentProgressSchema,
     /** Moves on with every change to what the Edit details page shows (issue 81). */
@@ -891,7 +892,7 @@ export const COUNSELLOR_PICK_API_FIELDS = { counsellor: "counsellor" } as const;
 
 /** A Student someone still counsels, listed before they're deactivated (spec 21). */
 export const AssignedStudentSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   stage: z.enum(Stage),
 });

@@ -1,6 +1,10 @@
+import type { RecordId } from "@/lib/recordId";
+
+import { uid } from "./ids";
+
 /** One file of a Document as the API answers it (issue 78). */
 type ApiFile = {
-  id: number;
+  id: RecordId;
   file_name: string;
   content_type: string;
   size: number;
@@ -11,7 +15,7 @@ type ApiFile = {
 /** A file as the API answers it, named `name`, for tests. */
 export function apiFile(id: number, name: string): ApiFile {
   return {
-    id,
+    id: uid(id),
     file_name: name,
     content_type: name.endsWith(".pdf") ? "application/pdf" : "image/jpeg",
     size: 2048,
@@ -22,20 +26,20 @@ export function apiFile(id: number, name: string): ApiFile {
 
 /** A Document as the API answers it. */
 type ApiDocument = {
-  id: number;
+  id: RecordId;
   files: ApiFile[];
   verification: string;
   rejection_reason: string;
-  link: { kind: string; id: number; university: string } | null;
+  link: { kind: string; id: RecordId; university: string } | null;
   /** Its files in the Bin (issue 79); none unless a test says so. */
-  binned_files?: { id: number; file_name: string; bin: unknown }[];
+  binned_files?: { id: RecordId; file_name: string; bin: unknown }[];
   uploaded_at: string;
   uploaded_by: { id: number; name: string } | null;
 };
 
 /** Documents as the API answers them, for tests. */
 export const PASSPORT_DOCUMENT: ApiDocument = {
-  id: 31,
+  id: uid(31),
   files: [apiFile(41, "passport.pdf")],
   verification: "pending",
   rejection_reason: "",
@@ -92,10 +96,10 @@ export const CHECKLIST = {
       state: "verified",
       document: {
         ...PASSPORT_DOCUMENT,
-        id: 32,
+        id: uid(32),
         files: [apiFile(42, "citizenship.jpg")],
         verification: "verified",
-        link: { kind: "application", id: 11, university: "Federation University" },
+        link: { kind: "application", id: uid(11), university: "Federation University" },
       },
     }),
     item({
@@ -104,7 +108,7 @@ export const CHECKLIST = {
       state: "rejected",
       document: {
         ...PASSPORT_DOCUMENT,
-        id: 33,
+        id: uid(33),
         files: [apiFile(43, "see.pdf")],
         verification: "rejected",
         rejection_reason: "Photo is blurred.",

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState, type ReactNode } from "react";
 
 import { canMessageStudents } from "@/components/features/communication/canMessage";
@@ -67,7 +68,7 @@ export function StudentProfilePage({
   studentId,
   startTab = TAB.applications,
 }: {
-  studentId: number;
+  studentId: RecordId;
   /** The tab to open on, e.g. Fees from Fees by type; Applications if it isn't shown. */
   startTab?: Tab;
 }) {
@@ -95,13 +96,13 @@ function useSeesFees(profile: StudentProfile): boolean {
 }
 
 /** The Student's classes, asked for only while the test-prep Module is on. */
-function useClassesTab(studentId: number): StudentClass[] {
+function useClassesTab(studentId: RecordId): StudentClass[] {
   const { modules } = useCurrentStaff();
   const state = useStudentClasses(studentId, modules.includes(Module.Batches));
   return state.status === "loaded" ? state.data : [];
 }
 
-type LoadedProfileProps = { studentId: number; role: Role; startTab: Tab };
+type LoadedProfileProps = { studentId: RecordId; role: Role; startTab: Tab };
 
 function LoadedProfile({ studentId, role, startTab }: LoadedProfileProps) {
   const { state, replace, update, refresh } = useStudentProfile(studentId);

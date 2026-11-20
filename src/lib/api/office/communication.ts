@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import {
   BODY_MAX_LENGTH,
@@ -37,8 +39,8 @@ const NoContactAnswerSchema = z.object({ code: z.literal(NO_CONTACT_EMAIL_CODE) 
 /** One email to one Student (or a past SMS), sent or failed. */
 export const MessageSchema = z
   .object({
-    id: z.number().int(),
-    student: z.object({ id: z.number().int(), name: z.string().min(1) }),
+    id: RecordIdSchema,
+    student: z.object({ id: RecordIdSchema, name: z.string().min(1) }),
     channel: z.enum(CHANNELS),
     subject: z.string().max(SUBJECT_MAX_LENGTH),
     body: z.string().max(BODY_MAX_LENGTH),
@@ -92,7 +94,7 @@ export function fetchMessages(page: number, fetchFn: typeof fetch = fetch): Prom
 
 /** One page of a Student's emails, newest first. */
 export function fetchStudentMessages(
-  studentId: number,
+  studentId: RecordId,
   page: number,
   fetchFn: typeof fetch = fetch,
 ): Promise<MessagePage> {
@@ -122,7 +124,7 @@ function knownFailure(error: unknown): NoContactEmailError | FilesNotFetchedErro
  * couldn't be got, or `InvalidFieldsError` naming `subject`, `body` or `attachments`.
  */
 export async function sendEmail(
-  studentId: number,
+  studentId: RecordId,
   email: NewEmail,
   fetchFn: typeof fetch = fetch,
 ): Promise<Message> {
@@ -140,7 +142,7 @@ export type PreTickSource =
 const ChoosableSchema = z.object({
   students: z.array(
     z.object({
-      id: z.number().int().positive(),
+      id: RecordIdSchema,
       name: z.string().min(1),
       email: z.string().min(1),
       stage: z.enum(Stage),
@@ -189,7 +191,7 @@ export type BulkEmailField = NewEmailField | "students";
  * `subject`, `body`, `attachments` or `students` (nobody, too many, Lost or unknown Students).
  */
 export async function sendBulkEmail(
-  studentIds: readonly number[],
+  studentIds: readonly RecordId[],
   email: NewEmail,
   fetchFn: typeof fetch = fetch,
 ): Promise<BulkResult> {

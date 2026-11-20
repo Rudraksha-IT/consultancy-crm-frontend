@@ -11,6 +11,7 @@ import { PROFILE } from "@/test/studentProfile";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { StudentProfilePage } from "./StudentProfilePage";
+import { uid } from "@/test/ids";
 
 vi.mock("@/lib/documents/tab", () => ({ openBlankTab: () => null }));
 
@@ -24,9 +25,9 @@ const COUNSELLOR: StaffContext = {
   theme: DEFAULT_THEME,
 };
 
-const LETTER = { id: 31, files: [{ id: 51, file_name: "deakin-offer.pdf" }] };
+const LETTER = { id: uid(31), files: [{ id: uid(51), file_name: "deakin-offer.pdf" }] };
 const DEAKIN = {
-  id: 11,
+  id: uid(11),
   university: { id: 3, name: "Deakin University" },
   course: { id: 4, name: "Master of IT", level: "master" },
   intake: "2027-03",
@@ -38,7 +39,7 @@ const DEAKIN = {
   documents: [],
 };
 const RMIT = {
-  id: 12,
+  id: uid(12),
   university: { id: 6, name: "RMIT University" },
   course: { id: 9, name: "Master of Data Science", level: "master" },
   intake: "2027-07",
@@ -50,7 +51,7 @@ const RMIT = {
   documents: [],
 };
 const MONASH = {
-  id: 13,
+  id: uid(13),
   university: { id: 8, name: "Monash University" },
   course: { id: 10, name: "Master of Nursing", level: "master" },
   intake: "2027-02",
@@ -68,11 +69,11 @@ const AT_OFFER = {
   visas: [],
   chosen_offer_id: null,
 };
-const CHOSEN = { ...AT_OFFER, chosen_offer_id: 11 };
+const CHOSEN = { ...AT_OFFER, chosen_offer_id: uid(11) };
 const APPLYING = { ...PROFILE, stage: "applying", applications: [MONASH], chosen_offer_id: null };
 const waitingVisa = {
-  id: 21,
-  application_id: 11,
+  id: uid(21),
+  application_id: uid(11),
   university: { id: 3, name: "Deakin University" },
   course: { id: 4, name: "Master of IT", level: "master" },
   status: "applied",
@@ -104,9 +105,9 @@ function on(verb: string, path: string, body: unknown, status = 200): Answer {
     method(init) === verb && calledPath === path ? jsonResponse(body, status) : undefined;
 }
 
-const profile = (body: unknown = AT_OFFER): Answer => on("GET", "/api/students/7/", body);
-const LETTERS_URL = "/api/students/7/offer-letters/";
-const CHOSEN_URL = "/api/students/7/chosen-offer/";
+const profile = (body: unknown = AT_OFFER): Answer => on("GET", `/api/students/${uid(7)}/`, body);
+const LETTERS_URL = `/api/students/${uid(7)}/offer-letters/`;
+const CHOSEN_URL = `/api/students/${uid(7)}/chosen-offer/`;
 
 function sentInit(fetchFn: ReturnType<typeof backend>, verb: string, path: string) {
   return fetchFn.mock.calls.find(([p, init]) => method(init) === verb && p === path)?.[1];
@@ -121,7 +122,7 @@ function renderPage() {
   return render(
     <StaffContextContext value={COUNSELLOR}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -246,7 +247,7 @@ describe("Go ahead with this", () => {
 
     expect(await screen.findByText("Going ahead with Deakin University")).toBeInTheDocument();
     expect(sentJson(fetchFn, "PUT", CHOSEN_URL)).toEqual({
-      application: 11,
+      application: uid(11),
     });
     expect(within(await offerRow("Deakin University")).getByText("Chosen")).toBeInTheDocument();
   });
@@ -293,7 +294,7 @@ describe("Add offer letter", () => {
     const form = sentInit(fetchFn, "POST", LETTERS_URL)?.body;
     expect(form).toBeInstanceOf(FormData);
     if (!(form instanceof FormData)) return;
-    expect(form.get("application")).toBe("13");
+    expect(form.get("application")).toBe(uid(13));
     expect(form.get("kind")).toBe("conditional");
     expect(form.get("file")).toBeInstanceOf(File);
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -379,7 +380,12 @@ describe("Visa applied on the Chosen Offer", () => {
   it("is offered in the Visa section for the Chosen Offer", async () => {
     const fetchFn = backend(
       profile(CHOSEN),
-      on("POST", "/api/students/7/visas/", { ...CHOSEN, stage: "visa", visas: [waitingVisa] }, 201),
+      on(
+        "POST",
+        `/api/students/${uid(7)}/visas/`,
+        { ...CHOSEN, stage: "visa", visas: [waitingVisa] },
+        201,
+      ),
     );
     renderPage();
 
@@ -393,8 +399,8 @@ describe("Visa applied on the Chosen Offer", () => {
     expect(
       await screen.findByText("Visa applied for Deakin University. Stage is now Visa."),
     ).toBeInTheDocument();
-    expect(sentJson(fetchFn, "POST", "/api/students/7/visas/")).toEqual({
-      application: 11,
+    expect(sentJson(fetchFn, "POST", `/api/students/${uid(7)}/visas/`)).toEqual({
+      application: uid(11),
     });
     expect(screen.queryByRole("button", { name: APPLY })).not.toBeInTheDocument();
   });
@@ -417,20 +423,20 @@ describe("offer changes in Activity", () => {
     };
     backend(
       profile(),
-      on("GET", "/api/students/7/visits/?page=1", {
+      on("GET", `/api/students/${uid(7)}/visits/?page=1`, {
         count: 0,
         page: 1,
         page_size: 50,
         results: [],
       }),
-      on("GET", "/api/students/7/history/", {
+      on("GET", `/api/students/${uid(7)}/history/`, {
         count: 4,
         page: 1,
         page_size: 50,
         results: [
           {
             ...entry,
-            id: 4,
+            id: uid(4),
             kind: "chosen_offer_changed",
             before: "Deakin University",
             after: "",
@@ -438,15 +444,21 @@ describe("offer changes in Activity", () => {
           },
           {
             ...entry,
-            id: 3,
+            id: uid(3),
             kind: "chosen_offer_changed",
             before: "RMIT University",
             after: "Deakin University",
           },
-          { ...entry, id: 2, kind: "chosen_offer_changed", before: "", after: "RMIT University" },
           {
             ...entry,
-            id: 1,
+            id: uid(2),
+            kind: "chosen_offer_changed",
+            before: "",
+            after: "RMIT University",
+          },
+          {
+            ...entry,
+            id: uid(1),
             kind: "offer_letter_added",
             before: "",
             after: "Deakin University, Conditional",
@@ -479,34 +491,40 @@ describe("the Bin in Activity (issue 79)", () => {
     };
     backend(
       profile(),
-      on("GET", "/api/students/7/visits/?page=1", {
+      on("GET", `/api/students/${uid(7)}/visits/?page=1`, {
         count: 0,
         page: 1,
         page_size: 50,
         results: [],
       }),
-      on("GET", "/api/students/7/history/", {
+      on("GET", `/api/students/${uid(7)}/history/`, {
         count: 5,
         page: 1,
         page_size: 50,
         results: [
-          { ...entry, id: 5, kind: "document_deleted", after: "CV", detail: "" },
+          { ...entry, id: uid(5), kind: "document_deleted", after: "CV", detail: "" },
           {
             ...entry,
-            id: 4,
+            id: uid(4),
             kind: "document_deleted_from_bin",
             after: "Passport",
             detail: "Uploaded twice",
           },
           {
             ...entry,
-            id: 3,
+            id: uid(3),
             kind: "document_restored",
             after: "page-2.pdf of Passport",
             detail: "Blurry scan",
           },
-          { ...entry, id: 2, kind: "document_taken_out", after: "Passport", detail: "" },
-          { ...entry, id: 1, kind: "document_binned", after: "Passport", detail: "Uploaded twice" },
+          { ...entry, id: uid(2), kind: "document_taken_out", after: "Passport", detail: "" },
+          {
+            ...entry,
+            id: uid(1),
+            kind: "document_binned",
+            after: "Passport",
+            detail: "Uploaded twice",
+          },
         ],
       }),
     );

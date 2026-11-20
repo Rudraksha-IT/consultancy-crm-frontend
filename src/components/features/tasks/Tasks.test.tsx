@@ -14,6 +14,7 @@ import { PROFILE } from "@/test/studentProfile";
 import { TasksPage } from "./TasksPage";
 import { consultancySummary } from "@/test/consultancy";
 import { testHost } from "@/test/hosts";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
   staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
@@ -48,7 +49,7 @@ const TASK = {
   done_at: null,
   assignee: { id: 5, name: "Bikash Thapa" },
   created_by: { id: 5, name: "Bikash Thapa" },
-  student: { id: 7, name: "Sita Gurung" },
+  student: { id: uid(7), name: "Sita Gurung" },
   can_mark_done: true,
 };
 
@@ -93,7 +94,7 @@ function renderProfile(context: StaffContext = COUNSELLOR) {
   return render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -143,7 +144,7 @@ describe("Tasks page", () => {
     renderTasks();
 
     const link = await screen.findByRole("link", { name: "Sita Gurung" });
-    expect(link).toHaveAttribute("href", "/students/7");
+    expect(link).toHaveAttribute("href", `/students/${uid(7)}`);
     // A 44 px touch target, not just the height of its text.
     expect(link).toHaveClass("min-h-control");
     expect(screen.getByText("From Ramesh KC")).toBeInTheDocument();
@@ -484,7 +485,7 @@ describe("New Task", () => {
         page_size: 25,
         results: [
           {
-            id: 7,
+            id: uid(7),
             name: "Sita Gurung",
             phone: "9841000001",
             email: "",
@@ -505,7 +506,7 @@ describe("New Task", () => {
     await userEvent.type(within(dialog).getByLabelText("Find a Student (optional)"), "Sita");
     const about = within(dialog).getByLabelText("About a Student (optional)");
     await within(about).findByRole("option", { name: "Sita Gurung" });
-    await userEvent.selectOptions(about, "7");
+    await userEvent.selectOptions(about, uid(7));
     await userEvent.click(within(dialog).getByRole("button", { name: "Create Task" }));
 
     expect(
@@ -515,7 +516,7 @@ describe("New Task", () => {
       title: "Call Sita",
       due_on: "2026-11-03",
       assignee: 5,
-      student: 7,
+      student: uid(7),
       priority: "normal",
       only_me: false,
     });
@@ -602,11 +603,11 @@ describe("New Task", () => {
 });
 
 describe("A Student's Tasks tab", () => {
-  const STUDENT_TASKS = "/api/students/7/tasks/?page=1";
+  const STUDENT_TASKS = `/api/students/${uid(7)}/tasks/?page=1`;
 
   it("counts and lists the Student's open Tasks without repeating their name", async () => {
     backend(
-      on("GET", "/api/students/7/", { ...PROFILE, open_tasks: 2 }),
+      on("GET", `/api/students/${uid(7)}/`, { ...PROFILE, open_tasks: 2 }),
       on("GET", STUDENT_TASKS, pageOf([TASK, LATER_TASK_ANSWER])),
     );
     renderProfile();
@@ -620,7 +621,7 @@ describe("A Student's Tasks tab", () => {
   });
 
   it("says when nothing is open", async () => {
-    backend(on("GET", "/api/students/7/", PROFILE), on("GET", STUDENT_TASKS, pageOf([])));
+    backend(on("GET", `/api/students/${uid(7)}/`, PROFILE), on("GET", STUDENT_TASKS, pageOf([])));
     renderProfile();
 
     await userEvent.click(await screen.findByRole("tab", { name: "Tasks 0" }));
@@ -631,7 +632,10 @@ describe("A Student's Tasks tab", () => {
   it("adds a Task about the Student, given to their counsellor, then counts it", async () => {
     let created = false;
     const fetchFn = backend(
-      onEach("GET", "/api/students/7/", () => ({ ...PROFILE, open_tasks: created ? 1 : 0 })),
+      onEach("GET", `/api/students/${uid(7)}/`, () => ({
+        ...PROFILE,
+        open_tasks: created ? 1 : 0,
+      })),
       onEach("GET", STUDENT_TASKS, () => pageOf(created ? [TASK] : [])),
       on("GET", "/api/tasks/assignees/", ASSIGNEES),
       (path, init) => {
@@ -654,7 +658,10 @@ describe("A Student's Tasks tab", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Create Task" }));
 
     expect(await screen.findByRole("tab", { name: "Tasks 1" })).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/tasks/")).toMatchObject({ assignee: 5, student: 7 });
+    expect(sentBody(fetchFn, "POST", "/api/tasks/")).toMatchObject({
+      assignee: 5,
+      student: uid(7),
+    });
     expect(await screen.findByText(TASK.title)).toBeInTheDocument();
   });
 });

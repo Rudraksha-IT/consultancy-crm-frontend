@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { ATTENDANCE_MARKS, type AttendanceMark } from "@/constants/batches";
 
@@ -12,14 +14,14 @@ const MarkSchema = z.enum(ATTENDANCE_MARKS);
 const AttendedSchema = z.number().int().min(0).max(100).nullable();
 
 /** Each marked Student's mark, by Student id; Students not marked that day are left out. */
-export type DayMarks = Partial<Record<number, AttendanceMark>>;
+export type DayMarks = Partial<Record<RecordId, AttendanceMark>>;
 
 /** One class day (spec 85): who is marked how, and whether this person may change it. */
 export const AttendanceDaySchema = z
   .object({
     day: z.iso.date(),
     can_mark: z.boolean(),
-    marks: z.array(z.object({ student: z.number().int(), mark: MarkSchema.nullable() })),
+    marks: z.array(z.object({ student: RecordIdSchema, mark: MarkSchema.nullable() })),
   })
   .transform((answer) => {
     const marks: DayMarks = {};
@@ -79,7 +81,7 @@ export async function saveAttendanceDay(
   fetchFn: typeof fetch = fetch,
 ): Promise<AttendanceDay> {
   const body = {
-    marks: Object.entries(marks).map(([student, mark]) => ({ student: Number(student), mark })),
+    marks: Object.entries(marks).map(([student, mark]) => ({ student, mark })),
   };
   try {
     return await putJson(dayPath(batchId, day), body, AttendanceDaySchema, fetchFn);
@@ -90,7 +92,7 @@ export async function saveAttendanceDay(
 
 /** The classes a Student is in, by name, with their Attendance (spec 86). */
 export function fetchStudentClasses(
-  studentId: number,
+  studentId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentClass[]> {
   return getJson(API_PATHS.studentBatches(studentId), z.array(StudentClassSchema), fetchFn);

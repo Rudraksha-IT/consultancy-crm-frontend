@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useFormSave } from "@/components/features/students/profile/useFormSave";
 import { useToast } from "@/components/ui/useToast";
 import { COMMUNICATION_TEXT as TEXT } from "@/constants/communication";
@@ -54,7 +55,7 @@ export function useEmailSend({
   return { isSaving, fieldErrors, failure, send };
 }
 
-function idsOf(recipients: readonly EmailRecipient[]): number[] {
+function idsOf(recipients: readonly EmailRecipient[]): RecordId[] {
   return recipients.map((recipient) => recipient.id);
 }
 

@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 export const ROUTES = {
   home: "/",
   login: "/login",
@@ -6,8 +7,8 @@ export const ROUTES = {
   join: "/join",
   students: "/students",
   /** One Student's page (issue 10). */
-  student: (id: number) => `/students/${String(id)}`,
-  studentEdit: (id: number) => `/students/${String(id)}/edit`,
+  student: (id: RecordId) => `/students/${id}`,
+  studentEdit: (id: RecordId) => `/students/${id}/edit`,
   /** Every Application in the office (issue 47). */
   applications: "/applications",
   /** Every Visa in the office (issue 48). */
@@ -31,7 +32,7 @@ export const ROUTES = {
   feesByType: "/accounts/fees-by-type",
   feeTypeStudents: (id: number) => `/accounts/fees-by-type/${String(id)}`,
   /** One Student's page opened on their Fees tab. */
-  studentFees: (id: number) => `/students/${String(id)}?tab=fees`,
+  studentFees: (id: RecordId) => `/students/${id}?tab=fees`,
   reports: "/reports",
   /** Configuration opened on Universities, the Catalogue and its Course Files (ticket 10). */
   universities: "/configuration?section=universities",

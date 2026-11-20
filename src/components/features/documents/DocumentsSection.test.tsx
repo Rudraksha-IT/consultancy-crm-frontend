@@ -8,6 +8,7 @@ import { backend, callsTo, on } from "@/test/backend";
 import { CHECKLIST, PASSPORT_DOCUMENT, apiFile, checklistRow, item } from "@/test/documents";
 
 import { DocumentsSection } from "./DocumentsSection";
+import { uid } from "@/test/ids";
 
 const { navigate, openBlankTab } = vi.hoisted(() => ({
   navigate: vi.fn<(path: string) => void>(),
@@ -16,7 +17,7 @@ const { navigate, openBlankTab } = vi.hoisted(() => ({
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 vi.mock("@/lib/documents/tab", () => ({ openBlankTab }));
 
-const CHECKLIST_PATH = "/api/students/7/documents/";
+const CHECKLIST_PATH = `/api/students/${uid(7)}/documents/`;
 const checklist = (body: unknown = CHECKLIST, status = 200) =>
   on("GET", CHECKLIST_PATH, body, status);
 
@@ -33,7 +34,7 @@ function renderSection(
   render(
     <ToastProvider>
       <DocumentsSection
-        studentId={7}
+        studentId={uid(7)}
         studentName="Sita Gurung"
         links={links}
         onProgress={onProgress}
@@ -243,7 +244,7 @@ describe("the checklist", () => {
   it("shows what a Document is linked to", async () => {
     const visaLinked = {
       ...PASSPORT_DOCUMENT,
-      link: { kind: "visa", id: 3, university: "Deakin University" },
+      link: { kind: "visa", id: uid(3), university: "Deakin University" },
     };
     backend(
       checklist({
@@ -328,10 +329,10 @@ describe("the checklist", () => {
 
 describe("opening a file", () => {
   it("opens a new tab at the click and sends it to the short-lived link", async () => {
-    const url = "https://files.test/abc/documents/7/x.pdf?sig=1";
+    const url = `https://files.test/abc/documents/${uid(7)}/x.pdf?sig=1`;
     backend(
       checklist(),
-      on("GET", "/api/students/7/documents/31/files/41/link/?action=open", {
+      on("GET", `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=open`, {
         url,
         expires_in: 300,
       }),
@@ -350,13 +351,17 @@ describe("opening a file", () => {
   });
 
   it("saves a file by going to its download link", async () => {
-    const url = "https://files.test/abc/documents/7/x.pdf?sig=2";
+    const url = `https://files.test/abc/documents/${uid(7)}/x.pdf?sig=2`;
     backend(
       checklist(),
-      on("GET", "/api/students/7/documents/31/files/41/link/?action=download", {
-        url,
-        expires_in: 300,
-      }),
+      on(
+        "GET",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=download`,
+        {
+          url,
+          expires_in: 300,
+        },
+      ),
     );
     renderSection();
 
@@ -372,7 +377,7 @@ describe("opening a file", () => {
     const url = "https://files.test/x.pdf";
     backend(
       checklist(),
-      on("GET", "/api/students/7/documents/31/files/41/link/?action=open", {
+      on("GET", `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=open`, {
         url,
         expires_in: 300,
       }),
@@ -390,7 +395,12 @@ describe("opening a file", () => {
   it("closes the new tab and says so when no link comes", async () => {
     backend(
       checklist(),
-      on("GET", "/api/students/7/documents/31/files/41/link/?action=open", {}, 404),
+      on(
+        "GET",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=open`,
+        {},
+        404,
+      ),
     );
     const tab = { opener: {}, location: { replace: vi.fn() }, close: vi.fn() };
     openBlankTab.mockReturnValue(tab);
@@ -590,13 +600,17 @@ describe("a Document with several files (issue 78)", () => {
   });
 
   it("opens the file asked for, not the first one", async () => {
-    const url = "https://files.test/abc/documents/7/back.jpg?sig=1";
+    const url = `https://files.test/abc/documents/${uid(7)}/back.jpg?sig=1`;
     backend(
       checklist(twoPages),
-      on("GET", "/api/students/7/documents/31/files/44/link/?action=download", {
-        url,
-        expires_in: 300,
-      }),
+      on(
+        "GET",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(44)}/link/?action=download`,
+        {
+          url,
+          expires_in: 300,
+        },
+      ),
     );
     renderSection();
 
@@ -609,7 +623,7 @@ describe("a Document with several files (issue 78)", () => {
 });
 
 describe("adding a file to a Document (issue 78)", () => {
-  const FILES_PATH = "/api/students/7/documents/32/files/";
+  const FILES_PATH = `/api/students/${uid(7)}/documents/${uid(32)}/files/`;
   const added = {
     ...CHECKLIST,
     items: CHECKLIST.items.map((one) =>
@@ -620,7 +634,7 @@ describe("adding a file to a Document (issue 78)", () => {
             state: "waiting",
             document: {
               ...PASSPORT_DOCUMENT,
-              id: 32,
+              id: uid(32),
               files: [apiFile(42, "citizenship.jpg"), apiFile(45, "citizenship-back.jpg")],
             },
           })
@@ -687,7 +701,10 @@ describe("adding a file to a Document (issue 78)", () => {
   });
 
   it("confirms plainly when the Document was waiting for a check anyway", async () => {
-    backend(checklist(), on("POST", "/api/students/7/documents/31/files/", CHECKLIST, 201));
+    backend(
+      checklist(),
+      on("POST", `/api/students/${uid(7)}/documents/${uid(31)}/files/`, CHECKLIST, 201),
+    );
     renderSection();
     const dialog = await openAddFile("Passport");
 
@@ -761,7 +778,7 @@ describe("adding a file to a Document (issue 78)", () => {
 });
 
 describe("checking a document", () => {
-  const VERIFY_PATH = "/api/students/7/documents/31/verification/";
+  const VERIFY_PATH = `/api/students/${uid(7)}/documents/${uid(31)}/verification/`;
   const verified = {
     ...CHECKLIST,
     items: CHECKLIST.items.map((one) =>
@@ -940,8 +957,12 @@ describe("checking a document", () => {
 
 describe("linking an upload", () => {
   const LINKS: DocumentLinkOption[] = [
-    { kind: "application", id: 11, label: "Application: Federation University, Bachelor of IT" },
-    { kind: "visa", id: 3, label: "Visa: Deakin University, Master of IT" },
+    {
+      kind: "application",
+      id: uid(11),
+      label: "Application: Federation University, Bachelor of IT",
+    },
+    { kind: "visa", id: uid(3), label: "Visa: Deakin University, Master of IT" },
   ];
 
   async function openUpload(): Promise<HTMLElement> {
@@ -987,7 +1008,7 @@ describe("linking an upload", () => {
     const [call] = callsTo(fetchFn, "POST", CHECKLIST_PATH);
     const body = call?.[1]?.body;
     if (!(body instanceof FormData)) throw new Error("expected a form");
-    expect(body.get("visa")).toBe("3");
+    expect(body.get("visa")).toBe(uid(3));
     expect(body.has("application")).toBe(false);
   });
 
@@ -1029,7 +1050,7 @@ describe("linking an upload", () => {
 
 describe("documents asked for this Student alone", () => {
   const TYPES_PATH = "/api/documents/types/";
-  const ASKED_PATH = "/api/students/7/documents/asked/";
+  const ASKED_PATH = `/api/students/${uid(7)}/documents/asked/`;
   const TYPES = {
     results: [
       { id: 1, name: "Passport", needed_by_everyone: true, usual_group: "applying" },

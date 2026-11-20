@@ -10,6 +10,7 @@ import {
 } from "./batches";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const BATCH = {
   id: 3,
@@ -42,8 +43,8 @@ const BATCH_IN_FRONTEND_NAMING = {
 const WITH_STUDENTS = {
   ...BATCH,
   students: [
-    { id: 7, name: "Sita Gurung", attended_percent: null },
-    { id: 8, name: "Ram Shrestha", attended_percent: 92 },
+    { id: uid(7), name: "Sita Gurung", attended_percent: null },
+    { id: uid(8), name: "Ram Shrestha", attended_percent: 92 },
   ],
 };
 
@@ -114,13 +115,13 @@ describe("fetchBatch", () => {
 
     expect(sent(fetchFn).path).toBe("/api/batches/3/");
     expect(batch.students).toEqual([
-      { id: 7, name: "Sita Gurung", attendedPercent: null },
-      { id: 8, name: "Ram Shrestha", attendedPercent: 92 },
+      { id: uid(7), name: "Sita Gurung", attendedPercent: null },
+      { id: uid(8), name: "Ram Shrestha", attendedPercent: 92 },
     ]);
   });
 
   it("refuses an attendance over 100%", async () => {
-    const students = [{ id: 7, name: "Sita Gurung", attended_percent: 101 }];
+    const students = [{ id: uid(7), name: "Sita Gurung", attended_percent: 101 }];
     const fetchFn = answering(jsonResponse({ ...BATCH, students }));
 
     await expect(fetchBatch(3, fetchFn)).rejects.toThrow();
@@ -182,17 +183,17 @@ describe("adding and removing Students", () => {
   it("POSTs the Student to the class", async () => {
     const fetchFn = answering(jsonResponse(WITH_STUDENTS, 201));
 
-    const batch = await addStudentToBatch(3, 7, fetchFn);
+    const batch = await addStudentToBatch(3, uid(7), fetchFn);
 
     expect(sent(fetchFn).path).toBe("/api/batches/3/students/");
-    expect(sentBody(fetchFn)).toEqual({ student: 7 });
+    expect(sentBody(fetchFn)).toEqual({ student: uid(7) });
     expect(batch.students).toHaveLength(2);
   });
 
   it("names why a Student can't be added", async () => {
     const fetchFn = answering(jsonResponse({ student: ["Already in this class."] }, 400));
 
-    const error: unknown = await addStudentToBatch(3, 7, fetchFn).catch((e: unknown) => e);
+    const error: unknown = await addStudentToBatch(3, uid(7), fetchFn).catch((e: unknown) => e);
 
     expect(error instanceof InvalidFieldsError && error.fieldErrors).toEqual({
       studentId: ["Already in this class."],
@@ -202,24 +203,26 @@ describe("adding and removing Students", () => {
   it("DELETEs the Student from the class", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await removeStudentFromBatch(3, 7, fetchFn);
+    await removeStudentFromBatch(3, uid(7), fetchFn);
 
     const { path, init } = sent(fetchFn);
-    expect(path).toBe("/api/batches/3/students/7/");
+    expect(path).toBe(`/api/batches/3/students/${uid(7)}/`);
     expect(init?.method).toBe("DELETE");
   });
 
   it("rejects when the Student can't be removed", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Not found." }, 404));
 
-    await expect(removeStudentFromBatch(3, 7, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(removeStudentFromBatch(3, uid(7), fetchFn)).rejects.toBeInstanceOf(
+      ApiRequestError,
+    );
   });
 });
 
 describe("fetchEnrolledStudents", () => {
   it("GETs one page of Students with their classes", async () => {
     const student = {
-      id: 7,
+      id: uid(7),
       name: "Sita Gurung",
       batches: [{ id: 3, name: "IELTS Morning" }],
       attended_percent: null,
@@ -231,7 +234,7 @@ describe("fetchEnrolledStudents", () => {
     expect(sent(fetchFn).path).toBe("/api/batches/students/?page=1");
     expect(page.students).toEqual([
       {
-        id: 7,
+        id: uid(7),
         name: "Sita Gurung",
         batches: [{ id: 3, name: "IELTS Morning" }],
         attendedPercent: null,

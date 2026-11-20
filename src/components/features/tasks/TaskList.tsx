@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import clsx from "clsx";
 import Link from "next/link";
 import { useId, useState, type ReactNode } from "react";
@@ -182,7 +183,7 @@ function isGivenBy(task: Task, ids: readonly number[]): boolean {
   return ids.includes(task.createdBy.id);
 }
 
-function StudentLink({ student }: { student: { id: number; name: string } }) {
+function StudentLink({ student }: { student: { id: RecordId; name: string } }) {
   return (
     <Link
       href={ROUTES.student(student.id)}

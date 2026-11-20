@@ -10,6 +10,7 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { HomePage } from "./HomePage";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
@@ -54,14 +55,14 @@ const SOME_WAITING = {
     count: 2,
     results: [
       {
-        visa_id: 4,
-        student: { id: 7, name: "Sita Gurung" },
+        visa_id: uid(4),
+        student: { id: uid(7), name: "Sita Gurung" },
         kind: "biometrics",
         at: "2026-11-04T14:00",
       },
       {
-        visa_id: 5,
-        student: { id: 8, name: "<b>Ram</b>" },
+        visa_id: uid(5),
+        student: { id: uid(8), name: "<b>Ram</b>" },
         kind: "interview",
         at: "2026-11-06T09:30",
       },
@@ -72,7 +73,7 @@ const SOME_WAITING = {
 function progressRow(id: number, name: string, overrides: object = {}) {
   return {
     student: {
-      id,
+      id: uid(id),
       name,
       stage: "applying",
       country: "australia",
@@ -88,7 +89,13 @@ function progressRow(id: number, name: string, overrides: object = {}) {
 
 const SITA = progressRow(7, "Sita Gurung");
 const RAM = progressRow(8, "Ram Karki", {
-  student: { ...SITA.student, id: 8, name: "Ram Karki", stage: "lead", assigned_counsellor: null },
+  student: {
+    ...SITA.student,
+    id: uid(8),
+    name: "Ram Karki",
+    stage: "lead",
+    assigned_counsellor: null,
+  },
   percent: 8,
   next_step: "Have the first counselling session",
   documents: { done: 0, total: 9, rejected: 0, waiting: 0, missing: 9 },
@@ -104,7 +111,7 @@ const COUNTS = {
 };
 
 const NEW_VISITOR = {
-  id: 12,
+  id: uid(12),
   name: "Hari Bhandari",
   phone: "9841000012",
   email: "",
@@ -290,7 +297,7 @@ describe("The Admin's Home", () => {
 
   it("says Done for a Student whose Visa is granted", async () => {
     const granted = progressRow(9, "Asha Rai", {
-      student: { ...SITA.student, id: 9, name: "Asha Rai", stage: "visa" },
+      student: { ...SITA.student, id: uid(9), name: "Asha Rai", stage: "visa" },
       percent: 100,
       next_step: "Visa granted. Help with flights and pre-departure.",
       is_done: true,
@@ -312,7 +319,7 @@ describe("The Admin's Home", () => {
 
     expect(await progress.findByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(progress.getByText("Australia, Bikash Thapa")).toBeInTheDocument();
     expect(progress.getByText("Australia, no counsellor yet")).toBeInTheDocument();
@@ -328,7 +335,7 @@ describe("The Admin's Home", () => {
   it("opens a Student's checklist from their documents button", async () => {
     backend(
       ...EVERYTHING,
-      on("GET", "/api/students/7/documents/", {
+      on("GET", `/api/students/${uid(7)}/documents/`, {
         done: 0,
         total: 0,
         can_change: true,
@@ -369,7 +376,7 @@ describe("The Admin's Home", () => {
 
     expect(await visitors.findByRole("link", { name: "Hari Bhandari" })).toHaveAttribute(
       "href",
-      "/students/12",
+      `/students/${uid(12)}`,
     );
     expect(visitors.getByText("Wants Canada")).toBeInTheDocument();
 

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useState } from "react";
 
 import { SelectField } from "@/components/ui/SelectField";
@@ -14,7 +15,7 @@ const SEARCH_DELAY_MS = 300;
 const NO_STUDENT = "";
 
 /** A Student a Task can be about, or one to put in a class. */
-export type StudentChoice = { id: number; name: string };
+export type StudentChoice = { id: RecordId; name: string };
 
 /** What the search box, the choice and its empty option are called. */
 export type StudentFinderLabels = {
@@ -78,11 +79,11 @@ export function StudentFinder({
         name="student"
         options={[
           { value: NO_STUDENT, label: labels.none },
-          ...choices.map((student) => ({ value: String(student.id), label: student.name })),
+          ...choices.map((student) => ({ value: student.id, label: student.name })),
         ]}
-        value={value === null ? NO_STUDENT : String(value.id)}
+        value={value === null ? NO_STUDENT : value.id}
         onChange={(id) => {
-          onChange(choices.find((student) => String(student.id) === id) ?? null);
+          onChange(choices.find((student) => student.id === id) ?? null);
         }}
         errors={errors}
       />

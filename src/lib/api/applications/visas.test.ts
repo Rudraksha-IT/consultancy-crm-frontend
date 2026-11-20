@@ -3,10 +3,11 @@ import { PROFILE } from "@/test/studentProfile";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 import { addVisaLetter, changeVisaStatus, setVisaDates, startVisa } from "./visas";
+import { uid } from "@/test/ids";
 
 const VISA = {
-  id: 21,
-  application_id: 11,
+  id: uid(21),
+  application_id: uid(11),
   university: { id: 3, name: "Deakin University" },
   course: { id: 4, name: "Master of IT", level: "master" },
   status: "applied",
@@ -39,17 +40,17 @@ describe("startVisa", () => {
   it("POSTs the Application and returns the profile with the Visa in frontend naming", async () => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, visas: [VISA] }, 201));
 
-    const profile = await startVisa(7, 11, fetchFn);
+    const profile = await startVisa(uid(7), uid(11), fetchFn);
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/students/7/visas/",
+      path: `/api/students/${uid(7)}/visas/`,
       method: "POST",
-      body: { application: 11 },
+      body: { application: uid(11) },
     });
     expect(profile.visas).toEqual([
       {
-        id: 21,
-        applicationId: 11,
+        id: uid(21),
+        applicationId: uid(11),
         university: { id: 3, name: "Deakin University" },
         course: { id: 4, name: "Master of IT", level: "master" },
         status: "applied",
@@ -66,7 +67,7 @@ describe("startVisa", () => {
     const message = "This Student already has a visa waiting for an answer.";
     const fetchFn = answering(jsonResponse({ application: [message] }, 400));
 
-    const failure = await startVisa(7, 11, fetchFn).catch((error: unknown) => error);
+    const failure = await startVisa(uid(7), uid(11), fetchFn).catch((error: unknown) => error);
 
     expect(fieldErrorsOf(failure)).toEqual({ application: [message] });
   });
@@ -74,7 +75,7 @@ describe("startVisa", () => {
   it("passes on a refusal that isn't about the fields", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Not your Student." }, 403));
 
-    await expect(startVisa(7, 11, fetchFn)).rejects.toThrow(ApiRequestError);
+    await expect(startVisa(uid(7), uid(11), fetchFn)).rejects.toThrow(ApiRequestError);
   });
 
   it.each([
@@ -86,7 +87,7 @@ describe("startVisa", () => {
   ])("refuses an answer with %s", async (_, broken) => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, visas: [broken] }, 201));
 
-    await expect(startVisa(7, 11, fetchFn)).rejects.toThrow();
+    await expect(startVisa(uid(7), uid(11), fetchFn)).rejects.toThrow();
   });
 });
 
@@ -95,10 +96,10 @@ describe("changeVisaStatus", () => {
     const moved = { ...PROFILE, stage: "offer", visas: [{ ...VISA, status: "refused" }] };
     const fetchFn = answering(jsonResponse(moved));
 
-    const profile = await changeVisaStatus(7, 21, "refused", fetchFn);
+    const profile = await changeVisaStatus(uid(7), uid(21), "refused", fetchFn);
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/students/7/visas/21/",
+      path: `/api/students/${uid(7)}/visas/${uid(21)}/`,
       method: "PATCH",
       body: { status: "refused" },
     });
@@ -108,7 +109,7 @@ describe("changeVisaStatus", () => {
   it("names a refused Status", async () => {
     const fetchFn = answering(jsonResponse({ status: ["The visa already has this status."] }, 400));
 
-    const failure = await changeVisaStatus(7, 21, "applied", fetchFn).catch(
+    const failure = await changeVisaStatus(uid(7), uid(21), "applied", fetchFn).catch(
       (error: unknown) => error,
     );
 
@@ -126,14 +127,14 @@ describe("setVisaDates", () => {
     );
 
     const profile = await setVisaDates(
-      7,
-      21,
+      uid(7),
+      uid(21),
       { biometrics: "2026-11-20T14:00", medical: null },
       fetchFn,
     );
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/students/7/visas/21/dates/",
+      path: `/api/students/${uid(7)}/visas/${uid(21)}/dates/`,
       method: "PATCH",
       body: { biometrics_at: "2026-11-20T14:00", medical_at: null },
     });
@@ -149,8 +150,8 @@ describe("setVisaDates", () => {
     const fetchFn = answering(jsonResponse({ medical_at: [message] }, 400));
 
     const error: unknown = await setVisaDates(
-      7,
-      21,
+      uid(7),
+      uid(21),
       { medical: "2020-01-01T10:00" },
       fetchFn,
     ).catch((caught: unknown) => caught);
@@ -165,7 +166,7 @@ describe("setVisaDates", () => {
         jsonResponse({ ...PROFILE, visas: [{ ...VISA, biometrics_at: broken }] }),
       );
 
-      await expect(setVisaDates(7, 21, { biometrics: null }, fetchFn)).rejects.toThrow();
+      await expect(setVisaDates(uid(7), uid(21), { biometrics: null }, fetchFn)).rejects.toThrow();
     },
   );
 
@@ -173,9 +174,9 @@ describe("setVisaDates", () => {
     const message = "Only a visa waiting for an answer has dates to change.";
     const fetchFn = answering(jsonResponse({ detail: message }, 400));
 
-    await expect(setVisaDates(7, 21, { interview: null }, fetchFn)).rejects.toBeInstanceOf(
-      ApiRequestError,
-    );
+    await expect(
+      setVisaDates(uid(7), uid(21), { interview: null }, fetchFn),
+    ).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
@@ -192,10 +193,10 @@ describe("addVisaLetter", () => {
     const granted = { ...PROFILE, stage: "visa", visas: [{ ...VISA, status: "granted" }] };
     const fetchFn = answering(jsonResponse(granted, 201));
 
-    const profile = await addVisaLetter(7, 21, { result: "granted", file }, fetchFn);
+    const profile = await addVisaLetter(uid(7), uid(21), { result: "granted", file }, fetchFn);
 
     expect(sent(fetchFn)).toMatchObject({
-      path: "/api/students/7/visas/21/letter/",
+      path: `/api/students/${uid(7)}/visas/${uid(21)}/letter/`,
       method: "POST",
     });
     const form = sentForm(fetchFn);
@@ -208,7 +209,7 @@ describe("addVisaLetter", () => {
   it("sends no result for a letter added later", async () => {
     const fetchFn = answering(jsonResponse(PROFILE, 201));
 
-    await addVisaLetter(7, 21, { result: null, file }, fetchFn);
+    await addVisaLetter(uid(7), uid(21), { result: null, file }, fetchFn);
 
     expect([...sentForm(fetchFn).keys()]).toEqual(["file"]);
   });
@@ -224,7 +225,7 @@ describe("addVisaLetter", () => {
       ),
     );
 
-    const failure = await addVisaLetter(7, 21, { result: null, file }, fetchFn).catch(
+    const failure = await addVisaLetter(uid(7), uid(21), { result: null, file }, fetchFn).catch(
       (error: unknown) => error,
     );
 
@@ -237,9 +238,12 @@ describe("addVisaLetter", () => {
   it("passes on a refusal that isn't about the fields", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Not found." }, 404));
 
-    const failure = await addVisaLetter(7, 21, { result: "refused", file }, fetchFn).catch(
-      (error: unknown) => error,
-    );
+    const failure = await addVisaLetter(
+      uid(7),
+      uid(21),
+      { result: "refused", file },
+      fetchFn,
+    ).catch((error: unknown) => error);
 
     expect(failure).toBeInstanceOf(ApiRequestError);
   });

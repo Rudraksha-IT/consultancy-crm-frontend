@@ -5,13 +5,13 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
-import { parseStudentId } from "@/lib/students";
+import { parseRecordId } from "@/lib/recordId";
 
 import { profileTabFrom, StudentProfilePage } from "./StudentProfilePage";
 
 /** The Student page for the id in the address; an address that isn't an id finds nobody. */
 export function StudentProfileRoute({ idText, tabText }: { idText: string; tabText?: string }) {
-  const studentId = parseStudentId(idText);
+  const studentId = parseRecordId(idText);
   if (studentId === null) {
     return (
       <Panel>

@@ -10,6 +10,7 @@ import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
@@ -35,7 +36,7 @@ const MONEY_OUT = "/api/accounts/expenses/?page=1";
 
 const WAITING = {
   id: 703,
-  student: { id: 1, name: "Aarav Sharma" },
+  student: { id: uid(1), name: "Aarav Sharma" },
   university: { id: 3, name: "Federation University" },
   intake: "2027-03",
   amount: 260000,
@@ -45,7 +46,7 @@ const WAITING = {
 const CLAIMED = {
   ...WAITING,
   id: 702,
-  student: { id: 2, name: "Sita Karki" },
+  student: { id: uid(2), name: "Sita Karki" },
   university: { id: 6, name: "RMIT University" },
   intake: "2027-02",
   amount: 290000,
@@ -54,7 +55,7 @@ const CLAIMED = {
 const RECEIVED = {
   ...WAITING,
   id: 701,
-  student: { id: 4, name: "Hari Lama" },
+  student: { id: uid(4), name: "Hari Lama" },
   intake: "2027-01",
   amount: 340000,
   status: "received",
@@ -145,7 +146,7 @@ const CATALOGUE = {
 };
 
 const SITA = {
-  id: 2,
+  id: uid(2),
   name: "Sita Karki",
   phone: "9841000001",
   email: "",
@@ -212,7 +213,7 @@ describe("Accounts -> Commission", () => {
     if (sita === undefined) throw new Error("No row for Sita");
     expect(within(sita).getByRole("link", { name: "Sita Karki" })).toHaveAttribute(
       "href",
-      "/students/2",
+      `/students/${uid(2)}`,
     );
     expect(within(sita).getByText("Intake Feb 2027")).toBeInTheDocument();
     expect(within(sita).getByText("RMIT University")).toBeInTheDocument();
@@ -294,7 +295,7 @@ describe("Accounts -> Commission", () => {
   });
 
   it("shows typed HTML as text", async () => {
-    const odd = { ...WAITING, student: { id: 1, name: "<b>Aarav</b>" } };
+    const odd = { ...WAITING, student: { id: uid(1), name: "<b>Aarav</b>" } };
     backend(on("GET", OWING_URL, pageOf([])), on("GET", PAGE_URL, pageOf([odd])));
     await openCommission();
 
@@ -340,7 +341,7 @@ describe("adding commission", () => {
 
     expect(await screen.findByText("Commission added")).toBeInTheDocument();
     expect(sentBody(fetchFn, "POST", LIST_URL)).toEqual({
-      student: 2,
+      student: uid(2),
       university: 3,
       intake: "2027-07",
       amount: 290000,

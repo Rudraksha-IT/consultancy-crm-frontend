@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useEffectEvent, useState } from "react";
 
 import { HTTP_STATUS } from "@/constants/api";
@@ -91,9 +92,9 @@ export function useAttendanceDay(id: number, day: string, version: number): Load
 }
 
 /** The classes a Student is in, with their Attendance; none, without asking, when not enabled. */
-export function useStudentClasses(studentId: number, isEnabled: boolean): Loaded<StudentClass[]> {
+export function useStudentClasses(studentId: RecordId, isEnabled: boolean): Loaded<StudentClass[]> {
   return useLoaded(
     () => (isEnabled ? fetchStudentClasses(studentId) : Promise.resolve([])),
-    `${String(studentId)}:${String(isEnabled)}`,
+    `${studentId}:${String(isEnabled)}`,
   );
 }

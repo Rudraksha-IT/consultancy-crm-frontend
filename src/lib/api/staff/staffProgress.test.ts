@@ -1,6 +1,7 @@
 import { InvalidFieldsError } from "../core/errors";
 import { fetchStaffProgress } from "./staffProgress";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const ANSWER = {
   staff: {
@@ -28,7 +29,7 @@ const ANSWER = {
           before: "",
           after: "Deakin University",
           detail: "Master of IT",
-          student: { id: 7, name: "Sita Gurung" },
+          student: { id: uid(7), name: "Sita Gurung" },
         },
         {
           kind: "attendance_marked",
@@ -76,7 +77,7 @@ describe("fetchStaffProgress", () => {
       before: "",
       after: "Deakin University",
       detail: "Master of IT",
-      student: { id: 7, name: "Sita Gurung" },
+      student: { id: uid(7), name: "Sita Gurung" },
     });
     expect(progress.days[0]?.entries[1]?.student).toBeNull();
     expect(progress.more).toBe(false);

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState, type ComponentProps } from "react";
 
 import { firstNameOf, type EmailRecipient } from "@/components/features/communication/recipients";
@@ -42,7 +43,7 @@ import { useDocumentLink } from "./useDocumentLink";
 import { notNeededFailure, useNotNeeded } from "./useNotNeeded";
 
 type DocumentsSectionProps = {
-  studentId: number;
+  studentId: RecordId;
   studentName: string;
   /** The Student's Applications and Visas an upload can be linked to (spec 66). */
   links?: readonly DocumentLinkOption[];
@@ -77,7 +78,7 @@ export function DocumentsSection(props: DocumentsSectionProps) {
 }
 
 type LoadedSectionProps = {
-  studentId: number;
+  studentId: RecordId;
   studentName: string;
   emailTo: EmailRecipient | undefined;
   links: readonly DocumentLinkOption[];
@@ -238,7 +239,7 @@ function uploadedWords(fileCount: number): string {
 }
 
 type AddingFileProps = {
-  studentId: number;
+  studentId: RecordId;
   studentName: string;
   /** The Document getting more files; nothing shows while null. */
   addingTo: AddingTo | null;

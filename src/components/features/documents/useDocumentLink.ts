@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { DOCUMENT_TEXT } from "@/constants/documents";
@@ -14,14 +15,14 @@ export type LinkAction = "open" | "download";
  * for opening is made at the click, before the link arrives, so popup blockers allow it; a
  * download goes through this page, which stays where it is.
  */
-export function useDocumentLink(studentId: number): {
-  show: (documentId: number, fileId: number, action: LinkAction) => Promise<void>;
+export function useDocumentLink(studentId: RecordId): {
+  show: (documentId: RecordId, fileId: RecordId, action: LinkAction) => Promise<void>;
   failure: string | null;
 } {
   const navigate = useFullPageNavigation();
   const [failure, setFailure] = useState<string | null>(null);
 
-  async function show(documentId: number, fileId: number, action: LinkAction): Promise<void> {
+  async function show(documentId: RecordId, fileId: RecordId, action: LinkAction): Promise<void> {
     setFailure(null);
     const tab = action === "open" ? openBlankTab() : null;
     try {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 
 import {
   BIN_ITEM_KINDS,
@@ -133,7 +134,7 @@ export type CountryListRow = { typeId: number; group: (typeof DOCUMENT_GROUPS)[n
 /** The Application or Visa a Document is for, with the University it is about (spec 66). */
 const DocumentLinkedToSchema = z.object({
   kind: z.enum(DOCUMENT_LINK_KINDS),
-  id: z.number().int(),
+  id: RecordIdSchema,
   university: z.string(),
 });
 
@@ -153,19 +154,19 @@ export type BinNote = z.infer<typeof BinNoteSchema>;
 
 /** A file named only: what it is opened by and shown as. */
 const FileNameSchema = z
-  .object({ id: z.number().int(), file_name: z.string() })
+  .object({ id: RecordIdSchema, file_name: z.string() })
   .transform(({ id, file_name }) => ({ id, fileName: file_name }));
 
 /** One file of a Document waiting in the Bin: its name and why; it can't be opened here. */
 const BinnedFileSchema = z
-  .object({ id: z.number().int(), file_name: z.string(), bin: BinNoteSchema })
+  .object({ id: RecordIdSchema, file_name: z.string(), bin: BinNoteSchema })
   .transform(({ id, file_name, bin }) => ({ id, fileName: file_name, bin }));
 
 export type BinnedFile = z.infer<typeof BinnedFileSchema>;
 
 /** A whole Document waiting in the Bin, shown greyed on the checklist (issue 79). */
 const BinnedDocumentSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   files: z.array(FileNameSchema),
   bin: BinNoteSchema,
 });
@@ -175,7 +176,7 @@ export type BinnedDocument = z.infer<typeof BinnedDocumentSchema>;
 /** One file of a Document (issue 78): its shown name, type and size, and who added it when. */
 const DocumentFileSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     file_name: z.string(),
     content_type: z.string(),
     size: z.number().int().nonnegative(),
@@ -199,7 +200,7 @@ export type DocumentFile = z.infer<typeof DocumentFileSchema>;
  */
 const StoredDocumentSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     files: z.array(DocumentFileSchema).nonempty(),
     /** Its files waiting in the Bin (issue 79). */
     binned_files: z.array(BinnedFileSchema).default([]),
@@ -276,7 +277,7 @@ export type Checklist = z.infer<typeof ChecklistSchema>;
 
 /** A file as an Application or Visa lists it: what it is opened by and shown as (issue 78). */
 export const NamedFileSchema = z
-  .object({ id: z.number().int(), file_name: z.string() })
+  .object({ id: RecordIdSchema, file_name: z.string() })
   .transform(({ id, file_name }) => ({ id, fileName: file_name }));
 
 export type NamedFile = z.infer<typeof NamedFileSchema>;
@@ -284,7 +285,7 @@ export type NamedFile = z.infer<typeof NamedFileSchema>;
 /** A Document as an Application or Visa lists it (spec 66), with every file. */
 export const LinkedDocumentSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     document_type: PersonSchema,
     files: z.array(NamedFileSchema).nonempty(),
     verification: z.enum(VERIFICATIONS),
@@ -294,7 +295,7 @@ export const LinkedDocumentSchema = z
 export type LinkedDocument = z.infer<typeof LinkedDocumentSchema>;
 
 /** An Application or Visa offered as a link when uploading, with the words to show. */
-export type DocumentLinkOption = { kind: DocumentLinkedTo["kind"]; id: number; label: string };
+export type DocumentLinkOption = { kind: DocumentLinkedTo["kind"]; id: RecordId; label: string };
 
 /** Mark a Document correct, or Rejected with the reason (spec 68). */
 export type DocumentCheck =
@@ -322,7 +323,7 @@ export type PaperworkCounts = z.infer<typeof PaperworkCountsSchema>;
 const PaperworkRowSchema = z
   .object({
     student: z.object({
-      id: z.number().int(),
+      id: RecordIdSchema,
       name: z.string(),
       stage: z.enum(Stage),
       country: z.enum(COUNTRIES),
@@ -366,8 +367,8 @@ export type PaperworkPage = z.infer<typeof PaperworkPageSchema>;
 const BinItemSchema = z
   .object({
     kind: z.enum(BIN_ITEM_KINDS),
-    document: PersonSchema,
-    student: PersonSchema,
+    document: z.object({ id: RecordIdSchema, name: z.string() }),
+    student: z.object({ id: RecordIdSchema, name: z.string() }),
     files: z.array(FileNameSchema).nonempty(),
     ...BinNoteSchema.shape,
   })
@@ -421,4 +422,4 @@ export const BinPageSchema = z
 export type BinPage = z.infer<typeof BinPageSchema>;
 
 /** A whole Document (`fileId` null) or one of its files: what the Bin acts on. */
-export type BinTarget = { documentId: number; fileId: number | null };
+export type BinTarget = { documentId: RecordId; fileId: RecordId | null };

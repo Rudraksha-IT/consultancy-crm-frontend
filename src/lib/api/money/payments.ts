@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import { PAYMENT_METHODS, type PaymentMethod } from "@/constants/payments";
 
@@ -9,9 +11,9 @@ import { toFieldErrors } from "../core/fieldErrors";
 import { FeeTypeRefSchema } from "./feeTypes";
 
 const PaymentFields = {
-  id: z.number().int(),
+  id: RecordIdSchema,
   receipt_number: z.string().min(1),
-  student: z.object({ id: z.number().int(), name: z.string(), phone: z.string() }),
+  student: z.object({ id: RecordIdSchema, name: z.string(), phone: z.string() }),
   amount: z.number().int().positive(),
   paid_on: z.iso.date(),
   method: z.enum(PAYMENT_METHODS),
@@ -44,7 +46,7 @@ export type Payment = z.infer<typeof PaymentSchema>;
 /** One line of a receipt: a Payment as it is now (ticket 07). */
 const ReceiptLineSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     fee_type: FeeTypeRefSchema,
     note: z.string(),
     amount: z.number().int().positive(),
@@ -182,7 +184,7 @@ function linesErrorsOf(lines: NonNullable<LinesRefusal["lines"]>): Record<string
  * `toLinesErrors` for their names), and `ApiRequestError` when not allowed.
  */
 export async function recordPayments(
-  studentId: number,
+  studentId: RecordId,
   visit: NewPayments,
   fetchFn: typeof fetch = fetch,
 ): Promise<Receipt> {
@@ -203,7 +205,7 @@ export async function recordPayments(
 }
 
 /** The receipt a Payment is on, with every line as it is now (spec 72-73). */
-export function fetchReceipt(paymentId: number, fetchFn: typeof fetch = fetch): Promise<Receipt> {
+export function fetchReceipt(paymentId: RecordId, fetchFn: typeof fetch = fetch): Promise<Receipt> {
   return getJson(API_PATHS.payment(paymentId), ReceiptSchema, fetchFn);
 }
 
@@ -233,7 +235,7 @@ export type PaymentFilters = {
   /** A Student's name or phone, or a receipt number. */
   search: string;
   feeTypeId: number | null;
-  studentId: number | null;
+  studentId: RecordId | null;
 };
 
 type FilterField = "from" | "to" | "search" | "feeTypeId";
@@ -248,7 +250,7 @@ const FILTER_FIELDS: Record<FilterField, string> = {
 /** The filters that are set, by their API names; the Student first. */
 export function paymentFilterQuery(filters: PaymentFilters): Record<string, string> {
   const query: Record<string, string> = {};
-  if (filters.studentId !== null) query.student = String(filters.studentId);
+  if (filters.studentId !== null) query.student = filters.studentId;
   for (const field of ["from", "to", "search"] as const) {
     const value = filters[field].trim();
     if (value !== "") query[FILTER_FIELDS[field]] = value;
@@ -280,7 +282,7 @@ export async function fetchPayments(
  * it is now; it keeps its receipt number. Rejects with `InvalidFieldsError` for refused fields.
  */
 export async function changePayment(
-  paymentId: number,
+  paymentId: RecordId,
   payment: NewPayment,
   fetchFn: typeof fetch = fetch,
 ): Promise<Payment> {
@@ -292,6 +294,6 @@ export async function changePayment(
 }
 
 /** Delete a Payment (Admins; spec 75). History keeps its details. */
-export function deletePayment(paymentId: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function deletePayment(paymentId: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.payment(paymentId), fetchFn);
 }

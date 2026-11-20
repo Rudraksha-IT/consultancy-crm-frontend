@@ -9,6 +9,7 @@ import { DEFAULT_THEME } from "@/lib/theme";
 
 import { StudentsPage } from "./StudentsPage";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
@@ -26,7 +27,7 @@ function as(role: StaffContext["staff"]["role"]): StaffContext {
 
 function student(overrides: Record<string, unknown>) {
   return {
-    id: 1,
+    id: uid(1),
     name: "Anish Neupane",
     phone: "9819988776",
     email: "",
@@ -40,7 +41,7 @@ function student(overrides: Record<string, unknown>) {
 
 const ANISH = student({});
 const SITA = student({
-  id: 2,
+  id: uid(2),
   name: "Sita Karki",
   phone: "9841234567",
   country: "australia",
@@ -131,7 +132,7 @@ describe("StudentsPage", () => {
 
     expect(await screen.findByRole("link", { name: "Sita Karki" })).toHaveAttribute(
       "href",
-      "/students/2",
+      `/students/${uid(2)}`,
     );
   });
 
@@ -319,7 +320,7 @@ describe("StudentsPage", () => {
 
 describe("adding a visitor", () => {
   const STORED = {
-    ...student({ id: 9, name: "Nisha Tamang", phone: "9818877665", country: "japan" }),
+    ...student({ id: uid(9), name: "Nisha Tamang", phone: "9818877665", country: "japan" }),
     source: "sub_agent",
     highest_qualification: "bachelor",
     past_degree: "BBS",

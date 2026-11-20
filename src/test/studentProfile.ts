@@ -1,6 +1,8 @@
+import { uid } from "./ids";
+
 /** A Student's profile as the API answers it, for tests. */
 export const PROFILE = {
-  id: 7,
+  id: uid(7),
   name: "Sita Gurung",
   phone: "9841000001",
   email: "sita@example.test",
@@ -32,7 +34,7 @@ export const PROFILE = {
   target_level: "master",
   work_experience: [
     {
-      id: 2,
+      id: uid(2),
       employer: "Bir Hospital",
       job_title: "Staff nurse",
       started_on: "2024-04",
@@ -51,10 +53,10 @@ export const PROFILE = {
   assigned_counsellor: { id: 5, name: "Bikash Thapa" },
   created_at: "2026-10-01T10:00:00+05:45",
   academic_records: [
-    { id: 1, level: "bachelor", institution: "TU", finished_year: 2024, result: "GPA 3.2" },
+    { id: uid(1), level: "bachelor", institution: "TU", finished_year: 2024, result: "GPA 3.2" },
   ],
   test_scores: [
-    { id: 3, test: "ielts", overall: "6.5", taken_on: "2026-09-14", details: "L 7, R 6.5" },
+    { id: uid(3), test: "ielts", overall: "6.5", taken_on: "2026-09-14", details: "L 7, R 6.5" },
   ],
   lost_reason: "",
   stage_changes: [],

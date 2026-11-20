@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -27,7 +28,7 @@ import { useTaskAssignees, type AssigneesState } from "./useTaskAssignees";
 
 type NewTaskDialogProps = {
   /** Opened from a Student's profile: the Task is about them, and goes to their counsellor. */
-  student?: { id: number; name: string; counsellorId: number | null };
+  student?: { id: RecordId; name: string; counsellorId: number | null };
   onClose: () => void;
   onCreated: (task: Task) => void;
 };

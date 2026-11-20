@@ -9,6 +9,7 @@ import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
 
 import { ApplicationsPage } from "./ApplicationsPage";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
@@ -26,8 +27,8 @@ function as(role: StaffContext["staff"]["role"]): StaffContext {
 
 function row(overrides: Record<string, unknown>) {
   return {
-    id: 11,
-    student: { id: 2, name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
+    id: uid(11),
+    student: { id: uid(2), name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
     university: { id: 3, name: "Deakin University", country: "australia" },
     course: { id: 4, name: "Master of IT", level: "master" },
     intake: "2027-07",
@@ -42,8 +43,8 @@ function row(overrides: Record<string, unknown>) {
 
 const SITA = row({});
 const GITA = row({
-  id: 12,
-  student: { id: 3, name: "Gita Rai", phone: "9801112222", email: "" },
+  id: uid(12),
+  student: { id: uid(3), name: "Gita Rai", phone: "9801112222", email: "" },
   university: { id: 6, name: "University of Toronto", country: "canada" },
   intake: "2028-02",
   status: "applied",
@@ -160,7 +161,7 @@ describe("ApplicationsPage", () => {
 
     expect(await screen.findByRole("link", { name: "Sita Karki" })).toHaveAttribute(
       "href",
-      "/students/2",
+      `/students/${uid(2)}`,
     );
   });
 
@@ -322,7 +323,7 @@ describe("ApplicationsPage", () => {
   });
 
   it("shows text as typed, never as markup", async () => {
-    const student = { id: 2, name: "<b>Sita</b>", phone: "9841234567", email: "" };
+    const student = { id: uid(2), name: "<b>Sita</b>", phone: "9841234567", email: "" };
     backend(listing(pageOf([row({ student })])), choices, counsellors);
     renderPage();
 

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { BATCH_TIMINGS, TEST_TYPES, type TestType } from "@/constants/batches";
 
@@ -50,7 +52,7 @@ export const BatchSchema = z.object(BatchFields).transform(toBatch);
 export type Batch = z.infer<typeof BatchSchema>;
 
 const MemberSchema = z
-  .object({ id: z.number().int(), name: z.string(), attended_percent: AttendedSchema })
+  .object({ id: RecordIdSchema, name: z.string(), attended_percent: AttendedSchema })
   .transform((member) => ({
     id: member.id,
     name: member.name,
@@ -86,7 +88,7 @@ export type BatchPage = z.infer<typeof BatchPageSchema>;
 
 const EnrolledStudentSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     batches: z.array(PersonSchema),
     attended_percent: AttendedSchema,
@@ -187,7 +189,7 @@ export async function saveBatch(
 /** Put a Student in a class (spec 84). Rejects with `InvalidFieldsError` naming why not. */
 export async function addStudentToBatch(
   batchId: number,
-  studentId: number,
+  studentId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<BatchWithStudents> {
   try {
@@ -205,7 +207,7 @@ export async function addStudentToBatch(
 /** Take a Student out of a class (spec 84). */
 export function removeStudentFromBatch(
   batchId: number,
-  studentId: number,
+  studentId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.batchStudent(batchId, studentId), fetchFn);

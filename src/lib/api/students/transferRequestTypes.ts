@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { TRANSFER_REQUEST_STATUSES } from "@/constants/transferRequests";
 
 const PersonSchema = z.object({ id: z.number().int(), name: z.string().min(1) });
@@ -8,7 +10,7 @@ const PersonSchema = z.object({ id: z.number().int(), name: z.string().min(1) })
 export const TransferRequestSchema = z
   .object({
     id: z.number().int(),
-    student: PersonSchema,
+    student: z.object({ id: RecordIdSchema, name: z.string().min(1) }),
     asked_by: PersonSchema,
     reason: z.string().min(1),
     asked_at: z.iso.datetime({ offset: true }),

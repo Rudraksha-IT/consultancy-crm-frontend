@@ -10,6 +10,7 @@ import { PROFILE } from "@/test/studentProfile";
 
 import { StudentProfilePage } from "./StudentProfilePage";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn<(path: string) => void>() }));
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
@@ -26,7 +27,7 @@ const COUNSELLOR: StaffContext = {
 };
 
 const DEAKIN = {
-  id: 11,
+  id: uid(11),
   university: { id: 3, name: "Deakin University" },
   course: { id: 4, name: "Master of IT", level: "master" },
   intake: "2027-03",
@@ -38,7 +39,7 @@ const DEAKIN = {
   documents: [],
 };
 const RMIT = {
-  id: 12,
+  id: uid(12),
   university: { id: 6, name: "RMIT University" },
   course: { id: 9, name: "Master of Data Science", level: "master" },
   intake: "2027-07",
@@ -135,7 +136,8 @@ function on(verb: string, path: string, body: unknown, status = 200): Answer {
     method(init) === verb && calledPath === path ? jsonResponse(body, status) : undefined;
 }
 
-const profile = (body: unknown = WITH_APPLICATIONS): Answer => on("GET", "/api/students/7/", body);
+const profile = (body: unknown = WITH_APPLICATIONS): Answer =>
+  on("GET", `/api/students/${uid(7)}/`, body);
 const catalogue = (body: unknown = CATALOGUE, status = 200): Answer =>
   on("GET", "/api/catalogue/universities/", body, status);
 
@@ -149,7 +151,7 @@ function renderPage(context: StaffContext = COUNSELLOR) {
   return render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -256,9 +258,9 @@ describe("the Applications tab", () => {
 
 describe("Documents linked to an Application", () => {
   const OFFER = {
-    id: 41,
+    id: uid(41),
     document_type: { id: 9, name: "Offer letter" },
-    files: [{ id: 61, file_name: "deakin-offer.pdf" }],
+    files: [{ id: uid(61), file_name: "deakin-offer.pdf" }],
     verification: "verified",
   };
 
@@ -289,8 +291,8 @@ describe("Documents linked to an Application", () => {
     const twoPages = {
       ...OFFER,
       files: [
-        { id: 61, file_name: "offer-page-1.pdf" },
-        { id: 63, file_name: "offer-page-2.pdf" },
+        { id: uid(61), file_name: "offer-page-1.pdf" },
+        { id: uid(63), file_name: "offer-page-2.pdf" },
       ],
     };
     backend(
@@ -304,10 +306,10 @@ describe("Documents linked to an Application", () => {
   });
 
   it("opens a linked file through a short-lived link", async () => {
-    const url = "https://files.test/abc/documents/7/offer.pdf?sig=1";
+    const url = `https://files.test/abc/documents/${uid(7)}/offer.pdf?sig=1`;
     backend(
       profile({ ...WITH_APPLICATIONS, applications: [{ ...DEAKIN, documents: [OFFER] }, RMIT] }),
-      on("GET", "/api/students/7/documents/41/files/61/link/?action=open", {
+      on("GET", `/api/students/${uid(7)}/documents/${uid(41)}/files/${uid(61)}/link/?action=open`, {
         url,
         expires_in: 300,
       }),
@@ -393,10 +395,10 @@ describe("Course brochures under an Application (ticket 10)", () => {
   it("emails them to the Student: the Plain email with the Course in the subject and a line", async () => {
     backend(
       profile(WITH_BROCHURES),
-      on("GET", "/api/students/7/emails/ready-made/", {
+      on("GET", `/api/students/${uid(7)}/emails/ready-made/`, {
         kinds: [{ kind: "plain", record: null, records: [], unavailable: null }],
       }),
-      on("GET", "/api/students/7/emails/draft/?kind=plain", PLAIN),
+      on("GET", `/api/students/${uid(7)}/emails/draft/?kind=plain`, PLAIN),
     );
     renderPage(EMAILING);
 
@@ -423,7 +425,10 @@ describe("changing an Application's Status", () => {
       ...WITH_APPLICATIONS,
       applications: [{ ...DEAKIN, status: "rejected" }, RMIT],
     };
-    const fetchFn = backend(profile(), on("PATCH", "/api/students/7/applications/11/", saved));
+    const fetchFn = backend(
+      profile(),
+      on("PATCH", `/api/students/${uid(7)}/applications/${uid(11)}/`, saved),
+    );
     renderPage();
 
     await userEvent.selectOptions(
@@ -435,7 +440,7 @@ describe("changing an Application's Status", () => {
 
     expect(await screen.findByText("Deakin University application: Rejected")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Stage: Applying" })).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PATCH", "/api/students/7/applications/11/")).toEqual({
+    expect(sentBody(fetchFn, "PATCH", `/api/students/${uid(7)}/applications/${uid(11)}/`)).toEqual({
       status: "rejected",
     });
   });
@@ -445,7 +450,7 @@ describe("changing an Application's Status", () => {
       ...WITH_APPLICATIONS,
       applications: [DEAKIN, { ...RMIT, status: "applied" }],
     };
-    backend(profile(), on("PATCH", "/api/students/7/applications/12/", saved));
+    backend(profile(), on("PATCH", `/api/students/${uid(7)}/applications/${uid(12)}/`, saved));
     renderPage();
 
     await userEvent.selectOptions(
@@ -461,7 +466,7 @@ describe("changing an Application's Status", () => {
   it("says a Lost Student's Stage wasn't moved", async () => {
     const lost = { ...WITH_APPLICATIONS, stage: "lost", lost_reason: "Moved away." };
     const saved = { ...lost, applications: [{ ...DEAKIN, status: "rejected" }, RMIT] };
-    backend(profile(lost), on("PATCH", "/api/students/7/applications/11/", saved));
+    backend(profile(lost), on("PATCH", `/api/students/${uid(7)}/applications/${uid(11)}/`, saved));
     renderPage();
 
     await userEvent.selectOptions(
@@ -481,7 +486,12 @@ describe("changing an Application's Status", () => {
   it("says when the change is no longer allowed, and keeps the stored Status", async () => {
     backend(
       profile(),
-      on("PATCH", "/api/students/7/applications/11/", { detail: "Not your Student." }, 403),
+      on(
+        "PATCH",
+        `/api/students/${uid(7)}/applications/${uid(11)}/`,
+        { detail: "Not your Student." },
+        403,
+      ),
     );
     renderPage();
     const select = within(await applicationsList()).getByRole("combobox", {
@@ -501,7 +511,7 @@ describe("changing an Application's Status", () => {
       profile(),
       on(
         "PATCH",
-        "/api/students/7/applications/12/",
+        `/api/students/${uid(7)}/applications/${uid(12)}/`,
         { status: ["The application already has this status."] },
         400,
       ),
@@ -528,7 +538,7 @@ describe("Add application", () => {
     backend(
       profile(counselling),
       catalogue(),
-      on("POST", "/api/students/7/applications/", added, 201),
+      on("POST", `/api/students/${uid(7)}/applications/`, added, 201),
     );
     renderPage();
     const dialog = await openAddDialog();
@@ -550,13 +560,17 @@ describe("Add application", () => {
       applications: [
         DEAKIN,
         RMIT,
-        { ...DEAKIN, id: 13, course: { id: 5, name: "Bachelor of Nursing", level: "bachelor" } },
+        {
+          ...DEAKIN,
+          id: uid(13),
+          course: { id: 5, name: "Bachelor of Nursing", level: "bachelor" },
+        },
       ],
     };
     const fetchFn = backend(
       profile(),
       catalogue(),
-      on("POST", "/api/students/7/applications/", added, 201),
+      on("POST", `/api/students/${uid(7)}/applications/`, added, 201),
     );
     renderPage();
     const dialog = await openAddDialog();
@@ -568,7 +582,7 @@ describe("Add application", () => {
 
     expect(await screen.findByText("Application added")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/students/7/applications/")).toEqual({
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/applications/`)).toEqual({
       course: 5,
       intake: "2027-02",
     });
@@ -669,7 +683,7 @@ describe("Add application", () => {
       catalogue(),
       on(
         "POST",
-        "/api/students/7/applications/",
+        `/api/students/${uid(7)}/applications/`,
         { intake: ["This Student already has an application for this course and intake."] },
         400,
       ),

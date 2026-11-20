@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { Stage } from "@/constants/stages";
 import { VISIT_KINDS, type VisitReason } from "@/constants/visits";
@@ -13,7 +15,7 @@ const Count = z.number().int().nonnegative();
 /** One time a Student came to the office: when, New or Follow-up, why, and who logged it. */
 const VisitSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     kind: z.enum(VISIT_KINDS),
     purpose: z.string(),
     at: z.iso.datetime({ offset: true }),
@@ -27,12 +29,12 @@ export type Visit = z.infer<typeof VisitSchema>;
 /** A Visit on today's timeline, with its Student and the first line of their Note. */
 const TimelineVisitSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     kind: z.enum(VISIT_KINDS),
     purpose: z.string(),
     at: z.iso.datetime({ offset: true }),
     recorded_by: z.object({ id: z.number().int().nullable(), name: z.string() }),
-    student: z.object({ id: z.number().int(), name: z.string(), note_first_line: z.string() }),
+    student: z.object({ id: RecordIdSchema, name: z.string(), note_first_line: z.string() }),
   })
   .transform(({ recorded_by, student, ...visit }) => ({
     ...visit,
@@ -90,7 +92,7 @@ export function fetchTodaysVisits(fetchFn: typeof fetch = fetch): Promise<Todays
 
 /** One page of a Student's Visits, newest first (their Activity, spec 23c). */
 export function fetchStudentVisits(
-  studentId: number,
+  studentId: RecordId,
   page: number,
   fetchFn: typeof fetch = fetch,
 ): Promise<VisitPage> {
@@ -103,7 +105,7 @@ export function fetchStudentVisits(
  * the API refuses the reason or details.
  */
 export async function logVisit(
-  studentId: number,
+  studentId: RecordId,
   visit: NewVisit,
   fetchFn: typeof fetch = fetch,
 ): Promise<Visit> {
@@ -116,7 +118,7 @@ export async function logVisit(
 
 /** How far along one Student is and their next step, for the visitor desk. */
 export function fetchStudentProgress(
-  studentId: number,
+  studentId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProgress> {
   return getJson(API_PATHS.studentProgress(studentId), StudentProgressSchema, fetchFn);

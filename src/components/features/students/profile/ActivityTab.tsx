@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useMemo, useState } from "react";
 
 import { useDates, type Dates } from "@/components/features/shell/dateDisplay";
@@ -56,7 +57,7 @@ type ActivityState =
   { status: "loading" } | { status: "loaded"; sources: Source[] } | { status: "failed" };
 
 type ActivityTabProps = {
-  studentId: number;
+  studentId: RecordId;
   /** When the Student was added: when they became a Lead. */
   createdAt: string;
   /** Every Stage change, from the profile, so the time in each Stage is known from the start. */
@@ -132,14 +133,14 @@ export function ActivityTab({ studentId, createdAt, stageChanges }: ActivityTabP
   );
 }
 
-function loadersFor(studentId: number, withMessages: boolean): LoadPage[] {
+function loadersFor(studentId: RecordId, withMessages: boolean): LoadPage[] {
   const history: LoadPage = async (page) => {
     const found = await fetchStudentHistory(studentId, page);
     return {
       count: found.count,
       page: found.page,
       items: found.entries.map((entry) => ({
-        key: `history-${String(entry.id)}`,
+        key: `history-${entry.id}`,
         at: entry.at,
         source: "history",
         entry,
@@ -152,7 +153,7 @@ function loadersFor(studentId: number, withMessages: boolean): LoadPage[] {
       count: found.count,
       page: found.page,
       items: found.visits.map((visit) => ({
-        key: `visit-${String(visit.id)}`,
+        key: `visit-${visit.id}`,
         at: visit.at,
         source: "visit",
         visit,
@@ -165,7 +166,7 @@ function loadersFor(studentId: number, withMessages: boolean): LoadPage[] {
       count: found.count,
       page: found.page,
       items: found.rows.map((message) => ({
-        key: `message-${String(message.id)}`,
+        key: `message-${message.id}`,
         at: message.sentAt,
         source: "message",
         message,

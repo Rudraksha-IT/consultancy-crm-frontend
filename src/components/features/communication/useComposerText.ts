@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useRef, useState } from "react";
 
 import { COMMUNICATION_TEXT as TEXT, type ReadyMadeKind } from "@/constants/communication";
@@ -22,7 +23,7 @@ import type { Pane } from "./ComposerParts";
  */
 export type StartWith = {
   kind: ReadyMadeKind;
-  record?: number;
+  record?: RecordId | number;
   text?: { subject: string; line: string };
   files?: readonly Attachable[];
 };
@@ -37,7 +38,7 @@ export type ReadyMadeMenu =
   | { status: "ready"; entries: readonly ReadyMadeEntry[] };
 
 /** The ready-made email chosen, and the record it is about (null when it needs none). */
-export type ReadyMadeChoice = { kind: ReadyMadeKind; record: number | null };
+export type ReadyMadeChoice = { kind: ReadyMadeKind; record: RecordId | number | null };
 
 /** One ask for a draft; `turn` makes asking again for the same email a new ask. */
 type DraftRequest = ReadyMadeChoice & { turn: number };
@@ -55,7 +56,7 @@ export type ComposerText = {
   /** Choose another ready-made email: its text replaces the subject line and message. */
   choose: (kind: ReadyMadeKind) => void;
   /** Pick the record the email is about. */
-  pick: (record: number) => void;
+  pick: (record: RecordId | number) => void;
   /** Changed since the ready-made text was put in, so it can be started again. */
   isEdited: boolean;
   startAgain: () => void;
@@ -231,7 +232,10 @@ function firstChoice(
 }
 
 /** The record asked for if it is one to pick, else the first (newest); null when there is none. */
-function recordOf(entry: ReadyMadeEntry, wanted: number | undefined): number | null {
+function recordOf(
+  entry: ReadyMadeEntry,
+  wanted: RecordId | number | undefined,
+): RecordId | number | null {
   const found = entry.records.find((record) => record.id === wanted) ?? entry.records[0];
   return found?.id ?? null;
 }
@@ -248,7 +252,7 @@ function firstUsable(
   );
 }
 
-function firstRecordOf(menu: ReadyMadeMenu, kind: ReadyMadeKind): number | null {
+function firstRecordOf(menu: ReadyMadeMenu, kind: ReadyMadeKind): RecordId | number | null {
   if (menu.status !== "ready") return null;
   return menu.entries.find((entry) => entry.kind === kind)?.records[0]?.id ?? null;
 }

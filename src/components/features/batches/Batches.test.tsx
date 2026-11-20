@@ -12,6 +12,7 @@ import { BatchesPage } from "./BatchesPage";
 import { BatchPage } from "./BatchPage";
 import { ClassesSection } from "./ClassesSection";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
   staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
@@ -72,8 +73,8 @@ const OLD = {
   student_count: 0,
 };
 
-const SITA = { id: 7, name: "Sita Gurung", attended_percent: null };
-const RAM = { id: 8, name: "Ram Shrestha", attended_percent: 92 };
+const SITA = { id: uid(7), name: "Sita Gurung", attended_percent: null };
+const RAM = { id: uid(8), name: "Ram Shrestha", attended_percent: 92 };
 
 const MORNING_WITH_STUDENTS = { ...MORNING, students: [RAM, SITA] };
 
@@ -94,7 +95,7 @@ function asTeacher(batch: object) {
 }
 
 const SEARCH_RESULT = {
-  id: 7,
+  id: uid(7),
   name: "Sita Gurung",
   phone: "9841000001",
   email: "",
@@ -336,7 +337,7 @@ describe("Who's in a class", () => {
 
     expect(await within(dialog).findByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(within(dialog).getByText("Attended 92%")).toBeInTheDocument();
     expect(within(dialog).getByText("No classes yet")).toBeInTheDocument();
@@ -355,8 +356,8 @@ describe("Who's in a class", () => {
         page: 1,
         page_size: 25,
         results: [
-          { ...SEARCH_RESULT, id: 7, name: "Sita Gurung" },
-          { ...SEARCH_RESULT, id: 12, name: "Sita Lost", stage: "lost" },
+          { ...SEARCH_RESULT, id: uid(7), name: "Sita Gurung" },
+          { ...SEARCH_RESULT, id: uid(12), name: "Sita Lost", stage: "lost" },
         ],
       }),
     );
@@ -376,7 +377,8 @@ describe("Who's in a class", () => {
       on("GET", LIST, pageOf([MORNING])),
       onEach("GET", "/api/batches/1/", () => current),
       (path, init) => {
-        if (init?.method !== "DELETE" || path !== "/api/batches/1/students/7/") return undefined;
+        if (init?.method !== "DELETE" || path !== `/api/batches/1/students/${uid(7)}/`)
+          return undefined;
         current = { ...MORNING, student_count: 1, students: [RAM] };
         return new Response(null, { status: 204 });
       },
@@ -392,7 +394,7 @@ describe("Who's in a class", () => {
     await userEvent.click(within(confirm).getByRole("button", { name: "Remove" }));
 
     expect(await screen.findByText("Removed from the class")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", "/api/batches/1/students/7/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "DELETE", `/api/batches/1/students/${uid(7)}/`)).toHaveLength(1);
     await waitFor(() => {
       expect(within(dialog).queryByText("Sita Gurung")).not.toBeInTheDocument();
     });
@@ -413,7 +415,7 @@ describe("Who's in a class", () => {
 
     expect(screen.queryByRole("dialog", { name: /^Remove Sita Gurung/ })).toBeNull();
     expect(within(dialog).getByText("Sita Gurung")).toBeVisible();
-    expect(callsTo(fetchFn, "DELETE", "/api/batches/1/students/7/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "DELETE", `/api/batches/1/students/${uid(7)}/`)).toHaveLength(0);
   });
 
   it("adds a Student found by name", async () => {
@@ -429,11 +431,11 @@ describe("Who's in a class", () => {
     await userEvent.type(await within(dialog).findByLabelText("Find a Student"), "Sita");
     const choice = within(dialog).getByLabelText("Student to add");
     await within(choice).findByRole("option", { name: "Sita Gurung" });
-    await userEvent.selectOptions(choice, "7");
+    await userEvent.selectOptions(choice, uid(7));
     await userEvent.click(within(dialog).getByRole("button", { name: "Add to class" }));
 
     expect(await screen.findByText("Sita Gurung added to IELTS Morning")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/batches/1/students/")).toEqual({ student: 7 });
+    expect(sentBody(fetchFn, "POST", "/api/batches/1/students/")).toEqual({ student: uid(7) });
   });
 
   it("shows why a Student couldn't be added", async () => {
@@ -449,7 +451,7 @@ describe("Who's in a class", () => {
     await userEvent.type(await within(dialog).findByLabelText("Find a Student"), "Sita");
     const choice = within(dialog).getByLabelText("Student to add");
     await within(choice).findByRole("option", { name: "Sita Gurung" });
-    await userEvent.selectOptions(choice, "7");
+    await userEvent.selectOptions(choice, uid(7));
     await userEvent.click(within(dialog).getByRole("button", { name: "Add to class" }));
 
     expect(await within(dialog).findByText("Already in this class.")).toBeInTheDocument();
@@ -480,7 +482,7 @@ describe("Enroll a Student", () => {
     await userEvent.type(within(dialog).getByLabelText("Find a Student"), "Sita");
     const student = within(dialog).getByLabelText("Student");
     await within(student).findByRole("option", { name: "Sita Gurung" });
-    await userEvent.selectOptions(student, "7");
+    await userEvent.selectOptions(student, uid(7));
     const classes = within(dialog).getByLabelText("Class");
     // Finished classes aren't offered.
     expect(
@@ -494,7 +496,7 @@ describe("Enroll a Student", () => {
     expect(
       await screen.findByText("Sita Gurung enrolled in Japanese N5 Evening"),
     ).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/batches/2/students/")).toEqual({ student: 7 });
+    expect(sentBody(fetchFn, "POST", "/api/batches/2/students/")).toEqual({ student: uid(7) });
   });
 
   it("asks for a Student before enrolling", async () => {
@@ -513,7 +515,7 @@ describe("Enroll a Student", () => {
 describe("Counsellor Home: Classes section", () => {
   const ENROLLED_PAGE = pageOf([
     {
-      id: 7,
+      id: uid(7),
       name: "Sita Gurung",
       batches: [
         { id: 1, name: "IELTS Morning" },
@@ -522,7 +524,7 @@ describe("Counsellor Home: Classes section", () => {
       attended_percent: null,
     },
     {
-      id: 8,
+      id: uid(8),
       name: "Ram Shrestha",
       batches: [{ id: 1, name: "IELTS Morning" }],
       attended_percent: 92,
@@ -577,7 +579,7 @@ describe("Counsellor Home: Classes section", () => {
     ).toEqual(["Student", "Classes", "Attended"]);
     expect(within(table).getByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(within(table).getByText("92%")).toBeInTheDocument();
     expect(within(table).getByText("—")).toBeInTheDocument();
@@ -621,8 +623,8 @@ describe("One class's page", () => {
     day: "2026-11-02",
     can_mark: false,
     marks: [
-      { student: 8, mark: null },
-      { student: 7, mark: null },
+      { student: uid(8), mark: null },
+      { student: uid(7), mark: null },
     ],
   });
 
@@ -637,7 +639,7 @@ describe("One class's page", () => {
     expect(screen.getByRole("link", { name: "All classes" })).toHaveAttribute("href", "/batches");
     expect(await screen.findByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(screen.getByText("Attended 92% of classes")).toBeInTheDocument();
     expect(screen.getByText("No classes yet")).toBeInTheDocument();

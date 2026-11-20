@@ -11,6 +11,7 @@ import {
 
 import { DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT } from "./route";
 import { TEST_PRODUCT_DOMAIN, testHost } from "@/test/hosts";
+import { uid } from "@/test/ids";
 
 const TOKEN = "a-test-internal-token-that-is-32-chars-or-more";
 const BROWSER_HOST = `${testHost("acme")}:8080`;
@@ -20,7 +21,7 @@ const KIB = 1024;
 const MAX_BODY_BYTES = 1024 * KIB;
 // A Document upload: the 10 MB file plus room for the form around it.
 const MAX_UPLOAD_BYTES = 20 * 1024 * KIB + 64 * KIB;
-const UPLOAD_PATH = "/api/students/7/documents/";
+const UPLOAD_PATH = `/api/students/${uid(7)}/documents/`;
 // The office logo (issue 39): the 1 MB file plus room for the form around it.
 const MAX_LOGO_UPLOAD_BYTES = 1024 * KIB + 64 * KIB;
 const LOGO_UPLOAD_PATH = "/api/configuration/logo/";
@@ -586,9 +587,12 @@ describe("request bodies", () => {
   });
 
   it.each([
-    ["adding files to a Document (issue 78)", "/api/students/7/documents/31/files/"],
-    ["an Offer Letter (issue 76)", "/api/students/7/offer-letters/"],
-    ["a visa letter (issue 77)", "/api/students/7/visas/21/letter/"],
+    [
+      "adding files to a Document (issue 78)",
+      `/api/students/${uid(7)}/documents/${uid(31)}/files/`,
+    ],
+    ["an Offer Letter (issue 76)", `/api/students/${uid(7)}/offer-letters/`],
+    ["a visa letter (issue 77)", `/api/students/${uid(7)}/visas/${uid(21)}/letter/`],
   ])("may be as large as a Document upload for %s", async (_case, path) => {
     const { sent } = fakeBackend();
 
@@ -685,14 +689,19 @@ describe("request bodies", () => {
   });
 
   it.each([
-    ["another path", "POST", "/api/students/7/note/"],
+    ["another path", "POST", `/api/students/${uid(7)}/note/`],
     ["the logo path with another method", "PATCH", LOGO_UPLOAD_PATH],
     ["a path that starts like the logo path", "POST", "/api/configuration/logo/x/"],
     ["the product logo's file path", "POST", "/api/platform/brand/logo/1/"],
-    ["a path that only looks like it", "POST", "/api/students/7/documents/../note/"],
-    ["a longer path", "POST", "/api/students/7/documents/1/link/"],
-    ["a file's link", "POST", "/api/students/7/documents/1/files/2/link/"],
-    ["a path that only looks like adding files", "POST", "/api/students/7/documents/x/files/"],
+    ["a path that only looks like it", "POST", `/api/students/${uid(7)}/documents/../note/`],
+    ["a longer path", "POST", `/api/students/${uid(7)}/documents/${uid(1)}/link/`],
+    ["a file's link", "POST", `/api/students/${uid(7)}/documents/${uid(1)}/files/${uid(2)}/link/`],
+    [
+      "a path that only looks like adding files",
+      "POST",
+      `/api/students/${uid(7)}/documents/x/files/`,
+    ],
+    ["a Student named by number, not UUID (ADR 0027)", "POST", "/api/students/7/documents/"],
     ["another method", "PUT", UPLOAD_PATH],
     ["a Course File's rename", "POST", "/api/catalogue/course-files/3/"],
     ["a path that only looks like a Course's files", "POST", "/api/catalogue/courses/x/files/"],
@@ -910,7 +919,7 @@ describe("while the app is being updated (ticket 14)", () => {
       vi.stubGlobal("fetch", fetchFn);
 
       const response = await afterWaiting(() =>
-        POST(incoming("/api/students/7/", { method, body: "{}", tokens: newTokens() })),
+        POST(incoming(`/api/students/${uid(7)}/`, { method, body: "{}", tokens: newTokens() })),
       );
 
       expect(response.status).toBe(503);

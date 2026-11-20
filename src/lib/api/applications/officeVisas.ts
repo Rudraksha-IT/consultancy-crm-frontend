@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { COURSE_LEVELS } from "@/constants/catalogue";
 import { COUNTRIES } from "@/constants/students";
@@ -15,9 +17,9 @@ const COUNT = z.number().int().nonnegative();
 /** One row of the office-wide Visas list (spec 62b), in frontend naming. */
 const OfficeVisaSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     student: z.object({
-      id: z.number().int(),
+      id: RecordIdSchema,
       name: z.string(),
       phone: z.string(),
       email: z.string(),

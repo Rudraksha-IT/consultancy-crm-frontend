@@ -8,6 +8,7 @@ import { backend, callsTo, on, onEach } from "@/test/backend";
 import { NotificationsButton } from "./NotificationsButton";
 import { StaffContextContext } from "./staffContext";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
   staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
@@ -26,7 +27,7 @@ const GIVEN = {
   is_read: false,
   task: { id: 31, title: "First counselling call with Manisha", due_on: "2026-11-03" },
   by: { id: 4, name: "Ramesh KC" },
-  student: { id: 7, name: "Manisha Rai" },
+  student: { id: uid(7), name: "Manisha Rai" },
   transfer_request: null,
 };
 
@@ -36,7 +37,7 @@ const ASKED = {
   kind: "transfer_asked",
   task: null,
   by: { id: 3, name: "Anjali Gurung" },
-  student: { id: 13, name: "Sarina Khadka" },
+  student: { id: uid(13), name: "Sarina Khadka" },
   transfer_request: { id: 801, status: "waiting" },
 };
 
@@ -252,7 +253,7 @@ describe("The notification bell", () => {
     );
     expect(within(panel).getAllByRole("link", { name: "Open Student" })[0]).toHaveAttribute(
       "href",
-      "/students/13",
+      `/students/${uid(13)}`,
     );
   });
 
@@ -265,7 +266,7 @@ describe("The notification bell", () => {
     const panel = await openBell();
     const link = within(panel).getByRole("link", { name: "Open Student" });
 
-    expect(link).toHaveAttribute("href", "/students/7");
+    expect(link).toHaveAttribute("href", `/students/${uid(7)}`);
     await userEvent.click(link);
 
     const [call] = callsTo(fetchFn, "PATCH", "/api/notifications/3/");

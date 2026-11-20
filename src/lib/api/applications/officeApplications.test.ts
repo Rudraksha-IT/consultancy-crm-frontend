@@ -3,10 +3,11 @@ import { Role } from "@/constants/roles";
 
 import { fetchApplicationFilterChoices, fetchApplications } from "./officeApplications";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const ROW = {
-  id: 11,
-  student: { id: 2, name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
+  id: uid(11),
+  student: { id: uid(2), name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
   university: { id: 3, name: "Deakin University", country: "australia" },
   course: { id: 4, name: "Master of IT", level: "master" },
   intake: "2027-07",
@@ -34,7 +35,7 @@ describe("fetchApplications", () => {
       pageSize: 25,
       applications: [
         {
-          id: 11,
+          id: uid(11),
           student: ROW.student,
           university: ROW.university,
           course: ROW.course,

@@ -11,6 +11,7 @@ import { PROFILE } from "@/test/studentProfile";
 
 import { StudentProfilePage } from "./StudentProfilePage";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
   staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
@@ -27,7 +28,7 @@ function as(role: StaffContext["staff"]["role"], id = 9): StaffContext {
 }
 
 const ENTRY = {
-  id: 2,
+  id: uid(2),
   kind: "note_edited",
   at: "2026-10-22T13:48:00+05:45",
   by: { name: "Bikash Thapa", is_platform_admin: false },
@@ -55,12 +56,14 @@ const method = (init?: RequestInit): string => init?.method ?? "GET";
 const profile =
   (body: unknown = PROFILE, status = 200): Answer =>
   (path, init) =>
-    method(init) === "GET" && path === "/api/students/7/" ? jsonResponse(body, status) : undefined;
+    method(init) === "GET" && path === `/api/students/${uid(7)}/`
+      ? jsonResponse(body, status)
+      : undefined;
 
 const history =
   (results: unknown[] = [ENTRY], count = results.length): Answer =>
   (path, init) =>
-    method(init) === "GET" && path.startsWith("/api/students/7/history/")
+    method(init) === "GET" && path.startsWith(`/api/students/${uid(7)}/history/`)
       ? jsonResponse({
           count,
           page: path.endsWith("page=2") ? 2 : 1,
@@ -70,7 +73,7 @@ const history =
       : undefined;
 
 const VISIT = {
-  id: 4,
+  id: uid(4),
   kind: "follow_up",
   purpose: "Bringing documents: Passport copy",
   at: "2026-10-23T10:15:00+05:45",
@@ -80,7 +83,7 @@ const VISIT = {
 const visits =
   (results: unknown[] = [], count = results.length): Answer =>
   (path, init) =>
-    method(init) === "GET" && path.startsWith("/api/students/7/visits/")
+    method(init) === "GET" && path.startsWith(`/api/students/${uid(7)}/visits/`)
       ? jsonResponse({ count, page: path.endsWith("page=2") ? 2 : 1, page_size: 50, results })
       : undefined;
 
@@ -99,7 +102,7 @@ function renderPage(context: StaffContext = COUNSELLOR) {
   return render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -254,7 +257,7 @@ describe("StudentProfilePage", () => {
     it("is edited in place and saved, and says the old text is kept", async () => {
       const fetchFn = backend(
         profile(),
-        on("PUT", "/api/students/7/note/", { ...PROFILE, note: "Wants Sydney now." }),
+        on("PUT", `/api/students/${uid(7)}/note/`, { ...PROFILE, note: "Wants Sydney now." }),
       );
       renderPage();
       const note = await screen.findByRole("region", { name: "Note" });
@@ -299,7 +302,7 @@ describe("StudentProfilePage", () => {
     it("saves on Ctrl + Enter, with Enter making a new line", async () => {
       const fetchFn = backend(
         profile(),
-        on("PUT", "/api/students/7/note/", { ...PROFILE, note: "Wants Sydney.\nIELTS 7." }),
+        on("PUT", `/api/students/${uid(7)}/note/`, { ...PROFILE, note: "Wants Sydney.\nIELTS 7." }),
       );
       renderPage();
       const note = await screen.findByRole("region", { name: "Note" });
@@ -339,7 +342,7 @@ describe("StudentProfilePage", () => {
     });
 
     it("shows why a Note was refused", async () => {
-      backend(profile(), on("PUT", "/api/students/7/note/", { note: ["Too long."] }, 400));
+      backend(profile(), on("PUT", `/api/students/${uid(7)}/note/`, { note: ["Too long."] }, 400));
       renderPage();
       const note = await screen.findByRole("region", { name: "Note" });
 
@@ -350,7 +353,10 @@ describe("StudentProfilePage", () => {
     });
 
     it("says when the change is no longer allowed", async () => {
-      backend(profile(), on("PUT", "/api/students/7/note/", { detail: "Not your Student." }, 403));
+      backend(
+        profile(),
+        on("PUT", `/api/students/${uid(7)}/note/`, { detail: "Not your Student." }, 403),
+      );
       renderPage();
       const note = await screen.findByRole("region", { name: "Note" });
 
@@ -372,7 +378,7 @@ describe("StudentProfilePage", () => {
 
       expect(screen.getByRole("menuitem", { name: "Edit details" })).toHaveAttribute(
         "href",
-        "/students/7/edit",
+        `/students/${uid(7)}/edit`,
       );
     });
 
@@ -382,7 +388,7 @@ describe("StudentProfilePage", () => {
 
       expect(await screen.findByRole("link", { name: "Edit details" })).toHaveAttribute(
         "href",
-        "/students/7/edit",
+        `/students/${uid(7)}/edit`,
       );
     });
 
@@ -466,7 +472,7 @@ describe("StudentProfilePage", () => {
     it("puts Visits among the changes, newest first", async () => {
       const first = {
         ...VISIT,
-        id: 3,
+        id: uid(3),
         kind: "new",
         purpose: "First visit",
         at: "2026-10-20T09:00:00+05:45",
@@ -494,7 +500,7 @@ describe("StudentProfilePage", () => {
 
     it("says the Activity couldn't load when the Visits fail", async () => {
       backend(profile(), history(), (path) =>
-        path.startsWith("/api/students/7/visits/") ? jsonResponse({}, 500) : undefined,
+        path.startsWith(`/api/students/${uid(7)}/visits/`) ? jsonResponse({}, 500) : undefined,
       );
       renderPage();
 
@@ -526,7 +532,10 @@ describe("StudentProfilePage", () => {
       await waitFor(() => {
         expect(screen.getAllByText("Note edited")).toHaveLength(2);
       });
-      expect(fetchFn).toHaveBeenCalledWith("/api/students/7/history/?page=2", expect.anything());
+      expect(fetchFn).toHaveBeenCalledWith(
+        `/api/students/${uid(7)}/history/?page=2`,
+        expect.anything(),
+      );
     });
 
     it("says when older changes couldn't load", async () => {
@@ -544,7 +553,7 @@ describe("StudentProfilePage", () => {
 
     it("says when the Activity couldn't load", async () => {
       backend(profile(), (path) =>
-        path.startsWith("/api/students/7/history/") ? jsonResponse({}, 500) : undefined,
+        path.startsWith(`/api/students/${uid(7)}/history/`) ? jsonResponse({}, 500) : undefined,
       );
       renderPage();
 
@@ -556,7 +565,7 @@ describe("StudentProfilePage", () => {
     describe("as a timeline of Stages (issue 82)", () => {
       const NOW = new Date("2026-11-15T10:00:00+05:45");
       const stageChange = (id: number, at: string, before: string, after: string, detail = "") => ({
-        id,
+        id: uid(id),
         kind: "stage_changed",
         at,
         by: { name: "Bikash Thapa", is_platform_admin: false },
@@ -657,7 +666,7 @@ describe("StudentProfilePage", () => {
     it("shows a Note change straight after it is saved", async () => {
       const fetchFn = backend(
         profile(),
-        on("PUT", "/api/students/7/note/", { ...PROFILE, note: "New." }),
+        on("PUT", `/api/students/${uid(7)}/note/`, { ...PROFILE, note: "New." }),
         visits(),
         history(),
       );
@@ -679,7 +688,7 @@ describe("StudentProfilePage", () => {
 
 describe("StudentProfilePage: Classes tab", () => {
   const WITH_CLASSES: StaffContext = { ...COUNSELLOR, modules: ["students", "batches"] };
-  const CLASSES = "/api/students/7/batches/";
+  const CLASSES = `/api/students/${uid(7)}/batches/`;
   const MORNING = {
     id: 1,
     name: "IELTS Morning",
@@ -728,7 +737,7 @@ describe("StudentProfilePage: who did each action, in Activity (issue 83)", () =
   const LATER = "2026-11-20T04:15:00+00:00";
   const entry = (id: number, kind: string, before: string, after: string, detail = "") => ({
     ...ENTRY,
-    id,
+    id: uid(id),
     kind,
     at: `2026-11-1${String(id % 10)}T10:00:00+05:45`,
     before,

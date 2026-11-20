@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, type SubmitEvent } from "react";
 
 import { readField } from "@/components/features/students/profile/formData";
@@ -15,7 +16,7 @@ import { firstName, transferFailure } from "./transferFailure";
 const REASON_ROWS = 3;
 
 type AskTransferDialogProps = {
-  student: { id: number; name: string };
+  student: { id: RecordId; name: string };
   /** The Student's counsellor now; null when they have none. */
   counsellor: string | null;
   onClose: () => void;

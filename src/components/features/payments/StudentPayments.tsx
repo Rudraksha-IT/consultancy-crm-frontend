@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState, type ReactNode } from "react";
 
 import { Banner } from "@/components/ui/Banner";
@@ -15,7 +16,7 @@ import { PaymentTable } from "./PaymentTable";
 import { usePaymentPage } from "./usePaymentPage";
 
 type StudentPaymentsProps = {
-  studentId: number;
+  studentId: RecordId;
   /** A Payment was changed or deleted: History has a new entry, and this list remounts. */
   onChanged: () => void;
   /** Shown beside the title, e.g. "Take a payment". */

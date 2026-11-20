@@ -7,12 +7,13 @@ import {
   recordPayments,
 } from "./payments";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 /** One Payment as the Payments list answers it. */
 const PAYMENT = {
-  id: 412,
+  id: uid(412),
   receipt_number: "000412",
-  student: { id: 7, name: "Sita Gurung", phone: "9841000001" },
+  student: { id: uid(7), name: "Sita Gurung", phone: "9841000001" },
   amount: 25000,
   paid_on: "2026-11-02",
   method: "esewa",
@@ -27,7 +28,7 @@ const RECEIPT = {
   ...PAYMENT,
   lines: [
     {
-      id: 412,
+      id: uid(412),
       fee_type: { id: 1, name: "Application fee" },
       note: "first half",
       amount: 25000,
@@ -35,7 +36,7 @@ const RECEIPT = {
       method: "esewa",
     },
     {
-      id: 413,
+      id: uid(413),
       fee_type: { id: 4, name: "IELTS class" },
       note: "",
       amount: 10000,
@@ -47,9 +48,9 @@ const RECEIPT = {
 };
 
 const PAYMENT_IN_FRONTEND_NAMING = {
-  id: 412,
+  id: uid(412),
   receiptNumber: "000412",
-  student: { id: 7, name: "Sita Gurung", phone: "9841000001" },
+  student: { id: uid(7), name: "Sita Gurung", phone: "9841000001" },
   amount: 25000,
   paidOn: "2026-11-02",
   method: "esewa",
@@ -62,7 +63,7 @@ const RECEIPT_IN_FRONTEND_NAMING = {
   ...PAYMENT_IN_FRONTEND_NAMING,
   lines: [
     {
-      id: 412,
+      id: uid(412),
       feeType: { id: 1, name: "Application fee" },
       note: "first half",
       amount: 25000,
@@ -70,7 +71,7 @@ const RECEIPT_IN_FRONTEND_NAMING = {
       method: "esewa",
     },
     {
-      id: 413,
+      id: uid(413),
       feeType: { id: 4, name: "IELTS class" },
       note: "",
       amount: 10000,
@@ -110,10 +111,10 @@ describe("recordPayments", () => {
   it("POSTs the visit with every line in API naming and returns the receipt", async () => {
     const fetchFn = answering(jsonResponse(RECEIPT, 201));
 
-    const receipt = await recordPayments(7, NEW_PAYMENTS, fetchFn);
+    const receipt = await recordPayments(uid(7), NEW_PAYMENTS, fetchFn);
 
     const [path, init] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/students/7/payments/");
+    expect(path).toBe(`/api/students/${uid(7)}/payments/`);
     expect(init?.method).toBe("POST");
     expect(typeof init?.body === "string" ? JSON.parse(init.body) : undefined).toEqual({
       paid_on: "2026-11-02",
@@ -144,7 +145,7 @@ describe("recordPayments", () => {
       ),
     );
 
-    const error = await refusalOf(recordPayments(7, NEW_PAYMENTS, fetchFn));
+    const error = await refusalOf(recordPayments(uid(7), NEW_PAYMENTS, fetchFn));
 
     expect(error).toEqual(
       new InvalidFieldsError({
@@ -162,7 +163,7 @@ describe("recordPayments", () => {
       jsonResponse({ lines: [message], method: ["Choose how they paid."] }, 400),
     );
 
-    const error = await refusalOf(recordPayments(7, NEW_PAYMENTS, fetchFn));
+    const error = await refusalOf(recordPayments(uid(7), NEW_PAYMENTS, fetchFn));
 
     expect(error).toEqual(
       new InvalidFieldsError({ lines: [message], method: ["Choose how they paid."] }),
@@ -177,7 +178,7 @@ describe("recordPayments", () => {
   ])("passes on a refusal it can't name a field for", async (body) => {
     const fetchFn = answering(jsonResponse(body, 400));
 
-    const error = await refusalOf(recordPayments(7, NEW_PAYMENTS, fetchFn));
+    const error = await refusalOf(recordPayments(uid(7), NEW_PAYMENTS, fetchFn));
 
     expect(error).toBeInstanceOf(ApiRequestError);
   });
@@ -185,7 +186,9 @@ describe("recordPayments", () => {
   it("passes other refusals on", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Teachers can't see Students." }, 403));
 
-    await expect(recordPayments(7, NEW_PAYMENTS, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(recordPayments(uid(7), NEW_PAYMENTS, fetchFn)).rejects.toBeInstanceOf(
+      ApiRequestError,
+    );
   });
 
   it.each([
@@ -200,7 +203,7 @@ describe("recordPayments", () => {
   ])("refuses an answer that isn't a receipt", async (body) => {
     const fetchFn = answering(jsonResponse(body, 201));
 
-    await expect(recordPayments(7, NEW_PAYMENTS, fetchFn)).rejects.toThrow();
+    await expect(recordPayments(uid(7), NEW_PAYMENTS, fetchFn)).rejects.toThrow();
   });
 });
 
@@ -208,10 +211,10 @@ describe("fetchReceipt", () => {
   it("GETs the receipt a Payment is on, with every line and the total", async () => {
     const fetchFn = answering(jsonResponse(RECEIPT));
 
-    const receipt = await fetchReceipt(413, fetchFn);
+    const receipt = await fetchReceipt(uid(413), fetchFn);
 
     const [path, init] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/payments/413/");
+    expect(path).toBe(`/api/payments/${uid(413)}/`);
     expect(init?.method ?? "GET").toBe("GET");
     expect(receipt).toEqual(RECEIPT_IN_FRONTEND_NAMING);
   });
@@ -221,7 +224,7 @@ describe("fetchReceipt", () => {
       jsonResponse({ detail: "Only an Admin can see other Payments." }, 403),
     );
 
-    await expect(fetchReceipt(413, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(fetchReceipt(uid(413), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
@@ -244,17 +247,21 @@ describe("fetchPayments", () => {
       page: 1,
       pageSize: 25,
       total: 25000,
-      rows: [expect.objectContaining({ id: 412, receiptNumber: "000412", amount: 25000 })],
+      rows: [expect.objectContaining({ id: uid(412), receiptNumber: "000412", amount: 25000 })],
     });
   });
 
   it("asks for one Student's Payments", async () => {
     const fetchFn = answering(jsonResponse(PAGE));
 
-    await fetchPayments({ from: "", to: "", search: "", feeTypeId: 3, studentId: 7 }, 1, fetchFn);
+    await fetchPayments(
+      { from: "", to: "", search: "", feeTypeId: 3, studentId: uid(7) },
+      1,
+      fetchFn,
+    );
 
     const [path] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/payments/?student=7&fee_type=3&page=1");
+    expect(path).toBe(`/api/payments/?student=${uid(7)}&fee_type=3&page=1`);
   });
 
   it("refuses an answer that isn't a page of Payments", async () => {
@@ -286,10 +293,10 @@ describe("changePayment", () => {
   it("PUTs the whole Payment and returns it as it is now", async () => {
     const fetchFn = answering(jsonResponse({ ...RECEIPT, amount: 30000 }));
 
-    const payment = await changePayment(412, { ...NEW_PAYMENT, amount: 30000 }, fetchFn);
+    const payment = await changePayment(uid(412), { ...NEW_PAYMENT, amount: 30000 }, fetchFn);
 
     const [path, init] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/payments/412/");
+    expect(path).toBe(`/api/payments/${uid(412)}/`);
     expect(init?.method).toBe("PUT");
     expect(typeof init?.body === "string" ? JSON.parse(init.body) : undefined).toEqual({
       amount: 30000,
@@ -309,7 +316,7 @@ describe("changePayment", () => {
       ),
     );
 
-    await expect(changePayment(412, NEW_PAYMENT, fetchFn)).rejects.toEqual(
+    await expect(changePayment(uid(412), NEW_PAYMENT, fetchFn)).rejects.toEqual(
       new InvalidFieldsError({
         feeTypeId: ["Choose a Fee Type."],
         note: ["Add a short note for Other."],
@@ -322,7 +329,7 @@ describe("changePayment", () => {
       jsonResponse({ paid_on: ["Enter a date from 1 Jan 2000 to today."] }, 400),
     );
 
-    await expect(changePayment(412, NEW_PAYMENT, fetchFn)).rejects.toEqual(
+    await expect(changePayment(uid(412), NEW_PAYMENT, fetchFn)).rejects.toEqual(
       new InvalidFieldsError({ paidOn: ["Enter a date from 1 Jan 2000 to today."] }),
     );
   });
@@ -332,7 +339,9 @@ describe("changePayment", () => {
       jsonResponse({ detail: "Only an Admin can change or delete a Payment." }, 403),
     );
 
-    await expect(changePayment(412, NEW_PAYMENT, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(changePayment(uid(412), NEW_PAYMENT, fetchFn)).rejects.toBeInstanceOf(
+      ApiRequestError,
+    );
   });
 });
 
@@ -340,16 +349,16 @@ describe("deletePayment", () => {
   it("DELETEs the Payment", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await deletePayment(412, fetchFn);
+    await deletePayment(uid(412), fetchFn);
 
     const [path, init] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/payments/412/");
+    expect(path).toBe(`/api/payments/${uid(412)}/`);
     expect(init?.method).toBe("DELETE");
   });
 
   it("rejects when it isn't deleted", async () => {
     const fetchFn = answering(jsonResponse({}, 404));
 
-    await expect(deletePayment(412, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(deletePayment(uid(412), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });

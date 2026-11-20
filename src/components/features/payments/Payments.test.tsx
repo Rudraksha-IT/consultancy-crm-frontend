@@ -5,11 +5,13 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { StudentProfilePage } from "@/components/features/students/profile/StudentProfilePage";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
+import type { RecordId } from "@/lib/recordId";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { backend as backendOnly, callsTo, on, type Answer } from "@/test/backend";
 import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 /** The canned backend, always with the office's Fee Types for the form. */
 function backend(...answers: Answer[]) {
@@ -33,17 +35,17 @@ const ADMIN: StaffContext = {
 
 const DESK_PROFILE = { ...PROFILE, can_change: false, can_set_stage: false, can_transfer: false };
 
-type Line = { id: number; fee_type: { id: number; name: string }; note: string; amount: number };
+type Line = { id: RecordId; fee_type: { id: number; name: string }; note: string; amount: number };
 
-const APPLICATION_FEE: Line = { id: 412, fee_type: feeTypeRef(1), note: "", amount: 25000 };
+const APPLICATION_FEE: Line = { id: uid(412), fee_type: feeTypeRef(1), note: "", amount: 25000 };
 
 /** A receipt as the API answers it, for Payment 412 (the first line), with these lines. */
 function receiptWith(first: Line, ...more: Line[]) {
   const lines = [first, ...more];
   return {
-    id: 412,
+    id: uid(412),
     receipt_number: "000412",
-    student: { id: 7, name: "Sita Gurung", phone: "9841000001" },
+    student: { id: uid(7), name: "Sita Gurung", phone: "9841000001" },
     amount: first.amount,
     paid_on: "2026-11-02",
     method: "esewa",
@@ -58,13 +60,13 @@ function receiptWith(first: Line, ...more: Line[]) {
 
 const RECEIPT = receiptWith(APPLICATION_FEE);
 
-const PAYMENTS = "/api/students/7/payments/";
+const PAYMENTS = `/api/students/${uid(7)}/payments/`;
 
 function renderPage(context: StaffContext = FRONT_DESK) {
   return render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -123,7 +125,7 @@ afterEach(() => {
 
 describe("taking a payment", () => {
   it("opens on today's date in AD and BS, Cash, and one line with no total yet", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE));
+    backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage();
 
     const dialog = await openPaymentDialog();
@@ -143,7 +145,7 @@ describe("taking a payment", () => {
   });
 
   it("shows the BS date of the day chosen", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE));
+    backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage();
     const dialog = await openPaymentDialog();
     const date = within(dialog).getByLabelText("Date");
@@ -155,7 +157,7 @@ describe("taking a payment", () => {
   });
 
   it("doesn't tell an Admin that totals stay with the Admin", async () => {
-    backend(on("GET", "/api/students/7/", PROFILE));
+    backend(on("GET", `/api/students/${uid(7)}/`, PROFILE));
     renderPage(ADMIN);
 
     const dialog = await openPaymentDialog();
@@ -167,7 +169,7 @@ describe("taking a payment", () => {
 
   it("saves the Payment, says so and closes, with no receipt to show or print (2026-11-20)", async () => {
     const fetchFn = backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
       on("POST", PAYMENTS, RECEIPT, 201),
     );
     renderPage();
@@ -187,7 +189,7 @@ describe("taking a payment", () => {
   it("shows the server's message under a refused field and stays open", async () => {
     const message = "Enter a date from 1 Jan 2000 to today.";
     backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
       on("POST", PAYMENTS, { paid_on: [message] }, 400),
     );
     renderPage();
@@ -202,7 +204,7 @@ describe("taking a payment", () => {
   it.each(["", "0", "12.5", "-4", "100000001"])(
     "refuses the amount %j before sending it",
     async (amount) => {
-      const fetchFn = backend(on("GET", "/api/students/7/", DESK_PROFILE));
+      const fetchFn = backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
       renderPage();
       const dialog = await openPaymentDialog();
 
@@ -217,7 +219,7 @@ describe("taking a payment", () => {
   );
 
   it("offers the Fee Types in order without the hidden ones, and asks for one", async () => {
-    const fetchFn = backend(on("GET", "/api/students/7/", DESK_PROFILE));
+    const fetchFn = backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage();
     const dialog = await openPaymentDialog();
     const picker = await within(dialog).findByRole("combobox", { name: "Fee Type" });
@@ -245,11 +247,11 @@ describe("taking a payment", () => {
 
   it("needs a note for Other before sending, and sends it", async () => {
     const fetchFn = backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
       on(
         "POST",
         PAYMENTS,
-        receiptWith({ id: 412, fee_type: feeTypeRef(7), note: "SOP check", amount: 500 }),
+        receiptWith({ id: uid(412), fee_type: feeTypeRef(7), note: "SOP check", amount: 500 }),
         201,
       ),
     );
@@ -276,7 +278,7 @@ describe("taking a payment", () => {
   });
 
   it("says so when the Fee Types can't be loaded", async () => {
-    backendOnly(on("GET", "/api/students/7/", DESK_PROFILE));
+    backendOnly(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage();
     const dialog = await openPaymentDialog();
 
@@ -287,7 +289,7 @@ describe("taking a payment", () => {
 
   it("says so when the save isn't allowed", async () => {
     backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
       on("POST", PAYMENTS, { detail: "Teachers can't see Students." }, 403),
     );
     renderPage();
@@ -299,7 +301,7 @@ describe("taking a payment", () => {
   });
 
   it("asks to try again when the server fails", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE), on("POST", PAYMENTS, {}, 500));
+    backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE), on("POST", PAYMENTS, {}, 500));
     renderPage();
     const dialog = await openPaymentDialog();
 
@@ -312,13 +314,13 @@ describe("taking a payment", () => {
 
   it("splits one visit across Fee Types and saves every line together", async () => {
     const fetchFn = backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
       on(
         "POST",
         PAYMENTS,
         receiptWith(
-          { id: 412, fee_type: feeTypeRef(3), note: "", amount: 40000 },
-          { id: 413, fee_type: feeTypeRef(4), note: "first half", amount: 10000 },
+          { id: uid(412), fee_type: feeTypeRef(3), note: "", amount: 40000 },
+          { id: uid(413), fee_type: feeTypeRef(4), note: "first half", amount: 10000 },
         ),
         201,
       ),
@@ -347,7 +349,7 @@ describe("taking a payment", () => {
   });
 
   it("removes a line, keeps focus on the line now in its place, and updates the total", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE));
+    backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage();
     const dialog = await openPaymentDialog();
     await fillLine(line(dialog, 1), "Visa fee", "40000");
@@ -371,7 +373,7 @@ describe("taking a payment", () => {
   });
 
   it("takes up to ten lines", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE));
+    backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage();
     const dialog = await openPaymentDialog();
 
@@ -387,7 +389,7 @@ describe("taking a payment", () => {
   });
 
   it("names a refused line before sending anything", async () => {
-    const fetchFn = backend(on("GET", "/api/students/7/", DESK_PROFILE));
+    const fetchFn = backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage();
     const dialog = await openPaymentDialog();
     await fillLine(line(dialog, 1), "Visa fee", "40000");
@@ -407,7 +409,7 @@ describe("taking a payment", () => {
   it("shows the server's refusal of one line under that line, and saves nothing", async () => {
     const hidden = "This Fee Type is hidden. Choose another.";
     backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
       on("POST", PAYMENTS, { lines: [{}, { fee_type: [hidden] }] }, 400),
     );
     renderPage();
@@ -425,7 +427,7 @@ describe("taking a payment", () => {
   it("shows the server's refusal of the lines as a whole", async () => {
     const message = "Add 1 to 10 lines, each with a Fee Type and an amount.";
     backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
       on("POST", PAYMENTS, { lines: [message] }, 400),
     );
     renderPage();
@@ -437,7 +439,7 @@ describe("taking a payment", () => {
   });
 
   it("isn't offered when the Staff member can't take payments", async () => {
-    backend(on("GET", "/api/students/7/", { ...DESK_PROFILE, can_record_payment: false }));
+    backend(on("GET", `/api/students/${uid(7)}/`, { ...DESK_PROFILE, can_record_payment: false }));
     renderPage();
 
     await screen.findByRole("heading", { name: "Sita Gurung" });
@@ -447,7 +449,7 @@ describe("taking a payment", () => {
 
   it("sits beside Assign a counsellor for a Student who has none", async () => {
     backend(
-      on("GET", "/api/students/7/", {
+      on("GET", `/api/students/${uid(7)}/`, {
         ...DESK_PROFILE,
         assigned_counsellor: null,
         can_assign: true,
@@ -463,20 +465,20 @@ describe("taking a payment", () => {
 describe("the Activity tab", () => {
   it("describes a recorded Payment with its receipt number", async () => {
     backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
-      on("GET", "/api/students/7/visits/?page=1", {
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/visits/?page=1`, {
         count: 0,
         page: 1,
         page_size: 50,
         results: [],
       }),
-      on("GET", "/api/students/7/history/", {
+      on("GET", `/api/students/${uid(7)}/history/`, {
         count: 1,
         page: 1,
         page_size: 50,
         results: [
           {
-            id: 3,
+            id: uid(3),
             kind: "payment_recorded",
             at: "2026-11-02T10:15:00+05:45",
             by: { name: "Ramesh KC", is_platform_admin: false },
@@ -502,7 +504,7 @@ describe("when the office shows dates in BS", () => {
   const BS_DESK: StaffContext = { ...FRONT_DESK, dateDisplay: "BS" };
 
   it("takes the date as a BS day, month and year, with the AD date under it", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE));
+    backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage(BS_DESK);
 
     const dialog = await openPaymentDialog();
@@ -516,7 +518,7 @@ describe("when the office shows dates in BS", () => {
 
   it("sends the AD date of the BS day chosen", async () => {
     const fetchFn = backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
       on("POST", PAYMENTS, { ...RECEIPT, paid_on: "2026-10-20" }, 201),
     );
     renderPage(BS_DESK);
@@ -531,20 +533,20 @@ describe("when the office shows dates in BS", () => {
 
   it("dates Activity in BS", async () => {
     backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
-      on("GET", "/api/students/7/visits/?page=1", {
+      on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE),
+      on("GET", `/api/students/${uid(7)}/visits/?page=1`, {
         count: 0,
         page: 1,
         page_size: 50,
         results: [],
       }),
-      on("GET", "/api/students/7/history/", {
+      on("GET", `/api/students/${uid(7)}/history/`, {
         count: 1,
         page: 1,
         page_size: 50,
         results: [
           {
-            id: 3,
+            id: uid(3),
             kind: "payment_recorded",
             at: "2026-11-02T10:15:00+05:45",
             by: { name: "Ramesh KC", is_platform_admin: false },

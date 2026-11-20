@@ -1,9 +1,10 @@
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { addStudent, fetchStudents } from "./students";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const ROW = {
-  id: 9,
+  id: uid(9),
   name: "Anish Neupane",
   phone: "9819988776",
   email: "anish@gmail.test",
@@ -74,7 +75,7 @@ describe("fetchStudents", () => {
     expect(page.pageSize).toBe(25);
     expect(page.students).toEqual([
       {
-        id: 9,
+        id: uid(9),
         name: "Anish Neupane",
         phone: "9819988776",
         email: "anish@gmail.test",
@@ -139,7 +140,7 @@ describe("addStudent", () => {
       assigned_counsellor: 2,
     });
     expect(added).toMatchObject({
-      id: 9,
+      id: uid(9),
       name: "Anish Neupane",
       stage: "lead",
       note: "Wants a diploma.",

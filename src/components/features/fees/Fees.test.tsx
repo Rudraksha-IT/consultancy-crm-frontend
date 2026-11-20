@@ -13,6 +13,7 @@ import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 /** The canned backend, always with the office's Fee Types for the forms. */
 function backend(...answers: Answer[]) {
@@ -42,8 +43,8 @@ const COUNSELLOR: StaffContext = {
   staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
 };
 
-const FEES_URL = "/api/students/7/fees/";
-const STUDENT_PAYMENTS = "/api/payments/?student=7&page=1";
+const FEES_URL = `/api/students/${uid(7)}/fees/`;
+const STUDENT_PAYMENTS = `/api/payments/?student=${uid(7)}&page=1`;
 const OWING_URL = "/api/accounts/student-fees/?page=1";
 /** The Admin's Home leaves Lost Students out, as Fees by type does (spec 87, 91). */
 const HOME_OWING_URL = "/api/accounts/student-fees/?page=1&leave_out=lost";
@@ -69,7 +70,7 @@ const NO_EXPENSES = {
 };
 
 const VISA_FEE = {
-  id: 31,
+  id: uid(31),
   fee_type: feeTypeRef(3),
   note: "processing",
   amount: 40000,
@@ -78,7 +79,7 @@ const VISA_FEE = {
 };
 const APPLICATION_FEE = {
   ...VISA_FEE,
-  id: 32,
+  id: uid(32),
   fee_type: feeTypeRef(1),
   note: "",
   amount: 25000,
@@ -102,8 +103,13 @@ const OWING = {
   page_size: 25,
   totals: { agreed: 170000, collected: 40000, still_to_collect: 130000, students: 4, owing: 2 },
   results: [
-    { student: { id: 3, name: "Sita Karki" }, fees: 80000, paid: 0, still_to_pay: 80000 },
-    { student: { id: 7, name: "Aarav Sharma" }, fees: 65000, paid: 15000, still_to_pay: 50000 },
+    { student: { id: uid(3), name: "Sita Karki" }, fees: 80000, paid: 0, still_to_pay: 80000 },
+    {
+      student: { id: uid(7), name: "Aarav Sharma" },
+      fees: 65000,
+      paid: 15000,
+      still_to_pay: 50000,
+    },
   ],
 };
 
@@ -144,11 +150,11 @@ function changingAfter(path: string, before: unknown, after: unknown): Answer {
 describe("opening a Student on their Fees tab", () => {
   it("starts on Fees when asked", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
-    withProviders(ADMIN, <StudentProfilePage studentId={7} startTab="fees" />);
+    withProviders(ADMIN, <StudentProfilePage studentId={uid(7)} startTab="fees" />);
 
     expect(await screen.findByRole("tab", { name: "Fees" })).toHaveAttribute(
       "aria-selected",
@@ -158,10 +164,10 @@ describe("opening a Student on their Fees tab", () => {
   });
 
   it("starts on Applications when Fees isn't shown to them", async () => {
-    backend(on("GET", "/api/students/7/", PROFILE));
+    backend(on("GET", `/api/students/${uid(7)}/`, PROFILE));
     withProviders(
       { ...ADMIN, modules: ["students", "payments"] },
-      <StudentProfilePage studentId={7} startTab="fees" />,
+      <StudentProfilePage studentId={uid(7)} startTab="fees" />,
     );
 
     expect(await screen.findByRole("tab", { name: /^Applications/ })).toHaveAttribute(
@@ -172,7 +178,7 @@ describe("opening a Student on their Fees tab", () => {
 });
 
 async function openFeesTab(context: StaffContext = ADMIN) {
-  withProviders(context, <StudentProfilePage studentId={7} />);
+  withProviders(context, <StudentProfilePage studentId={uid(7)} />);
   await userEvent.click(await screen.findByRole("tab", { name: "Fees" }));
 }
 
@@ -186,7 +192,7 @@ function tile(label: string): HTMLElement {
 describe("the Fees tab, for an Admin", () => {
   it("shows the agreed fees, paid so far and still to pay, the Fees and the Payments", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
@@ -207,7 +213,7 @@ describe("the Fees tab, for an Admin", () => {
 
   it("shows an overpayment as nothing owed, and says how much more was paid", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, {
         ...feesOf([VISA_FEE], null),
         total: 40000,
@@ -225,7 +231,7 @@ describe("the Fees tab, for an Admin", () => {
 
   it("says when everything is paid", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, {
         fees: [VISA_FEE],
         total: 40000,
@@ -240,7 +246,7 @@ describe("the Fees tab, for an Admin", () => {
 
   it("takes a payment from the Payments section", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
@@ -256,7 +262,7 @@ describe("the Fees tab, for an Admin", () => {
 
   it("says when no fees are agreed yet", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, {
         fees: [],
         total: 0,
@@ -270,7 +276,7 @@ describe("the Fees tab, for an Admin", () => {
   });
 
   it("says when the fees can't be loaded", async () => {
-    backend(on("GET", "/api/students/7/", PROFILE));
+    backend(on("GET", `/api/students/${uid(7)}/`, PROFILE));
     await openFeesTab();
 
     expect(
@@ -281,7 +287,7 @@ describe("the Fees tab, for an Admin", () => {
   it("shows typed text as text", async () => {
     const html = "<b>Visa</b><script>alert(1)</script>";
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, { ...ADMIN_FEES, fees: [{ ...VISA_FEE, note: html }] }),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
@@ -308,7 +314,7 @@ describe("adding a fee", () => {
         { fees: [], total: 0, balance: { paid: 0, still_to_pay: 0, overpaid: 0 } },
         AFTER,
       ),
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("POST", FEES_URL, AFTER, 201),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
@@ -333,7 +339,7 @@ describe("adding a fee", () => {
 
   it("refuses a missing Fee Type and a bad amount without sending them", async () => {
     const fetchFn = backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
@@ -352,7 +358,7 @@ describe("adding a fee", () => {
 
   it("shows the server's refusal under its field", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
       on("POST", FEES_URL, { note: ["Use at most 200 characters."] }, 400),
@@ -369,7 +375,7 @@ describe("adding a fee", () => {
 
   it("says when the person may no longer change fees", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
       on("POST", FEES_URL, { detail: "Not your Student." }, 403),
@@ -390,7 +396,7 @@ describe("adding a fee", () => {
 
   it("closes with Escape", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
@@ -417,8 +423,8 @@ describe("changing and deleting a fee", () => {
     const changed = { ...VISA_FEE, amount: 45000 };
     const fetchFn = backend(
       changingAfter(FEES_URL, ADMIN_FEES, feesOf([changed, APPLICATION_FEE], ADMIN_FEES.balance)),
-      on("GET", "/api/students/7/", PROFILE),
-      on("PUT", "/api/fees/31/", ADMIN_FEES),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
+      on("PUT", `/api/fees/${uid(31)}/`, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
     await openFeesTab();
@@ -432,7 +438,7 @@ describe("changing and deleting a fee", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
 
     expect(await screen.findByText("Changes saved")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PUT", "/api/fees/31/")).toEqual({
+    expect(sentBody(fetchFn, "PUT", `/api/fees/${uid(31)}/`)).toEqual({
       fee_type: 3,
       note: "processing",
       amount: 45000,
@@ -443,9 +449,9 @@ describe("changing and deleting a fee", () => {
   it("asks first, then deletes it and says so", async () => {
     const fetchFn = backend(
       changingAfter(FEES_URL, ADMIN_FEES, AFTER),
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       (path, init) =>
-        init?.method === "DELETE" && path === "/api/fees/31/"
+        init?.method === "DELETE" && path === `/api/fees/${uid(31)}/`
           ? new Response(null, { status: 204 })
           : undefined,
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
@@ -461,13 +467,13 @@ describe("changing and deleting a fee", () => {
     await userEvent.click(within(confirm).getByRole("button", { name: "Delete fee" }));
 
     expect(await screen.findByText("Fee deleted")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", "/api/fees/31/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "DELETE", `/api/fees/${uid(31)}/`)).toHaveLength(1);
     expect(screen.queryByText("Visa fee (processing)")).not.toBeInTheDocument();
   });
 
   it("deletes nothing when the confirmation is cancelled", async () => {
     const fetchFn = backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
@@ -482,13 +488,13 @@ describe("changing and deleting a fee", () => {
     await userEvent.click(within(confirm).getByRole("button", { name: "Cancel" }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", "/api/fees/31/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "DELETE", `/api/fees/${uid(31)}/`)).toHaveLength(0);
     expect(screen.getByText("Visa fee (processing)")).toBeInTheDocument();
   });
 
   it("keeps the confirmation open when deleting fails", async () => {
     backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
@@ -512,7 +518,7 @@ describe("the Fees tab, for the Student's counsellor", () => {
 
   it("shows their Fees and lets them add one, but no Payments or what is still to pay", async () => {
     const fetchFn = backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, COUNSELLOR_FEES),
     );
     await openFeesTab(COUNSELLOR);
@@ -529,7 +535,7 @@ describe("the Fees tab, for the Student's counsellor", () => {
 
   it("has no Add or Edit when they may not change the Fees", async () => {
     backend(
-      on("GET", "/api/students/7/", { ...PROFILE, can_change_fees: false }),
+      on("GET", `/api/students/${uid(7)}/`, { ...PROFILE, can_change_fees: false }),
       on("GET", FEES_URL, COUNSELLOR_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );
@@ -566,7 +572,7 @@ describe("Accounts -> Student fees", () => {
     if (sita === undefined || aarav === undefined) throw new Error("Expected two rows");
     expect(within(sita).getByRole("link", { name: "Sita Karki" })).toHaveAttribute(
       "href",
-      "/students/3",
+      `/students/${uid(3)}`,
     );
     expect(within(aarav).getByText("NPR 50,000")).toBeInTheDocument();
     expect(
@@ -605,7 +611,7 @@ describe("Accounts -> Student fees", () => {
     expect(await within(details).findByText("Visa fee (processing)")).toBeInTheDocument();
     expect(within(details).getByRole("link", { name: "Open their profile" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     await userEvent.click(within(details).getByRole("button", { name: "Add a fee" }));
     const add = screen.getByRole("dialog", { name: "Add a fee for Aarav Sharma" });
@@ -683,7 +689,7 @@ describe("the Admin's Home money", () => {
 
   it("shows at most five who owe", async () => {
     const many = Array.from({ length: 7 }, (_, index) => ({
-      student: { id: index + 1, name: `Student ${String(index + 1)}` },
+      student: { id: uid(index + 1), name: `Student ${String(index + 1)}` },
       fees: 1000,
       paid: 0,
       still_to_pay: 1000,
@@ -720,31 +726,37 @@ describe("Fee changes in Activity", () => {
       detail: "",
     };
     backend(
-      on("GET", "/api/students/7/", PROFILE),
-      on("GET", "/api/students/7/visits/?page=1", {
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
+      on("GET", `/api/students/${uid(7)}/visits/?page=1`, {
         count: 0,
         page: 1,
         page_size: 50,
         results: [],
       }),
-      on("GET", "/api/students/7/history/", {
+      on("GET", `/api/students/${uid(7)}/history/`, {
         count: 3,
         page: 1,
         page_size: 50,
         results: [
-          { ...entry, id: 3, kind: "fee_deleted", before: "PTE class, NPR 18,000", after: "" },
+          { ...entry, id: uid(3), kind: "fee_deleted", before: "PTE class, NPR 18,000", after: "" },
           {
             ...entry,
-            id: 2,
+            id: uid(2),
             kind: "fee_edited",
             before: "Visa processing, NPR 40,000",
             after: "Visa processing, NPR 45,000",
           },
-          { ...entry, id: 1, kind: "fee_added", before: "", after: "Visa processing, NPR 40,000" },
+          {
+            ...entry,
+            id: uid(1),
+            kind: "fee_added",
+            before: "",
+            after: "Visa processing, NPR 40,000",
+          },
         ],
       }),
     );
-    withProviders(ADMIN, <StudentProfilePage studentId={7} />);
+    withProviders(ADMIN, <StudentProfilePage studentId={uid(7)} />);
 
     await userEvent.click(await screen.findByRole("tab", { name: "Activity" }));
 
@@ -766,7 +778,7 @@ describe.each(THEME_CASES)("Fees in the $name Theme", ({ config, mode }) => {
   it("shows the Student fees list and the Fees tab", async () => {
     backend(
       on("GET", OWING_URL, OWING),
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", FEES_URL, ADMIN_FEES),
       on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
     );

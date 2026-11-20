@@ -11,6 +11,7 @@ import { DEFAULT_THEME } from "@/lib/theme";
 
 import { EmployeeProgressPage } from "./EmployeeProgressPage";
 import { MyProgressPage } from "./MyProgressPage";
+import { uid } from "@/test/ids";
 
 function context(
   overrides: Partial<StaffContext["staff"]> = {},
@@ -60,7 +61,7 @@ function answer(overrides: Record<string, unknown> = {}) {
             before: "",
             after: "Deakin University",
             detail: "Master of IT",
-            student: { id: 7, name: "Sita Gurung" },
+            student: { id: uid(7), name: "Sita Gurung" },
           },
           {
             kind: "stage_changed",
@@ -68,7 +69,7 @@ function answer(overrides: Record<string, unknown> = {}) {
             before: "counselling",
             after: "applying",
             detail: "",
-            student: { id: 7, name: "Sita Gurung" },
+            student: { id: uid(7), name: "Sita Gurung" },
           },
         ],
       },
@@ -150,7 +151,7 @@ describe("An employee's Progress tab", () => {
     expect(within(list).getByText("Stage: Counselling → Applying")).toBeVisible();
     expect(within(list).getAllByRole("link", { name: "Sita Gurung" })[0]).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(within(list).getByText("Marked attendance: <b>PTE Day</b> (1 Student)")).toBeVisible();
     expect(within(list).getByRole("heading", { name: /Mon, 2 Nov 2026/ })).toHaveTextContent(

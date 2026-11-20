@@ -1,13 +1,14 @@
 import { fetchAttendanceDay, fetchStudentClasses, saveAttendanceDay } from "./attendance";
 import { InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const DAY = {
   day: "2026-11-02",
   can_mark: true,
   marks: [
-    { student: 8, mark: null },
-    { student: 7, mark: "late" },
+    { student: uid(8), mark: null },
+    { student: uid(7), mark: "late" },
   ],
 };
 
@@ -32,13 +33,13 @@ describe("fetchAttendanceDay", () => {
     expect(day).toEqual({
       day: "2026-11-02",
       canMark: true,
-      marks: { 7: "late" },
+      marks: { [uid(7)]: "late" },
     });
   });
 
   it.each([
-    ["an unknown mark", { marks: [{ student: 7, mark: "here" }] }],
-    ["a student id that isn't a number", { marks: [{ student: "7", mark: "late" }] }],
+    ["an unknown mark", { marks: [{ student: uid(7), mark: "here" }] }],
+    ["a student id that isn't a UUID", { marks: [{ student: "7", mark: "late" }] }],
     ["a day that isn't one", { day: "2 Nov" }],
     ["no can_mark", { can_mark: undefined }],
   ])("refuses an answer with %s", async (_, change) => {
@@ -59,19 +60,24 @@ describe("saveAttendanceDay", () => {
   it("PUTs the marks in API naming and returns the saved day", async () => {
     const fetchFn = answering(jsonResponse(DAY));
 
-    const day = await saveAttendanceDay(3, "2026-11-02", { 7: "late", 9: "present" }, fetchFn);
+    const day = await saveAttendanceDay(
+      3,
+      "2026-11-02",
+      { [uid(7)]: "late", [uid(9)]: "present" },
+      fetchFn,
+    );
 
     expect(sent(fetchFn)).toEqual({
       path: "/api/batches/3/attendance/2026-11-02/",
       method: "PUT",
       body: {
         marks: [
-          { student: 7, mark: "late" },
-          { student: 9, mark: "present" },
+          { student: uid(7), mark: "late" },
+          { student: uid(9), mark: "present" },
         ],
       },
     });
-    expect(day.marks).toEqual({ 7: "late" });
+    expect(day.marks).toEqual({ [uid(7)]: "late" });
   });
 
   it("names a refused day or marks as field errors", async () => {
@@ -105,9 +111,9 @@ describe("fetchStudentClasses", () => {
     ];
     const fetchFn = answering(jsonResponse(classes));
 
-    const answer = await fetchStudentClasses(7, fetchFn);
+    const answer = await fetchStudentClasses(uid(7), fetchFn);
 
-    expect(sent(fetchFn).path).toBe("/api/students/7/batches/");
+    expect(sent(fetchFn).path).toBe(`/api/students/${uid(7)}/batches/`);
     expect(answer).toEqual([
       {
         id: 3,
@@ -126,6 +132,6 @@ describe("fetchStudentClasses", () => {
     const classes = [{ id: 3, name: "x", time_slot: "7", attended_percent: 120, recent_days: [] }];
     const fetchFn = answering(jsonResponse(classes));
 
-    await expect(fetchStudentClasses(7, fetchFn)).rejects.toThrow();
+    await expect(fetchStudentClasses(uid(7), fetchFn)).rejects.toThrow();
   });
 });

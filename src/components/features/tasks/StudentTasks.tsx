@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -12,7 +13,7 @@ import { TaskPanelBody } from "./TasksPage";
 import { useTaskPage } from "./useTaskPage";
 
 type StudentTasksProps = {
-  student: { id: number; name: string; counsellorId: number | null };
+  student: { id: RecordId; name: string; counsellorId: number | null };
   /** A Task was added or ticked, so the tab's count can change. */
   onChanged: () => void;
 };

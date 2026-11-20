@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useDates } from "@/components/features/shell/dateDisplay";
 import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -50,7 +51,7 @@ function TakeOutButton({ name, target, onTakeOut }: TakeOutProps) {
   );
 }
 
-type BinnedFilesProps = BinViewer & { documentId: number; files: readonly BinnedFile[] };
+type BinnedFilesProps = BinViewer & { documentId: RecordId; files: readonly BinnedFile[] };
 
 /** A Document's files in the Bin, under its files in use: named only, never opened here. */
 export function BinnedFileItems({ documentId, files, viewerId, onTakeOut }: BinnedFilesProps) {

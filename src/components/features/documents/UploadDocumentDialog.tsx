@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { SaveDialog } from "@/components/features/students/profile/SaveDialog";
@@ -13,7 +14,7 @@ import { documentFilesProblem } from "@/lib/documents";
 import { uploadFailure } from "./uploadFailure";
 
 type UploadDocumentDialogProps = {
-  studentId: number;
+  studentId: RecordId;
   studentName: string;
   /** The Document Types offered: the Student's checklist. */
   types: readonly { id: number; name: string }[];
@@ -26,7 +27,7 @@ type UploadDocumentDialogProps = {
   onUploaded: (checklist: Checklist, fileCount: number) => void;
 };
 
-const linkValue = (link: DocumentLinkOption): string => `${link.kind}:${String(link.id)}`;
+const linkValue = (link: DocumentLinkOption): string => `${link.kind}:${link.id}`;
 
 /**
  * Upload one or more files as one of the Student's Documents (spec 65, 117), optionally for one

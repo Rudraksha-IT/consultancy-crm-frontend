@@ -6,6 +6,7 @@ import { Role } from "@/constants/roles";
 import { backend, callsTo, on } from "@/test/backend";
 
 import { GlobalSearch } from "./GlobalSearch";
+import { uid } from "@/test/ids";
 
 const router = { push: vi.fn() };
 const path = { current: "/" };
@@ -16,13 +17,19 @@ const BOX = { name: "Search Students and classes" };
 const WIDE = { isExpanded: false, onCollapse: () => undefined };
 const SITA = {
   kind: "student",
-  id: 2,
+  id: uid(2),
   name: "Sita Karki",
   phone: "9841234567",
   stage: "counselling",
   assigned_counsellor: { id: 5, name: "Bikash Thapa" },
 };
-const ASHA = { ...SITA, id: 3, name: "Asha Sapkota", stage: "lead", assigned_counsellor: null };
+const ASHA = {
+  ...SITA,
+  id: uid(3),
+  name: "Asha Sapkota",
+  stage: "lead",
+  assigned_counsellor: null,
+};
 const MORNING = { id: 7, name: "IELTS Morning", time_slot: "7:00-8:30 AM" };
 
 function searchUrl(text: string): string {
@@ -76,7 +83,7 @@ describe("GlobalSearch", () => {
     ]);
     expect(within(students).getByRole("link", { name: /Sita Karki/ })).toHaveAttribute(
       "href",
-      "/students/2",
+      `/students/${uid(2)}`,
     );
     const classes = within(results).getByRole("group", { name: "Classes" });
     expect(within(classes).getByRole("link", { name: /IELTS Morning/ })).toHaveAttribute(
@@ -243,7 +250,7 @@ describe("GlobalSearch", () => {
     await user.type(box, "sita");
     await settle();
 
-    path.current = "/students/2";
+    path.current = `/students/${uid(2)}`;
     rerender(<GlobalSearch role={Role.Admin} modules={[Module.Batches]} {...WIDE} />);
 
     expect(screen.queryByRole("region", { name: "Search results" })).not.toBeInTheDocument();
@@ -303,7 +310,7 @@ describe("GlobalSearch for each Role", () => {
         students: [
           {
             kind: "class_student",
-            id: 2,
+            id: uid(2),
             name: "Sita Karki",
             batch: { id: 7, name: "IELTS Morning" },
           },
@@ -468,7 +475,7 @@ describe("GlobalSearch opened from the search icon (1024 px and below)", () => {
     const results = screen.getByRole("region", { name: "Search results" });
     expect(within(results).getByRole("link", { name: /Sita Karki/ })).toHaveAttribute(
       "href",
-      "/students/2",
+      `/students/${uid(2)}`,
     );
     expect(within(results).getByRole("link", { name: /IELTS Morning/ })).toBeInTheDocument();
     await user.keyboard("{ArrowDown}");
@@ -481,7 +488,7 @@ describe("GlobalSearch opened from the search icon (1024 px and below)", () => {
     const { user, box } = renderOpened(onCollapse);
     await user.type(box, "sita");
     await settle();
-    path.current = "/students/2";
+    path.current = `/students/${uid(2)}`;
     await user.click(screen.getByRole("link", { name: /Sita Karki/ }));
     expect(onCollapse).toHaveBeenCalled();
   });

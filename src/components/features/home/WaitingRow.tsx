@@ -111,7 +111,7 @@ function Appointments({ waiting }: { waiting: Waiting }) {
   return (
     <ul className="text-secondary text-ink-2 grid list-disc gap-1 pl-5">
       {waiting.appointments.map((appointment) => (
-        <li key={`${String(appointment.visaId)}-${appointment.kind}`}>
+        <li key={`${appointment.visaId}-${appointment.kind}`}>
           {HOME_TEXT.appointmentLine(
             appointment.student.name,
             APPOINTMENT_LABELS[appointment.kind],

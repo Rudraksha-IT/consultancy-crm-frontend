@@ -1,3 +1,5 @@
+import type { RecordId } from "@/lib/recordId";
+
 export const API_PATHS = {
   currentConsultancy: "/api/consultancy/",
   login: "/api/auth/login/",
@@ -44,15 +46,15 @@ export const API_PATHS = {
   /** The office-wide Visas list and its filters' choices (issue 48). */
   visas: "/api/visas/",
   visaFilterChoices: "/api/visas/filter-choices/",
-  student: (id: number) => `/api/students/${String(id)}/`,
-  studentDetails: (id: number) => `/api/students/${String(id)}/details/`,
-  studentNote: (id: number) => `/api/students/${String(id)}/note/`,
-  studentHistory: (id: number) => `/api/students/${String(id)}/history/`,
-  studentStage: (id: number) => `/api/students/${String(id)}/stage/`,
-  studentAssign: (id: number) => `/api/students/${String(id)}/assign/`,
-  studentTransfer: (id: number) => `/api/students/${String(id)}/transfer/`,
+  student: (id: RecordId) => `/api/students/${id}/`,
+  studentDetails: (id: RecordId) => `/api/students/${id}/details/`,
+  studentNote: (id: RecordId) => `/api/students/${id}/note/`,
+  studentHistory: (id: RecordId) => `/api/students/${id}/history/`,
+  studentStage: (id: RecordId) => `/api/students/${id}/stage/`,
+  studentAssign: (id: RecordId) => `/api/students/${id}/assign/`,
+  studentTransfer: (id: RecordId) => `/api/students/${id}/transfer/`,
   /** Ask to take a Student who isn't mine (issue 57). */
-  studentTransferRequests: (id: number) => `/api/students/${String(id)}/transfer-requests/`,
+  studentTransferRequests: (id: RecordId) => `/api/students/${id}/transfer-requests/`,
   /** Transfer Requests: the list, the menu count, and answering one (issue 57). */
   /** The Inbox (issue 86): my conversations, the 30-second check, who I can write to. */
   inbox: "/api/inbox/",
@@ -64,30 +66,29 @@ export const API_PATHS = {
   transferRequestApprove: (id: number) => `/api/transfer-requests/${String(id)}/approve/`,
   transferRequestDecline: (id: number) => `/api/transfer-requests/${String(id)}/decline/`,
   transferRequestCancel: (id: number) => `/api/transfer-requests/${String(id)}/cancel/`,
-  studentApplications: (id: number) => `/api/students/${String(id)}/applications/`,
-  studentApplication: (id: number, applicationId: number) =>
-    `/api/students/${String(id)}/applications/${String(applicationId)}/`,
-  studentOfferLetters: (id: number) => `/api/students/${String(id)}/offer-letters/`,
-  studentChosenOffer: (id: number) => `/api/students/${String(id)}/chosen-offer/`,
-  studentVisas: (id: number) => `/api/students/${String(id)}/visas/`,
-  studentVisa: (id: number, visaId: number) =>
-    `/api/students/${String(id)}/visas/${String(visaId)}/`,
-  studentVisaDates: (id: number, visaId: number) =>
-    `/api/students/${String(id)}/visas/${String(visaId)}/dates/`,
-  studentVisaLetter: (id: number, visaId: number) =>
-    `/api/students/${String(id)}/visas/${String(visaId)}/letter/`,
-  studentDocuments: (id: number) => `/api/students/${String(id)}/documents/`,
-  studentDocument: (id: number, documentId: number) =>
-    `/api/students/${String(id)}/documents/${String(documentId)}/`,
-  studentDocumentFiles: (id: number, documentId: number) =>
-    `/api/students/${String(id)}/documents/${String(documentId)}/files/`,
-  studentDocumentLink: (id: number, documentId: number, fileId: number) =>
-    `/api/students/${String(id)}/documents/${String(documentId)}/files/${String(fileId)}/link/`,
-  studentDocumentVerification: (id: number, documentId: number) =>
-    `/api/students/${String(id)}/documents/${String(documentId)}/verification/`,
-  studentPayments: (id: number) => `/api/students/${String(id)}/payments/`,
-  studentFees: (id: number) => `/api/students/${String(id)}/fees/`,
-  fee: (id: number) => `/api/fees/${String(id)}/`,
+  studentApplications: (id: RecordId) => `/api/students/${id}/applications/`,
+  studentApplication: (id: RecordId, applicationId: RecordId) =>
+    `/api/students/${id}/applications/${applicationId}/`,
+  studentOfferLetters: (id: RecordId) => `/api/students/${id}/offer-letters/`,
+  studentChosenOffer: (id: RecordId) => `/api/students/${id}/chosen-offer/`,
+  studentVisas: (id: RecordId) => `/api/students/${id}/visas/`,
+  studentVisa: (id: RecordId, visaId: RecordId) => `/api/students/${id}/visas/${visaId}/`,
+  studentVisaDates: (id: RecordId, visaId: RecordId) =>
+    `/api/students/${id}/visas/${visaId}/dates/`,
+  studentVisaLetter: (id: RecordId, visaId: RecordId) =>
+    `/api/students/${id}/visas/${visaId}/letter/`,
+  studentDocuments: (id: RecordId) => `/api/students/${id}/documents/`,
+  studentDocument: (id: RecordId, documentId: RecordId) =>
+    `/api/students/${id}/documents/${documentId}/`,
+  studentDocumentFiles: (id: RecordId, documentId: RecordId) =>
+    `/api/students/${id}/documents/${documentId}/files/`,
+  studentDocumentLink: (id: RecordId, documentId: RecordId, fileId: RecordId) =>
+    `/api/students/${id}/documents/${documentId}/files/${fileId}/link/`,
+  studentDocumentVerification: (id: RecordId, documentId: RecordId) =>
+    `/api/students/${id}/documents/${documentId}/verification/`,
+  studentPayments: (id: RecordId) => `/api/students/${id}/payments/`,
+  studentFees: (id: RecordId) => `/api/students/${id}/fees/`,
+  fee: (id: RecordId) => `/api/fees/${id}/`,
   accountsStudentFees: "/api/accounts/student-fees/",
   /** Fees by type, and one Fee Type's Students (ticket 08). */
   feesByType: "/api/accounts/fees-by-type/",
@@ -97,7 +98,7 @@ export const API_PATHS = {
   commission: "/api/accounts/commission/",
   commissionReceived: "/api/accounts/commission/received/",
   commissionStatus: (id: number) => `/api/accounts/commission/${String(id)}/status/`,
-  studentTasks: (id: number) => `/api/students/${String(id)}/tasks/`,
+  studentTasks: (id: RecordId) => `/api/students/${id}/tasks/`,
   tasks: "/api/tasks/",
   task: (id: number) => `/api/tasks/${String(id)}/`,
   taskAssignees: "/api/tasks/assignees/",
@@ -108,19 +109,19 @@ export const API_PATHS = {
   batches: "/api/batches/",
   batch: (id: number) => `/api/batches/${String(id)}/`,
   batchStudents: (id: number) => `/api/batches/${String(id)}/students/`,
-  batchStudent: (id: number, studentId: number) =>
-    `/api/batches/${String(id)}/students/${String(studentId)}/`,
+  batchStudent: (id: number, studentId: RecordId) =>
+    `/api/batches/${String(id)}/students/${studentId}/`,
   batchTeachers: "/api/batches/teachers/",
   batchEnrolledStudents: "/api/batches/students/",
   /** `day` is AD, "YYYY-MM-DD". */
   batchAttendance: (id: number, day: string) => `/api/batches/${String(id)}/attendance/${day}/`,
-  studentBatches: (id: number) => `/api/students/${String(id)}/batches/`,
-  studentMessages: (id: number) => `/api/students/${String(id)}/messages/`,
-  studentReadyMade: (id: number) => `/api/students/${String(id)}/emails/ready-made/`,
-  studentEmailDraft: (id: number) => `/api/students/${String(id)}/emails/draft/`,
-  studentAttachable: (id: number) => `/api/students/${String(id)}/emails/attachable/`,
-  studentVisits: (id: number) => `/api/students/${String(id)}/visits/`,
-  studentProgress: (id: number) => `/api/students/${String(id)}/progress/`,
+  studentBatches: (id: RecordId) => `/api/students/${id}/batches/`,
+  studentMessages: (id: RecordId) => `/api/students/${id}/messages/`,
+  studentReadyMade: (id: RecordId) => `/api/students/${id}/emails/ready-made/`,
+  studentEmailDraft: (id: RecordId) => `/api/students/${id}/emails/draft/`,
+  studentAttachable: (id: RecordId) => `/api/students/${id}/emails/attachable/`,
+  studentVisits: (id: RecordId) => `/api/students/${id}/visits/`,
+  studentProgress: (id: RecordId) => `/api/students/${id}/progress/`,
   visitsToday: "/api/visits/today/",
   messages: "/api/messages/",
   bulkMessages: "/api/messages/bulk/",
@@ -128,13 +129,13 @@ export const API_PATHS = {
   bulkEmailDraft: "/api/messages/bulk/draft/",
   bulkAttachable: "/api/messages/bulk/attachable/",
   payments: "/api/payments/",
-  payment: (id: number) => `/api/payments/${String(id)}/`,
+  payment: (id: RecordId) => `/api/payments/${id}/`,
   feeTypes: "/api/fee-types/",
   feeType: (id: number) => `/api/fee-types/${String(id)}/`,
   feeTypeOrder: "/api/fee-types/order/",
   documentsPaperwork: "/api/documents/students/",
   documentsBin: "/api/documents/bin/",
-  documentsBinFileLink: (fileId: number) => `/api/documents/bin/files/${String(fileId)}/link/`,
+  documentsBinFileLink: (fileId: RecordId) => `/api/documents/bin/files/${fileId}/link/`,
   homeProgress: "/api/home/progress/",
   homePipeline: "/api/home/pipeline/",
   homeWaiting: "/api/home/waiting/",
@@ -163,9 +164,9 @@ export const API_PATHS = {
   countryListNewDocument: (country: string) =>
     `/api/configuration/document-lists/${country}/new-document/`,
   pickableDocumentTypes: "/api/documents/types/",
-  studentDocumentsAsked: (id: number) => `/api/students/${String(id)}/documents/asked/`,
-  studentDocumentAsked: (id: number, typeId: number) =>
-    `/api/students/${String(id)}/documents/asked/${String(typeId)}/`,
+  studentDocumentsAsked: (id: RecordId) => `/api/students/${id}/documents/asked/`,
+  studentDocumentAsked: (id: RecordId, typeId: number) =>
+    `/api/students/${id}/documents/asked/${String(typeId)}/`,
   catalogueUniversities: "/api/catalogue/universities/",
   catalogueUniversity: (id: number) => `/api/catalogue/universities/${String(id)}/`,
   catalogueCourses: (universityId: number) =>

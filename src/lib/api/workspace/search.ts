@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { Stage } from "@/constants/stages";
 
@@ -11,7 +13,7 @@ const ID = z.number().int().positive();
 const FoundStudentSchema = z
   .object({
     kind: z.literal("student"),
-    id: ID,
+    id: RecordIdSchema,
     name: z.string(),
     phone: z.string(),
     stage: z.enum(Stage),
@@ -25,7 +27,7 @@ const FoundStudentSchema = z
 /** A Student found by their Teacher: only the name and the class they're in (spec 22). */
 const FoundClassStudentSchema = z.object({
   kind: z.literal("class_student"),
-  id: ID,
+  id: RecordIdSchema,
   name: z.string(),
   batch: z.object({ id: ID, name: z.string() }),
 });

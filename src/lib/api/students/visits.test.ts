@@ -1,9 +1,10 @@
 import { InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 import { fetchStudentProgress, fetchStudentVisits, fetchTodaysVisits, logVisit } from "./visits";
+import { uid } from "@/test/ids";
 
 const VISIT = {
-  id: 3,
+  id: uid(3),
   kind: "follow_up",
   purpose: "Bringing documents: Passport copy",
   at: "2026-11-03T10:15:00+05:45",
@@ -25,7 +26,10 @@ describe("fetchTodaysVisits", () => {
       jsonResponse({
         count: 1,
         results: [
-          { ...VISIT, student: { id: 7, name: "Sita Gurung", note_first_line: "Wants Sydney" } },
+          {
+            ...VISIT,
+            student: { id: uid(7), name: "Sita Gurung", note_first_line: "Wants Sydney" },
+          },
         ],
       }),
     );
@@ -37,12 +41,12 @@ describe("fetchTodaysVisits", () => {
       count: 1,
       visits: [
         {
-          id: 3,
+          id: uid(3),
           kind: "follow_up",
           purpose: "Bringing documents: Passport copy",
           at: "2026-11-03T10:15:00+05:45",
           recordedBy: { id: 4, name: "Ramesh KC" },
-          student: { id: 7, name: "Sita Gurung", noteFirstLine: "Wants Sydney" },
+          student: { id: uid(7), name: "Sita Gurung", noteFirstLine: "Wants Sydney" },
         },
       ],
     });
@@ -62,9 +66,9 @@ describe("fetchStudentVisits", () => {
     const old = { ...VISIT, recorded_by: { id: null, name: "Old Desk" } };
     const fetchFn = answering(jsonResponse({ count: 51, page: 2, page_size: 50, results: [old] }));
 
-    const page = await fetchStudentVisits(7, 2, fetchFn);
+    const page = await fetchStudentVisits(uid(7), 2, fetchFn);
 
-    expect(sent(fetchFn)[0]).toBe("/api/students/7/visits/?page=2");
+    expect(sent(fetchFn)[0]).toBe(`/api/students/${uid(7)}/visits/?page=2`);
     expect(page.count).toBe(51);
     expect(page.page).toBe(2);
     expect(page.pageSize).toBe(50);
@@ -77,13 +81,13 @@ describe("logVisit", () => {
     const fetchFn = answering(jsonResponse(VISIT, 201));
 
     const visit = await logVisit(
-      7,
+      uid(7),
       { reason: "bringing_documents", details: "Passport copy" },
       fetchFn,
     );
 
     const [path, init] = sent(fetchFn);
-    expect(path).toBe("/api/students/7/visits/");
+    expect(path).toBe(`/api/students/${uid(7)}/visits/`);
     expect(init?.method).toBe("POST");
     expect(JSON.parse(typeof init?.body === "string" ? init.body : "")).toEqual({
       reason: "bringing_documents",
@@ -97,7 +101,7 @@ describe("logVisit", () => {
       jsonResponse({ details: ["Ensure this field has no more than 200 characters."] }, 400),
     );
 
-    const failure = logVisit(7, { reason: "other", details: "x" }, fetchFn);
+    const failure = logVisit(uid(7), { reason: "other", details: "x" }, fetchFn);
 
     await expect(failure).rejects.toBeInstanceOf(InvalidFieldsError);
     await expect(failure).rejects.toMatchObject({
@@ -117,9 +121,9 @@ describe("fetchStudentProgress", () => {
       }),
     );
 
-    const progress = await fetchStudentProgress(7, fetchFn);
+    const progress = await fetchStudentProgress(uid(7), fetchFn);
 
-    expect(sent(fetchFn)[0]).toBe("/api/students/7/progress/");
+    expect(sent(fetchFn)[0]).toBe(`/api/students/${uid(7)}/progress/`);
     expect(progress).toEqual({
       stage: "lead",
       percent: 8,
@@ -131,13 +135,13 @@ describe("fetchStudentProgress", () => {
   it("refuses an answer without the done flag", async () => {
     const fetchFn = answering(jsonResponse({ stage: "lead", percent: 8, next_step: "x" }));
 
-    await expect(fetchStudentProgress(7, fetchFn)).rejects.toThrow();
+    await expect(fetchStudentProgress(uid(7), fetchFn)).rejects.toThrow();
   });
 
   it.each(["onboarded", "completed"])("refuses the Stage %s, which is gone", async (stage) => {
     const fetchFn = answering(jsonResponse({ stage, percent: 32, next_step: "x", is_done: false }));
 
-    await expect(fetchStudentProgress(7, fetchFn)).rejects.toThrow();
+    await expect(fetchStudentProgress(uid(7), fetchFn)).rejects.toThrow();
   });
 
   it("refuses a percent over 100", async () => {
@@ -145,6 +149,6 @@ describe("fetchStudentProgress", () => {
       jsonResponse({ stage: "lead", percent: 101, next_step: "x", is_done: false }),
     );
 
-    await expect(fetchStudentProgress(7, fetchFn)).rejects.toThrow();
+    await expect(fetchStudentProgress(uid(7), fetchFn)).rejects.toThrow();
   });
 });

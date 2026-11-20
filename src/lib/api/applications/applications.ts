@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { API_PATHS } from "@/constants/api";
 import type { OfferKind, StatusByHand } from "@/constants/applications";
 
@@ -20,7 +21,7 @@ const MAX_PICKER_PAGES = 40;
  * `InvalidFieldsError` for a refused course or intake, and `ApiRequestError` when not allowed.
  */
 export async function addApplication(
-  studentId: number,
+  studentId: RecordId,
   application: NewApplication,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
@@ -43,8 +44,8 @@ export async function addApplication(
  * have moved with it (spec 54-56).
  */
 export async function changeApplicationStatus(
-  studentId: number,
-  applicationId: number,
+  studentId: RecordId,
+  applicationId: RecordId,
   status: StatusByHand,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
@@ -61,7 +62,7 @@ export async function changeApplicationStatus(
 }
 
 /** An Offer Letter to add: which Application it is for, the kind of offer and the file. */
-export type NewOfferLetter = { applicationId: number; kind: OfferKind; file: File };
+export type NewOfferLetter = { applicationId: RecordId; kind: OfferKind; file: File };
 
 /** The Add offer letter fields, by their API names. */
 const OFFER_LETTER_FIELDS = { application: "application", kind: "kind", file: "file" } as const;
@@ -72,12 +73,12 @@ const OFFER_LETTER_FIELDS = { application: "application", kind: "kind", file: "f
  * whose Stage may have moved to Offer. Rejects with `InvalidFieldsError` naming the refused field.
  */
 export async function addOfferLetter(
-  studentId: number,
+  studentId: RecordId,
   letter: NewOfferLetter,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
   const form = new FormData();
-  form.append(OFFER_LETTER_FIELDS.application, String(letter.applicationId));
+  form.append(OFFER_LETTER_FIELDS.application, letter.applicationId);
   form.append(OFFER_LETTER_FIELDS.kind, letter.kind);
   form.append(OFFER_LETTER_FIELDS.file, letter.file);
   try {
@@ -97,8 +98,8 @@ export async function addOfferLetter(
  * `InvalidFieldsError` on `application` when it is refused, e.g. while its visa is waiting.
  */
 export async function chooseOffer(
-  studentId: number,
-  applicationId: number,
+  studentId: RecordId,
+  applicationId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
   try {

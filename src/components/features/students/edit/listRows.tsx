@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import type { ReactNode } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -34,7 +35,7 @@ export type ListKind = {
   fields: readonly string[];
   /** A new row's values. */
   blank: RowValues;
-  stored: (profile: StudentProfile) => { id: number; values: RowValues }[];
+  stored: (profile: StudentProfile) => { id: RecordId; values: RowValues }[];
   Fields: (props: RowFieldsProps) => ReactNode;
 };
 

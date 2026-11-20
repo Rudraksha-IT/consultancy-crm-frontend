@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { z } from "zod";
 
 import { API_PATHS } from "@/constants/api";
@@ -57,7 +58,7 @@ export async function fetchTransferRequestCount(fetchFn: typeof fetch = fetch): 
  * already).
  */
 export async function askToTakeStudent(
-  studentId: number,
+  studentId: RecordId,
   reason: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<TransferRequest> {

@@ -12,6 +12,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { CHECKLIST } from "@/test/documents";
 
 import { DocumentsPage } from "./DocumentsPage";
+import { uid } from "@/test/ids";
 
 const { openBlankTab } = vi.hoisted(() => ({ openBlankTab: vi.fn<() => BlankTab | null>() }));
 vi.mock("@/lib/documents/tab", () => ({ openBlankTab }));
@@ -37,19 +38,19 @@ const NOTE = {
 };
 const WHOLE = {
   kind: "document",
-  document: { id: 31, name: "Passport" },
-  student: { id: 7, name: "Sita Gurung" },
+  document: { id: uid(31), name: "Passport" },
+  student: { id: uid(7), name: "Sita Gurung" },
   files: [
-    { id: 41, file_name: "passport.pdf" },
-    { id: 42, file_name: "back.pdf" },
+    { id: uid(41), file_name: "passport.pdf" },
+    { id: uid(42), file_name: "back.pdf" },
   ],
   ...NOTE,
 };
 const ONE_FILE = {
   kind: "file",
-  document: { id: 33, name: "Bank Statement" },
-  student: { id: 8, name: "Ram Thapa" },
-  files: [{ id: 50, file_name: "page-3.jpg" }],
+  document: { id: uid(33), name: "Bank Statement" },
+  student: { id: uid(8), name: "Ram Thapa" },
+  files: [{ id: uid(50), file_name: "page-3.jpg" }],
   ...NOTE,
   reason: "<b>Blurry</b>",
 };
@@ -119,7 +120,7 @@ describe("the Bin tab (Admins, issue 79)", () => {
     expect(within(whole).getByRole("button", { name: "Open back.pdf" })).toBeVisible();
     expect(within(whole).getByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     const file = await itemFor("page-3.jpg");
     expect(file).toHaveTextContent("one file of Bank Statement");
@@ -132,7 +133,7 @@ describe("the Bin tab (Admins, issue 79)", () => {
     openBlankTab.mockReturnValue(tab);
     const fetchFn = backend(
       on("GET", BIN_PATH, BIN),
-      on("GET", "/api/documents/bin/files/41/link/?action=open", {
+      on("GET", `/api/documents/bin/files/${uid(41)}/link/?action=open`, {
         url: "https://files.test/k?sig=1",
         expires_in: 300,
       }),
@@ -143,9 +144,9 @@ describe("the Bin tab (Admins, issue 79)", () => {
       within(await itemFor("Passport")).getByRole("button", { name: "Open passport.pdf" }),
     );
 
-    expect(callsTo(fetchFn, "GET", "/api/documents/bin/files/41/link/?action=open")).toHaveLength(
-      1,
-    );
+    expect(
+      callsTo(fetchFn, "GET", `/api/documents/bin/files/${uid(41)}/link/?action=open`),
+    ).toHaveLength(1);
     expect(tab.location.replace).toHaveBeenCalledWith("https://files.test/k?sig=1");
   });
 
@@ -154,7 +155,10 @@ describe("the Bin tab (Admins, issue 79)", () => {
     const fetchFn = backend(
       onEach("GET", BIN_PATH, () => (restored ? { ...BIN, count: 1, results: [ONE_FILE] } : BIN)),
       (path, init) => {
-        if (init?.method !== "POST" || path !== "/api/students/7/documents/31/restore/")
+        if (
+          init?.method !== "POST" ||
+          path !== `/api/students/${uid(7)}/documents/${uid(31)}/restore/`
+        )
           return undefined;
         restored = true;
         return jsonResponse(CHECKLIST);
@@ -166,7 +170,9 @@ describe("the Bin tab (Admins, issue 79)", () => {
       within(await itemFor("Passport")).getByRole("button", { name: "Restore Passport" }),
     );
 
-    expect(callsTo(fetchFn, "POST", "/api/students/7/documents/31/restore/")).toHaveLength(1);
+    expect(
+      callsTo(fetchFn, "POST", `/api/students/${uid(7)}/documents/${uid(31)}/restore/`),
+    ).toHaveLength(1);
     expect(await screen.findByText("Passport restored")).toBeVisible();
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: "Restore Passport" })).toBeNull();
@@ -177,7 +183,7 @@ describe("the Bin tab (Admins, issue 79)", () => {
   it("deletes one file for good after asking", async () => {
     const fetchFn = backend(
       on("GET", BIN_PATH, BIN),
-      on("DELETE", "/api/students/8/documents/33/files/50/", CHECKLIST),
+      on("DELETE", `/api/students/${uid(8)}/documents/${uid(33)}/files/${uid(50)}/`, CHECKLIST),
     );
     renderPage("admin");
 
@@ -191,7 +197,9 @@ describe("the Bin tab (Admins, issue 79)", () => {
     expect(within(dialog).getByRole("button", { name: "Cancel" })).toHaveFocus();
     await userEvent.click(within(dialog).getByRole("button", { name: "Delete for good" }));
 
-    expect(callsTo(fetchFn, "DELETE", "/api/students/8/documents/33/files/50/")).toHaveLength(1);
+    expect(
+      callsTo(fetchFn, "DELETE", `/api/students/${uid(8)}/documents/${uid(33)}/files/${uid(50)}/`),
+    ).toHaveLength(1);
     expect(await screen.findByText("page-3.jpg deleted for good")).toBeVisible();
   });
 

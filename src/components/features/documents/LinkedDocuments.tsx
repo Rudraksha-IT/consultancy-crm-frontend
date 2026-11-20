@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { Banner } from "@/components/ui/Banner";
 import { Chip, type ChipTone } from "@/components/ui/Chip";
 import { DOCUMENT_TEXT, VERIFICATION_LABELS, type VERIFICATIONS } from "@/constants/documents";
@@ -16,7 +17,7 @@ const VERIFICATION_TONES: Record<(typeof VERIFICATIONS)[number], ChipTone> = {
 };
 
 type LinkedDocumentsProps = {
-  studentId: number;
+  studentId: RecordId;
   /** What they are for, e.g. "Deakin University" or "the Deakin University visa". */
   record: string;
   documents: readonly LinkedDocument[];

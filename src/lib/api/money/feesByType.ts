@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { Stage } from "@/constants/stages";
 
@@ -61,7 +63,7 @@ const FeeTypeStudentsSchema = z
     page_size: z.number().int().positive(),
     results: z.array(
       z.object({
-        student: z.object({ id: z.number().int(), name: z.string(), stage: z.enum(Stage) }),
+        student: z.object({ id: RecordIdSchema, name: z.string(), stage: z.enum(Stage) }),
         lost_reason: z.string(),
         fee: Npr,
         paid: Npr,

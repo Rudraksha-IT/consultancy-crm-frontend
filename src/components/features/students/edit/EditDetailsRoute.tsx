@@ -16,7 +16,7 @@ import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { EDIT_DETAILS_TEXT } from "@/constants/studentProfile";
 import { ApiRequestError, fetchStudentProfile, type StudentProfile } from "@/lib/api";
-import { parseStudentId } from "@/lib/students";
+import { parseRecordId, type RecordId } from "@/lib/recordId";
 
 import { EditDetailsForm } from "./EditDetailsForm";
 
@@ -29,7 +29,7 @@ type Loaded =
 /** The Edit details page for the id in the address (issue 81); Teachers can't open it. */
 export function EditDetailsRoute({ idText }: { idText: string }) {
   const { staff } = useCurrentStaff();
-  const studentId = parseStudentId(idText);
+  const studentId = parseRecordId(idText);
   if (staff.role === Role.Teacher) {
     return (
       <Panel>
@@ -58,7 +58,7 @@ function NotFound() {
  * stored: Next keeps a visited page alive while hidden, and its effects run again when it comes
  * back, so `visit` remounts the form instead of showing an old, half-edited copy.
  */
-function useFreshProfile(studentId: number): Loaded {
+function useFreshProfile(studentId: RecordId): Loaded {
   const [loaded, setLoaded] = useState<Loaded>({ status: "loading" });
   useEffect(() => {
     let isCancelled = false;
@@ -84,7 +84,7 @@ function useFreshProfile(studentId: number): Loaded {
   return loaded;
 }
 
-function EditDetailsLoader({ studentId }: { studentId: number }) {
+function EditDetailsLoader({ studentId }: { studentId: RecordId }) {
   const loaded = useFreshProfile(studentId);
   if (loaded.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
   if (loaded.status === "failed") return <Banner tone="problem">{MESSAGES.studentFailed}</Banner>;

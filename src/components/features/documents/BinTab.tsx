@@ -102,7 +102,7 @@ function itemName(item: BinEntry): string {
 function keyOf(item: BinEntry): string {
   if (item.kind === "course_file") return `course-file-${String(item.courseFile.id)}`;
   if (item.kind === "document_example") return `example-${String(item.example.id)}`;
-  return `${item.kind}-${String(targetOf(item).fileId ?? item.document.id)}`;
+  return `${item.kind}-${targetOf(item).fileId ?? item.document.id}`;
 }
 
 /** The one file an item is about, or null for a whole Document. */

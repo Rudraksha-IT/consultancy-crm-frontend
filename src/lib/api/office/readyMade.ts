@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import {
   BODY_MAX_LENGTH,
@@ -15,7 +17,7 @@ import { getJson } from "../core/client";
 import { AttachableSchema } from "./attachments";
 
 /** Who the ready-made emails are for: one Student, or many (Plain email and Class details). */
-export type ReadyMadeTarget = { studentId: number } | "many";
+export type ReadyMadeTarget = { studentId: RecordId } | "many";
 
 const MenuSchema = z
   .object({
@@ -25,7 +27,8 @@ const MenuSchema = z
         record: z.enum(READY_MADE_RECORDS).nullable(),
         records: z.array(
           z.object({
-            id: z.number().int().positive(),
+            /** A Payment's, Offer Letter's or Visa's UUID; a class's number until ticket 18. */
+            id: z.union([RecordIdSchema, z.number().int().positive()]),
             label: z.string().min(1).max(RECORD_LABEL_MAX_LENGTH),
           }),
         ),
@@ -64,7 +67,7 @@ export function fetchReadyMade(
 export function fetchReadyMadeDraft(
   target: ReadyMadeTarget,
   kind: ReadyMadeKind,
-  record: number | null,
+  record: RecordId | number | null,
   fetchFn: typeof fetch = fetch,
 ): Promise<ReadyMadeDraft> {
   const path =

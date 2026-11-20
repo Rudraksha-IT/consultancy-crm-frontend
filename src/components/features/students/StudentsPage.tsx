@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState, type ReactNode } from "react";
 
 import { counsellorWords } from "@/components/features/exports/counsellorWords";
@@ -215,7 +216,7 @@ function ListContent({ list, isFiltered, addButton, onPage, selection }: ListCon
   );
 }
 
-function studentIds(list: StudentListState): number[] {
+function studentIds(list: StudentListState): RecordId[] {
   return list.status === "loaded" ? list.page.students.map((student) => student.id) : [];
 }
 

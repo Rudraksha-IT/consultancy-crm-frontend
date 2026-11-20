@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { Stage } from "@/constants/stages";
 import { COUNTRIES } from "@/constants/students";
@@ -11,12 +13,13 @@ import { APPOINTMENT_AT } from "../core/types";
 const PERCENT_MAX = 100;
 const Count = z.number().int().nonnegative();
 const PersonSchema = z.object({ id: z.number().int(), name: z.string() });
+const StudentRefSchema = z.object({ id: RecordIdSchema, name: z.string() });
 
 /** One Student on a Home: how far along they are, the next step and their documents. */
 const ProgressRowSchema = z
   .object({
     student: z.object({
-      id: z.number().int(),
+      id: RecordIdSchema,
       name: z.string(),
       stage: z.enum(Stage),
       country: z.enum(COUNTRIES),
@@ -99,8 +102,8 @@ const WaitingSchema = z
       count: Count,
       results: z.array(
         z.object({
-          visa_id: z.number().int(),
-          student: PersonSchema,
+          visa_id: RecordIdSchema,
+          student: StudentRefSchema,
           kind: z.enum(APPOINTMENTS),
           at: APPOINTMENT_AT,
         }),

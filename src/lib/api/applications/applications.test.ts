@@ -9,9 +9,10 @@ import {
 } from "./applications";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const APPLICATION = {
-  id: 11,
+  id: uid(11),
   university: { id: 3, name: "Deakin University" },
   course: { id: 4, name: "Master of IT", level: "master" },
   intake: "2027-03",
@@ -62,16 +63,16 @@ describe("addApplication", () => {
   it("POSTs the course and intake and returns the profile with the Application", async () => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, applications: [APPLICATION] }, 201));
 
-    const profile = await addApplication(7, { courseId: 4, intake: "2027-03" }, fetchFn);
+    const profile = await addApplication(uid(7), { courseId: 4, intake: "2027-03" }, fetchFn);
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/students/7/applications/",
+      path: `/api/students/${uid(7)}/applications/`,
       method: "POST",
       body: { course: 4, intake: "2027-03" },
     });
     expect(profile.applications).toEqual([
       {
-        id: 11,
+        id: uid(11),
         university: APPLICATION.university,
         course: APPLICATION.course,
         intake: "2027-03",
@@ -90,7 +91,7 @@ describe("addApplication", () => {
       jsonResponse({ intake: ["Choose one of this course's intakes."] }, 400),
     );
 
-    const failure = await addApplication(7, { courseId: 4, intake: "2027-04" }, fetchFn).catch(
+    const failure = await addApplication(uid(7), { courseId: 4, intake: "2027-04" }, fetchFn).catch(
       (error: unknown) => error,
     );
 
@@ -102,16 +103,18 @@ describe("addApplication", () => {
   it("passes on a refusal that isn't about the fields", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Not your Student." }, 403));
 
-    await expect(addApplication(7, { courseId: 4, intake: "2027-03" }, fetchFn)).rejects.toThrow(
-      ApiRequestError,
-    );
+    await expect(
+      addApplication(uid(7), { courseId: 4, intake: "2027-03" }, fetchFn),
+    ).rejects.toThrow(ApiRequestError);
   });
 
   it("refuses an answer whose Application isn't what the API promises", async () => {
     const broken = { ...APPLICATION, status: "approved" };
     const fetchFn = answering(jsonResponse({ ...PROFILE, applications: [broken] }, 201));
 
-    await expect(addApplication(7, { courseId: 4, intake: "2027-03" }, fetchFn)).rejects.toThrow();
+    await expect(
+      addApplication(uid(7), { courseId: 4, intake: "2027-03" }, fetchFn),
+    ).rejects.toThrow();
   });
 });
 
@@ -120,10 +123,10 @@ describe("changeApplicationStatus", () => {
     const moved = { ...PROFILE, stage: "applying", applications: [APPLICATION] };
     const fetchFn = answering(jsonResponse(moved));
 
-    const profile = await changeApplicationStatus(7, 11, "rejected", fetchFn);
+    const profile = await changeApplicationStatus(uid(7), uid(11), "rejected", fetchFn);
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/students/7/applications/11/",
+      path: `/api/students/${uid(7)}/applications/${uid(11)}/`,
       method: "PATCH",
       body: { status: "rejected" },
     });
@@ -135,7 +138,7 @@ describe("changeApplicationStatus", () => {
       jsonResponse({ status: ["The application already has this status."] }, 400),
     );
 
-    const failure = await changeApplicationStatus(7, 11, "applied", fetchFn).catch(
+    const failure = await changeApplicationStatus(uid(7), uid(11), "applied", fetchFn).catch(
       (error: unknown) => error,
     );
 
@@ -150,7 +153,7 @@ describe("an Application in a profile", () => {
     const offer = { ...APPLICATION, status: "offer", offer_kind: "conditional" };
     const fetchFn = answering(jsonResponse({ ...PROFILE, applications: [offer] }));
 
-    const profile = await changeApplicationStatus(7, 11, "applied", fetchFn);
+    const profile = await changeApplicationStatus(uid(7), uid(11), "applied", fetchFn);
 
     expect(profile.applications[0]).toMatchObject({ status: "offer", offer_kind: "conditional" });
   });
@@ -161,12 +164,12 @@ describe("an Application in a profile", () => {
     ["a missing kind of offer", { ...APPLICATION, offer_kind: undefined }],
     ["an offer day that isn't a date", { ...APPLICATION, offered_on: "10/10/2026" }],
     ["a missing offer day", { ...APPLICATION, offered_on: undefined }],
-    ["an offer letter without its name", { ...APPLICATION, offer_letter: { id: 3 } }],
+    ["an offer letter without its name", { ...APPLICATION, offer_letter: { id: uid(3) } }],
     ["a missing offer letter", { ...APPLICATION, offer_letter: undefined }],
   ])("refuses %s", async (_case, application) => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, applications: [application] }));
 
-    await expect(changeApplicationStatus(7, 11, "applied", fetchFn)).rejects.toThrow();
+    await expect(changeApplicationStatus(uid(7), uid(11), "applied", fetchFn)).rejects.toThrow();
   });
 });
 
@@ -177,18 +180,18 @@ describe("an offer in a profile", () => {
       status: "offer",
       offer_kind: "conditional",
       offered_on: "2026-10-10",
-      offer_letter: { id: 31, files: [{ id: 51, file_name: "offer.pdf" }] },
+      offer_letter: { id: uid(31), files: [{ id: uid(51), file_name: "offer.pdf" }] },
     };
     const fetchFn = answering(
-      jsonResponse({ ...PROFILE, applications: [offer], chosen_offer_id: 11 }),
+      jsonResponse({ ...PROFILE, applications: [offer], chosen_offer_id: uid(11) }),
     );
 
-    const profile = await chooseOffer(7, 11, fetchFn);
+    const profile = await chooseOffer(uid(7), uid(11), fetchFn);
 
-    expect(profile.chosenOfferId).toBe(11);
+    expect(profile.chosenOfferId).toBe(uid(11));
     expect(profile.applications[0]).toMatchObject({
       offeredOn: "2026-10-10",
-      offerLetter: { id: 31, files: [{ id: 51, fileName: "offer.pdf" }] },
+      offerLetter: { id: uid(31), files: [{ id: uid(51), fileName: "offer.pdf" }] },
     });
   });
 
@@ -198,20 +201,20 @@ describe("an offer in a profile", () => {
   ])("refuses %s", async (_case, chosen) => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, chosen_offer_id: chosen }));
 
-    await expect(chooseOffer(7, 11, fetchFn)).rejects.toThrow();
+    await expect(chooseOffer(uid(7), uid(11), fetchFn)).rejects.toThrow();
   });
 });
 
 describe("chooseOffer", () => {
   it("PUTs the application", async () => {
-    const fetchFn = answering(jsonResponse({ ...PROFILE, chosen_offer_id: 11 }));
+    const fetchFn = answering(jsonResponse({ ...PROFILE, chosen_offer_id: uid(11) }));
 
-    await chooseOffer(7, 11, fetchFn);
+    await chooseOffer(uid(7), uid(11), fetchFn);
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/students/7/chosen-offer/",
+      path: `/api/students/${uid(7)}/chosen-offer/`,
       method: "PUT",
-      body: { application: 11 },
+      body: { application: uid(11) },
     });
   });
 
@@ -219,7 +222,7 @@ describe("chooseOffer", () => {
     const message = "This offer is already chosen.";
     const fetchFn = answering(jsonResponse({ application: [message] }, 400));
 
-    const failure = await chooseOffer(7, 11, fetchFn).catch((error: unknown) => error);
+    const failure = await chooseOffer(uid(7), uid(11), fetchFn).catch((error: unknown) => error);
 
     expect(fieldErrorsOf(failure)).toEqual({ application: [message] });
   });
@@ -231,15 +234,15 @@ describe("addOfferLetter", () => {
   it("POSTs a form with the application, the kind and the file", async () => {
     const fetchFn = answering(jsonResponse(PROFILE, 201));
 
-    await addOfferLetter(7, { applicationId: 11, kind: "unconditional", file }, fetchFn);
+    await addOfferLetter(uid(7), { applicationId: uid(11), kind: "unconditional", file }, fetchFn);
 
     const [path, init] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/students/7/offer-letters/");
+    expect(path).toBe(`/api/students/${uid(7)}/offer-letters/`);
     expect(init?.method).toBe("POST");
     const form = init?.body;
     if (!(form instanceof FormData)) throw new Error("expected a form");
     expect([...form.keys()]).toEqual(["application", "kind", "file"]);
-    expect(form.get("application")).toBe("11");
+    expect(form.get("application")).toBe(uid(11));
     expect(form.get("kind")).toBe("unconditional");
     expect(form.get("file")).toBeInstanceOf(File);
   });
@@ -257,8 +260,8 @@ describe("addOfferLetter", () => {
     );
 
     const failure = await addOfferLetter(
-      7,
-      { applicationId: 11, kind: "conditional", file },
+      uid(7),
+      { applicationId: uid(11), kind: "conditional", file },
       fetchFn,
     ).catch((error: unknown) => error);
 

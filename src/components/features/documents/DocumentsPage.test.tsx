@@ -10,6 +10,7 @@ import { CHECKLIST } from "@/test/documents";
 
 import { DocumentsPage } from "./DocumentsPage";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
   return {
@@ -25,7 +26,7 @@ function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
 
 const row = (id: number, name: string, counts: Partial<Record<string, number>> = {}) => ({
   student: {
-    id,
+    id: uid(id),
     name,
     stage: "applying",
     country: "australia",
@@ -146,7 +147,7 @@ describe("DocumentsPage", () => {
   it("opens a Student's checklist over the page and refreshes the counts after", async () => {
     const fetchFn = backend(
       paperwork("everyone"),
-      on("GET", "/api/students/7/documents/", CHECKLIST),
+      on("GET", `/api/students/${uid(7)}/documents/`, CHECKLIST),
     );
     renderPage("admin");
 
@@ -162,7 +163,7 @@ describe("DocumentsPage", () => {
     ).toBeVisible();
     expect(within(dialog).getByRole("link", { name: "Open their page" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     await userEvent.click(within(dialog).getByRole("button", { name: "Done" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

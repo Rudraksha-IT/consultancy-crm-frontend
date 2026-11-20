@@ -23,3 +23,4 @@ ADRs 0001 to 0004 were written when the decisions were made. ADRs 0005 to 0022 w
 | [0022](0022-design-tokens-and-one-theme-function.md)               | Every colour from tokens built by one theme function                                                                   | Accepted |
 | [0023](0023-all-email-through-the-product-smtp.md)                 | All email through the product's own SMTP account; no SMS                                                               | Accepted |
 | [0024](0024-safe-deploys-from-github.md)                           | Deploys keep logins, switch only when healthy, roll back by themselves, run from GitHub with a locked SSH key (no AWS) | Accepted |
+| [0027](0027-records-known-only-by-uuid.md)                         | Records are known outside the server only by a UUID                                                                    | Accepted |

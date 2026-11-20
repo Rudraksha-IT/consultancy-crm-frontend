@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { ATTACHMENT_KINDS, EMAIL_MAX_BYTES, type AttachmentKind } from "@/constants/communication";
 
@@ -14,7 +16,8 @@ import type { ReadyMadeTarget } from "./readyMade";
 export const AttachableSchema = z
   .object({
     kind: z.enum(ATTACHMENT_KINDS),
-    id: z.number().int().positive(),
+    /** A Document file's UUID; Course Files and Document Examples by number until ticket 18. */
+    id: z.union([RecordIdSchema, z.number().int().positive()]),
     name: z.string().min(1),
     file_name: z.string().min(1),
     size: z.number().int().nonnegative(),
@@ -25,7 +28,7 @@ export const AttachableSchema = z
 export type Attachable = z.infer<typeof AttachableSchema>;
 
 /** A file as the API takes it when sending: only its kind and id. */
-export type AttachmentRef = { kind: AttachmentKind; id: number };
+export type AttachmentRef = { kind: AttachmentKind; id: RecordId | number };
 
 const AttachableFilesSchema = z
   .object({

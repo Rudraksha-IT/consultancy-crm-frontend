@@ -11,6 +11,7 @@ import { PROFILE } from "@/test/studentProfile";
 
 import { StudentProfilePage } from "./StudentProfilePage";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
   staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
@@ -22,13 +23,13 @@ const COUNSELLOR: StaffContext = {
   theme: DEFAULT_THEME,
 };
 
-const CHECKLIST_PATH = "/api/students/7/documents/";
+const CHECKLIST_PATH = `/api/students/${uid(7)}/documents/`;
 
 function renderPage() {
   render(
     <StaffContextContext value={COUNSELLOR}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -40,7 +41,7 @@ afterEach(() => {
 
 describe("the profile's Documents tab", () => {
   it("comes after Applications and shows how many are received", async () => {
-    backend(on("GET", "/api/students/7/", PROFILE));
+    backend(on("GET", `/api/students/${uid(7)}/`, PROFILE));
     renderPage();
 
     const tabs = within(await screen.findByRole("tablist", { name: "Sections" })).getAllByRole(
@@ -67,7 +68,7 @@ describe("the profile's Documents tab", () => {
     };
     let isUploaded = false;
     backend(
-      onEach("GET", "/api/students/7/", () => ({
+      onEach("GET", `/api/students/${uid(7)}/`, () => ({
         ...PROFILE,
         documents: isUploaded ? { done: 3, total: 4 } : PROFILE.documents,
       })),
@@ -98,7 +99,7 @@ describe("the profile's Documents tab", () => {
 
   it("offers the Student's Applications and Visas as links when uploading", async () => {
     const deakin = {
-      id: 11,
+      id: uid(11),
       university: { id: 3, name: "Deakin University" },
       course: { id: 4, name: "Master of IT", level: "master" },
       intake: "2027-03",
@@ -110,8 +111,8 @@ describe("the profile's Documents tab", () => {
       documents: [],
     };
     const visa = {
-      id: 21,
-      application_id: 11,
+      id: uid(21),
+      application_id: uid(11),
       university: deakin.university,
       course: deakin.course,
       status: "applied",
@@ -122,7 +123,7 @@ describe("the profile's Documents tab", () => {
       documents: [],
     };
     backend(
-      on("GET", "/api/students/7/", { ...PROFILE, applications: [deakin], visas: [visa] }),
+      on("GET", `/api/students/${uid(7)}/`, { ...PROFILE, applications: [deakin], visas: [visa] }),
       on("GET", CHECKLIST_PATH, CHECKLIST),
     );
     renderPage();
@@ -146,7 +147,7 @@ describe("the profile's Documents tab", () => {
 
   it("reloads the profile after a change, so linked Documents show on the Application", async () => {
     const deakin = {
-      id: 11,
+      id: uid(11),
       university: { id: 3, name: "Deakin University" },
       course: { id: 4, name: "Master of IT", level: "master" },
       intake: "2027-03",
@@ -157,14 +158,14 @@ describe("the profile's Documents tab", () => {
       offer_letter: null,
     };
     const linked = {
-      id: 31,
+      id: uid(31),
       document_type: { id: 4, name: "Bank Statement" },
-      files: [{ id: 41, file_name: "passport.pdf" }],
+      files: [{ id: uid(41), file_name: "passport.pdf" }],
       verification: "pending",
     };
     let profileCalls = 0;
     backend(
-      onEach("GET", "/api/students/7/", () => {
+      onEach("GET", `/api/students/${uid(7)}/`, () => {
         profileCalls += 1;
         return {
           ...PROFILE,
@@ -226,7 +227,7 @@ describe("emailing a Document Type's examples from the checklist (ticket 12)", (
     render(
       <StaffContextContext value={context}>
         <ToastProvider>
-          <StudentProfilePage studentId={7} />
+          <StudentProfilePage studentId={uid(7)} />
         </ToastProvider>
       </StaffContextContext>,
     );
@@ -242,12 +243,12 @@ describe("emailing a Document Type's examples from the checklist (ticket 12)", (
 
   it("opens the Plain email with the Document Type, its instruction and the example attached", async () => {
     const fetchFn = backend(
-      on("GET", "/api/students/7/", PROFILE),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
       on("GET", CHECKLIST_PATH, WITH_EXAMPLE),
-      on("GET", "/api/students/7/emails/ready-made/", {
+      on("GET", `/api/students/${uid(7)}/emails/ready-made/`, {
         kinds: [{ kind: "plain", record: null, records: [], unavailable: null }],
       }),
-      on("GET", "/api/students/7/emails/draft/?kind=plain", PLAIN),
+      on("GET", `/api/students/${uid(7)}/emails/draft/?kind=plain`, PLAIN),
     );
     renderWith(EMAILING);
 
@@ -267,11 +268,14 @@ describe("emailing a Document Type's examples from the checklist (ticket 12)", (
     );
     const attached = within(dialog).getAllByRole("list", { name: "Attached files" })[0];
     expect(attached).toHaveTextContent("sample-bank-statement.pdf");
-    expect(callsTo(fetchFn, "GET", "/api/students/7/emails/attachable/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "GET", `/api/students/${uid(7)}/emails/attachable/`)).toHaveLength(0);
   });
 
   it("isn't offered when Email is off", async () => {
-    backend(on("GET", "/api/students/7/", PROFILE), on("GET", CHECKLIST_PATH, WITH_EXAMPLE));
+    backend(
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
+      on("GET", CHECKLIST_PATH, WITH_EXAMPLE),
+    );
     renderWith(COUNSELLOR);
 
     const examples = await openExamples();
@@ -281,7 +285,7 @@ describe("emailing a Document Type's examples from the checklist (ticket 12)", (
 
   it("isn't offered when the Student has no email address", async () => {
     backend(
-      on("GET", "/api/students/7/", { ...PROFILE, email: "" }),
+      on("GET", `/api/students/${uid(7)}/`, { ...PROFILE, email: "" }),
       on("GET", CHECKLIST_PATH, WITH_EXAMPLE),
     );
     renderWith(EMAILING);

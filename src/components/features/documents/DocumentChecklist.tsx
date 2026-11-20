@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import clsx from "clsx";
 
 import { Button } from "@/components/ui/Button";
@@ -42,7 +43,7 @@ type DocumentChecklistProps = {
   isChecking?: boolean;
   onUpload: (documentTypeId: number) => void;
   /** Open or save one file of a Document. */
-  onShow: (documentId: number, fileId: number, action: LinkAction) => void;
+  onShow: (documentId: RecordId, fileId: RecordId, action: LinkAction) => void;
   /** Add more files to the item's Document (issue 78). */
   onAddFile: (item: AddingTo) => void;
   /** Mark the item's Document correct. */
@@ -63,7 +64,7 @@ type DocumentChecklistProps = {
 export type Deleting = { target: BinTarget; name: string };
 
 /** An item with a Document, to check. */
-export type CheckedItem = { documentId: number; typeName: string };
+export type CheckedItem = { documentId: RecordId; typeName: string };
 
 /** An item whose Document gets more files; a Verified one will need checking again. */
 export type AddingTo = CheckedItem & { isVerified: boolean };
@@ -300,7 +301,7 @@ function StateActions(props: ItemActionsProps) {
 }
 
 /** "Delete" the whole Document: to the Bin, or for good by an Admin (issue 79). */
-function DeleteButton({ item, onDelete, documentId }: ItemActionsProps & { documentId: number }) {
+function DeleteButton({ item, onDelete, documentId }: ItemActionsProps & { documentId: RecordId }) {
   const name = item.documentType.name;
   return (
     <Button

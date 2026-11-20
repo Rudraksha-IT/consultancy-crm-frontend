@@ -10,6 +10,7 @@ import { PROFILE } from "@/test/studentProfile";
 
 import { StudentProfilePage } from "./StudentProfilePage";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
   staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
@@ -67,7 +68,7 @@ function on(verb: string, path: string, body: unknown, status = 200): Answer {
 const profile =
   (body: unknown = PROFILE): Answer =>
   (path, init) =>
-    method(init) === "GET" && path === "/api/students/7/" ? jsonResponse(body) : undefined;
+    method(init) === "GET" && path === `/api/students/${uid(7)}/` ? jsonResponse(body) : undefined;
 const choices = on("GET", "/api/staff/counsellors/", CHOICES);
 
 function sentBody(fetchFn: ReturnType<typeof backend>, verb: string, path: string): unknown {
@@ -80,7 +81,7 @@ function renderPage(context: StaffContext = COUNSELLOR) {
   return render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -98,7 +99,7 @@ describe("moving the Stage by hand", () => {
   it("moves the Student when another hand-set Stage is clicked", async () => {
     const fetchFn = backend(
       profile(),
-      on("POST", "/api/students/7/stage/", { ...PROFILE, stage: "lead" }),
+      on("POST", `/api/students/${uid(7)}/stage/`, { ...PROFILE, stage: "lead" }),
     );
     renderPage();
 
@@ -106,7 +107,7 @@ describe("moving the Stage by hand", () => {
 
     expect(await screen.findByText("Stage set to Lead")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Stage: Lead" })).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/students/7/stage/")).toEqual({ stage: "lead" });
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/stage/`)).toEqual({ stage: "lead" });
   });
 
   it("says why a move was refused", async () => {
@@ -114,7 +115,7 @@ describe("moving the Stage by hand", () => {
       profile(),
       on(
         "POST",
-        "/api/students/7/stage/",
+        `/api/students/${uid(7)}/stage/`,
         { stage: ["The Student is already at this Stage."] },
         400,
       ),
@@ -129,7 +130,10 @@ describe("moving the Stage by hand", () => {
   });
 
   it("says when the move is no longer allowed", async () => {
-    backend(profile(), on("POST", "/api/students/7/stage/", { detail: "Not your Student." }, 403));
+    backend(
+      profile(),
+      on("POST", `/api/students/${uid(7)}/stage/`, { detail: "Not your Student." }, 403),
+    );
     renderPage();
 
     await userEvent.click(await screen.findByRole("button", { name: "Move to Lead" }));
@@ -192,7 +196,7 @@ describe("the next step", () => {
 
 describe("Mark as Lost", () => {
   it("asks why, saves it and shows the Lost banner", async () => {
-    const fetchFn = backend(profile(), on("POST", "/api/students/7/stage/", LOST));
+    const fetchFn = backend(profile(), on("POST", `/api/students/${uid(7)}/stage/`, LOST));
     renderPage();
 
     await openMore();
@@ -207,14 +211,14 @@ describe("Mark as Lost", () => {
     expect(await screen.findByText("Marked as Lost")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByText("Chose a consultancy in Butwal.")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/students/7/stage/")).toEqual({
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/stage/`)).toEqual({
       stage: "lost",
       lost_reason: "Chose a consultancy in Butwal.",
     });
   });
 
   it("saves on Ctrl + Enter, with the keys shown beside the button", async () => {
-    const fetchFn = backend(profile(), on("POST", "/api/students/7/stage/", LOST));
+    const fetchFn = backend(profile(), on("POST", `/api/students/${uid(7)}/stage/`, LOST));
     renderPage();
 
     await openMore();
@@ -226,7 +230,7 @@ describe("Mark as Lost", () => {
     await userEvent.type(reason, "Chose a consultancy{Enter}in Butwal.{Control>}{Enter}{/Control}");
 
     expect(await screen.findByText("Marked as Lost")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/students/7/stage/")).toEqual({
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/stage/`)).toEqual({
       stage: "lost",
       lost_reason: "Chose a consultancy\nin Butwal.",
     });
@@ -235,7 +239,12 @@ describe("Mark as Lost", () => {
   it("shows why the reason was refused and keeps the dialog open", async () => {
     backend(
       profile(),
-      on("POST", "/api/students/7/stage/", { lost_reason: ["Say why we lost this Student."] }, 400),
+      on(
+        "POST",
+        `/api/students/${uid(7)}/stage/`,
+        { lost_reason: ["Say why we lost this Student."] },
+        400,
+      ),
     );
     renderPage();
 
@@ -277,7 +286,7 @@ describe("a Lost Student", () => {
   it("shows why they were lost and brings them back to Counselling", async () => {
     const fetchFn = backend(
       profile(LOST),
-      on("POST", "/api/students/7/stage/", { ...PROFILE, stage: "counselling" }),
+      on("POST", `/api/students/${uid(7)}/stage/`, { ...PROFILE, stage: "counselling" }),
     );
     renderPage();
 
@@ -290,7 +299,9 @@ describe("a Lost Student", () => {
 
     expect(await screen.findByText("Back in Counselling")).toBeInTheDocument();
     expect(screen.queryByText("Lost.")).not.toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/students/7/stage/")).toEqual({ stage: "counselling" });
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/stage/`)).toEqual({
+      stage: "counselling",
+    });
   });
 
   it("offers no way back to someone who can't move the Stage", async () => {
@@ -309,7 +320,7 @@ describe("assigning a counsellor", () => {
     const fetchFn = backend(
       profile(UNASSIGNED),
       choices,
-      on("POST", "/api/students/7/assign/", {
+      on("POST", `/api/students/${uid(7)}/assign/`, {
         ...UNASSIGNED,
         assigned_counsellor: { id: 2, name: "Anjali Gurung" },
         can_change: false,
@@ -328,7 +339,7 @@ describe("assigning a counsellor", () => {
     expect(await screen.findByText("Counsellor assigned")).toBeInTheDocument();
     expect(screen.getByText("Anjali Gurung")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Assign a counsellor" })).not.toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/students/7/assign/")).toEqual({ counsellor: 2 });
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/assign/`)).toEqual({ counsellor: 2 });
   });
 
   it("asks for a choice before sending anything", async () => {
@@ -347,7 +358,12 @@ describe("assigning a counsellor", () => {
     backend(
       profile(UNASSIGNED),
       choices,
-      on("POST", "/api/students/7/assign/", { detail: "Someone else just changed it." }, 409),
+      on(
+        "POST",
+        `/api/students/${uid(7)}/assign/`,
+        { detail: "Someone else just changed it." },
+        409,
+      ),
     );
     renderPage(FRONT_DESK);
 
@@ -368,7 +384,7 @@ describe("Transfer", () => {
     const fetchFn = backend(
       profile(),
       choices,
-      on("POST", "/api/students/7/transfer/", {
+      on("POST", `/api/students/${uid(7)}/transfer/`, {
         ...PROFILE,
         assigned_counsellor: { id: 2, name: "Anjali Gurung" },
         can_change: false,
@@ -394,7 +410,9 @@ describe("Transfer", () => {
     expect(
       screen.getByText(/^View only\. Anjali Gurung is this Student's counsellor/),
     ).toBeVisible();
-    expect(sentBody(fetchFn, "POST", "/api/students/7/transfer/")).toEqual({ counsellor: 1 });
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/transfer/`)).toEqual({
+      counsellor: 1,
+    });
   });
 
   it("is not offered to someone who can't Transfer", async () => {
@@ -410,8 +428,9 @@ describe("Transfer", () => {
 });
 
 describe("the Activity tab", () => {
+  let entries = 100;
   const entry = (kind: string, before: string, after: string, detail = "") => ({
-    id: Math.random(),
+    id: uid((entries += 1)),
     kind,
     at: "2026-10-22T13:48:00+05:45",
     by: { name: "Bikash Thapa", is_platform_admin: false },
@@ -421,23 +440,26 @@ describe("the Activity tab", () => {
   });
 
   it("shows Stage changes with the reason, assignments and Transfers", async () => {
-    const lost = { ...entry("stage_changed", "counselling", "lost", "Moved to Butwal."), id: 3 };
+    const lost = {
+      ...entry("stage_changed", "counselling", "lost", "Moved to Butwal."),
+      id: uid(3),
+    };
     backend(
       profile({ ...PROFILE, stage: "lost", stage_changes: [lost] }),
-      on("GET", "/api/students/7/visits/?page=1", {
+      on("GET", `/api/students/${uid(7)}/visits/?page=1`, {
         count: 0,
         page: 1,
         page_size: 50,
         results: [],
       }),
-      on("GET", "/api/students/7/history/", {
+      on("GET", `/api/students/${uid(7)}/history/`, {
         count: 3,
         page: 1,
         page_size: 50,
         results: [
           lost,
-          { ...entry("transferred", "Nabin Adhikari", "Bikash Thapa"), id: 2 },
-          { ...entry("counsellor_assigned", "", "Nabin Adhikari"), id: 1 },
+          { ...entry("transferred", "Nabin Adhikari", "Bikash Thapa"), id: uid(2) },
+          { ...entry("counsellor_assigned", "", "Nabin Adhikari"), id: uid(1) },
         ],
       }),
     );
@@ -462,19 +484,19 @@ describe("the Activity tab", () => {
     const approval = "Asked by Anjali Gurung, approved by Bikash Thapa.";
     backend(
       profile(),
-      on("GET", "/api/students/7/visits/?page=1", {
+      on("GET", `/api/students/${uid(7)}/visits/?page=1`, {
         count: 0,
         page: 1,
         page_size: 50,
         results: [],
       }),
-      on("GET", "/api/students/7/history/", {
+      on("GET", `/api/students/${uid(7)}/history/`, {
         count: 2,
         page: 1,
         page_size: 50,
         results: [
-          { ...entry("transferred", "Bikash Thapa", "Anjali Gurung", approval), id: 2 },
-          { ...entry("counsellor_assigned", "", "Anjali Gurung", approval), id: 1 },
+          { ...entry("transferred", "Bikash Thapa", "Anjali Gurung", approval), id: uid(2) },
+          { ...entry("counsellor_assigned", "", "Anjali Gurung", approval), id: uid(1) },
         ],
       }),
     );
