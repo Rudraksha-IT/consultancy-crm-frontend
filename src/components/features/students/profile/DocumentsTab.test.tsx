@@ -14,7 +14,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students", "documents"],
   dateDisplay: "AD",
@@ -61,8 +61,13 @@ describe("the profile's Documents tab", () => {
       ...CHECKLIST,
       done: 3,
       items: CHECKLIST.items.map((one) =>
-        one.document_type.id === 4
-          ? item({ id: 4, name: "Bank Statement", state: "waiting", document: PASSPORT_DOCUMENT })
+        one.document_type.id === uid(4)
+          ? item({
+              id: uid(4),
+              name: "Bank Statement",
+              state: "waiting",
+              document: PASSPORT_DOCUMENT,
+            })
           : one,
       ),
     };
@@ -100,8 +105,8 @@ describe("the profile's Documents tab", () => {
   it("offers the Student's Applications and Visas as links when uploading", async () => {
     const deakin = {
       id: uid(11),
-      university: { id: 3, name: "Deakin University" },
-      course: { id: 4, name: "Master of IT", level: "master" },
+      university: { id: uid(3), name: "Deakin University" },
+      course: { id: uid(4), name: "Master of IT", level: "master" },
       intake: "2027-03",
       status: "offer",
       offer_kind: "",
@@ -148,8 +153,8 @@ describe("the profile's Documents tab", () => {
   it("reloads the profile after a change, so linked Documents show on the Application", async () => {
     const deakin = {
       id: uid(11),
-      university: { id: 3, name: "Deakin University" },
-      course: { id: 4, name: "Master of IT", level: "master" },
+      university: { id: uid(3), name: "Deakin University" },
+      course: { id: uid(4), name: "Master of IT", level: "master" },
       intake: "2027-03",
       status: "applied",
       offer_kind: "",
@@ -159,7 +164,7 @@ describe("the profile's Documents tab", () => {
     };
     const linked = {
       id: uid(31),
-      document_type: { id: 4, name: "Bank Statement" },
+      document_type: { id: uid(4), name: "Bank Statement" },
       files: [{ id: uid(41), file_name: "passport.pdf" }],
       verification: "pending",
     };
@@ -204,7 +209,7 @@ describe("emailing a Document Type's examples from the checklist (ticket 12)", (
     modules: ["students", "documents", "communication"],
   };
   const SAMPLE = {
-    id: 52,
+    id: uid(52),
     file_name: "sample-bank-statement.pdf",
     content_type: "application/pdf",
     size: 1_157_120,
@@ -214,7 +219,9 @@ describe("emailing a Document Type's examples from the checklist (ticket 12)", (
   const WITH_EXAMPLE = {
     ...CHECKLIST,
     items: CHECKLIST.items.map((one) =>
-      one.document_type.id === 4 ? { ...one, instruction: INSTRUCTION, examples: [SAMPLE] } : one,
+      one.document_type.id === uid(4)
+        ? { ...one, instruction: INSTRUCTION, examples: [SAMPLE] }
+        : one,
     ),
   };
   const PLAIN = {

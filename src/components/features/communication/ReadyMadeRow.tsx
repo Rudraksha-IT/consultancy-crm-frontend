@@ -56,11 +56,11 @@ function RecordPicker({ entry, text }: { entry: ReadyMadeEntry; text: ComposerTe
     <SelectField
       label={READY_MADE_RECORD_LABELS[entry.record]}
       name="record"
-      value={String(record)}
+      value={record}
       onChange={(value) => {
-        text.pick(Number(value));
+        text.pick(value);
       }}
-      options={entry.records.map((each) => ({ value: String(each.id), label: each.label }))}
+      options={entry.records.map((each) => ({ value: each.id, label: each.label }))}
     />
   );
 }

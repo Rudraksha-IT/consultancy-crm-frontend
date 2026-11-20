@@ -90,7 +90,7 @@ function AttachedNames({ files }: { files: readonly Attachable[] }) {
     <ul aria-label={TEXT.attachedFiles} className="mt-3 flex flex-wrap gap-2">
       {files.map((file) => (
         <li
-          key={`${file.kind}-${String(file.id)}`}
+          key={`${file.kind}-${file.id}`}
           className="rounded-chip bg-paper border-rule text-small flex max-w-full min-w-0 items-center gap-2 border px-2.5 py-1"
         >
           <Icon name="file" size="sm" />

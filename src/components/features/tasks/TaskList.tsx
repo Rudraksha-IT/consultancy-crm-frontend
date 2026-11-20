@@ -157,7 +157,7 @@ function TaskMeta({ task, showsStudent }: { task: Task; showsStudent: boolean })
   );
 }
 
-function metaParts(task: Task, myId: number, showsStudent: boolean): ReactNode[] {
+function metaParts(task: Task, myId: RecordId, showsStudent: boolean): ReactNode[] {
   const student = showsStudent ? task.student : null;
   const parts: ReactNode[] = [];
   if (student !== null) parts.push(<StudentLink key="student" student={student} />);
@@ -179,7 +179,7 @@ function metaParts(task: Task, myId: number, showsStudent: boolean): ReactNode[]
 }
 
 /** Whether one of `ids` gave the Task. */
-function isGivenBy(task: Task, ids: readonly number[]): boolean {
+function isGivenBy(task: Task, ids: readonly RecordId[]): boolean {
   return ids.includes(task.createdBy.id);
 }
 

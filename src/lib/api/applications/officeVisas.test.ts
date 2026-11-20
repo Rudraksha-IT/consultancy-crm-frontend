@@ -10,14 +10,14 @@ const TODAY = "2026-11-05";
 const ROW = {
   id: uid(21),
   student: { id: uid(2), name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
-  university: { id: 3, name: "University of Toronto", country: "canada" },
-  course: { id: 4, name: "Master of IT", level: "master" },
+  university: { id: uid(3), name: "University of Toronto", country: "canada" },
+  course: { id: uid(4), name: "Master of IT", level: "master" },
   intake: "2027-09",
   status: "applied",
   next_appointment: { kind: "biometrics", at: "2026-11-20T14:00" },
   started_on: "2026-10-12",
   documents: { done: 5, total: 13, rejected: 1, waiting: 2 },
-  assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 };
 
 function answering(body: unknown, status = 200) {
@@ -46,7 +46,7 @@ describe("fetchVisas", () => {
           nextAppointment: { kind: "biometrics", at: "2026-11-20T14:00" },
           startedOn: "2026-10-12",
           documents: { done: 5, total: 13, rejected: 1, waiting: 2 },
-          assignedCounsellor: { id: 5, name: "Bikash Thapa" },
+          assignedCounsellor: { id: uid(5), name: "Bikash Thapa" },
         },
       ],
     });

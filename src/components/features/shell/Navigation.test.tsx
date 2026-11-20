@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -96,7 +97,7 @@ describe("Navigation", () => {
   });
 
   it("marks a screen's section as current on its inner pages", () => {
-    pathname.current = "/batches/4";
+    pathname.current = `/batches/${uid(4)}`;
     render(<Navigation role={Role.Teacher} modules={MODULES} />);
 
     expect(screen.getByRole("link", { name: "Classes" })).toHaveAttribute("aria-current", "page");
@@ -179,7 +180,7 @@ describe("The Transfer requests count", () => {
 describe("The Inbox count", () => {
   it("counts conversations with unread messages, named for screen readers", () => {
     render(
-      <InboxCheckContext value={{ unread: 2, latest: 9, refresh: vi.fn<() => void>() }}>
+      <InboxCheckContext value={{ unread: 2, latest: uid(9), refresh: vi.fn<() => void>() }}>
         <Navigation role={Role.Teacher} modules={MODULES} />
       </InboxCheckContext>,
     );
@@ -191,7 +192,7 @@ describe("The Inbox count", () => {
 
   it("shows no count when everything is read", () => {
     render(
-      <InboxCheckContext value={{ unread: 0, latest: 9, refresh: vi.fn<() => void>() }}>
+      <InboxCheckContext value={{ unread: 0, latest: uid(9), refresh: vi.fn<() => void>() }}>
         <Navigation role={Role.Admin} modules={MODULES} />
       </InboxCheckContext>,
     );

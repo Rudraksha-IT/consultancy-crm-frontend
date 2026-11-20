@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useCallback, useEffect, useState } from "react";
 
 import { fetchClockMonth, type ClockMonth } from "@/lib/api";
@@ -8,7 +9,7 @@ export type ClockMonthState =
   { status: "loading" } | { status: "failed" } | { status: "loaded"; month: ClockMonth };
 
 /** One month of clock-ins, mine (`staffId` null) or (Admins) someone else's, and a reload. */
-export function useClockMonth(month: string, staffId: number | null) {
+export function useClockMonth(month: string, staffId: RecordId | null) {
   const [state, setState] = useState<ClockMonthState>({ status: "loading" });
   const [version, setVersion] = useState(0);
 

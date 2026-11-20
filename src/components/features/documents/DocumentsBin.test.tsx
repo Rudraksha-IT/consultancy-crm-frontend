@@ -13,7 +13,7 @@ import { DocumentsSection } from "./DocumentsSection";
 import { uid } from "@/test/ids";
 
 const CHECKLIST_PATH = `/api/students/${uid(7)}/documents/`;
-const ME = 5;
+const ME = uid(5);
 const BIN_NOTE = {
   by: { id: ME, name: "Bikash Thapa" },
   at: "2026-11-02T10:00:00+05:45",
@@ -31,12 +31,12 @@ const CONTEXT: StaffContext = {
 };
 
 const AS_COUNSELLOR = { ...CHECKLIST, deletes_for_good: false, viewer_id: ME };
-const AS_ADMIN_FLAGS = { deletes_for_good: true, viewer_id: 1 };
+const AS_ADMIN_FLAGS = { deletes_for_good: true, viewer_id: uid(1) };
 const AS_ADMIN = { ...CHECKLIST, ...AS_ADMIN_FLAGS };
 
 const TWO_PAGES = {
   ...PASSPORT_DOCUMENT,
-  files: [apiFile(41, "passport.pdf"), apiFile(44, "page-2.pdf")],
+  files: [apiFile(uid(41), "passport.pdf"), apiFile(uid(44), "page-2.pdf")],
 };
 
 /** The Passport put in the Bin: missing, and listed greyed with who, when and why. */
@@ -45,7 +45,7 @@ function binnedPassport(by = BIN_NOTE.by, reason = BIN_NOTE.reason) {
     ...AS_COUNSELLOR,
     items: [
       {
-        ...item({ id: 1, name: "Passport", state: "not_received" }),
+        ...item({ id: uid(1), name: "Passport", state: "not_received" }),
         in_bin: [
           {
             id: uid(31),
@@ -64,7 +64,7 @@ const BINNED_PAGE = {
   ...AS_COUNSELLOR,
   items: [
     item({
-      id: 1,
+      id: uid(1),
       name: "Passport",
       state: "waiting",
       document: {
@@ -137,7 +137,7 @@ describe("deleting a Document as anyone but an Admin (the Bin, issue 79)", () =>
   it("deletes one file of several, and never offers it for the only one", async () => {
     const withPages = {
       ...AS_COUNSELLOR,
-      items: [item({ id: 1, name: "Passport", state: "waiting", document: TWO_PAGES })],
+      items: [item({ id: uid(1), name: "Passport", state: "waiting", document: TWO_PAGES })],
     };
     const fetchFn = backend(
       on("GET", CHECKLIST_PATH, withPages),
@@ -193,7 +193,7 @@ describe("what is in the Bin on the checklist", () => {
   });
 
   it("offers no Take it out for what someone else put there", async () => {
-    backend(on("GET", CHECKLIST_PATH, binnedPassport({ id: 99, name: "Anita Rai" })));
+    backend(on("GET", CHECKLIST_PATH, binnedPassport({ id: uid(99), name: "Anita Rai" })));
     renderSection();
 
     const row = await rowFor("Passport");
@@ -203,7 +203,7 @@ describe("what is in the Bin on the checklist", () => {
   it("offers an Admin the way to the Bin tab", async () => {
     backend(
       on("GET", CHECKLIST_PATH, {
-        ...binnedPassport({ id: 99, name: "Anita Rai" }),
+        ...binnedPassport({ id: uid(99), name: "Anita Rai" }),
         ...AS_ADMIN_FLAGS,
       }),
     );

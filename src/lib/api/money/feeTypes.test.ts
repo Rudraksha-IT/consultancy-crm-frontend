@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import {
   addFeeType,
@@ -11,13 +12,13 @@ import {
 import { jsonResponse } from "../core/test-helpers";
 
 const VISA = {
-  id: 3,
+  id: uid(3),
   name: "Visa fee",
   hidden: false,
   other: false,
   uses: { fees: 2, payments: 5 },
 };
-const OTHER = { id: 7, name: "Other", hidden: false, other: true, uses: null };
+const OTHER = { id: uid(7), name: "Other", hidden: false, other: true, uses: null };
 
 function answering(response: Response) {
   return vi.fn<typeof fetch>().mockResolvedValueOnce(response);
@@ -36,8 +37,14 @@ describe("fetchFeeTypes", () => {
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/fee-types/");
     expect(types).toEqual([
-      { id: 3, name: "Visa fee", hidden: false, isOther: false, uses: { fees: 2, payments: 5 } },
-      { id: 7, name: "Other", hidden: false, isOther: true, uses: null },
+      {
+        id: uid(3),
+        name: "Visa fee",
+        hidden: false,
+        isOther: false,
+        uses: { fees: 2, payments: 5 },
+      },
+      { id: uid(7), name: "Other", hidden: false, isOther: true, uses: null },
     ]);
   });
 
@@ -50,7 +57,7 @@ describe("fetchFeeTypes", () => {
 
 describe("addFeeType", () => {
   it("POSTs the name and returns the new Fee Type", async () => {
-    const fetchFn = answering(jsonResponse({ ...VISA, id: 9, name: "Japanese class" }, 201));
+    const fetchFn = answering(jsonResponse({ ...VISA, id: uid(9), name: "Japanese class" }, 201));
 
     const added = await addFeeType("Japanese class", fetchFn);
 
@@ -74,9 +81,9 @@ describe("changeFeeType", () => {
   it("PATCHes only what changes", async () => {
     const fetchFn = answering(jsonResponse({ ...VISA, hidden: true }));
 
-    const changed = await changeFeeType(3, { hidden: true }, fetchFn);
+    const changed = await changeFeeType(uid(3), { hidden: true }, fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/fee-types/3/");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/fee-types/${uid(3)}/`);
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("PATCH");
     expect(sentBody(fetchFn)).toEqual({ hidden: true });
     expect(changed.hidden).toBe(true);
@@ -86,7 +93,9 @@ describe("changeFeeType", () => {
     const detail = "Other is always there. It can't be renamed, hidden or deleted.";
     const fetchFn = answering(jsonResponse({ detail }, 400));
 
-    const error: unknown = await changeFeeType(7, { name: "X" }, fetchFn).catch((e: unknown) => e);
+    const error: unknown = await changeFeeType(uid(7), { name: "X" }, fetchFn).catch(
+      (e: unknown) => e,
+    );
 
     expect(error).toBeInstanceOf(ApiRequestError);
     expect(feeTypeRefusal(error)).toBe(detail);
@@ -95,7 +104,7 @@ describe("changeFeeType", () => {
   it("has no reason for other failures", () => {
     expect(feeTypeRefusal(new Error("offline"))).toBeNull();
     expect(
-      feeTypeRefusal(new ApiRequestError("/api/fee-types/3/", 400, { name: ["x"] })),
+      feeTypeRefusal(new ApiRequestError(`/api/fee-types/${uid(3)}/`, 400, { name: ["x"] })),
     ).toBeNull();
   });
 });
@@ -104,9 +113,9 @@ describe("deleteFeeType", () => {
   it("DELETEs the Fee Type", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await deleteFeeType(3, fetchFn);
+    await deleteFeeType(uid(3), fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/fee-types/3/");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/fee-types/${uid(3)}/`);
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("DELETE");
   });
 });
@@ -115,20 +124,20 @@ describe("reorderFeeTypes", () => {
   it("PUTs every id in order and returns the list", async () => {
     const fetchFn = answering(jsonResponse({ results: [VISA, OTHER] }));
 
-    const types = await reorderFeeTypes([3, 7], fetchFn);
+    const types = await reorderFeeTypes([uid(3), uid(7)], fetchFn);
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/fee-types/order/");
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("PUT");
-    expect(sentBody(fetchFn)).toEqual({ order: [3, 7] });
-    expect(types.map((type) => type.id)).toEqual([3, 7]);
+    expect(sentBody(fetchFn)).toEqual({ order: [uid(3), uid(7)] });
+    expect(types.map((type) => type.id)).toEqual([uid(3), uid(7)]);
   });
 });
 
 describe("describeFeeType", () => {
   it("adds the note in brackets when there is one", () => {
-    expect(describeFeeType({ id: 3, name: "Visa fee" }, "first half")).toBe(
+    expect(describeFeeType({ id: uid(3), name: "Visa fee" }, "first half")).toBe(
       "Visa fee (first half)",
     );
-    expect(describeFeeType({ id: 3, name: "Visa fee" }, "")).toBe("Visa fee");
+    expect(describeFeeType({ id: uid(3), name: "Visa fee" }, "")).toBe("Visa fee");
   });
 });

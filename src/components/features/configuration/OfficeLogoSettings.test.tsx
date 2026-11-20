@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -18,7 +19,7 @@ const LOGO_ANSWER = { logo: { url: "/api/consultancy/logo/1/", show_name: true }
 const MB = 1024 * 1024;
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["configuration"],
   dateDisplay: "AD",

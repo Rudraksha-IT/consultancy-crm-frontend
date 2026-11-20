@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -14,7 +15,7 @@ const router = { push: vi.fn(), replace: vi.fn(), back: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/" }));
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Asha Admin", email: "asha@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["catalogue"],
   dateDisplay: "AD",
@@ -24,20 +25,20 @@ const ADMIN: StaffContext = {
 };
 
 const NURSING = {
-  id: 11,
-  university_id: 1,
+  id: uid(11),
+  university_id: uid(1),
   name: "Bachelor of Nursing",
   level: "bachelor",
   intakes: ["2027-02"],
   archived: false,
-  documents: [{ id: 21, name: "Work Reference" }],
+  documents: [{ id: uid(21), name: "Work Reference" }],
   applications: 3,
   files: [],
   file_count: 0,
 };
 const OLD = {
   ...NURSING,
-  id: 12,
+  id: uid(12),
   name: "Diploma of Old Things",
   level: "diploma",
   intakes: [],
@@ -45,20 +46,25 @@ const OLD = {
   documents: [],
   applications: 0,
 };
-const USED_OLD = { ...OLD, id: 13, name: "Master of Used Things", applications: 2 };
+const USED_OLD = { ...OLD, id: uid(13), name: "Master of Used Things", applications: 2 };
 const DEAKIN = {
-  id: 1,
+  id: uid(1),
   name: "Deakin University",
   country: "australia",
   archived: false,
   courses: [NURSING, OLD],
 };
 const TYPES = [
-  { id: 21, name: "Work Reference", needed_by_everyone: false, usual_group: "applying" },
-  { id: 22, name: "Passport", needed_by_everyone: true, usual_group: "applying" },
-  { id: 23, name: "Statement of Purpose", needed_by_everyone: false, usual_group: "statements" },
+  { id: uid(21), name: "Work Reference", needed_by_everyone: false, usual_group: "applying" },
+  { id: uid(22), name: "Passport", needed_by_everyone: true, usual_group: "applying" },
+  {
+    id: uid(23),
+    name: "Statement of Purpose",
+    needed_by_everyone: false,
+    usual_group: "statements",
+  },
 ];
-const ONE = "/api/catalogue/universities/1/";
+const ONE = `/api/catalogue/universities/${uid(1)}/`;
 
 type Answer = (path: string, init?: RequestInit) => Response | undefined;
 const method = (init?: RequestInit): string => init?.method ?? "GET";
@@ -102,7 +108,7 @@ function calls(fetchFn: ReturnType<typeof backend>, verb: string): number {
   return fetchFn.mock.calls.filter(([, given]) => method(given) === verb).length;
 }
 
-function renderPage(context: StaffContext = ADMIN, idText = "1") {
+function renderPage(context: StaffContext = ADMIN, idText: string = uid(1)) {
   render(
     <StaffContextContext value={context}>
       <ToastProvider>
@@ -192,15 +198,15 @@ describe("a university's edit page", () => {
       archived: false,
       courses: [
         {
-          id: 11,
+          id: uid(11),
           name: "Bachelor of Nursing",
           level: "bachelor",
           intakes: ["2027-02", "2027-07"],
           archived: false,
-          documents: [21, 23],
+          documents: [uid(21), uid(23)],
         },
         {
-          id: 12,
+          id: uid(12),
           name: "Diploma of Old Things",
           level: "diploma",
           intakes: [],
@@ -248,8 +254,8 @@ describe("a university's edit page", () => {
       expect(sent(fetchFn, "PUT")).toMatchObject({
         archived: true,
         courses: [
-          { id: 11, archived: true },
-          { id: 12, archived: false },
+          { id: uid(11), archived: true },
+          { id: uid(12), archived: false },
         ],
       });
     });
@@ -362,7 +368,10 @@ describe("deleting courses", () => {
     await save();
 
     await waitFor(() => {
-      expect(sent(fetchFn, "PUT")).toMatchObject({ courses: [{ id: 11 }], deleted_courses: [12] });
+      expect(sent(fetchFn, "PUT")).toMatchObject({
+        courses: [{ id: uid(11) }],
+        deleted_courses: [uid(12)],
+      });
     });
   });
 
@@ -390,7 +399,7 @@ describe("deleting courses", () => {
   });
 
   it("keeps a course with Course Files, counting the Bin, and says why (ticket 10)", async () => {
-    const withFiles = { ...OLD, id: 14, name: "Master of Brochures", file_count: 1 };
+    const withFiles = { ...OLD, id: uid(14), name: "Master of Brochures", file_count: 1 };
     backend(stored({ ...DEAKIN, courses: [NURSING, withFiles] }), types);
     renderPage();
     await opened();
@@ -535,13 +544,18 @@ describe("leaving and access", () => {
     },
   );
 
-  it("finds nothing for an address that isn't an id, without asking the server", async () => {
-    const fetchFn = backend();
-    renderPage(ADMIN, "1;drop");
+  it.each(["1;drop", "1", "not-a-uuid", "00000000000040008000000000000001"])(
+    "finds nothing for %j, which isn't a UUID, without asking the server (ADR 0027)",
+    async (idText) => {
+      const fetchFn = backend();
+      renderPage(ADMIN, idText);
 
-    expect(await screen.findByText("This university isn't in the Catalogue.")).toBeInTheDocument();
-    expect(fetchFn).not.toHaveBeenCalled();
-  });
+      expect(
+        await screen.findByText("This university isn't in the Catalogue."),
+      ).toBeInTheDocument();
+      expect(fetchFn).not.toHaveBeenCalled();
+    },
+  );
 
   it("says when the university is not found", async () => {
     backend(stored({ detail: "Not found." }, 404));

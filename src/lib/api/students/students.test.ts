@@ -11,7 +11,7 @@ const ROW = {
   country: "canada",
   source: "walk_in",
   stage: "lead",
-  assigned_counsellor: { id: 2, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(2), name: "Bikash Thapa" },
 };
 
 const STORED = {
@@ -35,7 +35,7 @@ const NEW_ANISH = {
   pastDegree: "BBS, TU",
   previousJob: "",
   note: "Wants a diploma.",
-  assignedCounsellor: "2",
+  assignedCounsellor: uid(2),
 } as const;
 
 function sentBody(fetchFn: ReturnType<typeof answering>): unknown {
@@ -82,7 +82,7 @@ describe("fetchStudents", () => {
         country: "canada",
         source: "walk_in",
         stage: "lead",
-        assignedCounsellor: { id: 2, name: "Bikash Thapa" },
+        assignedCounsellor: { id: uid(2), name: "Bikash Thapa" },
       },
     ]);
   });
@@ -137,7 +137,7 @@ describe("addStudent", () => {
       past_degree: "BBS, TU",
       previous_job: "",
       note: "Wants a diploma.",
-      assigned_counsellor: 2,
+      assigned_counsellor: uid(2),
     });
     expect(added).toMatchObject({
       id: uid(9),

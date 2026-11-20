@@ -11,7 +11,7 @@ import { jsonResponse } from "../core/test-helpers";
 import { uid } from "@/test/ids";
 
 const TASK = {
-  id: 31,
+  id: uid(31),
   title: "Call Sita about her IELTS score",
   due_on: "2026-11-03",
   priority: "normal",
@@ -19,14 +19,14 @@ const TASK = {
   timing: "upcoming",
   is_done: false,
   done_at: null,
-  assignee: { id: 5, name: "Bikash Thapa" },
-  created_by: { id: 4, name: "Ramesh KC" },
+  assignee: { id: uid(5), name: "Bikash Thapa" },
+  created_by: { id: uid(4), name: "Ramesh KC" },
   student: { id: uid(7), name: "Sita Gurung" },
   can_mark_done: true,
 };
 
 const TASK_IN_FRONTEND_NAMING = {
-  id: 31,
+  id: uid(31),
   title: "Call Sita about her IELTS score",
   dueOn: "2026-11-03",
   priority: "normal",
@@ -34,8 +34,8 @@ const TASK_IN_FRONTEND_NAMING = {
   timing: "upcoming",
   isDone: false,
   doneAt: null,
-  assignee: { id: 5, name: "Bikash Thapa" },
-  createdBy: { id: 4, name: "Ramesh KC" },
+  assignee: { id: uid(5), name: "Bikash Thapa" },
+  createdBy: { id: uid(4), name: "Ramesh KC" },
   student: { id: uid(7), name: "Sita Gurung" },
   canMarkDone: true,
 };
@@ -65,7 +65,9 @@ describe("fetchMyTasks", () => {
 
   it("accepts a done Task and one with no Student", async () => {
     const done = { ...TASK, timing: "done", is_done: true, done_at: "2026-11-02T10:00:00+05:45" };
-    const fetchFn = answering(jsonResponse(pageOf([done, { ...TASK, id: 32, student: null }])));
+    const fetchFn = answering(
+      jsonResponse(pageOf([done, { ...TASK, id: uid(32), student: null }])),
+    );
 
     const page = await fetchMyTasks("done", 1, {}, fetchFn);
 
@@ -144,7 +146,7 @@ describe("createTask", () => {
       {
         title: "Call Sita",
         dueOn: "2026-11-03",
-        assigneeId: 5,
+        assigneeId: uid(5),
         studentId: uid(7),
         priority: "high",
         isOnlyMe: false,
@@ -158,7 +160,7 @@ describe("createTask", () => {
     expect(typeof init?.body === "string" ? JSON.parse(init.body) : undefined).toEqual({
       title: "Call Sita",
       due_on: "2026-11-03",
-      assignee: 5,
+      assignee: uid(5),
       student: uid(7),
       priority: "high",
       only_me: false,
@@ -173,7 +175,7 @@ describe("createTask", () => {
       {
         title: "Call",
         dueOn: "2026-11-03",
-        assigneeId: 5,
+        assigneeId: uid(5),
         studentId: null,
         priority: "normal",
         isOnlyMe: true,
@@ -203,7 +205,14 @@ describe("createTask", () => {
     );
 
     const error = await createTask(
-      { title: "", dueOn: "", assigneeId: 0, studentId: null, priority: "normal", isOnlyMe: false },
+      {
+        title: "",
+        dueOn: "",
+        assigneeId: uid(0),
+        studentId: null,
+        priority: "normal",
+        isOnlyMe: false,
+      },
       fetchFn,
     ).catch((caught: unknown) => caught);
 
@@ -223,10 +232,10 @@ describe("setTaskDone", () => {
   it("PATCHes only the done flag", async () => {
     const fetchFn = answering(jsonResponse({ ...TASK, is_done: true, timing: "done" }));
 
-    const task = await setTaskDone(31, true, fetchFn);
+    const task = await setTaskDone(uid(31), true, fetchFn);
 
     const { path, init } = sent(fetchFn);
-    expect(path).toBe("/api/tasks/31/");
+    expect(path).toBe(`/api/tasks/${uid(31)}/`);
     expect(init?.method).toBe("PATCH");
     expect(init?.body).toBe(JSON.stringify({ done: true }));
     expect(task.isDone).toBe(true);
@@ -235,7 +244,7 @@ describe("setTaskDone", () => {
   it("rejects with the refusal when not allowed", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Only…" }, 403));
 
-    await expect(setTaskDone(31, true, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(setTaskDone(uid(31), true, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
@@ -243,8 +252,8 @@ describe("fetchTaskAssignees", () => {
   it("GETs who a Task can be given to", async () => {
     const fetchFn = answering(
       jsonResponse([
-        { id: 5, name: "Bikash Thapa", role: "counsellor" },
-        { id: 9, name: "Gita Lama", role: "teacher" },
+        { id: uid(5), name: "Bikash Thapa", role: "counsellor" },
+        { id: uid(9), name: "Gita Lama", role: "teacher" },
       ]),
     );
 
@@ -252,13 +261,13 @@ describe("fetchTaskAssignees", () => {
 
     expect(sent(fetchFn).path).toBe("/api/tasks/assignees/");
     expect(people).toEqual([
-      { id: 5, name: "Bikash Thapa", role: "counsellor" },
-      { id: 9, name: "Gita Lama", role: "teacher" },
+      { id: uid(5), name: "Bikash Thapa", role: "counsellor" },
+      { id: uid(9), name: "Gita Lama", role: "teacher" },
     ]);
   });
 
   it("refuses an unknown Role", async () => {
-    const fetchFn = answering(jsonResponse([{ id: 5, name: "Bikash", role: "owner" }]));
+    const fetchFn = answering(jsonResponse([{ id: uid(5), name: "Bikash", role: "owner" }]));
 
     await expect(fetchTaskAssignees(fetchFn)).rejects.toThrow();
   });

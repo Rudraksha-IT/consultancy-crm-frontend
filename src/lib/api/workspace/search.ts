@@ -7,7 +7,7 @@ import { Stage } from "@/constants/stages";
 
 import { getJson } from "../core/client";
 
-const ID = z.number().int().positive();
+const ID = RecordIdSchema;
 
 /** A Student for someone who may open their profile (everyone but Teachers). */
 const FoundStudentSchema = z

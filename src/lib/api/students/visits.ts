@@ -20,7 +20,7 @@ const VisitSchema = z
     purpose: z.string(),
     at: z.iso.datetime({ offset: true }),
     // Who logged it; the id is gone if their account was ever removed, the name stays.
-    recorded_by: z.object({ id: z.number().int().nullable(), name: z.string() }),
+    recorded_by: z.object({ id: RecordIdSchema.nullable(), name: z.string() }),
   })
   .transform(({ recorded_by, ...visit }) => ({ ...visit, recordedBy: recorded_by }));
 
@@ -33,7 +33,7 @@ const TimelineVisitSchema = z
     kind: z.enum(VISIT_KINDS),
     purpose: z.string(),
     at: z.iso.datetime({ offset: true }),
-    recorded_by: z.object({ id: z.number().int().nullable(), name: z.string() }),
+    recorded_by: z.object({ id: RecordIdSchema.nullable(), name: z.string() }),
     student: z.object({ id: RecordIdSchema, name: z.string(), note_first_line: z.string() }),
   })
   .transform(({ recorded_by, student, ...visit }) => ({

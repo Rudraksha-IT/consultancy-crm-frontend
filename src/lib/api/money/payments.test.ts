@@ -17,7 +17,7 @@ const PAYMENT = {
   amount: 25000,
   paid_on: "2026-11-02",
   method: "esewa",
-  fee_type: { id: 1, name: "Application fee" },
+  fee_type: { id: uid(1), name: "Application fee" },
   note: "first half",
   recorded_by: { name: "Ramesh KC" },
   recorded_at: "2026-11-02T10:15:00+05:45",
@@ -29,7 +29,7 @@ const RECEIPT = {
   lines: [
     {
       id: uid(412),
-      fee_type: { id: 1, name: "Application fee" },
+      fee_type: { id: uid(1), name: "Application fee" },
       note: "first half",
       amount: 25000,
       paid_on: "2026-11-02",
@@ -37,7 +37,7 @@ const RECEIPT = {
     },
     {
       id: uid(413),
-      fee_type: { id: 4, name: "IELTS class" },
+      fee_type: { id: uid(4), name: "IELTS class" },
       note: "",
       amount: 10000,
       paid_on: "2026-11-02",
@@ -54,7 +54,7 @@ const PAYMENT_IN_FRONTEND_NAMING = {
   amount: 25000,
   paidOn: "2026-11-02",
   method: "esewa",
-  feeType: { id: 1, name: "Application fee" },
+  feeType: { id: uid(1), name: "Application fee" },
   note: "first half",
   recordedBy: { name: "Ramesh KC" },
 };
@@ -64,7 +64,7 @@ const RECEIPT_IN_FRONTEND_NAMING = {
   lines: [
     {
       id: uid(412),
-      feeType: { id: 1, name: "Application fee" },
+      feeType: { id: uid(1), name: "Application fee" },
       note: "first half",
       amount: 25000,
       paidOn: "2026-11-02",
@@ -72,7 +72,7 @@ const RECEIPT_IN_FRONTEND_NAMING = {
     },
     {
       id: uid(413),
-      feeType: { id: 4, name: "IELTS class" },
+      feeType: { id: uid(4), name: "IELTS class" },
       note: "",
       amount: 10000,
       paidOn: "2026-11-02",
@@ -86,7 +86,7 @@ const NEW_PAYMENT = {
   amount: 25000,
   paidOn: "2026-11-02",
   method: "esewa",
-  feeTypeId: 1,
+  feeTypeId: uid(1),
   note: "first half",
 } as const;
 
@@ -94,8 +94,8 @@ const NEW_PAYMENTS = {
   paidOn: "2026-11-02",
   method: "esewa",
   lines: [
-    { feeTypeId: 1, note: "first half", amount: 25000 },
-    { feeTypeId: 4, note: "", amount: 10000 },
+    { feeTypeId: uid(1), note: "first half", amount: 25000 },
+    { feeTypeId: uid(4), note: "", amount: 10000 },
   ],
 } as const;
 
@@ -120,8 +120,8 @@ describe("recordPayments", () => {
       paid_on: "2026-11-02",
       method: "esewa",
       lines: [
-        { fee_type: 1, note: "first half", amount: 25000 },
-        { fee_type: 4, note: "", amount: 10000 },
+        { fee_type: uid(1), note: "first half", amount: 25000 },
+        { fee_type: uid(4), note: "", amount: 10000 },
       ],
     });
     expect(receipt).toEqual(RECEIPT_IN_FRONTEND_NAMING);
@@ -255,13 +255,13 @@ describe("fetchPayments", () => {
     const fetchFn = answering(jsonResponse(PAGE));
 
     await fetchPayments(
-      { from: "", to: "", search: "", feeTypeId: 3, studentId: uid(7) },
+      { from: "", to: "", search: "", feeTypeId: uid(3), studentId: uid(7) },
       1,
       fetchFn,
     );
 
     const [path] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe(`/api/payments/?student=${uid(7)}&fee_type=3&page=1`);
+    expect(path).toBe(`/api/payments/?student=${uid(7)}&fee_type=${uid(3)}&page=1`);
   });
 
   it("refuses an answer that isn't a page of Payments", async () => {
@@ -302,7 +302,7 @@ describe("changePayment", () => {
       amount: 30000,
       paid_on: "2026-11-02",
       method: "esewa",
-      fee_type: 1,
+      fee_type: uid(1),
       note: "first half",
     });
     expect(payment).toStrictEqual({ ...PAYMENT_IN_FRONTEND_NAMING, amount: 30000 });

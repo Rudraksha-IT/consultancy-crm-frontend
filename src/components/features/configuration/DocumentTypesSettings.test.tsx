@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,16 +12,22 @@ const TYPES_PATH = "/api/configuration/document-types/";
 const UNUSED = { countries: 0, courses: 0, students: 0, documents: 0 };
 const TYPES = {
   results: [
-    { id: 1, name: "Passport", needed_by_everyone: true, usual_group: "applying", used_by: UNUSED },
     {
-      id: 8,
+      id: uid(1),
+      name: "Passport",
+      needed_by_everyone: true,
+      usual_group: "applying",
+      used_by: UNUSED,
+    },
+    {
+      id: uid(8),
       name: "Sponsor Letter",
       needed_by_everyone: true,
       usual_group: "applying",
       used_by: UNUSED,
     },
     {
-      id: 9,
+      id: uid(9),
       name: "Police report",
       needed_by_everyone: false,
       usual_group: "applying",
@@ -78,8 +85,8 @@ describe("DocumentTypesSettings", () => {
   it("moves a type off everyone's checklist", async () => {
     const fetchFn = backend(
       on("GET", TYPES_PATH, TYPES),
-      on("PATCH", `${TYPES_PATH}8/`, {
-        id: 8,
+      on("PATCH", `${TYPES_PATH}${uid(8)}/`, {
+        id: uid(8),
         name: "Sponsor Letter",
         needed_by_everyone: false,
         usual_group: "applying",
@@ -96,15 +103,15 @@ describe("DocumentTypesSettings", () => {
 
     expect(await screen.findByText("Now under Extra documents")).toBeVisible();
     expect(names(await list(ALWAYS))).toEqual(["Passport"]);
-    const [call] = callsTo(fetchFn, "PATCH", `${TYPES_PATH}8/`);
+    const [call] = callsTo(fetchFn, "PATCH", `${TYPES_PATH}${uid(8)}/`);
     expect(call?.[1]?.body).toBe(JSON.stringify({ needed_by_everyone: false }));
   });
 
   it("moves a type onto everyone's checklist", async () => {
     backend(
       on("GET", TYPES_PATH, TYPES),
-      on("PATCH", `${TYPES_PATH}9/`, {
-        id: 9,
+      on("PATCH", `${TYPES_PATH}${uid(9)}/`, {
+        id: uid(9),
         name: "Police report",
         needed_by_everyone: true,
         usual_group: "applying",
@@ -124,7 +131,7 @@ describe("DocumentTypesSettings", () => {
   });
 
   it("says when a move fails, keeping the lists", async () => {
-    backend(on("GET", TYPES_PATH, TYPES), on("PATCH", `${TYPES_PATH}8/`, {}, 500));
+    backend(on("GET", TYPES_PATH, TYPES), on("PATCH", `${TYPES_PATH}${uid(8)}/`, {}, 500));
     renderSettings("always");
 
     await userEvent.click(
@@ -144,7 +151,7 @@ describe("DocumentTypesSettings", () => {
         "POST",
         TYPES_PATH,
         {
-          id: 10,
+          id: uid(10),
           name: "Birth certificate",
           needed_by_everyone: true,
           usual_group: "applying",
@@ -172,9 +179,15 @@ describe("DocumentTypesSettings", () => {
 
   it("adds one after another", async () => {
     const added = [
-      { id: 21, name: "CV", needed_by_everyone: false, usual_group: "applying", used_by: UNUSED },
       {
-        id: 22,
+        id: uid(21),
+        name: "CV",
+        needed_by_everyone: false,
+        usual_group: "applying",
+        used_by: UNUSED,
+      },
+      {
+        id: uid(22),
         name: "Medical report",
         needed_by_everyone: false,
         usual_group: "applying",
@@ -205,7 +218,13 @@ describe("DocumentTypesSettings", () => {
       on(
         "POST",
         TYPES_PATH,
-        { id: 11, name: "CV", needed_by_everyone: false, usual_group: "applying", used_by: UNUSED },
+        {
+          id: uid(11),
+          name: "CV",
+          needed_by_everyone: false,
+          usual_group: "applying",
+          used_by: UNUSED,
+        },
         201,
       ),
     );
@@ -269,7 +288,7 @@ describe("DocumentTypesSettings", () => {
     backend(
       on("GET", TYPES_PATH, {
         results: [
-          { id: 3, name, needed_by_everyone: true, usual_group: "applying", used_by: UNUSED },
+          { id: uid(3), name, needed_by_everyone: true, usual_group: "applying", used_by: UNUSED },
         ],
       }),
     );
@@ -284,35 +303,35 @@ describe("where each document is used", () => {
   const USED = {
     results: [
       {
-        id: 1,
+        id: uid(1),
         name: "Passport",
         needed_by_everyone: true,
         usual_group: "applying",
         used_by: UNUSED,
       },
       {
-        id: 20,
+        id: uid(20),
         name: "Genuine Student statement",
         needed_by_everyone: false,
         usual_group: "applying",
         used_by: { countries: 2, courses: 6, students: 1, documents: 0 },
       },
       {
-        id: 21,
+        id: uid(21),
         name: "CV",
         needed_by_everyone: false,
         usual_group: "applying",
         used_by: { countries: 0, courses: 1, students: 0, documents: 3 },
       },
       {
-        id: 22,
+        id: uid(22),
         name: "Old form",
         needed_by_everyone: false,
         usual_group: "applying",
         used_by: { countries: 0, courses: 0, students: 0, documents: 1 },
       },
       {
-        id: 23,
+        id: uid(23),
         name: "Unused",
         needed_by_everyone: false,
         usual_group: "applying",
@@ -363,7 +382,7 @@ describe("where each document is used", () => {
 
   it("removes an unused document", async () => {
     const fetchFn = backend(on("GET", TYPES_PATH, USED), (path, init) =>
-      init?.method === "DELETE" && path === `${TYPES_PATH}23/`
+      init?.method === "DELETE" && path === `${TYPES_PATH}${uid(23)}/`
         ? new Response(null, { status: 204 })
         : undefined,
     );
@@ -380,7 +399,7 @@ describe("where each document is used", () => {
 
     expect(await screen.findByText("Removed from the office's documents")).toBeInTheDocument();
     expect(names(await list(EXTRA))).toEqual(["Genuine Student statement", "CV", "Old form"]);
-    expect(callsTo(fetchFn, "DELETE", `${TYPES_PATH}23/`)).toHaveLength(1);
+    expect(callsTo(fetchFn, "DELETE", `${TYPES_PATH}${uid(23)}/`)).toHaveLength(1);
   });
 
   it("removes nothing until the popup is confirmed", async () => {
@@ -395,12 +414,12 @@ describe("where each document is used", () => {
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(names(await list(EXTRA))).toContain("Unused");
-    expect(callsTo(fetchFn, "DELETE", `${TYPES_PATH}23/`)).toHaveLength(0);
+    expect(callsTo(fetchFn, "DELETE", `${TYPES_PATH}${uid(23)}/`)).toHaveLength(0);
   });
 
   it("says why a removal was refused, keeping the list", async () => {
     const detail = "This document is asked for or has files, so it can't be removed.";
-    backend(on("GET", TYPES_PATH, USED), on("DELETE", `${TYPES_PATH}23/`, { detail }, 400));
+    backend(on("GET", TYPES_PATH, USED), on("DELETE", `${TYPES_PATH}${uid(23)}/`, { detail }, 400));
     renderSettings();
 
     await userEvent.click(

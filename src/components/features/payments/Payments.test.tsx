@@ -19,7 +19,7 @@ function backend(...answers: Answer[]) {
 }
 
 const FRONT_DESK: StaffContext = {
-  staff: { id: 8, name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
+  staff: { id: uid(8), name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
@@ -30,14 +30,24 @@ const FRONT_DESK: StaffContext = {
 
 const ADMIN: StaffContext = {
   ...FRONT_DESK,
-  staff: { id: 1, name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
 };
 
 const DESK_PROFILE = { ...PROFILE, can_change: false, can_set_stage: false, can_transfer: false };
 
-type Line = { id: RecordId; fee_type: { id: number; name: string }; note: string; amount: number };
+type Line = {
+  id: RecordId;
+  fee_type: { id: RecordId; name: string };
+  note: string;
+  amount: number;
+};
 
-const APPLICATION_FEE: Line = { id: uid(412), fee_type: feeTypeRef(1), note: "", amount: 25000 };
+const APPLICATION_FEE: Line = {
+  id: uid(412),
+  fee_type: feeTypeRef(uid(1)),
+  note: "",
+  amount: 25000,
+};
 
 /** A receipt as the API answers it, for Payment 412 (the first line), with these lines. */
 function receiptWith(first: Line, ...more: Line[]) {
@@ -180,7 +190,7 @@ describe("taking a payment", () => {
     expect(sentBody(fetchFn)).toEqual({
       paid_on: "2026-11-02",
       method: "esewa",
-      lines: [{ fee_type: 1, note: "", amount: 25000 }],
+      lines: [{ fee_type: uid(1), note: "", amount: 25000 }],
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Print receipt" })).not.toBeInTheDocument();
@@ -251,7 +261,7 @@ describe("taking a payment", () => {
       on(
         "POST",
         PAYMENTS,
-        receiptWith({ id: uid(412), fee_type: feeTypeRef(7), note: "SOP check", amount: 500 }),
+        receiptWith({ id: uid(412), fee_type: feeTypeRef(uid(7)), note: "SOP check", amount: 500 }),
         201,
       ),
     );
@@ -273,7 +283,7 @@ describe("taking a payment", () => {
 
     expect(await screen.findByText("Payment recorded")).toBeInTheDocument();
     expect(sentBody(fetchFn)).toMatchObject({
-      lines: [{ fee_type: 7, note: "SOP check", amount: 500 }],
+      lines: [{ fee_type: uid(7), note: "SOP check", amount: 500 }],
     });
   });
 
@@ -319,8 +329,8 @@ describe("taking a payment", () => {
         "POST",
         PAYMENTS,
         receiptWith(
-          { id: uid(412), fee_type: feeTypeRef(3), note: "", amount: 40000 },
-          { id: uid(413), fee_type: feeTypeRef(4), note: "first half", amount: 10000 },
+          { id: uid(412), fee_type: feeTypeRef(uid(3)), note: "", amount: 40000 },
+          { id: uid(413), fee_type: feeTypeRef(uid(4)), note: "first half", amount: 10000 },
         ),
         201,
       ),
@@ -341,8 +351,8 @@ describe("taking a payment", () => {
       paid_on: "2026-11-02",
       method: "cash",
       lines: [
-        { fee_type: 3, note: "", amount: 40000 },
-        { fee_type: 4, note: "first half", amount: 10000 },
+        { fee_type: uid(3), note: "", amount: 40000 },
+        { fee_type: uid(4), note: "first half", amount: 10000 },
       ],
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

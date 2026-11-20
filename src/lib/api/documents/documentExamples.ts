@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 
 import {
@@ -39,7 +41,7 @@ function refused(error: unknown): unknown {
  * Rejects with `InvalidFieldsError` on `instruction`.
  */
 export async function setDocumentInstruction(
-  typeId: number,
+  typeId: RecordId,
   instruction: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<ConfiguredDocumentType> {
@@ -68,7 +70,7 @@ function sendFile(path: string, file: File, fetchFn: typeof fetch): Promise<Docu
  * on `file`, or `ExampleRefusedError` with the server's reason (already 3).
  */
 export function addDocumentExample(
-  typeId: number,
+  typeId: RecordId,
   file: File,
   fetchFn: typeof fetch = fetch,
 ): Promise<DocumentExample> {
@@ -77,7 +79,7 @@ export function addDocumentExample(
 
 /** Keep a new file in place of an example; the old one goes to the Bin. */
 export function replaceDocumentExample(
-  id: number,
+  id: RecordId,
   file: File,
   fetchFn: typeof fetch = fetch,
 ): Promise<DocumentExample> {
@@ -85,13 +87,13 @@ export function replaceDocumentExample(
 }
 
 /** Remove an example file to the Bin, where an Admin restores it or deletes it for good. */
-export function removeDocumentExample(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function removeDocumentExample(id: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.documentExample(id), fetchFn);
 }
 
 /** A short-lived link to open (or save) an example file in use. */
 export async function fetchDocumentExampleLink(
-  id: number,
+  id: RecordId,
   action: "open" | "download",
   fetchFn: typeof fetch = fetch,
 ): Promise<string> {
@@ -104,7 +106,7 @@ export async function fetchDocumentExampleLink(
  * rejects with `ApiRequestError`, whose reason `binFailure` reads.
  */
 export function restoreDocumentExample(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<DocumentExample> {
   return postJson(API_PATHS.binDocumentExampleRestore(id), {}, DocumentExampleSchema, fetchFn);
@@ -112,7 +114,7 @@ export function restoreDocumentExample(
 
 /** Delete an example file in the Bin for good, with its stored file (Admins). */
 export function deleteDocumentExampleForGood(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.binDocumentExample(id), fetchFn);
@@ -120,7 +122,7 @@ export function deleteDocumentExampleForGood(
 
 /** A short-lived link to open an example file waiting in the Bin, for an Admin on the Bin tab. */
 export async function fetchBinDocumentExampleLink(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<string> {
   const path = `${API_PATHS.binDocumentExampleLink(id)}?action=open`;

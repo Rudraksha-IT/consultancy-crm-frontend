@@ -8,8 +8,8 @@ import { uid } from "@/test/ids";
 const VISA = {
   id: uid(21),
   application_id: uid(11),
-  university: { id: 3, name: "Deakin University" },
-  course: { id: 4, name: "Master of IT", level: "master" },
+  university: { id: uid(3), name: "Deakin University" },
+  course: { id: uid(4), name: "Master of IT", level: "master" },
   status: "applied",
   started_on: "2026-10-12",
   biometrics_at: null,
@@ -51,8 +51,8 @@ describe("startVisa", () => {
       {
         id: uid(21),
         applicationId: uid(11),
-        university: { id: 3, name: "Deakin University" },
-        course: { id: 4, name: "Master of IT", level: "master" },
+        university: { id: uid(3), name: "Deakin University" },
+        course: { id: uid(4), name: "Master of IT", level: "master" },
         status: "applied",
         startedOn: "2026-10-12",
         biometricsAt: null,

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { TEST_TYPES } from "@/constants/batches";
 import { EXPENSE_CATEGORIES } from "@/constants/expenses";
@@ -117,7 +119,7 @@ export type SourceReport = z.infer<typeof SourceReportSchema>;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-const PersonSchema = z.object({ id: z.number().int(), name: z.string(), is_active: z.boolean() });
+const PersonSchema = z.object({ id: RecordIdSchema, name: z.string(), is_active: z.boolean() });
 const CounsellorCounts = z.object({
   students: Count,
   moved_forward: Count,
@@ -174,7 +176,7 @@ export type StaffProgressReport = z.infer<typeof StaffProgressReportSchema>;
 
 /** One person in a Staff Progress table, with that table's counts. */
 export type StaffProgressRow<Counts> = {
-  id: number;
+  id: RecordId;
   name: string;
   isActive: boolean;
   counts: Counts;
@@ -182,7 +184,7 @@ export type StaffProgressRow<Counts> = {
 
 const ClassSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     test_type: z.enum(TEST_TYPES),
     teacher: z.string(),

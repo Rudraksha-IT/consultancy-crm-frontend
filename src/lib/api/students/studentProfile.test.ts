@@ -40,7 +40,7 @@ describe("fetchStudentProfile", () => {
         { id: uid(2), jobTitle: "Staff nurse", startedOn: "2024-04", endedOn: null },
       ],
       preferredIntake: "2027-02",
-      assignedCounsellor: { id: 5, name: "Bikash Thapa" },
+      assignedCounsellor: { id: uid(5), name: "Bikash Thapa" },
       academicRecords: [{ id: uid(1), level: "bachelor", finishedYear: 2024, result: "GPA 3.2" }],
       testScores: [{ id: uid(3), test: "ielts", overall: "6.5", takenOn: "2026-09-14" }],
       lostReason: "",

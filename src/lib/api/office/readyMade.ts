@@ -28,7 +28,7 @@ const MenuSchema = z
         records: z.array(
           z.object({
             /** A Payment's, Offer Letter's or Visa's UUID; a class's number until ticket 18. */
-            id: z.union([RecordIdSchema, z.number().int().positive()]),
+            id: RecordIdSchema,
             label: z.string().min(1).max(RECORD_LABEL_MAX_LENGTH),
           }),
         ),
@@ -67,11 +67,11 @@ export function fetchReadyMade(
 export function fetchReadyMadeDraft(
   target: ReadyMadeTarget,
   kind: ReadyMadeKind,
-  record: RecordId | number | null,
+  record: RecordId | null,
   fetchFn: typeof fetch = fetch,
 ): Promise<ReadyMadeDraft> {
   const path =
     target === "many" ? API_PATHS.bulkEmailDraft : API_PATHS.studentEmailDraft(target.studentId);
-  const query = new URLSearchParams(record === null ? { kind } : { kind, record: String(record) });
+  const query = new URLSearchParams(record === null ? { kind } : { kind, record: record });
   return getJson(`${path}?${query.toString()}`, DraftSchema, fetchFn);
 }

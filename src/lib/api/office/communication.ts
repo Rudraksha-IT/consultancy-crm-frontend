@@ -49,7 +49,7 @@ export const MessageSchema = z
     sent_to: z.string(),
     attachments: z.array(z.string().min(1)),
     sent_at: z.iso.datetime({ offset: true }),
-    sent_by: z.object({ id: z.number().int().nullable(), name: z.string().min(1) }),
+    sent_by: z.object({ id: RecordIdSchema.nullable(), name: z.string().min(1) }),
   })
   .transform((message) => ({
     id: message.id,
@@ -137,7 +137,7 @@ export async function sendEmail(
 
 /** Where pre-ticked Students come from: a class, or the Student list's filters. */
 export type PreTickSource =
-  { kind: "batch"; batchId: number } | { kind: "students"; filters: StudentFilters };
+  { kind: "batch"; batchId: RecordId } | { kind: "students"; filters: StudentFilters };
 
 const ChoosableSchema = z.object({
   students: z.array(
@@ -161,9 +161,7 @@ export function fetchChoosable(
   fetchFn: typeof fetch = fetch,
 ): Promise<Choosable> {
   const values =
-    source.kind === "batch"
-      ? { batch: String(source.batchId) }
-      : studentFilterValues(source.filters);
+    source.kind === "batch" ? { batch: source.batchId } : studentFilterValues(source.filters);
   const query = new URLSearchParams(values).toString();
   const path = query === "" ? API_PATHS.bulkMessages : `${API_PATHS.bulkMessages}?${query}`;
   return getJson(path, ChoosableSchema, fetchFn);

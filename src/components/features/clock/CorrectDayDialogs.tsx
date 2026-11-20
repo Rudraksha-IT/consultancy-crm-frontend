@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -34,7 +35,7 @@ type Open =
   | { kind: "fix"; date: string; session: ClockSession | null };
 
 type StaffMonthDialogProps = {
-  staffId: number;
+  staffId: RecordId;
   name: string;
   month: string;
   /** Called after a correction is saved, so the lists behind can be read again. */
@@ -235,7 +236,7 @@ function SessionRow({
 }
 
 type CorrectionDialogProps = {
-  staffId: number;
+  staffId: RecordId;
   name: string;
   day: ClockDay;
   /** The session missing its clock-out, or null to add missed time. */

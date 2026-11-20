@@ -1,9 +1,11 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 /** A PDF brochure kept on a Course (ticket 10): its shown name, its own file name and size. */
 export const CourseFileSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     file_name: z.string(),
     size: z.number().int().nonnegative(),
@@ -21,10 +23,10 @@ export type CourseFile = z.infer<typeof CourseFileSchema>;
 export const BinnedCourseFileSchema = z
   .object({
     kind: z.literal("course_file"),
-    course_file: z.object({ id: z.number().int(), name: z.string(), file_name: z.string() }),
-    university: z.object({ id: z.number().int(), name: z.string() }),
-    course: z.object({ id: z.number().int(), name: z.string() }),
-    by: z.object({ id: z.number().int().nullable(), name: z.string() }),
+    course_file: z.object({ id: RecordIdSchema, name: z.string(), file_name: z.string() }),
+    university: z.object({ id: RecordIdSchema, name: z.string() }),
+    course: z.object({ id: RecordIdSchema, name: z.string() }),
+    by: z.object({ id: RecordIdSchema.nullable(), name: z.string() }),
     at: z.iso.datetime({ offset: true }),
     reason: z.string(),
   })

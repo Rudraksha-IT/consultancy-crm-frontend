@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import clsx from "clsx";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -15,8 +16,8 @@ import type { ConversationsState } from "./useInboxData";
 
 type ConversationListProps = {
   state: ConversationsState;
-  openId: number | null;
-  onOpen: (personId: number) => void;
+  openId: RecordId | null;
+  onOpen: (personId: RecordId) => void;
 };
 
 /** My conversations, newest first: who, the start of the last message, when, and if unread. */
@@ -46,7 +47,7 @@ export function ConversationList({ state, openId, onOpen }: ConversationListProp
 type ConversationRowProps = {
   conversation: InboxConversation;
   isOpen: boolean;
-  onOpen: (personId: number) => void;
+  onOpen: (personId: RecordId) => void;
 };
 
 function ConversationRow({ conversation, isOpen, onOpen }: ConversationRowProps) {

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -17,14 +18,14 @@ vi.mock("@/lib/documents/tab", () => ({ openBlankTab }));
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 
 const BROCHURE = {
-  id: 31,
+  id: uid(31),
   name: "Deakin IT brochure",
   file_name: "deakin-it.pdf",
   size: 2_516_582,
   uploaded_at: "2026-11-19T10:00:00+05:45",
 };
 const FEES = {
-  id: 32,
+  id: uid(32),
   name: "Fees 2027",
   file_name: "fees.pdf",
   size: 819_200,
@@ -33,8 +34,8 @@ const FEES = {
 
 function courseWith(files: unknown[]): Course {
   return CourseSchema.parse({
-    id: 11,
-    university_id: 1,
+    id: uid(11),
+    university_id: uid(1),
     name: "Master of IT",
     level: "master",
     intakes: ["2027-03"],
@@ -46,9 +47,9 @@ function courseWith(files: unknown[]): Course {
   });
 }
 
-const UPLOAD = "/api/catalogue/courses/11/files/";
-const FILE_31 = "/api/catalogue/course-files/31/";
-const LINK_31 = "/api/catalogue/course-files/31/link/?action=open";
+const UPLOAD = `/api/catalogue/courses/${uid(11)}/files/`;
+const FILE_31 = `/api/catalogue/course-files/${uid(31)}/`;
+const LINK_31 = `/api/catalogue/course-files/${uid(31)}/link/?action=open`;
 
 function pdf(name = "deakin-it_2027.pdf", size = 1000): File {
   const file = new File(["%PDF-1.7"], name, { type: "application/pdf" });
@@ -161,7 +162,7 @@ describe("CourseFilesCell", () => {
       on(
         "POST",
         UPLOAD,
-        { ...FEES, id: 33, name: "Deakin it 2027", file_name: "deakin-it_2027.pdf" },
+        { ...FEES, id: uid(33), name: "Deakin it 2027", file_name: "deakin-it_2027.pdf" },
         201,
       ),
     );

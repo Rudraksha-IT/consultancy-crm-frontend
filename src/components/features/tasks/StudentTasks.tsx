@@ -13,7 +13,7 @@ import { TaskPanelBody } from "./TasksPage";
 import { useTaskPage } from "./useTaskPage";
 
 type StudentTasksProps = {
-  student: { id: RecordId; name: string; counsellorId: number | null };
+  student: { id: RecordId; name: string; counsellorId: RecordId | null };
   /** A Task was added or ticked, so the tab's count can change. */
   onChanged: () => void;
 };

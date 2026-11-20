@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { RecordIdSchema } from "@/lib/recordId";
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 
 import { API_PATHS } from "@/constants/api";
 import { ROLES } from "@/constants/roles";
@@ -43,7 +43,7 @@ export type ProgressChange = z.infer<typeof ChangeSchema>;
 const StaffProgressSchema = z
   .object({
     staff: z.object({
-      id: z.number().int().positive(),
+      id: RecordIdSchema,
       name: z.string(),
       job_title: z.string(),
       mobile: z.string(),
@@ -68,7 +68,7 @@ const RANGE_FIELDS: Record<keyof DateRange, string> = { from: "from", to: "to" }
 
 /** One Staff member's Progress between the dates (both included, at most one year). */
 export async function fetchStaffProgress(
-  staffId: number,
+  staffId: RecordId,
   range: DateRange,
   fetchFn: typeof fetch = fetch,
 ): Promise<StaffProgress> {

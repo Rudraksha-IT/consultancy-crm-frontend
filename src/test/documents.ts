@@ -9,18 +9,18 @@ type ApiFile = {
   content_type: string;
   size: number;
   uploaded_at: string;
-  uploaded_by: { id: number; name: string } | null;
+  uploaded_by: { id: RecordId; name: string } | null;
 };
 
 /** A file as the API answers it, named `name`, for tests. */
-export function apiFile(id: number, name: string): ApiFile {
+export function apiFile(id: RecordId, name: string): ApiFile {
   return {
-    id: uid(id),
+    id,
     file_name: name,
     content_type: name.endsWith(".pdf") ? "application/pdf" : "image/jpeg",
     size: 2048,
     uploaded_at: "2026-11-01T10:00:00+05:45",
-    uploaded_by: { id: 5, name: "Bikash Thapa" },
+    uploaded_by: { id: uid(5), name: "Bikash Thapa" },
   };
 }
 
@@ -34,22 +34,22 @@ type ApiDocument = {
   /** Its files in the Bin (issue 79); none unless a test says so. */
   binned_files?: { id: RecordId; file_name: string; bin: unknown }[];
   uploaded_at: string;
-  uploaded_by: { id: number; name: string } | null;
+  uploaded_by: { id: RecordId; name: string } | null;
 };
 
 /** Documents as the API answers them, for tests. */
 export const PASSPORT_DOCUMENT: ApiDocument = {
   id: uid(31),
-  files: [apiFile(41, "passport.pdf")],
+  files: [apiFile(uid(41), "passport.pdf")],
   verification: "pending",
   rejection_reason: "",
   link: null,
   uploaded_at: "2026-11-01T10:00:00+05:45",
-  uploaded_by: { id: 5, name: "Bikash Thapa" },
+  uploaded_by: { id: uid(5), name: "Bikash Thapa" },
 };
 
 type Item = {
-  id: number;
+  id: RecordId;
   name: string;
   state: string;
   reason?: string;
@@ -89,32 +89,32 @@ export const CHECKLIST = {
   can_change: true,
   asked: NOT_ASKED,
   items: [
-    item({ id: 1, name: "Passport", state: "waiting", document: PASSPORT_DOCUMENT }),
+    item({ id: uid(1), name: "Passport", state: "waiting", document: PASSPORT_DOCUMENT }),
     item({
-      id: 2,
+      id: uid(2),
       name: "Citizenship",
       state: "verified",
       document: {
         ...PASSPORT_DOCUMENT,
         id: uid(32),
-        files: [apiFile(42, "citizenship.jpg")],
+        files: [apiFile(uid(42), "citizenship.jpg")],
         verification: "verified",
         link: { kind: "application", id: uid(11), university: "Federation University" },
       },
     }),
     item({
-      id: 3,
+      id: uid(3),
       name: "SEE Marksheet",
       state: "rejected",
       document: {
         ...PASSPORT_DOCUMENT,
         id: uid(33),
-        files: [apiFile(43, "see.pdf")],
+        files: [apiFile(uid(43), "see.pdf")],
         verification: "rejected",
         rejection_reason: "Photo is blurred.",
       },
     }),
-    item({ id: 4, name: "Bank Statement", state: "not_received", group: "visa" }),
+    item({ id: uid(4), name: "Bank Statement", state: "not_received", group: "visa" }),
   ],
 };
 

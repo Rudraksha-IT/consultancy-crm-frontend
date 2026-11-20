@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor } from "@testing-library/react";
 
 import { StaffContextContext } from "@/components/features/shell/staffContext";
@@ -16,7 +17,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 3, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(3), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["visas"],
   dateDisplay: "AD",

@@ -69,7 +69,7 @@ function FileChips({ attachments, attachButton }: WithButton) {
     <ul ref={chips} aria-label={TEXT.attachedFiles} className="flex flex-wrap gap-2">
       {attachments.files.map((file, index) => (
         <li
-          key={`${file.kind}-${String(file.id)}`}
+          key={`${file.kind}-${file.id}`}
           title={`${file.group} · ${formatFileSize(file.size)}`}
           className="rounded-chip bg-fill text-secondary flex max-w-full min-w-0 items-center gap-2 pl-3"
         >
@@ -188,7 +188,7 @@ function Choices({ attachments, source }: { attachments: Attachments; source: So
   return (
     <ul className="grid gap-1">
       {files.map((file) => (
-        <li key={`${file.kind}-${String(file.id)}`}>
+        <li key={`${file.kind}-${file.id}`}>
           <PickRow
             file={file}
             isChecked={attachments.isAttached(file)}

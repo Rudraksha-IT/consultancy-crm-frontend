@@ -13,7 +13,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
@@ -24,13 +24,13 @@ const COUNSELLOR: StaffContext = {
 
 const FRONT_DESK: StaffContext = {
   ...COUNSELLOR,
-  staff: { id: 8, name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
+  staff: { id: uid(8), name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
 };
 
 const CHOICES = [
-  { id: 2, name: "Anjali Gurung", role: "counsellor" },
-  { id: 5, name: "Bikash Thapa", role: "counsellor" },
-  { id: 1, name: "Sunita Shrestha", role: "admin" },
+  { id: uid(2), name: "Anjali Gurung", role: "counsellor" },
+  { id: uid(5), name: "Bikash Thapa", role: "counsellor" },
+  { id: uid(1), name: "Sunita Shrestha", role: "admin" },
 ];
 
 const LOST = { ...PROFILE, stage: "lost", lost_reason: "Chose a consultancy in Butwal." };
@@ -322,7 +322,7 @@ describe("assigning a counsellor", () => {
       choices,
       on("POST", `/api/students/${uid(7)}/assign/`, {
         ...UNASSIGNED,
-        assigned_counsellor: { id: 2, name: "Anjali Gurung" },
+        assigned_counsellor: { id: uid(2), name: "Anjali Gurung" },
         can_change: false,
         can_assign: false,
       }),
@@ -333,13 +333,15 @@ describe("assigning a counsellor", () => {
     const dialog = screen.getByRole("dialog", { name: "Assign a counsellor to Sita Gurung" });
     const select = within(dialog).getByRole("combobox", { name: "Counsellor" });
     await within(dialog).findByRole("option", { name: "Anjali Gurung" });
-    await userEvent.selectOptions(select, "2");
+    await userEvent.selectOptions(select, uid(2));
     await userEvent.click(within(dialog).getByRole("button", { name: "Assign" }));
 
     expect(await screen.findByText("Counsellor assigned")).toBeInTheDocument();
     expect(screen.getByText("Anjali Gurung")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Assign a counsellor" })).not.toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/assign/`)).toEqual({ counsellor: 2 });
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/assign/`)).toEqual({
+      counsellor: uid(2),
+    });
   });
 
   it("asks for a choice before sending anything", async () => {
@@ -370,7 +372,7 @@ describe("assigning a counsellor", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Assign a counsellor" }));
     const dialog = screen.getByRole("dialog", { name: "Assign a counsellor to Sita Gurung" });
     await within(dialog).findByRole("option", { name: "Anjali Gurung" });
-    await userEvent.selectOptions(within(dialog).getByRole("combobox"), "2");
+    await userEvent.selectOptions(within(dialog).getByRole("combobox"), uid(2));
     await userEvent.click(within(dialog).getByRole("button", { name: "Assign" }));
 
     expect(await within(dialog).findByRole("alert")).toHaveTextContent(
@@ -386,7 +388,7 @@ describe("Transfer", () => {
       choices,
       on("POST", `/api/students/${uid(7)}/transfer/`, {
         ...PROFILE,
-        assigned_counsellor: { id: 2, name: "Anjali Gurung" },
+        assigned_counsellor: { id: uid(2), name: "Anjali Gurung" },
         can_change: false,
         can_set_stage: false,
         can_transfer: false,
@@ -403,7 +405,7 @@ describe("Transfer", () => {
     const select = within(dialog).getByRole("combobox", { name: "Transfer to" });
     await within(dialog).findByRole("option", { name: "Anjali Gurung" });
     expect(within(select).queryByRole("option", { name: "Bikash Thapa" })).not.toBeInTheDocument();
-    await userEvent.selectOptions(select, "1");
+    await userEvent.selectOptions(select, uid(1));
     await userEvent.click(within(dialog).getByRole("button", { name: "Transfer" }));
 
     expect(await screen.findByText("Transferred to Anjali Gurung")).toBeInTheDocument();
@@ -411,7 +413,7 @@ describe("Transfer", () => {
       screen.getByText(/^View only\. Anjali Gurung is this Student's counsellor/),
     ).toBeVisible();
     expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/transfer/`)).toEqual({
-      counsellor: 1,
+      counsellor: uid(1),
     });
   });
 

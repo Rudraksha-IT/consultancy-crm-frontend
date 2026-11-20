@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,7 +12,7 @@ import { backend, callsTo, on } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 3, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(3), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students", "clock_in"],
   dateDisplay: "AD",
@@ -41,7 +42,7 @@ const NOT_IN = {
 // Clocked in at 9:02 AM, Kathmandu.
 const IN = {
   ...NOT_IN,
-  open: { id: 4, clocked_in_at: "2026-11-05T03:17:00Z" },
+  open: { id: uid(4), clocked_in_at: "2026-11-05T03:17:00Z" },
   today_minutes: 118,
 };
 
@@ -290,8 +291,8 @@ describe("HomeClock", () => {
         "POST",
         "/api/clock/work-from-home/",
         {
-          id: 7,
-          staff_id: 3,
+          id: uid(7),
+          staff_id: uid(3),
           starts_on: "2026-11-05",
           ends_on: null,
           reason: "Plumber",

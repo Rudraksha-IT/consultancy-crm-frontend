@@ -20,7 +20,7 @@ vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => v
 
 function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
   return {
-    staff: { id: 1, name: "Anita Rai", email: "admin@office.com", role },
+    staff: { id: uid(1), name: "Anita Rai", email: "admin@office.com", role },
     consultancy: consultancySummary(),
     modules: ["documents"],
     dateDisplay: "AD",
@@ -32,7 +32,7 @@ function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
 
 const BIN_PATH = "/api/documents/bin/?page=1";
 const NOTE = {
-  by: { id: 5, name: "Bikash Thapa" },
+  by: { id: uid(5), name: "Bikash Thapa" },
   at: "2026-11-02T10:00:00+05:45",
   reason: "Uploaded twice",
 };
@@ -56,16 +56,16 @@ const ONE_FILE = {
 };
 const BROCHURE = {
   kind: "course_file",
-  course_file: { id: 31, name: "Deakin IT brochure", file_name: "deakin-it.pdf" },
-  university: { id: 1, name: "Deakin University" },
-  course: { id: 11, name: "Master of IT" },
+  course_file: { id: uid(31), name: "Deakin IT brochure", file_name: "deakin-it.pdf" },
+  university: { id: uid(1), name: "Deakin University" },
+  course: { id: uid(11), name: "Master of IT" },
   ...NOTE,
   reason: "Deleted from the Catalogue",
 };
 const OLD_SAMPLE = {
   kind: "document_example",
-  document_example: { id: 56, file_name: "old-sample-statement.pdf" },
-  document_type: { id: 7, name: "Bank Statement" },
+  document_example: { id: uid(56), file_name: "old-sample-statement.pdf" },
+  document_type: { id: uid(7), name: "Bank Statement" },
   ...NOTE,
   reason: "Replaced",
 };
@@ -233,7 +233,7 @@ describe("the Bin tab (Admins, issue 79)", () => {
     openBlankTab.mockReturnValue(tab);
     backend(
       on("GET", BIN_PATH, { ...BIN, count: 1, results: [BROCHURE] }),
-      on("GET", "/api/documents/bin/course-files/31/link/?action=open", {
+      on("GET", `/api/documents/bin/course-files/${uid(31)}/link/?action=open`, {
         url: "https://files.test/c?sig=1",
         expires_in: 300,
       }),
@@ -254,8 +254,8 @@ describe("the Bin tab (Admins, issue 79)", () => {
   it("restores a Course File to its Course", async () => {
     const fetchFn = backend(
       on("GET", BIN_PATH, { ...BIN, count: 1, results: [BROCHURE] }),
-      on("POST", "/api/documents/bin/course-files/31/restore/", {
-        id: 31,
+      on("POST", `/api/documents/bin/course-files/${uid(31)}/restore/`, {
+        id: uid(31),
         name: "Deakin IT brochure",
         file_name: "deakin-it.pdf",
         size: 1000,
@@ -271,14 +271,16 @@ describe("the Bin tab (Admins, issue 79)", () => {
     );
 
     expect(await screen.findByText("Deakin IT brochure restored")).toBeVisible();
-    expect(callsTo(fetchFn, "POST", "/api/documents/bin/course-files/31/restore/")).toHaveLength(1);
+    expect(
+      callsTo(fetchFn, "POST", `/api/documents/bin/course-files/${uid(31)}/restore/`),
+    ).toHaveLength(1);
   });
 
   it("deletes a Course File for good after asking", async () => {
     const fetchFn = backend(
       on("GET", BIN_PATH, { ...BIN, count: 1, results: [BROCHURE] }),
       (path, init) =>
-        init?.method === "DELETE" && path === "/api/documents/bin/course-files/31/"
+        init?.method === "DELETE" && path === `/api/documents/bin/course-files/${uid(31)}/`
           ? new Response(null, { status: 204 })
           : undefined,
     );
@@ -292,7 +294,9 @@ describe("the Bin tab (Admins, issue 79)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Delete for good" }));
 
     expect(await screen.findByText("Deakin IT brochure deleted for good")).toBeVisible();
-    expect(callsTo(fetchFn, "DELETE", "/api/documents/bin/course-files/31/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "DELETE", `/api/documents/bin/course-files/${uid(31)}/`)).toHaveLength(
+      1,
+    );
   });
 
   it("lists a Document Example with its kind and Document Type (ticket 11)", async () => {
@@ -311,7 +315,7 @@ describe("the Bin tab (Admins, issue 79)", () => {
     openBlankTab.mockReturnValue(tab);
     backend(
       on("GET", BIN_PATH, { ...BIN, count: 1, results: [OLD_SAMPLE] }),
-      on("GET", "/api/documents/bin/document-examples/56/link/?action=open", {
+      on("GET", `/api/documents/bin/document-examples/${uid(56)}/link/?action=open`, {
         url: "https://files.test/e?sig=1",
         expires_in: 300,
       }),
@@ -332,8 +336,8 @@ describe("the Bin tab (Admins, issue 79)", () => {
   it("restores a Document Example to its Document Type", async () => {
     const fetchFn = backend(
       on("GET", BIN_PATH, { ...BIN, count: 1, results: [OLD_SAMPLE] }),
-      on("POST", "/api/documents/bin/document-examples/56/restore/", {
-        id: 56,
+      on("POST", `/api/documents/bin/document-examples/${uid(56)}/restore/`, {
+        id: uid(56),
         file_name: "old-sample-statement.pdf",
         content_type: "application/pdf",
         size: 1000,
@@ -350,7 +354,7 @@ describe("the Bin tab (Admins, issue 79)", () => {
 
     expect(await screen.findByText("old-sample-statement.pdf restored")).toBeVisible();
     expect(
-      callsTo(fetchFn, "POST", "/api/documents/bin/document-examples/56/restore/"),
+      callsTo(fetchFn, "POST", `/api/documents/bin/document-examples/${uid(56)}/restore/`),
     ).toHaveLength(1);
   });
 
@@ -358,7 +362,12 @@ describe("the Bin tab (Admins, issue 79)", () => {
     const reason = "This document already has 3 example files. Remove one first.";
     backend(
       on("GET", BIN_PATH, { ...BIN, count: 1, results: [OLD_SAMPLE] }),
-      on("POST", "/api/documents/bin/document-examples/56/restore/", { detail: reason }, 400),
+      on(
+        "POST",
+        `/api/documents/bin/document-examples/${uid(56)}/restore/`,
+        { detail: reason },
+        400,
+      ),
     );
     renderPage("admin");
 
@@ -375,7 +384,7 @@ describe("the Bin tab (Admins, issue 79)", () => {
     const fetchFn = backend(
       on("GET", BIN_PATH, { ...BIN, count: 1, results: [OLD_SAMPLE] }),
       (path, init) =>
-        init?.method === "DELETE" && path === "/api/documents/bin/document-examples/56/"
+        init?.method === "DELETE" && path === `/api/documents/bin/document-examples/${uid(56)}/`
           ? new Response(null, { status: 204 })
           : undefined,
     );
@@ -389,7 +398,9 @@ describe("the Bin tab (Admins, issue 79)", () => {
     await userEvent.click(screen.getByRole("button", { name: "Delete for good" }));
 
     expect(await screen.findByText("old-sample-statement.pdf deleted for good")).toBeVisible();
-    expect(callsTo(fetchFn, "DELETE", "/api/documents/bin/document-examples/56/")).toHaveLength(1);
+    expect(
+      callsTo(fetchFn, "DELETE", `/api/documents/bin/document-examples/${uid(56)}/`),
+    ).toHaveLength(1);
   });
 
   it("says when the Bin is empty", async () => {

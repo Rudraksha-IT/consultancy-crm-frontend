@@ -5,7 +5,7 @@ import { uid } from "@/test/ids";
 
 const FEE = {
   id: uid(31),
-  fee_type: { id: 3, name: "Visa fee" },
+  fee_type: { id: uid(3), name: "Visa fee" },
   note: "",
   amount: 40000,
   added_by: { name: "Bikash Thapa" },
@@ -22,7 +22,7 @@ const FRONTEND_FEES = {
   fees: [
     {
       id: uid(31),
-      feeType: { id: 3, name: "Visa fee" },
+      feeType: { id: uid(3), name: "Visa fee" },
       note: "",
       amount: 40000,
       addedBy: { name: "Bikash Thapa" },
@@ -75,11 +75,11 @@ describe("addFee", () => {
   it("POSTs the Fee Type, note and amount and returns the Student's Fees", async () => {
     const fetchFn = answering(jsonResponse(STUDENT_FEES, 201));
 
-    const fees = await addFee(uid(7), { feeTypeId: 3, note: "", amount: 40000 }, fetchFn);
+    const fees = await addFee(uid(7), { feeTypeId: uid(3), note: "", amount: 40000 }, fetchFn);
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/students/${uid(7)}/fees/`);
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("POST");
-    expect(sentBody(fetchFn)).toEqual({ fee_type: 3, note: "", amount: 40000 });
+    expect(sentBody(fetchFn)).toEqual({ fee_type: uid(3), note: "", amount: 40000 });
     expect(fees).toEqual(FRONTEND_FEES);
   });
 
@@ -100,7 +100,7 @@ describe("addFee", () => {
     const fetchFn = answering(jsonResponse({ detail: "Not your Student." }, 403));
 
     await expect(
-      addFee(uid(7), { feeTypeId: 3, note: "", amount: 1 }, fetchFn),
+      addFee(uid(7), { feeTypeId: uid(3), note: "", amount: 1 }, fetchFn),
     ).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
@@ -109,18 +109,18 @@ describe("changeFee", () => {
   it("PUTs the new Fee Type, note and amount", async () => {
     const fetchFn = answering(jsonResponse(STUDENT_FEES));
 
-    await changeFee(uid(31), { feeTypeId: 7, note: "embassy", amount: 45000 }, fetchFn);
+    await changeFee(uid(31), { feeTypeId: uid(7), note: "embassy", amount: 45000 }, fetchFn);
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/fees/${uid(31)}/`);
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("PUT");
-    expect(sentBody(fetchFn)).toEqual({ fee_type: 7, note: "embassy", amount: 45000 });
+    expect(sentBody(fetchFn)).toEqual({ fee_type: uid(7), note: "embassy", amount: 45000 });
   });
 
   it("names refused fields", async () => {
     const fetchFn = answering(jsonResponse({ amount: ["Enter a whole amount."] }, 400));
 
     await expect(
-      changeFee(uid(31), { feeTypeId: 3, note: "", amount: 0 }, fetchFn),
+      changeFee(uid(31), { feeTypeId: uid(3), note: "", amount: 0 }, fetchFn),
     ).rejects.toMatchObject({
       fieldErrors: { amount: ["Enter a whole amount."] },
     });

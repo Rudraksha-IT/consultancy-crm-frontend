@@ -11,13 +11,13 @@ import {
 import { uid } from "@/test/ids";
 
 const WAITING = {
-  id: 801,
+  id: uid(801),
   student: { id: uid(13), name: "Sarina Khadka" },
-  asked_by: { id: 3, name: "Anjali Gurung" },
+  asked_by: { id: uid(3), name: "Anjali Gurung" },
   reason: "Her sister is my Student.",
   asked_at: "2026-10-27T10:35:00+00:00",
   status: "waiting",
-  counsellor: { id: 2, name: "Bikash Thapa" },
+  counsellor: { id: uid(2), name: "Bikash Thapa" },
   answered_by: null,
   answer_reason: "",
   answered_at: null,
@@ -27,13 +27,13 @@ const WAITING = {
 };
 
 const WAITING_IN_FRONTEND_NAMING = {
-  id: 801,
+  id: uid(801),
   student: { id: uid(13), name: "Sarina Khadka" },
-  askedBy: { id: 3, name: "Anjali Gurung" },
+  askedBy: { id: uid(3), name: "Anjali Gurung" },
   reason: "Her sister is my Student.",
   askedAt: "2026-10-27T10:35:00+00:00",
   status: "waiting",
-  counsellor: { id: 2, name: "Bikash Thapa" },
+  counsellor: { id: uid(2), name: "Bikash Thapa" },
   answeredBy: null,
   answerReason: "",
   answeredAt: null,
@@ -44,7 +44,7 @@ const WAITING_IN_FRONTEND_NAMING = {
 
 const DECLINED = {
   ...WAITING,
-  id: 804,
+  id: uid(804),
   status: "declined",
   answered_by: { name: "Nabin Adhikari (Platform Admin)", is_platform_admin: true },
   answer_reason: "Not now.",
@@ -127,7 +127,7 @@ describe("askToTakeStudent", () => {
     expect(path).toBe(`/api/students/${uid(13)}/transfer-requests/`);
     expect(init?.method).toBe("POST");
     expect(sentJson(init)).toEqual({ reason: "Her sister is my Student." });
-    expect(sent.id).toBe(801);
+    expect(sent.id).toBe(uid(801));
   });
 
   it("turns a refused reason into a field error", async () => {
@@ -157,10 +157,10 @@ describe("answering a request", () => {
   it("approves with an empty body", async () => {
     const fetchFn = answering(jsonResponse({ ...WAITING, status: "approved" }));
 
-    const approved = await approveTransferRequest(801, fetchFn);
+    const approved = await approveTransferRequest(uid(801), fetchFn);
 
     const [path, init] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/transfer-requests/801/approve/");
+    expect(path).toBe(`/api/transfer-requests/${uid(801)}/approve/`);
     expect(sentJson(init)).toEqual({});
     expect(approved.status).toBe("approved");
   });
@@ -168,17 +168,17 @@ describe("answering a request", () => {
   it("declines with the reason, which may be empty", async () => {
     const fetchFn = answering(jsonResponse(DECLINED));
 
-    await declineTransferRequest(801, "", fetchFn);
+    await declineTransferRequest(uid(801), "", fetchFn);
 
     const [path, init] = fetchFn.mock.calls[0] ?? [];
-    expect(path).toBe("/api/transfer-requests/801/decline/");
+    expect(path).toBe(`/api/transfer-requests/${uid(801)}/decline/`);
     expect(sentJson(init)).toEqual({ reason: "" });
   });
 
   it("turns a refused decline reason into a field error", async () => {
     const fetchFn = answering(jsonResponse({ reason: ["Too long."] }, 400));
 
-    await expect(declineTransferRequest(801, "x", fetchFn)).rejects.toBeInstanceOf(
+    await expect(declineTransferRequest(uid(801), "x", fetchFn)).rejects.toBeInstanceOf(
       InvalidFieldsError,
     );
   });
@@ -186,9 +186,9 @@ describe("answering a request", () => {
   it("cancels with an empty body", async () => {
     const fetchFn = answering(jsonResponse({ ...WAITING, status: "cancelled" }));
 
-    const cancelled = await cancelTransferRequest(801, fetchFn);
+    const cancelled = await cancelTransferRequest(uid(801), fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/transfer-requests/801/cancel/");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/transfer-requests/${uid(801)}/cancel/`);
     expect(cancelled.status).toBe("cancelled");
   });
 });

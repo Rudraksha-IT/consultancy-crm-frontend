@@ -41,7 +41,7 @@ type DocumentChecklistProps = {
   canChange: boolean;
   /** A check is being saved: its buttons wait. */
   isChecking?: boolean;
-  onUpload: (documentTypeId: number) => void;
+  onUpload: (documentTypeId: RecordId) => void;
   /** Open or save one file of a Document. */
   onShow: (documentId: RecordId, fileId: RecordId, action: LinkAction) => void;
   /** Add more files to the item's Document (issue 78). */

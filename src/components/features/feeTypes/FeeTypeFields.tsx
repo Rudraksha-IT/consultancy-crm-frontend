@@ -1,5 +1,6 @@
 "use client";
 
+import { type RecordId, parseRecordId } from "@/lib/recordId";
 import { useEffect, useState } from "react";
 
 import { readField } from "@/components/features/students/profile/formData";
@@ -87,7 +88,7 @@ function NoteField({ isNeeded, start, errors }: NoteFieldProps) {
 /** What the fields start with: the record's Fee Type and note, or nothing chosen. */
 function startOf(initial: FeeTypeStart | undefined) {
   if (initial === undefined) return { kept: undefined, chosen: "", note: "" };
-  return { kept: initial.feeType, chosen: String(initial.feeType.id), note: initial.note };
+  return { kept: initial.feeType, chosen: initial.feeType.id, note: initial.note };
 }
 
 /** "We couldn't load the Fee Types" when they failed to load, to show under the picker. */
@@ -105,17 +106,17 @@ export function feeTypeOptions(choices: FeeTypeChoices, kept?: FeeTypeRef) {
   if (kept !== undefined && !offered.some((type) => type.id === kept.id)) offered.push(kept);
   return [
     { value: "", label: TEXT.choose },
-    ...offered.map((type) => ({ value: String(type.id), label: type.name })),
+    ...offered.map((type) => ({ value: type.id, label: type.name })),
   ];
 }
 
-/** A chosen id, or null for none (or anything that isn't a whole number). */
-export function idOf(value: string): number | null {
-  return /^[0-9]+$/.test(value) ? Number(value) : null;
+/** A chosen id, or null for none (or anything that isn't a record id). */
+export function idOf(value: string): RecordId | null {
+  return parseRecordId(value);
 }
 
 /** Whether `id` is the office's Other, which needs a note. */
-export function isOtherId(choices: FeeTypeChoices, id: number | null): boolean {
+export function isOtherId(choices: FeeTypeChoices, id: RecordId | null): boolean {
   return Array.isArray(choices) && choices.some((type) => type.isOther && type.id === id);
 }
 
@@ -127,7 +128,7 @@ export function readFeeTypeChoice(
   form: FormData,
   choices: FeeTypeChoices,
   errors: Partial<Record<"feeTypeId" | "note", string[]>>,
-): { feeTypeId: number | null; note: string } {
+): { feeTypeId: RecordId | null; note: string } {
   const feeTypeId = idOf(readField(form, "feeTypeId"));
   const note = readField(form, "note").trim();
   if (feeTypeId === null) errors.feeTypeId = [TEXT.chooseRefused];

@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { FEE_TYPE_STUDENTS_TEXT as TEXT } from "@/constants/feesByType";
 import { ROUTES } from "@/constants/routes";
-import { parseRecordNumber as parseId } from "@/lib/recordId";
+import { parseRecordId as parseId } from "@/lib/recordId";
 
 import { FeeTypeStudentsPage } from "./FeeTypeStudentsPage";
 

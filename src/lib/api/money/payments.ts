@@ -86,12 +86,12 @@ export type NewPayment = {
   amount: number;
   paidOn: string;
   method: PaymentMethod;
-  feeTypeId: number | null;
+  feeTypeId: RecordId | null;
   note: string;
 };
 
 /** One line of a visit's money: a Fee Type, its note and whole NPR. */
-export type NewPaymentLine = { feeTypeId: number | null; note: string; amount: number };
+export type NewPaymentLine = { feeTypeId: RecordId | null; note: string; amount: number };
 
 /** One visit's money (spec 73): the day paid (AD), how, and a Payment per line. */
 export type NewPayments = {
@@ -234,7 +234,7 @@ export type PaymentFilters = {
   to: string;
   /** A Student's name or phone, or a receipt number. */
   search: string;
-  feeTypeId: number | null;
+  feeTypeId: RecordId | null;
   studentId: RecordId | null;
 };
 
@@ -255,7 +255,7 @@ export function paymentFilterQuery(filters: PaymentFilters): Record<string, stri
     const value = filters[field].trim();
     if (value !== "") query[FILTER_FIELDS[field]] = value;
   }
-  if (filters.feeTypeId !== null) query[FILTER_FIELDS.feeTypeId] = String(filters.feeTypeId);
+  if (filters.feeTypeId !== null) query[FILTER_FIELDS.feeTypeId] = filters.feeTypeId;
   return query;
 }
 

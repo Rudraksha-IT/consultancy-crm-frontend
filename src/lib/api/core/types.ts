@@ -27,7 +27,7 @@ import {
   TARGET_LEVELS,
 } from "@/constants/students";
 import { PASSWORD_RULE_IDS, type PasswordRuleId } from "@/lib/password";
-import { RecordIdSchema } from "@/lib/recordId";
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 import { normaliseThemeConfig, type ThemeConfig } from "@/lib/theme";
 
 import { CourseFileSchema } from "../catalogue/courseFileTypes";
@@ -108,7 +108,7 @@ export type Consultancy = z.infer<typeof ConsultancySchema>;
 export const StaffContextSchema = z
   .object({
     staff: z.object({
-      id: z.number().int(),
+      id: RecordIdSchema,
       name: z.string(),
       email: z.string(),
       role: z.enum(ROLES),
@@ -270,7 +270,7 @@ export type StaffStatus = (typeof StaffStatus)[keyof typeof StaffStatus];
 /** One employee as the Employees page shows them, in frontend naming. */
 export const EmployeeSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     email: z.string(),
     mobile: z.string(),
@@ -316,14 +316,14 @@ export const NEW_EMPLOYEE_API_FIELDS = {
 
 /** Someone who can be picked as an Assigned Counsellor: a Counsellor or an Admin. */
 export const CounsellorChoiceSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   role: z.enum(ROLES),
 });
 
 export type CounsellorChoice = z.infer<typeof CounsellorChoiceSchema>;
 
-const AssignedCounsellorSchema = z.object({ id: z.number().int(), name: z.string() }).nullable();
+const AssignedCounsellorSchema = z.object({ id: RecordIdSchema, name: z.string() }).nullable();
 
 const StudentRowFields = {
   id: RecordIdSchema,
@@ -498,8 +498,8 @@ const PERCENT_MAX = 100;
 export const ApplicationSchema = z
   .object({
     id: RecordIdSchema,
-    university: z.object({ id: z.number().int(), name: z.string() }),
-    course: z.object({ id: z.number().int(), name: z.string(), level: z.enum(COURSE_LEVELS) }),
+    university: z.object({ id: RecordIdSchema, name: z.string() }),
+    course: z.object({ id: RecordIdSchema, name: z.string(), level: z.enum(COURSE_LEVELS) }),
     intake: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
     status: z.enum(APPLICATION_STATUSES),
     offer_kind: z.enum(OFFER_KINDS).or(z.literal("")),
@@ -530,8 +530,8 @@ export const VisaSchema = z
   .object({
     id: RecordIdSchema,
     application_id: RecordIdSchema,
-    university: z.object({ id: z.number().int(), name: z.string() }),
-    course: z.object({ id: z.number().int(), name: z.string(), level: z.enum(COURSE_LEVELS) }),
+    university: z.object({ id: RecordIdSchema, name: z.string() }),
+    course: z.object({ id: RecordIdSchema, name: z.string(), level: z.enum(COURSE_LEVELS) }),
     status: z.enum(VISA_STATUSES),
     started_on: z.iso.date(),
     biometrics_at: APPOINTMENT_AT.nullable(),
@@ -553,7 +553,7 @@ export const VisaSchema = z
 export type Visa = z.infer<typeof VisaSchema>;
 
 /** What the Add Application dialog sends: a Catalogue Course and one of its Intakes. */
-export type NewApplication = { courseId: number; intake: string };
+export type NewApplication = { courseId: RecordId; intake: string };
 
 /** The Add Application fields, by their API names. */
 export const APPLICATION_API_FIELDS = { course: "course", intake: "intake" } as const;

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { DEFAULT_THEME } from "@/lib/theme";
 
 import { InvalidFieldsError } from "../core/errors";
@@ -26,7 +27,7 @@ const VISIT = {
 const CODE = "Xy_9-abcdefghijklmnopqrstuvwxyz0123456789AB";
 const CONTEXT = {
   staff: {
-    id: 0,
+    id: uid(0),
     name: "Ramesh",
     email: "ramesh@platform.test",
     role: "admin",
@@ -235,15 +236,15 @@ describe("Platform-only actions inside the office", () => {
   it("sends someone a reset Code", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Reset code sent." }));
 
-    await sendResetCodeTo(4, fetchFn);
+    await sendResetCodeTo(uid(4), fetchFn);
 
-    expect(sent(fetchFn).path).toBe("/api/support-access/staff/4/reset-code/");
+    expect(sent(fetchFn).path).toBe(`/api/support-access/staff/${uid(4)}/reset-code/`);
   });
 
   it("says why a reset Code wasn't sent", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Send their invite again instead." }, 400));
 
-    const error = await sendResetCodeTo(4, fetchFn).catch((caught: unknown) => caught);
+    const error = await sendResetCodeTo(uid(4), fetchFn).catch((caught: unknown) => caught);
 
     expect(fieldErrorsOf(error)).toEqual({
       detail: ["Send their invite again instead."],
@@ -253,10 +254,10 @@ describe("Platform-only actions inside the office", () => {
   it("signs someone out", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await signOutStaff(4, fetchFn);
+    await signOutStaff(uid(4), fetchFn);
 
     const { path, init } = sent(fetchFn);
-    expect(path).toBe("/api/support-access/staff/4/sign-out/");
+    expect(path).toBe(`/api/support-access/staff/${uid(4)}/sign-out/`);
     expect(init?.method).toBe("POST");
   });
 

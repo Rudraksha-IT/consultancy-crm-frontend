@@ -8,7 +8,7 @@ const VISIT = {
   kind: "follow_up",
   purpose: "Bringing documents: Passport copy",
   at: "2026-11-03T10:15:00+05:45",
-  recorded_by: { id: 4, name: "Ramesh KC" },
+  recorded_by: { id: uid(4), name: "Ramesh KC" },
 };
 
 function answering(response: Response) {
@@ -45,7 +45,7 @@ describe("fetchTodaysVisits", () => {
           kind: "follow_up",
           purpose: "Bringing documents: Passport copy",
           at: "2026-11-03T10:15:00+05:45",
-          recordedBy: { id: 4, name: "Ramesh KC" },
+          recordedBy: { id: uid(4), name: "Ramesh KC" },
           student: { id: uid(7), name: "Sita Gurung", noteFirstLine: "Wants Sydney" },
         },
       ],

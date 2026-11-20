@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -20,7 +21,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { testHost } from "@/test/hosts";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["configuration"],
   dateDisplay: "AD",
@@ -116,7 +117,7 @@ describe("ConfigurationPage", () => {
       on("GET", TYPES_PATH, {
         results: [
           {
-            id: 1,
+            id: uid(1),
             name: "Passport",
             needed_by_everyone: true,
             usual_group: "applying",
@@ -140,7 +141,7 @@ describe("ConfigurationPage", () => {
   it("puts the Fee Types under Fees", async () => {
     backend(
       on("GET", "/api/fee-types/", {
-        results: [{ id: 7, name: "Other", hidden: false, other: true, uses: null }],
+        results: [{ id: uid(7), name: "Other", hidden: false, other: true, uses: null }],
       }),
     );
     renderPage(ADMIN);

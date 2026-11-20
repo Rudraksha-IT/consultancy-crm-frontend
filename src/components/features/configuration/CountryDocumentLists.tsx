@@ -304,7 +304,7 @@ function AddExisting({ country, group, addable, onAdd }: AddExistingProps) {
   if (addable.length === 0) {
     return <p className="text-small text-ink-2">{COUNTRY_LIST_TEXT.noneLeft(country)}</p>;
   }
-  const chosen = addable.find((type) => String(type.id) === picked) ?? addable[0];
+  const chosen = addable.find((type) => type.id === picked) ?? addable[0];
 
   function submit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -322,9 +322,9 @@ function AddExisting({ country, group, addable, onAdd }: AddExistingProps) {
         <SelectField
           label={COUNTRY_LIST_TEXT.addExisting(country, group)}
           name="country_document"
-          value={chosen === undefined ? "" : String(chosen.id)}
+          value={chosen === undefined ? "" : chosen.id}
           onChange={setPicked}
-          options={addable.map((type) => ({ value: String(type.id), label: type.name }))}
+          options={addable.map((type) => ({ value: type.id, label: type.name }))}
         />
       </div>
       <div>

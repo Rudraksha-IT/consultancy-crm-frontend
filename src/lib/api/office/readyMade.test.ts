@@ -9,7 +9,7 @@ const MENU = {
     {
       kind: "payment_received",
       record: "payment",
-      records: [{ id: 12, label: "Receipt 000012: Visa fee, NPR 40,000, 2 Nov 2026" }],
+      records: [{ id: uid(12), label: "Receipt 000012: Visa fee, NPR 40,000, 2 Nov 2026" }],
       unavailable: null,
     },
     { kind: "offer_received", record: "offer", records: [], unavailable: "No offer letters yet" },
@@ -44,7 +44,7 @@ describe("fetchReadyMade", () => {
     { kinds: [{ ...MENU.kinds[0], kind: "sms" }] },
     { kinds: [{ ...MENU.kinds[0], record: "student" }] },
     { kinds: [{ ...MENU.kinds[1], records: [{ id: -1, label: "x" }] }] },
-    { kinds: [{ ...MENU.kinds[1], records: [{ id: 1, label: "" }] }] },
+    { kinds: [{ ...MENU.kinds[1], records: [{ id: uid(1), label: "" }] }] },
     { kinds: [{ ...MENU.kinds[0], unavailable: "x".repeat(201) }] },
     { kinds: "welcome" },
   ])("refuses a damaged answer %#", async (body) => {
@@ -66,12 +66,12 @@ describe("fetchReadyMadeDraft", () => {
     const answer = await fetchReadyMadeDraft(
       { studentId: uid(7) },
       "payment_received",
-      12,
+      uid(12),
       fetchFn,
     );
 
     expect(pathOf(fetchFn)).toBe(
-      `/api/students/${uid(7)}/emails/draft/?kind=payment_received&record=12`,
+      `/api/students/${uid(7)}/emails/draft/?kind=payment_received&record=${uid(12)}`,
     );
     expect(answer).toEqual(draft);
   });
@@ -97,7 +97,7 @@ describe("fetchReadyMadeDraft", () => {
   it("reads the files it suggests attaching", async () => {
     const example = {
       kind: "document_example",
-      id: 4,
+      id: uid(4),
       name: "sample.pdf",
       file_name: "sample.pdf",
       size: 2048,
@@ -115,7 +115,7 @@ describe("fetchReadyMadeDraft", () => {
     expect(draft.attachments).toEqual([
       {
         kind: "document_example",
-        id: 4,
+        id: uid(4),
         name: "sample.pdf",
         fileName: "sample.pdf",
         size: 2048,
@@ -126,7 +126,7 @@ describe("fetchReadyMadeDraft", () => {
 
   it.each([
     [{ subject: "", body: "" }],
-    [{ subject: "", body: "", attachments: [{ kind: "computer_file", id: 1 }] }],
+    [{ subject: "", body: "", attachments: [{ kind: "computer_file", id: uid(1) }] }],
   ])("refuses a damaged list of suggested files %#", async (body) => {
     await expect(
       fetchReadyMadeDraft("many", "plain", null, answering(jsonResponse(body))),
@@ -137,7 +137,7 @@ describe("fetchReadyMadeDraft", () => {
     const fetchFn = answering(jsonResponse({ record: ["Choose a Payment."] }, 400));
 
     await expect(
-      fetchReadyMadeDraft({ studentId: uid(7) }, "payment_received", 99, fetchFn),
+      fetchReadyMadeDraft({ studentId: uid(7) }, "payment_received", uid(99), fetchFn),
     ).rejects.toBeInstanceOf(ApiRequestError);
   });
 });

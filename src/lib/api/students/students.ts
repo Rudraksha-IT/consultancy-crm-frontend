@@ -1,3 +1,4 @@
+import { parseRecordId, type RecordId } from "@/lib/recordId";
 import { API_PATHS } from "@/constants/api";
 import { studentListQuery, type StudentFilters } from "@/lib/students";
 
@@ -57,6 +58,6 @@ function toApiFields(student: NewStudent): Record<string, string | number | null
 }
 
 /** The chosen Staff id, or null for "Decide later" (anything that isn't an id). */
-function counsellorId(value: string): number | null {
-  return /^[1-9][0-9]*$/.test(value) ? Number(value) : null;
+function counsellorId(value: string): RecordId | null {
+  return parseRecordId(value);
 }

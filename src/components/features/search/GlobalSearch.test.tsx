@@ -21,7 +21,7 @@ const SITA = {
   name: "Sita Karki",
   phone: "9841234567",
   stage: "counselling",
-  assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 };
 const ASHA = {
   ...SITA,
@@ -30,7 +30,7 @@ const ASHA = {
   stage: "lead",
   assigned_counsellor: null,
 };
-const MORNING = { id: 7, name: "IELTS Morning", time_slot: "7:00-8:30 AM" };
+const MORNING = { id: uid(7), name: "IELTS Morning", time_slot: "7:00-8:30 AM" };
 
 function searchUrl(text: string): string {
   return `/api/search/?${new URLSearchParams({ q: text }).toString()}`;
@@ -88,7 +88,7 @@ describe("GlobalSearch", () => {
     const classes = within(results).getByRole("group", { name: "Classes" });
     expect(within(classes).getByRole("link", { name: /IELTS Morning/ })).toHaveAttribute(
       "href",
-      "/batches/7",
+      `/batches/${uid(7)}`,
     );
     expect(within(classes).getByText("7:00-8:30 AM")).toBeInTheDocument();
     expect(
@@ -312,7 +312,7 @@ describe("GlobalSearch for each Role", () => {
             kind: "class_student",
             id: uid(2),
             name: "Sita Karki",
-            batch: { id: 7, name: "IELTS Morning" },
+            batch: { id: uid(7), name: "IELTS Morning" },
           },
         ],
         student_count: 1,
@@ -325,7 +325,7 @@ describe("GlobalSearch for each Role", () => {
     await settle();
 
     const link = screen.getByRole("link", { name: /Sita Karki/ });
-    expect(link).toHaveAttribute("href", "/batches/7");
+    expect(link).toHaveAttribute("href", `/batches/${uid(7)}`);
     expect(link).toHaveTextContent("In your class");
     expect(screen.queryByRole("link", { name: /Student list/ })).not.toBeInTheDocument();
     await user.keyboard("{Enter}");

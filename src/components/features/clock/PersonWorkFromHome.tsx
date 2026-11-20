@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useCallback, useState } from "react";
 
 import { Banner } from "@/components/ui/Banner";
@@ -17,7 +18,7 @@ import { WorkFromHomeDialog } from "./WorkFromHomeDialog";
 import { WorkFromHomeRows } from "./WorkFromHomeRows";
 import { firstName } from "./workFromHomeFailure";
 
-type PersonWorkFromHomeProps = { staffId: number };
+type PersonWorkFromHomeProps = { staffId: RecordId };
 
 /**
  * One employee's Work From Home dates, for Admins (spec 133): approve or decline a request, set

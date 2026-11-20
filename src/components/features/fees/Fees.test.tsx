@@ -29,7 +29,7 @@ async function pickFeeType(dialog: HTMLElement, name: string): Promise<void> {
 }
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "payments", "accounts"],
   dateDisplay: "AD",
@@ -40,7 +40,7 @@ const ADMIN: StaffContext = {
 
 const COUNSELLOR: StaffContext = {
   ...ADMIN,
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
 };
 
 const FEES_URL = `/api/students/${uid(7)}/fees/`;
@@ -71,7 +71,7 @@ const NO_EXPENSES = {
 
 const VISA_FEE = {
   id: uid(31),
-  fee_type: feeTypeRef(3),
+  fee_type: feeTypeRef(uid(3)),
   note: "processing",
   amount: 40000,
   added_by: { name: "Bikash Thapa" },
@@ -80,7 +80,7 @@ const VISA_FEE = {
 const APPLICATION_FEE = {
   ...VISA_FEE,
   id: uid(32),
-  fee_type: feeTypeRef(1),
+  fee_type: feeTypeRef(uid(1)),
   note: "",
   amount: 25000,
 };
@@ -329,7 +329,7 @@ describe("adding a fee", () => {
 
     expect(await screen.findByText("Fee added")).toBeInTheDocument();
     expect(sentBody(fetchFn, "POST", FEES_URL)).toEqual({
-      fee_type: 3,
+      fee_type: uid(3),
       note: "processing",
       amount: 40000,
     });
@@ -430,7 +430,7 @@ describe("changing and deleting a fee", () => {
     await openFeesTab();
     const dialog = await openEdit();
 
-    expect(within(dialog).getByRole("combobox", { name: "Fee Type" })).toHaveValue("3");
+    expect(within(dialog).getByRole("combobox", { name: "Fee Type" })).toHaveValue(uid(3));
     expect(within(dialog).getByLabelText(/^Note/)).toHaveValue("processing");
     expect(within(dialog).getByLabelText("Amount (NPR)")).toHaveValue(40000);
     await userEvent.clear(within(dialog).getByLabelText("Amount (NPR)"));
@@ -439,7 +439,7 @@ describe("changing and deleting a fee", () => {
 
     expect(await screen.findByText("Changes saved")).toBeInTheDocument();
     expect(sentBody(fetchFn, "PUT", `/api/fees/${uid(31)}/`)).toEqual({
-      fee_type: 3,
+      fee_type: uid(3),
       note: "processing",
       amount: 45000,
     });
@@ -620,7 +620,11 @@ describe("Accounts -> Student fees", () => {
     await userEvent.click(within(add).getByRole("button", { name: "Add fee" }));
 
     expect(await screen.findByText("Fee added")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", FEES_URL)).toEqual({ fee_type: 4, note: "", amount: 18000 });
+    expect(sentBody(fetchFn, "POST", FEES_URL)).toEqual({
+      fee_type: uid(4),
+      note: "",
+      amount: 18000,
+    });
     expect(callsTo(fetchFn, "GET", OWING_URL).length).toBeGreaterThan(1);
   });
 

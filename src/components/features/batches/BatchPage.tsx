@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -40,7 +41,7 @@ const BACK = (
  * for Admins and Counsellors Add Students, Edit class details and (with email on) Email the
  * class, which ticks its Students first (issue 04).
  */
-export function BatchPage({ batchId }: { batchId: number }) {
+export function BatchPage({ batchId }: { batchId: RecordId }) {
   const context = useCurrentStaff();
   if (!canSeeClasses(context)) {
     return (
@@ -56,7 +57,7 @@ export function BatchPage({ batchId }: { batchId: number }) {
 
 type Open = "add" | "edit" | "message" | null;
 
-function LoadedClass({ batchId }: { batchId: number }) {
+function LoadedClass({ batchId }: { batchId: RecordId }) {
   const [version, setVersion] = useState(0);
   const state = useBatch(batchId, version);
   const reload = () => {

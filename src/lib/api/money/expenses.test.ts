@@ -1,9 +1,10 @@
+import { uid } from "@/test/ids";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { addExpense, changeExpense, deleteExpense, fetchExpenses } from "./expenses";
 import { jsonResponse } from "../core/test-helpers";
 
 const EXPENSE = {
-  id: 605,
+  id: uid(605),
   spent_on: "2026-10-12",
   category: "electricity",
   paid_to: "Nepal Electricity Authority",
@@ -13,7 +14,7 @@ const EXPENSE = {
 };
 
 const FRONTEND_EXPENSE = {
-  id: 605,
+  id: uid(605),
   spentOn: "2026-10-12",
   category: "electricity",
   paidTo: "Nepal Electricity Authority",
@@ -130,9 +131,9 @@ describe("changeExpense", () => {
   it("PUTs every field to the Expense", async () => {
     const fetchFn = answering(jsonResponse(EXPENSE));
 
-    const expense = await changeExpense(605, NEW_EXPENSE, fetchFn);
+    const expense = await changeExpense(uid(605), NEW_EXPENSE, fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/accounts/expenses/605/");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/accounts/expenses/${uid(605)}/`);
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("PUT");
     expect(expense).toEqual(FRONTEND_EXPENSE);
   });
@@ -140,7 +141,7 @@ describe("changeExpense", () => {
   it("names refused fields", async () => {
     const fetchFn = answering(jsonResponse({ amount: ["Too big."] }, 400));
 
-    await expect(changeExpense(605, NEW_EXPENSE, fetchFn)).rejects.toMatchObject({
+    await expect(changeExpense(uid(605), NEW_EXPENSE, fetchFn)).rejects.toMatchObject({
       fieldErrors: { amount: ["Too big."] },
     });
   });
@@ -150,9 +151,9 @@ describe("deleteExpense", () => {
   it("DELETEs the Expense", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await deleteExpense(605, fetchFn);
+    await deleteExpense(uid(605), fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/accounts/expenses/605/");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/accounts/expenses/${uid(605)}/`);
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("DELETE");
   });
 });

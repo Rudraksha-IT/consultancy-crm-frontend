@@ -15,7 +15,7 @@ import { TransferRequestsPage } from "./TransferRequestsPage";
 import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 3, name: "Anjali Gurung", email: "anjali@acme.test", role: "counsellor" },
+  staff: { id: uid(3), name: "Anjali Gurung", email: "anjali@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students", "tasks"],
   dateDisplay: "AD",
@@ -24,7 +24,7 @@ const COUNSELLOR: StaffContext = {
   theme: DEFAULT_THEME,
 };
 
-function as(role: StaffContext["staff"]["role"], id = 9): StaffContext {
+function as(role: StaffContext["staff"]["role"], id = uid(9)): StaffContext {
   return { ...COUNSELLOR, staff: { ...COUNSELLOR.staff, id, name: "Someone Else", role } };
 }
 
@@ -34,13 +34,13 @@ const LIST = "/api/transfer-requests/";
 const REASON = "Her sister Rojina is my Student, and the family wants one counsellor.";
 
 const WAITING = {
-  id: 801,
+  id: uid(801),
   student: { id: uid(7), name: "Sita Gurung" },
-  asked_by: { id: 3, name: "Anjali Gurung" },
+  asked_by: { id: uid(3), name: "Anjali Gurung" },
   reason: REASON,
   asked_at: "2026-10-27T10:35:00+00:00",
   status: "waiting",
-  counsellor: { id: 2, name: "Bikash Thapa" },
+  counsellor: { id: uid(2), name: "Bikash Thapa" },
   answered_by: null,
   answer_reason: "",
   answered_at: null,
@@ -53,7 +53,7 @@ const FOR_ME = { ...WAITING, can_answer: true, can_cancel: false };
 
 const VIEW_ONLY = {
   ...PROFILE,
-  assigned_counsellor: { id: 2, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(2), name: "Bikash Thapa" },
   can_change: false,
   can_set_stage: false,
   can_transfer: false,
@@ -206,7 +206,7 @@ describe("Asking to take a Student", () => {
           ? { ...VIEW_ONLY, can_ask_transfer: true }
           : { ...VIEW_ONLY, transfer_request: WAITING },
       ),
-      onEach("POST", "/api/transfer-requests/801/cancel/", () => {
+      onEach("POST", `/api/transfer-requests/${uid(801)}/cancel/`, () => {
         cancelled = true;
         return { ...WAITING, status: "cancelled", answered_at: "2026-10-28T09:00:00+00:00" };
       }),
@@ -219,7 +219,7 @@ describe("Asking to take a Student", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Cancel request" }));
 
     expect(await screen.findByText("Request cancelled")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "POST", "/api/transfer-requests/801/cancel/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "POST", `/api/transfer-requests/${uid(801)}/cancel/`)).toHaveLength(1);
     expect(
       await screen.findByRole("button", { name: "Ask to take this Student" }),
     ).toBeInTheDocument();
@@ -239,13 +239,13 @@ describe("Cancelling needs the popup", () => {
 
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByRole("button", { name: "Cancel request" })).toBeVisible();
-    expect(callsTo(fetchFn, "POST", "/api/transfer-requests/801/cancel/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "POST", `/api/transfer-requests/${uid(801)}/cancel/`)).toHaveLength(0);
   });
 });
 
 describe("Answering on the profile", () => {
-  const MINE = { ...PROFILE, assigned_counsellor: { id: 2, name: "Bikash Thapa" } };
-  const BIKASH = as("counsellor", 2);
+  const MINE = { ...PROFILE, assigned_counsellor: { id: uid(2), name: "Bikash Thapa" } };
+  const BIKASH = as("counsellor", uid(2));
 
   it("shows who asked, when and why, with Approve and Decline", async () => {
     backend(on("GET", STUDENT, { ...MINE, transfer_request: FOR_ME }));
@@ -262,7 +262,7 @@ describe("Answering on the profile", () => {
     backend(
       on("GET", STUDENT, { ...VIEW_ONLY, transfer_request: { ...FOR_ME, can_answer: false } }),
     );
-    renderWith(as("counsellor", 11), <StudentProfilePage studentId={uid(7)} />);
+    renderWith(as("counsellor", uid(11)), <StudentProfilePage studentId={uid(7)} />);
 
     expect(await screen.findByText(/Waiting for Bikash Thapa or an Admin\./)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
@@ -275,10 +275,10 @@ describe("Answering on the profile", () => {
     const fetchFn = backend(
       onEach("GET", STUDENT, () =>
         approved
-          ? { ...VIEW_ONLY, assigned_counsellor: { id: 3, name: "Anjali Gurung" } }
+          ? { ...VIEW_ONLY, assigned_counsellor: { id: uid(3), name: "Anjali Gurung" } }
           : { ...MINE, transfer_request: FOR_ME },
       ),
-      onEach("POST", "/api/transfer-requests/801/approve/", () => {
+      onEach("POST", `/api/transfer-requests/${uid(801)}/approve/`, () => {
         approved = true;
         return { ...FOR_ME, status: "approved", can_answer: false };
       }),
@@ -293,7 +293,7 @@ describe("Answering on the profile", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Approve and transfer" }));
 
     expect(await screen.findByText("Sita Gurung is now with Anjali Gurung")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "POST", "/api/transfer-requests/801/approve/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "POST", `/api/transfer-requests/${uid(801)}/approve/`)).toHaveLength(1);
     await waitFor(() => {
       expect(screen.queryByRole("button", { name: "Approve" })).toBeNull();
     });
@@ -305,7 +305,7 @@ describe("Answering on the profile", () => {
       on("GET", STUDENT, { ...MINE, transfer_request: FOR_ME }),
       on(
         "POST",
-        "/api/transfer-requests/801/approve/",
+        `/api/transfer-requests/${uid(801)}/approve/`,
         { detail: "This request is no longer waiting for an answer." },
         409,
       ),
@@ -323,7 +323,7 @@ describe("Answering on the profile", () => {
   it("declines with an optional reason", async () => {
     const fetchFn = backend(
       on("GET", STUDENT, { ...MINE, transfer_request: FOR_ME }),
-      on("POST", "/api/transfer-requests/801/decline/", {
+      on("POST", `/api/transfer-requests/${uid(801)}/decline/`, {
         ...FOR_ME,
         status: "declined",
         can_answer: false,
@@ -339,14 +339,15 @@ describe("Answering on the profile", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Decline" }));
 
     expect(await screen.findByText("Request declined")).toBeInTheDocument();
-    const [, init] = callsTo(fetchFn, "POST", "/api/transfer-requests/801/decline/")[0] ?? [];
+    const [, init] =
+      callsTo(fetchFn, "POST", `/api/transfer-requests/${uid(801)}/decline/`)[0] ?? [];
     expect(sentJson(init)).toEqual({ reason: "After her PTE." });
   });
 
   it("declines on Ctrl + Enter in the reason", async () => {
     const fetchFn = backend(
       on("GET", STUDENT, { ...MINE, transfer_request: FOR_ME }),
-      on("POST", "/api/transfer-requests/801/decline/", {
+      on("POST", `/api/transfer-requests/${uid(801)}/decline/`, {
         ...FOR_ME,
         status: "declined",
         can_answer: false,
@@ -361,7 +362,8 @@ describe("Answering on the profile", () => {
     await userEvent.type(box, "After her PTE.{Control>}{Enter}{/Control}");
 
     expect(await screen.findByText("Request declined")).toBeInTheDocument();
-    const [, init] = callsTo(fetchFn, "POST", "/api/transfer-requests/801/decline/")[0] ?? [];
+    const [, init] =
+      callsTo(fetchFn, "POST", `/api/transfer-requests/${uid(801)}/decline/`)[0] ?? [];
     expect(sentJson(init)).toEqual({ reason: "After her PTE." });
   });
 
@@ -389,7 +391,7 @@ describe("Answering on the profile", () => {
 describe("The Transfer requests page", () => {
   const DECLINED = {
     ...WAITING,
-    id: 804,
+    id: uid(804),
     student: { id: uid(9), name: "Asmita Rai" },
     status: "declined",
     answered_by: { name: "Bikash Thapa", is_platform_admin: false },
@@ -397,16 +399,16 @@ describe("The Transfer requests page", () => {
     answered_at: "2026-10-10T09:17:00+00:00",
     taken_from: "Bikash Thapa",
     // Transferred to Anjali later, another way.
-    counsellor: { id: 3, name: "Anjali Gurung" },
+    counsellor: { id: uid(3), name: "Anjali Gurung" },
     can_cancel: false,
   };
   const APPROVED = {
     ...DECLINED,
-    id: 805,
+    id: uid(805),
     student: { id: uid(10), name: "Dipesh Rana" },
     status: "approved",
     answer_reason: "",
-    counsellor: { id: 3, name: "Anjali Gurung" },
+    counsellor: { id: uid(3), name: "Anjali Gurung" },
     taken_from: "",
   };
 
@@ -487,7 +489,7 @@ describe("The Transfer requests page", () => {
       onEach("GET", `${LIST}?box=waiting_for_me&page=1`, () =>
         declined ? pageOf([]) : pageOf([FOR_ME], 1),
       ),
-      onEach("POST", "/api/transfer-requests/801/decline/", () => {
+      onEach("POST", `/api/transfer-requests/${uid(801)}/decline/`, () => {
         declined = true;
         return { ...FOR_ME, status: "declined" };
       }),
@@ -525,7 +527,7 @@ describe("The Transfer requests page", () => {
     const fetchFn = backend(
       on("GET", `${LIST}?box=waiting_for_me&page=1`, pageOf([FOR_ME], 1, 21)),
       on("GET", `${LIST}?box=waiting_for_me&page=2`, {
-        ...pageOf([{ ...FOR_ME, id: 900 }], 1, 21),
+        ...pageOf([{ ...FOR_ME, id: uid(900) }], 1, 21),
         page: 2,
       }),
     );

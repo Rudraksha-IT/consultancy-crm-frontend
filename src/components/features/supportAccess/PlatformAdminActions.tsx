@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { Banner } from "@/components/ui/Banner";
@@ -12,9 +13,9 @@ import { InvalidFieldsError, sendResetCodeTo, signOutStaff, type Employee } from
 type PlatformAdminActionsProps = {
   employee: Employee;
   /** Sends the Code; the office's own endpoint by default. */
-  sendCode?: (staffId: number) => Promise<void>;
+  sendCode?: (staffId: RecordId) => Promise<void>;
   /** Signs them out everywhere; the office's own endpoint by default. */
-  signOut?: (staffId: number) => Promise<void>;
+  signOut?: (staffId: RecordId) => Promise<void>;
 };
 
 /**

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import { CONSULTANCY_STATUSES } from "@/constants/consultancyStatus";
 import { MODULES, type SwitchableModule } from "@/constants/modules";
@@ -118,7 +120,7 @@ export async function switchOfficeModules(
 
 /** Email a Staff member (Admins included) a password reset Code. */
 export async function sendResetCodeTo(
-  staffId: number,
+  staffId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<void> {
   try {
@@ -129,7 +131,7 @@ export async function sendResetCodeTo(
 }
 
 /** Sign a Staff member (Admins included) out of every device at once. */
-export function signOutStaff(staffId: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function signOutStaff(staffId: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return postWithoutBody(API_PATHS.supportSignOut(staffId), fetchFn);
 }
 

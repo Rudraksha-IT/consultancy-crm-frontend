@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { parseRecordId, parseRecordNumber, RecordIdSchema } from "./index";
+import { parseRecordId, RecordIdSchema } from "./index";
 
 const ID = "3f8a2c1e-9b7d-4c2a-8e1f-0a1b2c3d4e5f";
 
@@ -29,17 +29,4 @@ describe("parseRecordId", () => {
       expect(parseRecordId(text)).toBeNull();
     },
   );
-});
-
-describe("parseRecordNumber (records ticket 18 hasn't switched yet)", () => {
-  it.each([
-    ["7", 7],
-    ["1234567890", 1234567890],
-  ])("reads %j as a record number", (text, id) => {
-    expect(parseRecordNumber(text)).toBe(id);
-  });
-
-  it.each(["0", "-1", "07", "abc", "1.5", "", "12345678901", "1e3", ID])("refuses %j", (text) => {
-    expect(parseRecordNumber(text)).toBeNull();
-  });
 });

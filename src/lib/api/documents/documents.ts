@@ -72,12 +72,12 @@ function appendFiles(form: FormData, files: readonly File[]): FormData {
 
 /** The upload form: the type, the files and, when there is one, the link's own field. */
 function uploadForm(
-  documentTypeId: number,
+  documentTypeId: RecordId,
   files: readonly File[],
   link: Pick<DocumentLinkedTo, "kind" | "id"> | null,
 ): FormData {
   const form = new FormData();
-  form.append(UPLOAD_FIELDS.documentType, String(documentTypeId));
+  form.append(UPLOAD_FIELDS.documentType, documentTypeId);
   appendFiles(form, files);
   if (link !== null) form.append(LINK_FIELDS[link.kind], link.id);
   return form;
@@ -91,7 +91,7 @@ function uploadForm(
  */
 export async function uploadDocument(
   studentId: RecordId,
-  documentTypeId: number,
+  documentTypeId: RecordId,
   files: readonly File[],
   fetchFn: typeof fetch = fetch,
   link: Pick<DocumentLinkedTo, "kind" | "id"> | null = null,
@@ -211,7 +211,7 @@ export async function addDocumentType(
 
 /** Move a Document Type onto, or off, every Student's checklist. */
 export function setNeededByEveryone(
-  id: number,
+  id: RecordId,
   neededByEveryone: boolean,
   fetchFn: typeof fetch = fetch,
 ): Promise<ConfiguredDocumentType> {
@@ -227,7 +227,7 @@ export function setNeededByEveryone(
  * Remove a Document Type nothing asks for and with no files (Configuration). A refusal rejects
  * with `ApiRequestError`; `requirementRefusal` reads its reason.
  */
-export function removeDocumentType(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function removeDocumentType(id: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.documentType(id), fetchFn);
 }
 
@@ -296,7 +296,7 @@ export async function addPickedDocumentType(
 /** Ask one Student for exactly these extra Document Types (spec 63b); returns the checklist. */
 export function setStudentDocuments(
   studentId: RecordId,
-  typeIds: readonly number[],
+  typeIds: readonly RecordId[],
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
   return putJson(
@@ -310,7 +310,7 @@ export function setStudentDocuments(
 /** "Not needed": take a type asked for one Student alone off their checklist. */
 export function dropStudentDocument(
   studentId: RecordId,
-  typeId: number,
+  typeId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
   return deleteJson(API_PATHS.studentDocumentAsked(studentId, typeId), ChecklistSchema, fetchFn);

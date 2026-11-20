@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -29,7 +30,7 @@ export function ClassesSection() {
   const enrolled = useEnrolledStudents(1, version);
   const dialogs = useClassDialogs();
   const classes = batches.status === "loaded" ? batches.data.batches : [];
-  const peekById = (id: number) => {
+  const peekById = (id: RecordId) => {
     const batch =
       batches.status === "loaded" ? batches.data.batches.find((b) => b.id === id) : null;
     if (batch !== undefined && batch !== null) dialogs.openPeek(batch);
@@ -127,7 +128,7 @@ const CELL = "px-6 py-4 align-middle max-tablet:px-6 max-tablet:py-1";
 
 type EnrolledTableProps = {
   state: Loaded<{ students: EnrolledStudent[] }>;
-  onPeek: (batchId: number) => void;
+  onPeek: (batchId: RecordId) => void;
 };
 
 /** Each Student in a class, the classes they're in, and how much they attended. */

@@ -90,7 +90,7 @@ function LoadedSection(props: LoadedSectionProps) {
   const { studentId, studentName, emailTo, links, checklist, onChanged } = props;
   const { showToast } = useToast();
   const examples = useExamplesEmail(emailTo);
-  const [uploadingTypeId, setUploadingTypeId] = useState<number | null>(null);
+  const [uploadingTypeId, setUploadingTypeId] = useState<RecordId | null>(null);
   const [addingTo, setAddingTo] = useState<AddingTo | null>(null);
   const [isAsking, setIsAsking] = useState(false);
   const [notNeeded, setNotNeeded] = useState<ChecklistItem["documentType"] | null>(null);
@@ -270,7 +270,7 @@ type NotNeededDialogProps = {
   documentType: ChecklistItem["documentType"] | null;
   studentName: string;
   onClose: () => void;
-  onConfirm: (documentTypeId: number) => Promise<void>;
+  onConfirm: (documentTypeId: RecordId) => Promise<void>;
 };
 
 /** Asks before taking a document off this Student's checklist ("Not needed"). */

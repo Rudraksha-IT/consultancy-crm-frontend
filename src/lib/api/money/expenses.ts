@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import {
   EXPENSE_CATEGORIES,
@@ -16,7 +18,7 @@ const Npr = z.number().int().nonnegative();
 /** One Expense as the API answers it (spec 76c). The day is AD, "YYYY-MM-DD". */
 const ExpenseSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     spent_on: z.iso.date(),
     category: z.enum(EXPENSE_CATEGORIES),
     paid_to: z.string(),
@@ -112,7 +114,7 @@ export async function addExpense(
 
 /** Replace every detail of an Expense and return it. */
 export async function changeExpense(
-  expenseId: number,
+  expenseId: RecordId,
   expense: NewExpense,
   fetchFn: typeof fetch = fetch,
 ): Promise<Expense> {
@@ -124,6 +126,6 @@ export async function changeExpense(
 }
 
 /** Delete an Expense. */
-export function deleteExpense(expenseId: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function deleteExpense(expenseId: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.expense(expenseId), fetchFn);
 }

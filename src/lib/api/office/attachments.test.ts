@@ -4,7 +4,7 @@ import { uid } from "@/test/ids";
 
 const BROCHURE = {
   kind: "course_file",
-  id: 3,
+  id: uid(3),
   name: "Master of IT brochure",
   file_name: "brochure.pdf",
   size: 1_048_576,
@@ -12,7 +12,7 @@ const BROCHURE = {
 };
 const EXAMPLE = {
   kind: "document_example",
-  id: 4,
+  id: uid(4),
   name: "sample.pdf",
   file_name: "sample.pdf",
   size: 2048,
@@ -20,7 +20,7 @@ const EXAMPLE = {
 };
 const PASSPORT = {
   kind: "document_file",
-  id: 9,
+  id: uid(9),
   name: "passport.pdf",
   file_name: "passport.pdf",
   size: 4096,
@@ -49,15 +49,15 @@ describe("fetchAttachable", () => {
     expect(files.courseFiles).toEqual([
       {
         kind: "course_file",
-        id: 3,
+        id: uid(3),
         name: "Master of IT brochure",
         fileName: "brochure.pdf",
         size: 1_048_576,
         group: "Deakin University, Master of IT",
       },
     ]);
-    expect(files.documentExamples.map((file) => file.id)).toEqual([4]);
-    expect(files.documents.map((file) => file.id)).toEqual([9]);
+    expect(files.documentExamples.map((file) => file.id)).toEqual([uid(4)]);
+    expect(files.documents.map((file) => file.id)).toEqual([uid(9)]);
   });
 
   it("reads what can go to many Students", async () => {
@@ -71,7 +71,7 @@ describe("fetchAttachable", () => {
 
   it.each([
     { ...ANSWER, course_files: [{ ...BROCHURE, kind: "computer_file" }] },
-    { ...ANSWER, course_files: [{ ...BROCHURE, id: 0 }] },
+    { ...ANSWER, course_files: [{ ...BROCHURE, id: 3 }] },
     { ...ANSWER, course_files: [{ ...BROCHURE, size: -1 }] },
     { ...ANSWER, course_files: [{ ...BROCHURE, file_name: "" }] },
     { ...ANSWER, documents: undefined },
@@ -88,13 +88,13 @@ describe("refsOf", () => {
   it("keeps only each file's kind and id", () => {
     const file = {
       kind: "document_file" as const,
-      id: 9,
+      id: uid(9),
       name: "passport.pdf",
       fileName: "passport.pdf",
       size: 4096,
       group: "Passport",
     };
 
-    expect(refsOf([file])).toEqual([{ kind: "document_file", id: 9 }]);
+    expect(refsOf([file])).toEqual([{ kind: "document_file", id: uid(9) }]);
   });
 });

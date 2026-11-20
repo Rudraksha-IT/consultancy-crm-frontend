@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useEffectEvent, useState } from "react";
 
 import { HTTP_STATUS } from "@/constants/api";
@@ -27,10 +28,10 @@ type Answer = { key: string; state: ProgressState; staff: StaffProgress["staff"]
  * kept while a new period loads or is refused, so the page header stays put.
  */
 export function useStaffProgress(
-  staffId: number,
+  staffId: RecordId,
   range: DateRange,
 ): { state: ProgressState; staff: StaffProgress["staff"] | null } {
-  const key = `${String(staffId)}:${range.from}:${range.to}`;
+  const key = `${staffId}:${range.from}:${range.to}`;
   const [answer, setAnswer] = useState<Answer>({
     key: "",
     state: { status: "loading" },

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 
 import { getJson, patchJson, postJson, putJson, sendWithoutBody } from "../core/client";
@@ -8,7 +10,7 @@ import { toFieldErrors } from "../core/fieldErrors";
 import { DetailAnswerSchema } from "../core/types";
 
 /** What a Fee or Payment is for, as its answer names it (GLOSSARY: Fee Type). */
-export const FeeTypeRefSchema = z.object({ id: z.number().int(), name: z.string().min(1) });
+export const FeeTypeRefSchema = z.object({ id: RecordIdSchema, name: z.string().min(1) });
 
 export type FeeTypeRef = z.infer<typeof FeeTypeRefSchema>;
 
@@ -18,7 +20,7 @@ export type FeeTypeRef = z.infer<typeof FeeTypeRefSchema>;
  */
 const FeeTypeSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string().min(1),
     hidden: z.boolean(),
     other: z.boolean(),
@@ -65,7 +67,7 @@ export type FeeTypeChange = { name?: string; hidden?: boolean };
  * `InvalidFieldsError` on `name`, or `ApiRequestError` with the reason.
  */
 export async function changeFeeType(
-  feeTypeId: number,
+  feeTypeId: RecordId,
   change: FeeTypeChange,
   fetchFn: typeof fetch = fetch,
 ): Promise<FeeType> {
@@ -77,13 +79,13 @@ export async function changeFeeType(
 }
 
 /** Delete a Fee Type no Fee or Payment uses (Admins); one in use is refused: hide it instead. */
-export function deleteFeeType(feeTypeId: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function deleteFeeType(feeTypeId: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.feeType(feeTypeId), fetchFn);
 }
 
 /** Put the Fee Types in this order (every id once) and return the list. */
 export function reorderFeeTypes(
-  order: readonly number[],
+  order: readonly RecordId[],
   fetchFn: typeof fetch = fetch,
 ): Promise<FeeType[]> {
   return putJson(API_PATHS.feeTypeOrder, { order }, FeeTypeListSchema, fetchFn);

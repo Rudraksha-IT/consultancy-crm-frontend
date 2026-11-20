@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useState } from "react";
 
 import { fetchEmployees, type Employee } from "@/lib/api";
@@ -14,7 +15,7 @@ export type EmployeesState = {
   /** Show an employee as the API returned them after a change. */
   replace: (employee: Employee) => void;
   /** Stop showing someone whose invite was cancelled. */
-  remove: (id: number) => void;
+  remove: (id: RecordId) => void;
 };
 
 /** Load the office's employees and keep the list in step with changes made on the page. */

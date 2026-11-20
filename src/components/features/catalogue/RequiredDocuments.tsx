@@ -1,3 +1,5 @@
+import type { RecordId } from "@/lib/recordId";
+
 import { Banner } from "@/components/ui/Banner";
 import { CheckboxGroup } from "@/components/ui/CheckboxGroup";
 import { CATALOGUE_TEXT } from "@/constants/catalogue";
@@ -11,8 +13,8 @@ type RequiredDocumentsProps = {
   name: string;
   types: OptionalTypesState;
   /** The ticked Document Type ids. */
-  ticked: readonly number[];
-  onChange: (ids: number[]) => void;
+  ticked: readonly RecordId[];
+  onChange: (ids: RecordId[]) => void;
   errors?: readonly string[] | undefined;
 };
 
@@ -31,10 +33,10 @@ export function RequiredDocuments({
       label={CATALOGUE_TEXT.requiredDocuments}
       name={name}
       hint={CATALOGUE_TEXT.requiredDocumentsHint}
-      options={types.types.map((type) => ({ value: String(type.id), label: type.name }))}
+      options={types.types.map((type) => ({ value: type.id, label: type.name }))}
       values={ticked.map(String)}
       onChange={(values) => {
-        onChange(values.map(Number));
+        onChange(values);
       }}
       isOptional
       errors={errors}

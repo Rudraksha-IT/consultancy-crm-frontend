@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { InvalidFieldsError } from "../core/errors";
 import {
   fetchClassReport,
@@ -19,7 +20,7 @@ const MONTH = {
 };
 
 const COUNSELLOR = {
-  id: 3,
+  id: uid(3),
   name: "Bikash Thapa",
   is_active: true,
   students: 12,
@@ -31,7 +32,7 @@ const COUNSELLOR = {
   tasks_done: 9,
 };
 const FRONT_DESK = {
-  id: 4,
+  id: uid(4),
   name: "Sunita Shrestha",
   is_active: false,
   visitors_registered: 20,
@@ -39,7 +40,7 @@ const FRONT_DESK = {
   payments_taken: 5,
 };
 const TEACHER = {
-  id: 6,
+  id: uid(6),
   name: "Gita Lama",
   is_active: true,
   classes_taken: 12,
@@ -186,7 +187,7 @@ describe("fetchStaffProgressReport", () => {
     expect(report).toEqual({
       counsellors: [
         {
-          id: 3,
+          id: uid(3),
           name: "Bikash Thapa",
           isActive: true,
           counts: {
@@ -202,7 +203,7 @@ describe("fetchStaffProgressReport", () => {
       ],
       frontDesk: [
         {
-          id: 4,
+          id: uid(4),
           name: "Sunita Shrestha",
           isActive: false,
           counts: { visitors_registered: 20, new_leads: 8, payments_taken: 5 },
@@ -210,7 +211,7 @@ describe("fetchStaffProgressReport", () => {
       ],
       teachers: [
         {
-          id: 6,
+          id: uid(6),
           name: "Gita Lama",
           isActive: true,
           counts: { classes_taken: 12, attendance_marked: 140 },
@@ -223,7 +224,7 @@ describe("fetchStaffProgressReport", () => {
   it.each([
     ["a row without its name", { counsellors: [{ ...COUNSELLOR, name: 7 }] }],
     ["a negative count", { front_desk: [{ ...FRONT_DESK, new_leads: -1 }] }],
-    ["a missing column", { teachers: [{ id: 6, name: "Gita Lama", is_active: true }] }],
+    ["a missing column", { teachers: [{ id: uid(6), name: "Gita Lama", is_active: true }] }],
     ["an unknown counted-from count", { counted_from: { coffee: "2026-11-15" } }],
     ["a counted-from day that isn't a date", { counted_from: { tasks_done: "<b>soon</b>" } }],
   ])("refuses %s", async (_, change) => {
@@ -242,7 +243,7 @@ describe("fetchStaffProgressReport", () => {
 });
 
 const CLASS = {
-  id: 4,
+  id: uid(4),
   name: "IELTS Morning",
   test_type: "ielts",
   teacher: "Gita Lama",
@@ -253,7 +254,7 @@ const CLASS = {
 describe("fetchClassReport", () => {
   it("sends the dates and returns each class in frontend naming", async () => {
     const fetchFn = answering(
-      jsonResponse({ batches: [CLASS, { ...CLASS, id: 5, attended_percent: null }] }),
+      jsonResponse({ batches: [CLASS, { ...CLASS, id: uid(5), attended_percent: null }] }),
     );
 
     const rows = await fetchClassReport(RANGE, fetchFn);
@@ -261,7 +262,7 @@ describe("fetchClassReport", () => {
     expect(sentPath(fetchFn)).toBe("/api/reports/batches/?from=2026-08-01&to=2026-11-03");
     expect(rows).toEqual([
       {
-        id: 4,
+        id: uid(4),
         name: "IELTS Morning",
         testType: "ielts",
         teacher: "Gita Lama",
@@ -269,7 +270,7 @@ describe("fetchClassReport", () => {
         attendedPercent: 86,
       },
       {
-        id: 5,
+        id: uid(5),
         name: "IELTS Morning",
         testType: "ielts",
         teacher: "Gita Lama",
@@ -315,7 +316,7 @@ describe("fetchMoneyReport", () => {
           { category: "office_rent", amount: 85000 },
           { category: "internet", amount: 6500 },
         ],
-        money_in_by_fee_type: [{ fee_type: { id: 3, name: "Visa fee" }, amount: 180000 }],
+        money_in_by_fee_type: [{ fee_type: { id: uid(3), name: "Visa fee" }, amount: 180000 }],
       }),
     );
 
@@ -328,7 +329,7 @@ describe("fetchMoneyReport", () => {
         { category: "office_rent", amount: 85000 },
         { category: "internet", amount: 6500 },
       ],
-      moneyInByFeeType: [{ feeType: { id: 3, name: "Visa fee" }, amount: 180000 }],
+      moneyInByFeeType: [{ feeType: { id: uid(3), name: "Visa fee" }, amount: 180000 }],
     });
   });
 
@@ -346,7 +347,7 @@ describe("fetchMoneyReport", () => {
     ["no Fee Types", { months: [MONEY_MONTH], money_in_by_fee_type: undefined }],
     [
       "a Fee Type without a name",
-      { months: [], money_in_by_fee_type: [{ fee_type: { id: 1, name: "" }, amount: 1 }] },
+      { months: [], money_in_by_fee_type: [{ fee_type: { id: uid(1), name: "" }, amount: 1 }] },
     ],
   ])("refuses an answer with %s", async (_, body) => {
     const fetchFn = answering(

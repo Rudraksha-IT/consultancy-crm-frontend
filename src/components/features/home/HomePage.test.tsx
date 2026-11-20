@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -13,7 +14,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "batches", "accounts", "reports"],
   dateDisplay: "AD",
@@ -23,15 +24,15 @@ const ADMIN: StaffContext = {
 };
 const COUNSELLOR: StaffContext = {
   ...ADMIN,
-  staff: { id: 3, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(3), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
 };
 const TEACHER: StaffContext = {
   ...ADMIN,
-  staff: { id: 9, name: "Gita Lama", email: "gita@acme.test", role: "teacher" },
+  staff: { id: uid(9), name: "Gita Lama", email: "gita@acme.test", role: "teacher" },
 };
 const DESK: StaffContext = {
   ...ADMIN,
-  staff: { id: 4, name: "Asha Rai", email: "asha@acme.test", role: "front_desk" },
+  staff: { id: uid(4), name: "Asha Rai", email: "asha@acme.test", role: "front_desk" },
 };
 
 const PROGRESS_ADMIN = "/api/home/progress/?counsellor=any&limit=6";
@@ -70,14 +71,14 @@ const SOME_WAITING = {
   },
 };
 
-function progressRow(id: number, name: string, overrides: object = {}) {
+function progressRow(id: RecordId, name: string, overrides: object = {}) {
   return {
     student: {
-      id: uid(id),
+      id,
       name,
       stage: "applying",
       country: "australia",
-      assigned_counsellor: { id: 3, name: "Bikash Thapa" },
+      assigned_counsellor: { id: uid(3), name: "Bikash Thapa" },
     },
     percent: 45,
     next_step: "Waiting for an offer, Deakin University",
@@ -87,8 +88,8 @@ function progressRow(id: number, name: string, overrides: object = {}) {
   };
 }
 
-const SITA = progressRow(7, "Sita Gurung");
-const RAM = progressRow(8, "Ram Karki", {
+const SITA = progressRow(uid(7), "Sita Gurung");
+const RAM = progressRow(uid(8), "Ram Karki", {
   student: {
     ...SITA.student,
     id: uid(8),
@@ -121,7 +122,7 @@ const NEW_VISITOR = {
   assigned_counsellor: null,
 };
 
-function task(id: number, title: string, dueOn: string, timing: string, priority = "normal") {
+function task(id: RecordId, title: string, dueOn: string, timing: string, priority = "normal") {
   return {
     id,
     title,
@@ -131,8 +132,8 @@ function task(id: number, title: string, dueOn: string, timing: string, priority
     timing,
     is_done: false,
     done_at: null,
-    assignee: { id: 9, name: "Gita Lama" },
-    created_by: { id: 1, name: "Maya Shrestha" },
+    assignee: { id: uid(9), name: "Gita Lama" },
+    created_by: { id: uid(1), name: "Maya Shrestha" },
     student: null,
     can_mark_done: true,
   };
@@ -143,10 +144,10 @@ const TASK_PAGE = {
   page: 1,
   page_size: 25,
   results: [
-    task(1, "Call Sita about her IELTS score", "2026-11-01", "overdue"),
-    task(2, "Check the mock test", "2026-11-03", "today"),
-    task(3, "Book the hall", "2026-11-05", "upcoming"),
-    task(4, "Plan next month", "2026-11-20", "upcoming"),
+    task(uid(1), "Call Sita about her IELTS score", "2026-11-01", "overdue"),
+    task(uid(2), "Check the mock test", "2026-11-03", "today"),
+    task(uid(3), "Book the hall", "2026-11-05", "upcoming"),
+    task(uid(4), "Plan next month", "2026-11-20", "upcoming"),
   ],
 };
 
@@ -162,7 +163,7 @@ const EVERYTHING = [
   on("GET", TASKS, TASK_PAGE),
   on("GET", CLASSES, pageOf([])),
   on("GET", ENROLLED, pageOf([])),
-  on("GET", "/api/staff/counsellors/", [{ id: 3, name: "Bikash Thapa" }]),
+  on("GET", "/api/staff/counsellors/", [{ id: uid(3), name: "Bikash Thapa" }]),
   on("GET", "/api/visits/today/", { count: 0, results: [] }),
   on("GET", WAITING, NOTHING_WAITING),
 ];
@@ -296,7 +297,7 @@ describe("The Admin's Home", () => {
   });
 
   it("says Done for a Student whose Visa is granted", async () => {
-    const granted = progressRow(9, "Asha Rai", {
+    const granted = progressRow(uid(9), "Asha Rai", {
       student: { ...SITA.student, id: uid(9), name: "Asha Rai", stage: "visa" },
       percent: 100,
       next_step: "Visa granted. Help with flights and pre-departure.",
@@ -412,9 +413,9 @@ describe("The Admin's Home", () => {
         "GET",
         TASKS,
         pageOf([
-          task(1, "Overdue call", "2026-11-01", "overdue", "low"),
-          task(5, "Urgent offer", "2026-11-05", "upcoming", "high"),
-          task(2, "Mock test", "2026-11-03", "today"),
+          task(uid(1), "Overdue call", "2026-11-01", "overdue", "low"),
+          task(uid(5), "Urgent offer", "2026-11-05", "upcoming", "high"),
+          task(uid(2), "Mock test", "2026-11-03", "today"),
         ]),
       ),
       ...EVERYTHING,
@@ -592,14 +593,14 @@ describe("What's waiting on you", () => {
     backend(
       ...withWaiting({
         ...NOTHING_WAITING,
-        work_from_home_requests: { count: 2, first_staff_id: 6 },
+        work_from_home_requests: { count: 2, first_staff_id: uid(6) },
       }),
     );
     renderHome(ADMIN);
     const waiting = within(await region("Waiting on you"));
 
     const link = await waiting.findByRole("link", { name: /Work from home requests/ });
-    expect(link).toHaveAttribute("href", "/staff/6?tab=wfh");
+    expect(link).toHaveAttribute("href", `/staff/${uid(6)}?tab=wfh`);
     expect(link).toHaveTextContent("2");
   });
 

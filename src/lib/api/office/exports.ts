@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { EXPORT_LISTS, type ExportList } from "@/constants/exports";
 import type { ExportFilters } from "@/lib/exports";
@@ -8,7 +10,7 @@ import { getJson, postJsonForBlob } from "../core/client";
 
 const ExportRecordSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     list: z.enum(EXPORT_LISTS),
     filters: z.string(),
     row_count: z.number().int().nonnegative(),

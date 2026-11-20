@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -14,7 +15,7 @@ import { uid } from "@/test/ids";
 
 function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
   return {
-    staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role },
+    staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role },
     consultancy: consultancySummary(),
     modules: ["documents"],
     dateDisplay: "AD",
@@ -24,13 +25,13 @@ function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
   };
 }
 
-const row = (id: number, name: string, counts: Partial<Record<string, number>> = {}) => ({
+const row = (id: RecordId, name: string, counts: Partial<Record<string, number>> = {}) => ({
   student: {
-    id: uid(id),
+    id,
     name,
     stage: "applying",
     country: "australia",
-    assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+    assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
   },
   done: 5,
   total: 8,
@@ -47,8 +48,8 @@ const PAGE = {
   page_size: 25,
   totals: { rejected: 1, waiting: 2, missing: 3, verified: 9 },
   results: [
-    row(7, "Sita Gurung", { rejected: 1, waiting: 2, verified: 5 }),
-    row(8, "Ram Thapa", { missing: 3, verified: 4 }),
+    row(uid(7), "Sita Gurung", { rejected: 1, waiting: 2, verified: 5 }),
+    row(uid(8), "Ram Thapa", { missing: 3, verified: 4 }),
   ],
 };
 
@@ -177,7 +178,7 @@ describe("DocumentsPage", () => {
   it("pages through many Students", async () => {
     const fetchFn = backend(
       paperwork("everyone", { ...PAGE, count: 30 }),
-      paperwork("everyone", { ...PAGE, count: 30, page: 2, results: [row(9, "Last One")] }, 2),
+      paperwork("everyone", { ...PAGE, count: 30, page: 2, results: [row(uid(9), "Last One")] }, 2),
     );
     renderPage("admin");
     await rowFor("Sita Gurung");

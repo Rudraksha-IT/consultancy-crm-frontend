@@ -31,12 +31,12 @@ type UniversityCardProps = CardActions & { university: University };
 export function UniversityCard({ university, ...actions }: UniversityCardProps) {
   const country = countryLabel(university.country);
   return (
-    <section aria-labelledby={`university-${String(university.id)}`} className="min-w-0">
+    <section aria-labelledby={`university-${university.id}`} className="min-w-0">
       <Panel>
         <header className="border-rule flex flex-wrap items-center justify-between gap-x-5 gap-y-3 border-b px-6 py-4">
           <div className="grid min-w-0 gap-1">
             <h2
-              id={`university-${String(university.id)}`}
+              id={`university-${university.id}`}
               className="text-section-title text-ink flex flex-wrap items-center gap-2 break-words"
             >
               {university.name}

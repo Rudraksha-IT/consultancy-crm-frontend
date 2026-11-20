@@ -55,7 +55,7 @@ const StudentFeesSchema = z
 export type StudentFees = z.infer<typeof StudentFeesSchema>;
 
 /** A Fee as the form sends it: its Fee Type, a short note (needed for Other) and whole NPR. */
-export type NewFee = { feeTypeId: number | null; note: string; amount: number };
+export type NewFee = { feeTypeId: RecordId | null; note: string; amount: number };
 
 const FEE_FIELDS: Record<keyof NewFee, string> = {
   feeTypeId: "fee_type",

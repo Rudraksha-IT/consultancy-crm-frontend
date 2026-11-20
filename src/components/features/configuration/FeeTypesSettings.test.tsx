@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -9,14 +10,14 @@ import { FeeTypesSettings } from "./FeeTypesSettings";
 const LIST = "/api/fee-types/";
 const UNUSED = { fees: 0, payments: 0 };
 const VISA = {
-  id: 3,
+  id: uid(3),
   name: "Visa fee",
   hidden: false,
   other: false,
   uses: { fees: 2, payments: 1 },
 };
-const PTE = { id: 5, name: "PTE class", hidden: false, other: false, uses: UNUSED };
-const OTHER = { id: 7, name: "Other", hidden: false, other: true, uses: UNUSED };
+const PTE = { id: uid(5), name: "PTE class", hidden: false, other: false, uses: UNUSED };
+const OTHER = { id: uid(7), name: "Other", hidden: false, other: true, uses: UNUSED };
 
 function renderSection() {
   render(
@@ -75,7 +76,7 @@ describe("FeeTypesSettings", () => {
 
   it("adds one and clears the form", async () => {
     let types = [VISA, OTHER];
-    const added = { ...PTE, id: 9, name: "SOP writing" };
+    const added = { ...PTE, id: uid(9), name: "SOP writing" };
     const fetchFn = backend(
       onEach("GET", LIST, () => ({ results: types })),
       (path, init) => {
@@ -137,14 +138,14 @@ describe("FeeTypesSettings", () => {
   it("hides one and shows it again", async () => {
     const fetchFn = backend(
       on("GET", LIST, { results: [VISA, OTHER] }),
-      on("PATCH", "/api/fee-types/3/", { ...VISA, hidden: true }),
+      on("PATCH", `/api/fee-types/${uid(3)}/`, { ...VISA, hidden: true }),
     );
     const list = await listIn(renderSection());
 
     await userEvent.click(list.getByRole("button", { name: "Hide Visa fee" }));
 
     expect(await screen.findByText("Visa fee is hidden. Old records keep it.")).toBeVisible();
-    expect(sentBody(fetchFn, "PATCH", "/api/fee-types/3/")).toEqual({ hidden: true });
+    expect(sentBody(fetchFn, "PATCH", `/api/fee-types/${uid(3)}/`)).toEqual({ hidden: true });
     expect(list.getByText("Hidden")).toBeVisible();
     expect(list.getByRole("button", { name: "Show Visa fee" })).toBeVisible();
   });
@@ -152,7 +153,7 @@ describe("FeeTypesSettings", () => {
   it("renames one in a dialog", async () => {
     const fetchFn = backend(
       on("GET", LIST, { results: [VISA, OTHER] }),
-      on("PATCH", "/api/fee-types/3/", { ...VISA, name: "Visa lodgement" }),
+      on("PATCH", `/api/fee-types/${uid(3)}/`, { ...VISA, name: "Visa lodgement" }),
     );
     const list = await listIn(renderSection());
 
@@ -164,7 +165,7 @@ describe("FeeTypesSettings", () => {
     await userEvent.click(dialog.getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Renamed to Visa lodgement")).toBeVisible();
-    expect(sentBody(fetchFn, "PATCH", "/api/fee-types/3/")).toEqual({
+    expect(sentBody(fetchFn, "PATCH", `/api/fee-types/${uid(3)}/`)).toEqual({
       name: "Visa lodgement",
     });
     expect(screen.queryByRole("dialog")).toBeNull();
@@ -173,7 +174,7 @@ describe("FeeTypesSettings", () => {
 
   it("asks before deleting, then deletes", async () => {
     backend(on("GET", LIST, { results: [PTE, OTHER] }), (path, init) =>
-      init?.method === "DELETE" && path === "/api/fee-types/5/"
+      init?.method === "DELETE" && path === `/api/fee-types/${uid(5)}/`
         ? new Response(null, { status: 204 })
         : undefined,
     );
@@ -194,7 +195,7 @@ describe("FeeTypesSettings", () => {
     const detail = "Fees or Payments use this Fee Type. Hide it instead.";
     backend(
       on("GET", LIST, { results: [PTE, OTHER] }),
-      on("DELETE", "/api/fee-types/5/", { detail }, 400),
+      on("DELETE", `/api/fee-types/${uid(5)}/`, { detail }, 400),
     );
     const list = await listIn(renderSection());
 
@@ -215,7 +216,7 @@ describe("FeeTypesSettings", () => {
     await userEvent.click(list.getByRole("button", { name: "Move Visa fee down" }));
 
     expect(sentBody(fetchFn, "PUT", "/api/fee-types/order/")).toEqual({
-      order: [5, 3, 7],
+      order: [uid(5), uid(3), uid(7)],
     });
     await waitFor(() => {
       expect(list.getAllByRole("listitem").map((row) => row.textContent)).toEqual([

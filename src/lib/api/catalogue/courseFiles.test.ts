@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { CatalogueRefusedError } from "./catalogueEdit";
 import {
   binCourseFile,
@@ -13,14 +14,14 @@ import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 
 const ANSWER = {
-  id: 31,
+  id: uid(31),
   name: "Deakin IT brochure",
   file_name: "deakin-it.pdf",
   size: 2_516_582,
   uploaded_at: "2026-11-19T10:00:00+05:45",
 };
 const COURSE_FILE = {
-  id: 31,
+  id: uid(31),
   name: "Deakin IT brochure",
   fileName: "deakin-it.pdf",
   size: 2_516_582,
@@ -55,10 +56,10 @@ describe("uploadCourseFile", () => {
   it("POSTs the PDF and its name as a form, and returns the Course File", async () => {
     const fetchFn = answering(jsonResponse(ANSWER, 201));
 
-    const saved = await uploadCourseFile(11, pdf(), "Deakin IT brochure", fetchFn);
+    const saved = await uploadCourseFile(uid(11), pdf(), "Deakin IT brochure", fetchFn);
 
     const { path, method, body } = call(fetchFn);
-    expect(path).toBe("/api/catalogue/courses/11/files/");
+    expect(path).toBe(`/api/catalogue/courses/${uid(11)}/files/`);
     expect(method).toBe("POST");
     if (!(body instanceof FormData)) throw new Error("Expected a form to be sent");
     expect(body.get("name")).toBe("Deakin IT brochure");
@@ -71,7 +72,7 @@ describe("uploadCourseFile", () => {
       jsonResponse({ file: ["The file is too big. A Course File can be at most 5 MB."] }, 400),
     );
 
-    const failure = await uploadCourseFile(11, pdf(), "x", fetchFn).catch(
+    const failure = await uploadCourseFile(uid(11), pdf(), "x", fetchFn).catch(
       (error: unknown) => error,
     );
 
@@ -84,7 +85,7 @@ describe("uploadCourseFile", () => {
     const reason = "This course is archived. Restore it before adding files.";
     const fetchFn = answering(jsonResponse({ detail: reason }, 400));
 
-    const failure = await uploadCourseFile(11, pdf(), "x", fetchFn).catch(
+    const failure = await uploadCourseFile(uid(11), pdf(), "x", fetchFn).catch(
       (error: unknown) => error,
     );
 
@@ -95,7 +96,7 @@ describe("uploadCourseFile", () => {
   it("passes on any other failure as it is", async () => {
     const fetchFn = answering(jsonResponse({ detail: "We couldn't store the file." }, 503));
 
-    const failure = await uploadCourseFile(11, pdf(), "x", fetchFn).catch(
+    const failure = await uploadCourseFile(uid(11), pdf(), "x", fetchFn).catch(
       (error: unknown) => error,
     );
 
@@ -106,7 +107,7 @@ describe("uploadCourseFile", () => {
   it("refuses an answer that isn't a Course File", async () => {
     const fetchFn = answering(jsonResponse({ ...ANSWER, size: "big" }, 201));
 
-    await expect(uploadCourseFile(11, pdf(), "x", fetchFn)).rejects.toThrow();
+    await expect(uploadCourseFile(uid(11), pdf(), "x", fetchFn)).rejects.toThrow();
   });
 });
 
@@ -114,10 +115,10 @@ describe("renameCourseFile", () => {
   it("PATCHes only the name", async () => {
     const fetchFn = answering(jsonResponse({ ...ANSWER, name: "IT guide" }));
 
-    const saved = await renameCourseFile(31, "IT guide", fetchFn);
+    const saved = await renameCourseFile(uid(31), "IT guide", fetchFn);
 
     expect(call(fetchFn)).toEqual({
-      path: "/api/catalogue/course-files/31/",
+      path: `/api/catalogue/course-files/${uid(31)}/`,
       method: "PATCH",
       body: { name: "IT guide" },
     });
@@ -127,7 +128,7 @@ describe("renameCourseFile", () => {
   it("names a refused name", async () => {
     const fetchFn = answering(jsonResponse({ name: ["Give it a name."] }, 400));
 
-    const failure = await renameCourseFile(31, "", fetchFn).catch((error: unknown) => error);
+    const failure = await renameCourseFile(uid(31), "", fetchFn).catch((error: unknown) => error);
 
     expect(fieldErrorsOf(failure)).toEqual({
       name: ["Give it a name."],
@@ -139,10 +140,10 @@ describe("the rest of a Course File's calls", () => {
   it("puts one in the Bin with a DELETE", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await binCourseFile(31, fetchFn);
+    await binCourseFile(uid(31), fetchFn);
 
     expect(call(fetchFn)).toMatchObject({
-      path: "/api/catalogue/course-files/31/",
+      path: `/api/catalogue/course-files/${uid(31)}/`,
       method: "DELETE",
     });
   });
@@ -150,25 +151,27 @@ describe("the rest of a Course File's calls", () => {
   it.each(["open", "download"] as const)("asks for a link to %s one", async (action) => {
     const fetchFn = answering(jsonResponse(LINK));
 
-    const url = await fetchCourseFileLink(31, action, fetchFn);
+    const url = await fetchCourseFileLink(uid(31), action, fetchFn);
 
-    expect(call(fetchFn).path).toBe(`/api/catalogue/course-files/31/link/?action=${action}`);
+    expect(call(fetchFn).path).toBe(
+      `/api/catalogue/course-files/${uid(31)}/link/?action=${action}`,
+    );
     expect(url).toBe(LINK.url);
   });
 
   it("refuses a link that isn't http or https", async () => {
     const fetchFn = answering(jsonResponse({ ...LINK, url: "javascript:alert(1)" }));
 
-    await expect(fetchCourseFileLink(31, "open", fetchFn)).rejects.toThrow();
+    await expect(fetchCourseFileLink(uid(31), "open", fetchFn)).rejects.toThrow();
   });
 
   it("restores one from the Bin with an empty POST", async () => {
     const fetchFn = answering(jsonResponse(ANSWER));
 
-    const restored = await restoreCourseFile(31, fetchFn);
+    const restored = await restoreCourseFile(uid(31), fetchFn);
 
     expect(call(fetchFn)).toEqual({
-      path: "/api/documents/bin/course-files/31/restore/",
+      path: `/api/documents/bin/course-files/${uid(31)}/restore/`,
       method: "POST",
       body: {},
     });
@@ -178,10 +181,10 @@ describe("the rest of a Course File's calls", () => {
   it("deletes one in the Bin for good", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await deleteCourseFileForGood(31, fetchFn);
+    await deleteCourseFileForGood(uid(31), fetchFn);
 
     expect(call(fetchFn)).toMatchObject({
-      path: "/api/documents/bin/course-files/31/",
+      path: `/api/documents/bin/course-files/${uid(31)}/`,
       method: "DELETE",
     });
   });
@@ -189,8 +192,8 @@ describe("the rest of a Course File's calls", () => {
   it("asks for the Bin's own link to open one there", async () => {
     const fetchFn = answering(jsonResponse(LINK));
 
-    expect(await fetchBinCourseFileLink(31, fetchFn)).toBe(LINK.url);
-    expect(call(fetchFn).path).toBe("/api/documents/bin/course-files/31/link/?action=open");
+    expect(await fetchBinCourseFileLink(uid(31), fetchFn)).toBe(LINK.url);
+    expect(call(fetchFn).path).toBe(`/api/documents/bin/course-files/${uid(31)}/link/?action=open`);
   });
 });
 
@@ -198,21 +201,21 @@ describe("BinnedCourseFileSchema", () => {
   it("reads a Course File in the Bin in frontend naming", () => {
     const parsed = BinnedCourseFileSchema.parse({
       kind: "course_file",
-      course_file: { id: 31, name: "Deakin IT brochure", file_name: "deakin-it.pdf" },
-      university: { id: 1, name: "Deakin University" },
-      course: { id: 11, name: "Master of IT" },
-      by: { id: 5, name: "Bikash Thapa" },
+      course_file: { id: uid(31), name: "Deakin IT brochure", file_name: "deakin-it.pdf" },
+      university: { id: uid(1), name: "Deakin University" },
+      course: { id: uid(11), name: "Master of IT" },
+      by: { id: uid(5), name: "Bikash Thapa" },
       at: "2026-11-02T10:00:00+05:45",
       reason: "Deleted from the Catalogue",
     });
 
     expect(parsed).toEqual({
       kind: "course_file",
-      courseFile: { id: 31, name: "Deakin IT brochure", fileName: "deakin-it.pdf" },
-      university: { id: 1, name: "Deakin University" },
-      course: { id: 11, name: "Master of IT" },
+      courseFile: { id: uid(31), name: "Deakin IT brochure", fileName: "deakin-it.pdf" },
+      university: { id: uid(1), name: "Deakin University" },
+      course: { id: uid(11), name: "Master of IT" },
       bin: {
-        by: { id: 5, name: "Bikash Thapa" },
+        by: { id: uid(5), name: "Bikash Thapa" },
         at: "2026-11-02T10:00:00+05:45",
         reason: "Deleted from the Catalogue",
       },

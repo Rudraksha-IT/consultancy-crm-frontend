@@ -14,7 +14,7 @@ import { FeeTypeStudentsPage } from "./FeeTypeStudentsPage";
 import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "payments", "accounts"],
   dateDisplay: "AD",
@@ -24,8 +24,8 @@ const ADMIN: StaffContext = {
 };
 
 const TOTALS_URL = "/api/accounts/fees-by-type/";
-const COUNTED_URL = "/api/accounts/fees-by-type/3/?part=counted&page=1";
-const LOST_URL = "/api/accounts/fees-by-type/3/?part=lost&page=1";
+const COUNTED_URL = `/api/accounts/fees-by-type/${uid(3)}/?part=counted&page=1`;
+const LOST_URL = `/api/accounts/fees-by-type/${uid(3)}/?part=lost&page=1`;
 
 const TOTALS = {
   totals: {
@@ -36,13 +36,17 @@ const TOTALS = {
     owing: 1,
   },
   fee_types: [
-    { fee_type: { id: 1, name: "Application fee", hidden: false }, fees: 25000, received: 24000 },
-    { fee_type: { id: 3, name: "Visa fee", hidden: false }, fees: 80000, received: 66000 },
-    { fee_type: { id: 5, name: "PTE class", hidden: true }, fees: 0, received: 5000 },
+    {
+      fee_type: { id: uid(1), name: "Application fee", hidden: false },
+      fees: 25000,
+      received: 24000,
+    },
+    { fee_type: { id: uid(3), name: "Visa fee", hidden: false }, fees: 80000, received: 66000 },
+    { fee_type: { id: uid(5), name: "PTE class", hidden: true }, fees: 0, received: 5000 },
   ],
 };
 
-const VISA = { id: 3, name: "Visa fee", hidden: false };
+const VISA = { id: uid(3), name: "Visa fee", hidden: false };
 
 function page(part: "counted" | "lost", results: unknown[], extra: object = {}) {
   return {
@@ -114,7 +118,7 @@ describe("Fees by type", () => {
     ]);
     expect(within(table).getByRole("link", { name: "Visa fee" })).toHaveAttribute(
       "href",
-      "/accounts/fees-by-type/3",
+      `/accounts/fees-by-type/${uid(3)}`,
     );
     const pte = within(table).getByRole("row", { name: /PTE class/ });
     expect(within(pte).getByText("Hidden")).toBeInTheDocument();
@@ -168,7 +172,7 @@ describe("One Fee Type's Students", () => {
       on("GET", COUNTED_URL, page("counted", [AARAV, SITA])),
       on("GET", LOST_URL, page("lost", [])),
     );
-    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={3} />);
+    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={uid(3)} />);
 
     expect(await screen.findByRole("heading", { level: 1, name: "Visa fee" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Fees by type" })).toHaveAttribute(
@@ -194,7 +198,7 @@ describe("One Fee Type's Students", () => {
       on("GET", COUNTED_URL, page("counted", [AARAV])),
       on("GET", LOST_URL, page("lost", [HARI])),
     );
-    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={3} />);
+    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={uid(3)} />);
 
     const lost = await screen.findByRole("region", { name: "Lost, not counted" });
     const row = within(lost).getByRole("row", { name: /Hari Lama/ });
@@ -213,7 +217,7 @@ describe("One Fee Type's Students", () => {
       on("GET", COUNTED_URL, page("counted", [], hidden)),
       on("GET", LOST_URL, page("lost", [], hidden)),
     );
-    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={3} />);
+    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={uid(3)} />);
 
     expect(await screen.findByText("Nobody is counted here.")).toBeInTheDocument();
     expect(screen.getByText(/This Fee Type is hidden/)).toBeInTheDocument();
@@ -224,13 +228,13 @@ describe("One Fee Type's Students", () => {
       ...AARAV,
       student: { ...AARAV.student, id: uid(100 + index), name: `Student ${String(index)}` },
     }));
-    const second = "/api/accounts/fees-by-type/3/?part=counted&page=2";
+    const second = `/api/accounts/fees-by-type/${uid(3)}/?part=counted&page=2`;
     const fetchFn = backend(
       on("GET", COUNTED_URL, page("counted", many, { count: 26 })),
       on("GET", second, page("counted", [SITA], { count: 26, page: 2 })),
       on("GET", LOST_URL, page("lost", [])),
     );
-    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={3} />);
+    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={uid(3)} />);
 
     const next = await screen.findByRole("button", { name: /next/i });
     await userEvent.click(next);
@@ -246,7 +250,7 @@ describe("One Fee Type's Students", () => {
       on("GET", COUNTED_URL, { detail: "Not found." }, 404),
       on("GET", LOST_URL, { detail: "Not found." }, 404),
     );
-    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={3} />);
+    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={uid(3)} />);
 
     expect(await screen.findByText("We couldn't find this Fee Type.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Fees by type" })).toBeInTheDocument();
@@ -254,7 +258,7 @@ describe("One Fee Type's Students", () => {
 
   it("says when it can't load", async () => {
     backend(on("GET", COUNTED_URL, { results: "x" }), on("GET", LOST_URL, page("lost", [])));
-    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={3} />);
+    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={uid(3)} />);
 
     expect(
       await screen.findByText(
@@ -267,7 +271,7 @@ describe("One Fee Type's Students", () => {
     const fetchFn = backend();
     withContext(
       { ...ADMIN, staff: { ...ADMIN.staff, role: "front_desk" } },
-      <FeeTypeStudentsPage feeTypeId={3} />,
+      <FeeTypeStudentsPage feeTypeId={uid(3)} />,
     );
 
     expect(screen.getByText(/isn't available/i)).toBeInTheDocument();
@@ -294,7 +298,7 @@ describe.each(THEME_CASES)("Fees by type in the $name Theme", ({ config, mode })
     expect(await screen.findByRole("table", { name: "By Fee Type" })).toBeInTheDocument();
     first.unmount();
 
-    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={3} />);
+    withContext(ADMIN, <FeeTypeStudentsPage feeTypeId={uid(3)} />);
     expect(await screen.findByRole("region", { name: "Lost, not counted" })).toBeInTheDocument();
   });
 });

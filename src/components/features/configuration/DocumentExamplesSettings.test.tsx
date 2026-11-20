@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -15,16 +16,26 @@ vi.mock("@/lib/documents/tab", () => ({ openBlankTab }));
 const TYPES_PATH = "/api/configuration/document-types/";
 const UNUSED = { countries: 0, courses: 0, students: 0, documents: 0 };
 const SAMPLE = {
-  id: 52,
+  id: uid(52),
   file_name: "sample-bank-statement.pdf",
   content_type: "application/pdf",
   size: 1_157_120,
   uploaded_at: "2026-11-20T10:00:00+05:45",
 };
-const PHOTO = { ...SAMPLE, id: 53, file_name: "sample-balance.jpg", content_type: "image/jpeg" };
-const NEW_SAMPLE = { ...SAMPLE, id: 60, file_name: "new-sample.png", content_type: "image/png" };
+const PHOTO = {
+  ...SAMPLE,
+  id: uid(53),
+  file_name: "sample-balance.jpg",
+  content_type: "image/jpeg",
+};
+const NEW_SAMPLE = {
+  ...SAMPLE,
+  id: uid(60),
+  file_name: "new-sample.png",
+  content_type: "image/png",
+};
 const STATEMENT = {
-  id: 7,
+  id: uid(7),
   name: "Bank Statement",
   needed_by_everyone: true,
   usual_group: "visa",
@@ -35,7 +46,7 @@ const STATEMENT = {
 };
 const PASSPORT = {
   ...STATEMENT,
-  id: 1,
+  id: uid(1),
   name: "Passport",
   instruction: "",
   examples: [],
@@ -43,7 +54,7 @@ const PASSPORT = {
 };
 const POLICE = {
   ...PASSPORT,
-  id: 9,
+  id: uid(9),
   name: "Police report",
   needed_by_everyone: false,
   example_count: 1,
@@ -128,7 +139,7 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
   it("saves the instruction on one line, closes and gives focus back", async () => {
     const fetchFn = backend(
       on("GET", TYPES_PATH, TYPES),
-      on("PUT", "/api/configuration/document-types/7/instruction/", {
+      on("PUT", `/api/configuration/document-types/${uid(7)}/instruction/`, {
         ...STATEMENT,
         instruction: "Six months. Stamped.",
       }),
@@ -142,7 +153,11 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Saved for Bank Statement")).toBeVisible();
-    const [put] = callsTo(fetchFn, "PUT", "/api/configuration/document-types/7/instruction/");
+    const [put] = callsTo(
+      fetchFn,
+      "PUT",
+      `/api/configuration/document-types/${uid(7)}/instruction/`,
+    );
     const body = put?.[1]?.body;
     expect(JSON.parse(typeof body === "string" ? body : "")).toEqual({
       instruction: "Six months. Stamped.",
@@ -161,7 +176,7 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
       on("GET", TYPES_PATH, TYPES),
       on(
         "PUT",
-        "/api/configuration/document-types/7/instruction/",
+        `/api/configuration/document-types/${uid(7)}/instruction/`,
         { instruction: [message] },
         400,
       ),
@@ -180,7 +195,7 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
   it("adds an example file at once and counts it", async () => {
     const fetchFn = backend(
       on("GET", TYPES_PATH, TYPES),
-      on("POST", "/api/configuration/document-types/1/examples/", NEW_SAMPLE, 201),
+      on("POST", `/api/configuration/document-types/${uid(1)}/examples/`, NEW_SAMPLE, 201),
     );
     renderSettings();
     const dialog = await openExamples("Passport");
@@ -193,7 +208,11 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
     expect(await screen.findByText("new-sample.png added")).toBeVisible();
     expect(fileNames(dialog)).toEqual(["new-sample.png"]);
     expect(within(dialog).getByText("(1 of 3)")).toBeVisible();
-    const [post] = callsTo(fetchFn, "POST", "/api/configuration/document-types/1/examples/");
+    const [post] = callsTo(
+      fetchFn,
+      "POST",
+      `/api/configuration/document-types/${uid(1)}/examples/`,
+    );
     expect(post?.[1]?.body).toBeInstanceOf(FormData);
     await userEvent.keyboard("{Escape}");
     expect(await rowFor("Passport")).toHaveTextContent("No instruction and 1 example file");
@@ -216,9 +235,9 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
     });
 
     expect(await within(dialog).findByText(message)).toBeVisible();
-    expect(callsTo(fetchFn, "POST", "/api/configuration/document-types/1/examples/")).toHaveLength(
-      0,
-    );
+    expect(
+      callsTo(fetchFn, "POST", `/api/configuration/document-types/${uid(1)}/examples/`),
+    ).toHaveLength(0);
   });
 
   it.each([
@@ -234,7 +253,7 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
   ])("says why the server refused an upload", async (body, message, code = 400) => {
     backend(
       on("GET", TYPES_PATH, TYPES),
-      on("POST", "/api/configuration/document-types/1/examples/", body, code),
+      on("POST", `/api/configuration/document-types/${uid(1)}/examples/`, body, code),
     );
     renderSettings();
     const dialog = await openExamples("Passport");
@@ -249,7 +268,7 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
   });
 
   it("offers no more files once a type has 3", async () => {
-    const full = { ...STATEMENT, examples: [SAMPLE, PHOTO, { ...SAMPLE, id: 54 }] };
+    const full = { ...STATEMENT, examples: [SAMPLE, PHOTO, { ...SAMPLE, id: uid(54) }] };
     backend(on("GET", TYPES_PATH, { results: [full] }));
     renderSettings();
 
@@ -262,7 +281,7 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
   it("replaces a file in its place and keeps focus there", async () => {
     backend(
       on("GET", TYPES_PATH, TYPES),
-      on("POST", "/api/configuration/document-examples/52/replace/", NEW_SAMPLE, 201),
+      on("POST", `/api/configuration/document-examples/${uid(52)}/replace/`, NEW_SAMPLE, 201),
     );
     renderSettings();
     const dialog = await openExamples();
@@ -283,7 +302,7 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
 
   it("removes a file to the Bin after asking, with focus on the next one", async () => {
     const fetchFn = backend(on("GET", TYPES_PATH, TYPES), (path, init) =>
-      init?.method === "DELETE" && path === "/api/configuration/document-examples/52/"
+      init?.method === "DELETE" && path === `/api/configuration/document-examples/${uid(52)}/`
         ? new Response(null, { status: 204 })
         : undefined,
     );
@@ -301,7 +320,9 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
 
     expect(await screen.findByText("sample-bank-statement.pdf is in the Bin")).toBeVisible();
     expect(fileNames(dialog)).toEqual(["sample-balance.jpg"]);
-    expect(callsTo(fetchFn, "DELETE", "/api/configuration/document-examples/52/")).toHaveLength(1);
+    expect(
+      callsTo(fetchFn, "DELETE", `/api/configuration/document-examples/${uid(52)}/`),
+    ).toHaveLength(1);
     await waitFor(() => {
       expect(within(dialog).getByRole("button", { name: "Open sample-balance.jpg" })).toHaveFocus();
     });
@@ -312,7 +333,7 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
     openBlankTab.mockReturnValue(tab);
     backend(
       on("GET", TYPES_PATH, TYPES),
-      on("GET", "/api/documents/examples/53/link/?action=open", {
+      on("GET", `/api/documents/examples/${uid(53)}/link/?action=open`, {
         url: "https://files.test/e53?sig=1",
         expires_in: 300,
       }),
@@ -330,7 +351,7 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
   it("offers Remove only for an extra document with no example files, even in the Bin", async () => {
     backend(
       on("GET", TYPES_PATH, {
-        results: [POLICE, { ...POLICE, id: 10, name: "CV", example_count: 0 }],
+        results: [POLICE, { ...POLICE, id: uid(10), name: "CV", example_count: 0 }],
       }),
     );
     renderSettings("extra");

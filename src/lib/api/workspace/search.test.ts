@@ -8,7 +8,7 @@ const STUDENT = {
   name: "Sita Karki",
   phone: "9841234567",
   stage: "counselling",
-  assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 };
 
 function answering(body: unknown, status = 200) {
@@ -24,11 +24,11 @@ describe("searchEverything", () => {
           kind: "class_student",
           id: uid(3),
           name: "Sita Rai",
-          batch: { id: 7, name: "IELTS Morning" },
+          batch: { id: uid(7), name: "IELTS Morning" },
         },
       ],
       student_count: 9,
-      batches: [{ id: 7, name: "IELTS Morning", time_slot: "7:00-8:30 AM" }],
+      batches: [{ id: uid(7), name: "IELTS Morning", time_slot: "7:00-8:30 AM" }],
     });
 
     const found = await searchEverything("sita & co", fetchFn);
@@ -42,17 +42,17 @@ describe("searchEverything", () => {
           name: "Sita Karki",
           phone: "9841234567",
           stage: "counselling",
-          assignedCounsellor: { id: 5, name: "Bikash Thapa" },
+          assignedCounsellor: { id: uid(5), name: "Bikash Thapa" },
         },
         {
           kind: "class_student",
           id: uid(3),
           name: "Sita Rai",
-          batch: { id: 7, name: "IELTS Morning" },
+          batch: { id: uid(7), name: "IELTS Morning" },
         },
       ],
       studentCount: 9,
-      batches: [{ id: 7, name: "IELTS Morning", timeSlot: "7:00-8:30 AM" }],
+      batches: [{ id: uid(7), name: "IELTS Morning", timeSlot: "7:00-8:30 AM" }],
     });
   });
 

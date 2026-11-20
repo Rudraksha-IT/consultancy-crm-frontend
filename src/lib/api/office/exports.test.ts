@@ -1,9 +1,10 @@
+import { uid } from "@/test/ids";
 import { ApiRequestError } from "../core/errors";
 import { downloadExport, fetchExportRecords } from "./exports";
 import { jsonResponse } from "../core/test-helpers";
 
 const RECORD = {
-  id: 4,
+  id: uid(4),
   list: "students",
   filters: "Stage: Applying",
   row_count: 12,
@@ -57,7 +58,7 @@ describe("fetchExportRecords", () => {
       pageSize: 25,
       records: [
         {
-          id: 4,
+          id: uid(4),
           list: "students",
           filters: "Stage: Applying",
           rowCount: 12,

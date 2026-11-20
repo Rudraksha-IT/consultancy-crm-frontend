@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -29,7 +30,7 @@ const OFFICE = {
 };
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: OFFICE,
   modules: ["students", "communication", "batches"],
   dateDisplay: "AD",
@@ -39,7 +40,7 @@ const COUNSELLOR: StaffContext = {
 };
 const ADMIN: StaffContext = {
   ...COUNSELLOR,
-  staff: { id: 1, name: "Asha Admin", email: "admin@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Asha Admin", email: "admin@acme.test", role: "admin" },
 };
 const NO_CONTACT = { ...consultancySummary(), hasContactEmail: false };
 
@@ -58,7 +59,7 @@ const SENT = {
   sent_to: "sita@example.test",
   attachments: [],
   sent_at: "2026-11-02T10:04:00+05:45",
-  sent_by: { id: 5, name: "Bikash Thapa" },
+  sent_by: { id: uid(5), name: "Bikash Thapa" },
 };
 const FAILED = {
   ...SENT,
@@ -84,9 +85,9 @@ function page(results: unknown[], count = results.length) {
   return { count, page: 1, page_size: 25, results };
 }
 
-function row(id: number, name: string, email: string, stage = "counselling") {
+function row(id: RecordId, name: string, email: string, stage = "counselling") {
   return {
-    id: uid(id),
+    id,
     name,
     phone: "9841000001",
     email,
@@ -98,10 +99,10 @@ function row(id: number, name: string, email: string, stage = "counselling") {
 }
 
 const LIST = page([
-  row(7, "Sita Gurung", "sita@example.test"),
-  row(8, "Hari Thapa", "hari@example.test"),
-  row(10, "Maya Lama", ""),
-  row(11, "Lila Shrestha", "lila@example.test", "lost"),
+  row(uid(7), "Sita Gurung", "sita@example.test"),
+  row(uid(8), "Hari Thapa", "hari@example.test"),
+  row(uid(10), "Maya Lama", ""),
+  row(uid(11), "Lila Shrestha", "lila@example.test", "lost"),
 ]);
 
 function renderIn(context: StaffContext, children: React.ReactNode) {
@@ -430,7 +431,7 @@ describe("The Email page", () => {
     const fetchFn = backend(
       list([]),
       students,
-      on("GET", "/api/students/?q=sita", page([row(7, "Sita Gurung", "sita@example.test")])),
+      on("GET", "/api/students/?q=sita", page([row(uid(7), "Sita Gurung", "sita@example.test")])),
     );
     renderIn(COUNSELLOR, <MessagesPage />);
 
@@ -594,11 +595,11 @@ describe("When things go wrong", () => {
 
   it("starts with nobody ticked, and says so, when a class's Students can't be loaded", async () => {
     backend(
-      on("GET", "/api/batches/1/", {
-        id: 1,
+      on("GET", `/api/batches/${uid(1)}/`, {
+        id: uid(1),
         name: "IELTS Morning",
         test_type: "ielts",
-        teacher: { id: 9, name: "Gita Lama" },
+        teacher: { id: uid(9), name: "Gita Lama" },
         time_slot: "7:00-8:30 AM",
         starts_on: "2026-10-05",
         ends_on: "2026-12-04",
@@ -610,7 +611,7 @@ describe("When things go wrong", () => {
       }),
       on("GET", "/api/students/", LIST),
     );
-    renderIn(COUNSELLOR, <BatchPage batchId={1} />);
+    renderIn(COUNSELLOR, <BatchPage batchId={uid(1)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Email the class" }));
 
@@ -696,11 +697,11 @@ describe("Pre-ticked from a list or a class", () => {
 
   const MINE = "/api/students/?counsellor=me";
   const COUNSELLORS = on("GET", "/api/staff/counsellors/", []);
-  const CLASS = on("GET", "/api/batches/1/", {
-    id: 1,
+  const CLASS = on("GET", `/api/batches/${uid(1)}/`, {
+    id: uid(1),
     name: "IELTS Morning",
     test_type: "ielts",
-    teacher: { id: 9, name: "Gita Lama" },
+    teacher: { id: uid(9), name: "Gita Lama" },
     time_slot: "7:00-8:30 AM",
     starts_on: "2026-10-05",
     ends_on: "2026-12-04",
@@ -734,10 +735,10 @@ describe("Pre-ticked from a list or a class", () => {
   it("Email the class pre-ticks its Students, saying when there are more than can be sent", async () => {
     backend(
       CLASS,
-      on("GET", `${BULK}?batch=1`, { ...choosable, count: 3, max: 2 }),
+      on("GET", `${BULK}?batch=${uid(1)}`, { ...choosable, count: 3, max: 2 }),
       on("GET", "/api/students/", LIST),
     );
-    renderIn(COUNSELLOR, <BatchPage batchId={1} />);
+    renderIn(COUNSELLOR, <BatchPage batchId={uid(1)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Email the class" }));
 
@@ -748,8 +749,8 @@ describe("Pre-ticked from a list or a class", () => {
 
   it("Email the class opens on Class details for that class", async () => {
     const classes = [
-      { id: 2, label: "PTE Evening, 5 PM" },
-      { id: 1, label: "IELTS Morning, 7 AM" },
+      { id: uid(2), label: "PTE Evening, 5 PM" },
+      { id: uid(1), label: "IELTS Morning, 7 AM" },
     ];
     const details = {
       subject: "Your class: IELTS Morning",
@@ -758,7 +759,7 @@ describe("Pre-ticked from a list or a class", () => {
     };
     backend(
       CLASS,
-      on("GET", `${BULK}?batch=1`, choosable),
+      on("GET", `${BULK}?batch=${uid(1)}`, choosable),
       on("GET", "/api/students/", LIST),
       on("GET", "/api/messages/bulk/ready-made/", {
         kinds: [
@@ -766,9 +767,9 @@ describe("Pre-ticked from a list or a class", () => {
           { kind: "plain", record: null, records: [], unavailable: null },
         ],
       }),
-      on("GET", "/api/messages/bulk/draft/?kind=class_details&record=1", details),
+      on("GET", `/api/messages/bulk/draft/?kind=class_details&record=${uid(1)}`, details),
     );
-    renderIn(COUNSELLOR, <BatchPage batchId={1} />);
+    renderIn(COUNSELLOR, <BatchPage batchId={uid(1)} />);
     await userEvent.click(await screen.findByRole("button", { name: "Email the class" }));
     const picker = await screen.findByRole("dialog", { name: "Email many Students" });
     await within(picker).findByText(/Students? chosen/);
@@ -777,7 +778,7 @@ describe("Pre-ticked from a list or a class", () => {
 
     const composer = await screen.findByRole("dialog", { name: "Email many Students" });
     expect(await within(composer).findByDisplayValue(details.subject)).toBeInTheDocument();
-    expect(within(composer).getByRole("combobox", { name: "Class" })).toHaveValue("1");
+    expect(within(composer).getByRole("combobox", { name: "Class" })).toHaveValue(uid(1));
   });
 
   const EMAIL_OFF: StaffContext = { ...COUNSELLOR, modules: ["students", "batches"] };
@@ -788,7 +789,7 @@ describe("Pre-ticked from a list or a class", () => {
     ["a Teacher can't email", TEACHER],
   ])("Email the class isn't offered when %s", async (_why, context) => {
     backend(CLASS);
-    renderIn(context, <BatchPage batchId={1} />);
+    renderIn(context, <BatchPage batchId={uid(1)} />);
 
     await screen.findByRole("heading", { level: 1, name: "IELTS Morning" });
     expect(screen.queryByRole("button", { name: "Email the class" })).not.toBeInTheDocument();

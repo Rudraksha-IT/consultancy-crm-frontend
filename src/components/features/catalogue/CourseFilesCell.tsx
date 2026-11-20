@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import clsx from "clsx";
 import { useId, useRef, useState, type SubmitEvent } from "react";
 
@@ -276,7 +277,7 @@ function UploadButton({
 
 type NameDialogProps = {
   naming: Exclude<Naming, null>;
-  courseId: number;
+  courseId: RecordId;
   onClose: () => void;
   onSaved: (file: CourseFile) => void;
 };
@@ -372,7 +373,7 @@ function dialogWords(naming: Exclude<Naming, null>): {
 
 function saveNamed(
   naming: Exclude<Naming, null>,
-  courseId: number,
+  courseId: RecordId,
   name: string,
 ): Promise<CourseFile> {
   return naming.kind === "new"

@@ -15,7 +15,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
 const DESK: StaffContext = {
-  staff: { id: 4, name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
+  staff: { id: uid(4), name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
@@ -34,7 +34,7 @@ const NEW_VISIT = {
   kind: "new",
   purpose: "First visit",
   at: "2026-11-03T10:15:00+05:45",
-  recorded_by: { id: 4, name: "Ramesh KC" },
+  recorded_by: { id: uid(4), name: "Ramesh KC" },
   student: { id: uid(12), name: "Hari Bhandari", note_first_line: "Wants a diploma in Canada" },
 };
 const FOLLOW_UP = {
@@ -54,7 +54,7 @@ const SITA_ROW = {
   country: "australia",
   source: "walk_in",
   stage: "counselling",
-  assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 };
 
 const ADDED = {
@@ -91,7 +91,7 @@ const PICKED: Answer[] = [
   on("GET", `${VISITS_7}?page=1`, { ...pageOf([LAST_VISIT]), page_size: 50 }),
 ];
 
-const COUNSELLORS = on("GET", "/api/staff/counsellors/", [{ id: 5, name: "Bikash Thapa" }]);
+const COUNSELLORS = on("GET", "/api/staff/counsellors/", [{ id: uid(5), name: "Bikash Thapa" }]);
 
 function renderDesk() {
   return render(

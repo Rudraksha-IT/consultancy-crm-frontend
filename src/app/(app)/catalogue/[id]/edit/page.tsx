@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { ROUTES } from "@/constants/routes";
+import { parseRecordId } from "@/lib/recordId";
 
 type OldUniversityEditPageProps = { params: Promise<{ id: string }> };
 
@@ -9,6 +10,6 @@ export default async function OldUniversityEditPage({
   params,
 }: OldUniversityEditPageProps): Promise<never> {
   const { id } = await params;
-  const number = Number(id);
-  redirect(/^[1-9][0-9]{0,9}$/.test(id) ? ROUTES.universityEdit(number) : ROUTES.universities);
+  const universityId = parseRecordId(id);
+  redirect(universityId === null ? ROUTES.universities : ROUTES.universityEdit(universityId));
 }

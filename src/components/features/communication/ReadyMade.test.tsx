@@ -13,7 +13,7 @@ import { EmailComposer } from "./EmailComposer";
 import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: {
     ...consultancySummary(),
     officeDetails: {
@@ -42,10 +42,10 @@ const BULK_DRAFT_PATH = "/api/messages/bulk/draft/";
 const SEND_PATH = `/api/students/${uid(7)}/messages/`;
 
 const PAYMENTS = [
-  { id: 12, label: "Receipt 000012: Visa fee, NPR 40,000, 2 Nov 2026" },
-  { id: 9, label: "Receipt 000009: IELTS class, NPR 10,000, 1 Oct 2026" },
+  { id: uid(12), label: "Receipt 000012: Visa fee, NPR 40,000, 2 Nov 2026" },
+  { id: uid(9), label: "Receipt 000009: IELTS class, NPR 10,000, 1 Oct 2026" },
 ];
-const CLASSES = [{ id: 3, label: "IELTS Morning, 7:00-8:30 AM" }];
+const CLASSES = [{ id: uid(3), label: "IELTS Morning, 7:00-8:30 AM" }];
 
 const MENU = {
   kinds: [
@@ -88,7 +88,7 @@ const CLASS = {
 };
 
 const draftPath = (path: string, kind: string, record?: number) =>
-  `${path}?${new URLSearchParams(record === undefined ? { kind } : { kind, record: String(record) }).toString()}`;
+  `${path}?${new URLSearchParams(record === undefined ? { kind } : { kind, record: uid(record) }).toString()}`;
 
 /** The backend for one Student: the menu and each draft. */
 function oneStudentBackend(...more: Parameters<typeof backend>) {
@@ -188,7 +188,7 @@ describe("Ready-made emails to one Student", () => {
         .map((o) => o.textContent),
     ).toEqual(PAYMENTS.map((p) => p.label));
 
-    await userEvent.selectOptions(payment, "9");
+    await userEvent.selectOptions(payment, uid(9));
 
     await waitFor(() => {
       expect(subject()).toHaveValue(PAID_9.subject);
@@ -251,14 +251,14 @@ describe("Ready-made emails to one Student", () => {
   it("opens on the email and record it was asked for, e.g. from a receipt", async () => {
     oneStudentBackend();
     const { dialog, kind, subject } = renderComposer({
-      startWith: { kind: "payment_received", record: 9 },
+      startWith: { kind: "payment_received", record: uid(9) },
     });
 
     await waitFor(() => {
       expect(subject()).toHaveValue(PAID_9.subject);
     });
     expect(kind()).toHaveValue("payment_received");
-    expect(within(dialog).getByRole("combobox", { name: "Payment" })).toHaveValue("9");
+    expect(within(dialog).getByRole("combobox", { name: "Payment" })).toHaveValue(uid(9));
   });
 
   it("starts from given words: a subject, and a line under the greeting (Course brochures)", async () => {
@@ -388,7 +388,7 @@ describe("Ready-made emails to many Students", () => {
         .getAllByRole("option")
         .map((o) => o.textContent),
     ).toEqual(["Class details", "Plain email"]);
-    expect(within(dialog).getByRole("combobox", { name: "Class" })).toHaveValue("3");
+    expect(within(dialog).getByRole("combobox", { name: "Class" })).toHaveValue(uid(3));
   });
 
   it("asks the backend for the Plain email when it is chosen", async () => {
@@ -447,6 +447,6 @@ function sentMessage() {
     sent_to: "sita@example.test",
     attachments: [],
     sent_at: "2026-11-02T10:04:00+05:45",
-    sent_by: { id: 5, name: "Bikash Thapa" },
+    sent_by: { id: uid(5), name: "Bikash Thapa" },
   };
 }

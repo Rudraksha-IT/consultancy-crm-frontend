@@ -1,10 +1,11 @@
+import { uid } from "@/test/ids";
 import { loginAddress, safeNextPath } from "./loginReturn";
 
 describe("safeNextPath", () => {
   it.each([
     "/students",
-    "/students/12?ptab=docs",
-    "/accounts/fees-by-type/3",
+    `/students/${uid(12)}?ptab=docs`,
+    `/accounts/fees-by-type/${uid(3)}`,
     "/platform/consultancies",
     "/students?q=sita%20rai&page=2",
   ])("keeps a path on this site (%s)", (path) => {

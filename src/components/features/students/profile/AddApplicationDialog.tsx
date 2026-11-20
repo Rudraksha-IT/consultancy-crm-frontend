@@ -109,7 +109,7 @@ function universityOptions(universities: readonly University[]): SelectOption[] 
   return [
     { value: NOTHING, label: APPLICATION_TEXT.chooseUniversity },
     ...universities.map((university) => ({
-      value: String(university.id),
+      value: university.id,
       label: APPLICATION_TEXT.universityOption(university.name, COUNTRY_LABELS[university.country]),
     })),
   ];
@@ -119,7 +119,7 @@ function courseOptions(university: University | undefined): SelectOption[] {
   return [
     { value: NOTHING, label: APPLICATION_TEXT.chooseCourse },
     ...(university?.courses ?? []).map((course) => ({
-      value: String(course.id),
+      value: course.id,
       label: APPLICATION_TEXT.courseOption(course.name, COURSE_LEVEL_LABELS[course.level]),
     })),
   ];

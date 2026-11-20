@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { SelectField } from "@/components/ui/SelectField";
@@ -16,7 +17,7 @@ import { RequiredDocuments } from "./RequiredDocuments";
 import { useOptionalDocumentTypes } from "./useOptionalDocumentTypes";
 
 type CourseDialogProps = {
-  universityId: number;
+  universityId: RecordId;
   onClose: () => void;
   onSaved: (course: Course) => void;
 };
@@ -32,7 +33,7 @@ export function CourseDialog({ universityId, onClose, onSaved }: CourseDialogPro
   const [name, setName] = useState("");
   const [level, setLevel] = useState<string>(CourseLevel.Bachelor);
   const [intakes, setIntakes] = useState<string[]>([]);
-  const [documents, setDocuments] = useState<number[]>([]);
+  const [documents, setDocuments] = useState<RecordId[]>([]);
   const [checked, setChecked] = useState<{ name?: string[]; intakes?: string[] }>({});
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {

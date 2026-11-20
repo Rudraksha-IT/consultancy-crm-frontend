@@ -117,7 +117,7 @@ function fromStudentsRows(byFeeType: MoneyAnswer["moneyInByFeeType"], fromStuden
     return [{ key: "students", label: TEXT.studentFees, value: fromStudents }];
   }
   return byFeeType.map((row) => ({
-    key: `fee-type-${String(row.feeType.id)}`,
+    key: `fee-type-${row.feeType.id}`,
     label: row.feeType.name,
     value: row.amount,
   }));

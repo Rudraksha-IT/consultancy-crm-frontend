@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -30,7 +31,7 @@ const CRIMSON_THEME = {
 
 const TEACHER_CONTEXT = {
   staff: {
-    id: 7,
+    id: uid(7),
     name: "Ram Thapa",
     email: "ram@acme.test",
     role: "teacher",
@@ -46,7 +47,7 @@ const TEACHER_CONTEXT = {
 const ADMIN_CONTEXT = {
   ...TEACHER_CONTEXT,
   staff: {
-    id: 1,
+    id: uid(1),
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "admin",
@@ -518,7 +519,7 @@ describe("AppShell's search", () => {
 
 const VISITOR_CONTEXT = {
   ...ADMIN_CONTEXT,
-  staff: { ...ADMIN_CONTEXT.staff, id: 0, name: "Ramesh", email: "ramesh@platform.test" },
+  staff: { ...ADMIN_CONTEXT.staff, id: uid(0), name: "Ramesh", email: "ramesh@platform.test" },
   support_access: { platform_admin_name: "Ramesh", platform_host: testHost("admin") },
 };
 

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import clsx from "clsx";
 import { useCallback, useId, useState } from "react";
 
@@ -34,7 +35,7 @@ import { MonthPicker } from "./MonthPicker";
 
 const MONTH_LENGTH = 7;
 
-type Person = { id: number; name: string };
+type Person = { id: RecordId; name: string };
 
 /**
  * Employees → Working hours (spec 107-108), for Admins and a Platform Admin: who's in now, then

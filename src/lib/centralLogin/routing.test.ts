@@ -1,10 +1,11 @@
+import { uid } from "@/test/ids";
 import { routeForCentralLogin, routeForPlatformHost } from "./routing";
 import { TEST_PRODUCT_DOMAIN, testHost } from "@/test/hosts";
 
 const HOSTS = { productDomain: TEST_PRODUCT_DOMAIN, centralLoginSubdomain: "login" };
 
 describe("routeForCentralLogin", () => {
-  it.each(["/", "/login", "/students/1", "/platform"])(
+  it.each(["/", "/login", `/students/${uid(1)}`, "/platform"])(
     "shows the Central login at %s on its own address",
     (path) => {
       expect(routeForCentralLogin(`${testHost("login")}:8080`, path, HOSTS)).toBe("show");

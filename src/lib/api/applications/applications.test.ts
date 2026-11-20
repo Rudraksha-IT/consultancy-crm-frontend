@@ -13,8 +13,8 @@ import { uid } from "@/test/ids";
 
 const APPLICATION = {
   id: uid(11),
-  university: { id: 3, name: "Deakin University" },
-  course: { id: 4, name: "Master of IT", level: "master" },
+  university: { id: uid(3), name: "Deakin University" },
+  course: { id: uid(4), name: "Master of IT", level: "master" },
   intake: "2027-03",
   status: "applied",
   offer_kind: "",
@@ -44,10 +44,10 @@ function fieldErrorsOf(error: unknown): unknown {
   return error.fieldErrors;
 }
 
-function university(id: number, courses: unknown[] = []) {
+function university(n: number, courses: unknown[] = []) {
   return {
-    id,
-    name: `University ${String(id)}`,
+    id: uid(n),
+    name: `University ${String(n)}`,
     country: "australia",
     archived: false,
     documents: [],
@@ -63,12 +63,12 @@ describe("addApplication", () => {
   it("POSTs the course and intake and returns the profile with the Application", async () => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, applications: [APPLICATION] }, 201));
 
-    const profile = await addApplication(uid(7), { courseId: 4, intake: "2027-03" }, fetchFn);
+    const profile = await addApplication(uid(7), { courseId: uid(4), intake: "2027-03" }, fetchFn);
 
     expect(sent(fetchFn)).toEqual({
       path: `/api/students/${uid(7)}/applications/`,
       method: "POST",
-      body: { course: 4, intake: "2027-03" },
+      body: { course: uid(4), intake: "2027-03" },
     });
     expect(profile.applications).toEqual([
       {
@@ -91,9 +91,11 @@ describe("addApplication", () => {
       jsonResponse({ intake: ["Choose one of this course's intakes."] }, 400),
     );
 
-    const failure = await addApplication(uid(7), { courseId: 4, intake: "2027-04" }, fetchFn).catch(
-      (error: unknown) => error,
-    );
+    const failure = await addApplication(
+      uid(7),
+      { courseId: uid(4), intake: "2027-04" },
+      fetchFn,
+    ).catch((error: unknown) => error);
 
     expect(fieldErrorsOf(failure)).toEqual({
       intake: ["Choose one of this course's intakes."],
@@ -104,7 +106,7 @@ describe("addApplication", () => {
     const fetchFn = answering(jsonResponse({ detail: "Not your Student." }, 403));
 
     await expect(
-      addApplication(uid(7), { courseId: 4, intake: "2027-03" }, fetchFn),
+      addApplication(uid(7), { courseId: uid(4), intake: "2027-03" }, fetchFn),
     ).rejects.toThrow(ApiRequestError);
   });
 
@@ -113,7 +115,7 @@ describe("addApplication", () => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, applications: [broken] }, 201));
 
     await expect(
-      addApplication(uid(7), { courseId: 4, intake: "2027-03" }, fetchFn),
+      addApplication(uid(7), { courseId: uid(4), intake: "2027-03" }, fetchFn),
     ).rejects.toThrow();
   });
 });

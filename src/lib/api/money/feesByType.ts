@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { RecordIdSchema } from "@/lib/recordId";
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 
 import { API_PATHS } from "@/constants/api";
 import { Stage } from "@/constants/stages";
@@ -11,7 +11,7 @@ const Npr = z.number().int().nonnegative();
 
 /** A Fee Type on Fees by type: a hidden one still shows its money (spec 69). */
 const ByTypeFeeTypeSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   hidden: z.boolean(),
 });
@@ -97,7 +97,7 @@ export function fetchFeesByType(fetchFn: typeof fetch = fetch): Promise<FeesByTy
 
 /** One page of one Fee Type's counted or Lost Students (Admins, Accounts on). */
 export function fetchFeeTypeStudents(
-  feeTypeId: number,
+  feeTypeId: RecordId,
   part: FeeTypePart,
   page: number,
   fetchFn: typeof fetch = fetch,

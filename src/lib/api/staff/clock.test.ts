@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import {
   addHoliday,
   addMissedTime,
@@ -22,14 +23,14 @@ const MY_CLOCK = {
   now: "2026-11-05T05:15:00Z",
   office_network: "on",
   anywhere: null,
-  open: { id: 4, clocked_in_at: "2026-11-05T03:17:00Z" },
+  open: { id: uid(4), clocked_in_at: "2026-11-05T03:17:00Z" },
   forgotten_day: null,
   today_minutes: 118,
   last_out: null,
 };
 
 const SESSION = {
-  id: 4,
+  id: uid(4),
   clocked_in_at: "2026-11-03T03:15:00Z",
   clocked_out_at: "2026-11-03T07:15:00Z",
   missing_clock_out: false,
@@ -58,7 +59,7 @@ const DAY = {
 };
 
 const CORRECTION = {
-  id: 2,
+  id: uid(2),
   day: "2026-11-03",
   before: "In 9:00 AM, no clock-out",
   after: "Out 1:00 PM",
@@ -75,7 +76,7 @@ const FIGURES = {
   corrected: 1,
 };
 
-const STAFF = { id: 7, name: "Sita Rai", job_title: "Counsellor", has_left: false };
+const STAFF = { id: uid(7), name: "Sita Rai", job_title: "Counsellor", has_left: false };
 
 const MONTH = {
   month: "2026-11",
@@ -102,7 +103,7 @@ describe("fetchMyClock", () => {
       now: MY_CLOCK.now,
       officeNetwork: "on",
       anywhere: null,
-      open: { id: 4, clockedInAt: "2026-11-05T03:17:00Z" },
+      open: { id: uid(4), clockedInAt: "2026-11-05T03:17:00Z" },
       forgottenDay: null,
       todayMinutes: 118,
       lastOut: null,
@@ -122,7 +123,7 @@ describe("fetchMyClock", () => {
     { ...MY_CLOCK, anywhere: "home" },
     { ...MY_CLOCK, anywhere: undefined },
     { ...MY_CLOCK, office_network: "maybe" },
-    { ...MY_CLOCK, open: { id: 4, clocked_in_at: "9:02" } },
+    { ...MY_CLOCK, open: { id: uid(4), clocked_in_at: "9:02" } },
     { ...MY_CLOCK, today_minutes: -1 },
     { ...MY_CLOCK, forgotten_day: "04/11/2026" },
     { ...MY_CLOCK, now: undefined },
@@ -176,12 +177,12 @@ describe("fetchClockMonth", () => {
   it("asks for my month, or someone else's by id, and reads it", async () => {
     const fetchFn = answering(jsonResponse(MONTH));
 
-    const month = await fetchClockMonth("2026-11", 7, fetchFn);
+    const month = await fetchClockMonth("2026-11", uid(7), fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/clock/month/?month=2026-11&staff=7");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/clock/month/?month=2026-11&staff=${uid(7)}`);
     expect(month.workingDayMinutes).toBe(480);
     expect(month.staff).toEqual({
-      id: 7,
+      id: uid(7),
       name: "Sita Rai",
       jobTitle: "Counsellor",
       hasLeft: false,
@@ -229,7 +230,7 @@ describe("the team", () => {
         clocked_in_count: 1,
         people: [
           {
-            id: 7,
+            id: uid(7),
             name: "Sita Rai",
             job_title: "",
             state: "in",
@@ -245,7 +246,7 @@ describe("the team", () => {
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/clock/team/now/");
     expect(team.officeNetwork).toBe("off");
     expect(team.people[0]).toEqual({
-      id: 7,
+      id: uid(7),
       name: "Sita Rai",
       jobTitle: "",
       state: "in",
@@ -267,7 +268,7 @@ describe("the team", () => {
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/clock/team/?month=2026-10");
     expect(team.rows[0]).toEqual({
-      staff: { id: 7, name: "Sita Rai", jobTitle: "Counsellor", hasLeft: false },
+      staff: { id: uid(7), name: "Sita Rai", jobTitle: "Counsellor", hasLeft: false },
       daysWorked: 1,
       minutes: 240,
       shortDays: 1,
@@ -281,7 +282,7 @@ describe("the team", () => {
       now: "2026-11-05T05:15:00Z",
       office_network: "on",
       clocked_in_count: 0,
-      people: [{ id: 1, name: "A", job_title: "", state: "away", since: null, left_at: null }],
+      people: [{ id: uid(1), name: "A", job_title: "", state: "away", since: null, left_at: null }],
     };
 
     await expect(fetchTeamNow(answering(jsonResponse(body)))).rejects.toThrow();
@@ -293,7 +294,7 @@ describe("the Working Day", () => {
     minutes: 450,
     weekly_off: "sunday",
     changes: [
-      { id: 1, old_minutes: 480, new_minutes: 450, by: "Anita", at: "2026-11-05T05:15:00Z" },
+      { id: uid(1), old_minutes: 480, new_minutes: 450, by: "Anita", at: "2026-11-05T05:15:00Z" },
     ],
   };
 
@@ -301,7 +302,7 @@ describe("the Working Day", () => {
     const working = await fetchWorkingDay(answering(jsonResponse(ANSWER)));
 
     expect(working.changes[0]).toEqual({
-      id: 1,
+      id: uid(1),
       oldMinutes: 480,
       newMinutes: 450,
       by: "Anita",
@@ -347,9 +348,9 @@ describe("corrections", () => {
   it("sets a missing clock-out", async () => {
     const fetchFn = answering(jsonResponse(CORRECTION, 201));
 
-    const saved = await setMissingClockOut(4, { clockedOutAt: "13:00", reason: "x" }, fetchFn);
+    const saved = await setMissingClockOut(uid(4), { clockedOutAt: "13:00", reason: "x" }, fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/clock/sessions/4/clock-out/");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/clock/sessions/${uid(4)}/clock-out/`);
     expect(fetchFn.mock.calls[0]?.[1]?.body).toBe('{"clocked_out_at":"13:00","reason":"x"}');
     expect(saved).toEqual(CORRECTION);
   });
@@ -358,9 +359,9 @@ describe("corrections", () => {
     const fetchFn = answering(jsonResponse(CORRECTION, 201));
     const missed = { day: "2026-11-04", from: "09:00", to: "17:00", reason: "x" };
 
-    await addMissedTime(7, missed, fetchFn);
+    await addMissedTime(uid(7), missed, fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/clock/staff/7/missed-time/");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/clock/staff/${uid(7)}/missed-time/`);
     expect(fetchFn.mock.calls[0]?.[1]?.body).toBe(JSON.stringify(missed));
   });
 
@@ -368,7 +369,7 @@ describe("corrections", () => {
     const detail = "That overlaps time already recorded on this day.";
 
     const refused = setMissingClockOut(
-      4,
+      uid(4),
       { clockedOutAt: "13:00", reason: "x" },
       answering(jsonResponse({ detail }, 400)),
     );
@@ -378,7 +379,7 @@ describe("corrections", () => {
 
   it("a refused field comes back named in frontend terms", async () => {
     const refused = addMissedTime(
-      7,
+      uid(7),
       { day: "2026-11-04", from: "9", to: "10:00", reason: "x" },
       answering(jsonResponse({ from: ["Enter a time such as 17:30."] }, 400)),
     );
@@ -392,12 +393,12 @@ describe("corrections", () => {
 describe("holidays", () => {
   it("reads the list", async () => {
     const fetchFn = answering(
-      jsonResponse({ holidays: [{ id: 4, date: "2026-10-21", name: "Dashain" }] }),
+      jsonResponse({ holidays: [{ id: uid(4), date: "2026-10-21", name: "Dashain" }] }),
     );
 
     const holidays = await fetchHolidays(fetchFn);
 
-    expect(holidays).toEqual([{ id: 4, date: "2026-10-21", name: "Dashain" }]);
+    expect(holidays).toEqual([{ id: uid(4), date: "2026-10-21", name: "Dashain" }]);
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/clock/holidays/");
   });
 
@@ -418,9 +419,9 @@ describe("holidays", () => {
   it("DELETEs one", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await removeHoliday(4, fetchFn);
+    await removeHoliday(uid(4), fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/clock/holidays/4/");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/clock/holidays/${uid(4)}/`);
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("DELETE");
   });
 

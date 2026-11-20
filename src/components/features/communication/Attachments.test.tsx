@@ -14,7 +14,7 @@ import { EmailComposer } from "./EmailComposer";
 import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: {
     ...consultancySummary(),
     officeDetails: {
@@ -48,7 +48,7 @@ const BULK_PATH = "/api/messages/bulk/";
 
 const apiFile = (
   kind: Attachable["kind"],
-  id: RecordId | number,
+  id: RecordId,
   name: string,
   size: number,
   group: string,
@@ -61,10 +61,16 @@ const apiFile = (
   group,
 });
 
-const BROCHURE = apiFile("course_file", 3, "brochure.pdf", 2 * MB, "Deakin University, MIT");
-const SAMPLE = apiFile("document_example", 4, "sample-statement.pdf", 200 * 1024, "Bank Statement");
+const BROCHURE = apiFile("course_file", uid(3), "brochure.pdf", 2 * MB, "Deakin University, MIT");
+const SAMPLE = apiFile(
+  "document_example",
+  uid(4),
+  "sample-statement.pdf",
+  200 * 1024,
+  "Bank Statement",
+);
 const PASSPORT = apiFile("document_file", uid(9), "passport.pdf", 5 * MB, "Passport");
-const BIG = apiFile("course_file", 6, "big-brochure.pdf", 5 * MB + MB / 2, "RMIT, MBA");
+const BIG = apiFile("course_file", uid(6), "big-brochure.pdf", 5 * MB + MB / 2, "RMIT, MBA");
 const ATTACHABLE = {
   course_files: [BROCHURE, BIG],
   document_examples: [SAMPLE],
@@ -102,7 +108,7 @@ function sentMessage(attachments: string[]) {
     sent_to: "sita@example.test",
     attachments,
     sent_at: "2026-11-02T10:04:00+05:45",
-    sent_by: { id: 5, name: "Bikash Thapa" },
+    sent_by: { id: uid(5), name: "Bikash Thapa" },
   };
 }
 
@@ -205,8 +211,8 @@ describe("Attachments in an email to one Student", () => {
     await screen.findByText("Email sent to Sita Gurung");
     expect(sentBody(fetchFn, SEND_PATH)).toMatchObject({
       attachments: [
-        { kind: "document_example", id: 4 },
-        { kind: "course_file", id: 3 },
+        { kind: "document_example", id: uid(4) },
+        { kind: "course_file", id: uid(3) },
       ],
     });
     expect(callsTo(fetchFn, "GET", ATTACHABLE_PATH)).toHaveLength(1);
@@ -367,7 +373,7 @@ describe("Attachments in an email to many Students", () => {
 
     await screen.findByRole("dialog", { name: "Sending finished" });
     expect(sentBody(fetchFn, BULK_PATH)).toMatchObject({
-      attachments: [{ kind: "document_example", id: 4 }],
+      attachments: [{ kind: "document_example", id: uid(4) }],
       students: [uid(7), uid(8)],
     });
     expect(callsTo(fetchFn, "GET", BULK_ATTACHABLE_PATH)).toHaveLength(1);

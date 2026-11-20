@@ -16,7 +16,7 @@ import { uid } from "@/test/ids";
 vi.mock("@/lib/documents/tab", () => ({ openBlankTab: () => null }));
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
@@ -28,8 +28,8 @@ const COUNSELLOR: StaffContext = {
 const LETTER = { id: uid(31), files: [{ id: uid(51), file_name: "deakin-offer.pdf" }] };
 const DEAKIN = {
   id: uid(11),
-  university: { id: 3, name: "Deakin University" },
-  course: { id: 4, name: "Master of IT", level: "master" },
+  university: { id: uid(3), name: "Deakin University" },
+  course: { id: uid(4), name: "Master of IT", level: "master" },
   intake: "2027-03",
   status: "offer",
   offer_kind: "unconditional",
@@ -40,8 +40,8 @@ const DEAKIN = {
 };
 const RMIT = {
   id: uid(12),
-  university: { id: 6, name: "RMIT University" },
-  course: { id: 9, name: "Master of Data Science", level: "master" },
+  university: { id: uid(6), name: "RMIT University" },
+  course: { id: uid(9), name: "Master of Data Science", level: "master" },
   intake: "2027-07",
   status: "offer",
   offer_kind: "",
@@ -52,8 +52,8 @@ const RMIT = {
 };
 const MONASH = {
   id: uid(13),
-  university: { id: 8, name: "Monash University" },
-  course: { id: 10, name: "Master of Nursing", level: "master" },
+  university: { id: uid(8), name: "Monash University" },
+  course: { id: uid(10), name: "Master of Nursing", level: "master" },
   intake: "2027-02",
   status: "applied",
   offer_kind: "",
@@ -74,8 +74,8 @@ const APPLYING = { ...PROFILE, stage: "applying", applications: [MONASH], chosen
 const waitingVisa = {
   id: uid(21),
   application_id: uid(11),
-  university: { id: 3, name: "Deakin University" },
-  course: { id: 4, name: "Master of IT", level: "master" },
+  university: { id: uid(3), name: "Deakin University" },
+  course: { id: uid(4), name: "Master of IT", level: "master" },
   status: "applied",
   started_on: "2026-10-20",
   biometrics_at: null,

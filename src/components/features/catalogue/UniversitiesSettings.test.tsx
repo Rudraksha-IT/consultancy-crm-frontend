@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,7 +12,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { UniversitiesSettings } from "./UniversitiesSettings";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Asha Admin", email: "asha@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["catalogue"],
   dateDisplay: "AD",
@@ -21,48 +22,53 @@ const ADMIN: StaffContext = {
 };
 
 const MIT = {
-  id: 11,
-  university_id: 1,
+  id: uid(11),
+  university_id: uid(1),
   name: "Master of Information Technology",
   level: "master",
   intakes: ["2027-03", "2027-07"],
   archived: false,
-  documents: [{ id: 21, name: "Work Reference" }],
+  documents: [{ id: uid(21), name: "Work Reference" }],
   applications: 0,
   files: [],
   file_count: 0,
 };
 const OLD_COURSE = {
   ...MIT,
-  id: 12,
+  id: uid(12),
   name: "Old diploma",
   level: "diploma",
   archived: true,
   documents: [],
 };
 const DEAKIN = {
-  id: 1,
+  id: uid(1),
   name: "Deakin University",
   country: "australia",
   archived: false,
   courses: [MIT],
 };
 const KAPLAN = {
-  id: 2,
+  id: uid(2),
   name: "Kaplan Business School",
   country: "australia",
   archived: true,
   courses: [],
 };
 const TYPES = [
-  { id: 21, name: "Work Reference", needed_by_everyone: false, usual_group: "applying" },
-  { id: 22, name: "Passport", needed_by_everyone: true, usual_group: "applying" },
-  { id: 23, name: "Statement of Purpose", needed_by_everyone: false, usual_group: "statements" },
+  { id: uid(21), name: "Work Reference", needed_by_everyone: false, usual_group: "applying" },
+  { id: uid(22), name: "Passport", needed_by_everyone: true, usual_group: "applying" },
+  {
+    id: uid(23),
+    name: "Statement of Purpose",
+    needed_by_everyone: false,
+    usual_group: "statements",
+  },
 ];
 
 const LIST = "GET /api/catalogue/universities/";
 const LIST_ARCHIVED = "GET /api/catalogue/universities/?include_archived=true";
-const COURSE_URL = "PATCH /api/catalogue/courses/11/";
+const COURSE_URL = `PATCH /api/catalogue/courses/${uid(11)}/`;
 
 function pageOf(results: unknown[], count = results.length) {
   return { count, page: 1, page_size: 25, results };
@@ -176,7 +182,7 @@ describe("UniversitiesSettings", () => {
 
     expect(
       within(deakin).getByRole("link", { name: "Edit Deakin University and its courses" }),
-    ).toHaveAttribute("href", "/configuration/universities/1/edit");
+    ).toHaveAttribute("href", `/configuration/universities/${uid(1)}/edit`);
     expect(within(deakin).queryByRole("button", { name: /Archive/ })).toBeNull();
   });
 
@@ -246,7 +252,10 @@ describe("UniversitiesSettings", () => {
 
   it("adds a university and loads the list again", async () => {
     const fetchFn = listing({
-      "POST /api/catalogue/universities/": jsonResponse({ ...KAPLAN, id: 3, archived: false }, 201),
+      "POST /api/catalogue/universities/": jsonResponse(
+        { ...KAPLAN, id: uid(3), archived: false },
+        201,
+      ),
     });
     renderPage();
     await cardFor("Deakin University");
@@ -411,7 +420,7 @@ describe("intakes on the Catalogue", () => {
 });
 
 describe("adding a course", () => {
-  const ADD = "POST /api/catalogue/universities/1/courses/";
+  const ADD = `POST /api/catalogue/universities/${uid(1)}/courses/`;
 
   async function openAddCourse(): Promise<HTMLElement> {
     renderPage();
@@ -425,7 +434,7 @@ describe("adding a course", () => {
   it("uses the edit page's picker: name, level, month grid and document tick boxes", async () => {
     const fetchFn = listing({
       "GET /api/documents/types/": jsonResponse({ results: TYPES }),
-      [ADD]: jsonResponse({ ...MIT, id: 13, name: "Bachelor of IT" }, 201),
+      [ADD]: jsonResponse({ ...MIT, id: uid(13), name: "Bachelor of IT" }, 201),
     });
     const dialog = await openAddCourse();
 
@@ -443,7 +452,7 @@ describe("adding a course", () => {
       name: "Bachelor of IT",
       level: "bachelor",
       intakes: ["2027-02", "2027-07"],
-      documents: [21],
+      documents: [uid(21)],
     });
   });
 

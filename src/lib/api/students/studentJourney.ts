@@ -34,7 +34,7 @@ export async function setStage(
 /** Give a Student with no counsellor their first one (spec 28). */
 export function assignCounsellor(
   id: RecordId,
-  counsellorId: number,
+  counsellorId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
   return pickCounsellor(API_PATHS.studentAssign(id), counsellorId, fetchFn);
@@ -43,7 +43,7 @@ export function assignCounsellor(
 /** Transfer a Student to another counsellor (spec 42). */
 export function transferStudent(
   id: RecordId,
-  counsellorId: number,
+  counsellorId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
   return pickCounsellor(API_PATHS.studentTransfer(id), counsellorId, fetchFn);
@@ -51,7 +51,7 @@ export function transferStudent(
 
 async function pickCounsellor(
   path: string,
-  counsellorId: number,
+  counsellorId: RecordId,
   fetchFn: typeof fetch,
 ): Promise<StudentProfile> {
   const fields = COUNSELLOR_PICK_API_FIELDS;

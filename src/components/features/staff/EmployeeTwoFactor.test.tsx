@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen } from "@testing-library/react";
 
 import type { Employee } from "@/lib/api";
@@ -6,7 +7,7 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { EmployeeTwoFactorChip } from "./EmployeeTwoFactor";
 
 const RAM: Employee = {
-  id: 2,
+  id: uid(2),
   name: "Ram Thapa",
   email: "ram@acme.test",
   mobile: "9800000002",

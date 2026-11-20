@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 
 import { CatalogueRefusedError } from "./catalogueEdit";
@@ -28,7 +30,7 @@ function refused(error: unknown): unknown {
  * `InvalidFieldsError` on `file` or `name`, or `CatalogueRefusedError` with the server's reason.
  */
 export async function uploadCourseFile(
-  courseId: number,
+  courseId: RecordId,
   file: File,
   name: string,
   fetchFn: typeof fetch = fetch,
@@ -45,7 +47,7 @@ export async function uploadCourseFile(
 
 /** Give a Course File a new name. Rejects with `InvalidFieldsError` on `name`. */
 export async function renameCourseFile(
-  id: number,
+  id: RecordId,
   name: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<CourseFile> {
@@ -57,13 +59,13 @@ export async function renameCourseFile(
 }
 
 /** Put a Course File in the Bin, where an Admin restores it or deletes it for good. */
-export function binCourseFile(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function binCourseFile(id: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.courseFile(id), fetchFn);
 }
 
 /** A short-lived link to open (or save) a Course File in use. */
 export async function fetchCourseFileLink(
-  id: number,
+  id: RecordId,
   action: "open" | "download",
   fetchFn: typeof fetch = fetch,
 ): Promise<string> {
@@ -72,18 +74,24 @@ export async function fetchCourseFileLink(
 }
 
 /** Restore a Course File from the Bin to its Course (Admins). */
-export function restoreCourseFile(id: number, fetchFn: typeof fetch = fetch): Promise<CourseFile> {
+export function restoreCourseFile(
+  id: RecordId,
+  fetchFn: typeof fetch = fetch,
+): Promise<CourseFile> {
   return postJson(API_PATHS.binCourseFileRestore(id), {}, CourseFileSchema, fetchFn);
 }
 
 /** Delete a Course File in the Bin for good, with its stored file (Admins). */
-export function deleteCourseFileForGood(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function deleteCourseFileForGood(
+  id: RecordId,
+  fetchFn: typeof fetch = fetch,
+): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.binCourseFile(id), fetchFn);
 }
 
 /** A short-lived link to open a Course File waiting in the Bin, for an Admin on the Bin tab. */
 export async function fetchBinCourseFileLink(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<string> {
   const path = `${API_PATHS.binCourseFileLink(id)}?action=open`;

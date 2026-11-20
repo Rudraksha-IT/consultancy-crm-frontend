@@ -12,7 +12,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Asha Admin", email: "asha@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
@@ -46,11 +46,11 @@ const SITA = student({
   phone: "9841234567",
   country: "australia",
   stage: "applying",
-  assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 });
 const COUNSELLORS = [
-  { id: 1, name: "Asha Admin", role: "admin" },
-  { id: 5, name: "Bikash Thapa", role: "counsellor" },
+  { id: uid(1), name: "Asha Admin", role: "admin" },
+  { id: uid(5), name: "Bikash Thapa", role: "counsellor" },
 ];
 
 function pageOf(results: unknown[], count = results.length, page = 1) {
@@ -208,7 +208,7 @@ describe("StudentsPage", () => {
     );
 
     await waitFor(() => {
-      expect(lastListCall(fetchFn)).toBe("/api/students/?stage=visa&counsellor=5");
+      expect(lastListCall(fetchFn)).toBe(`/api/students/?stage=visa&counsellor=${uid(5)}`);
     });
   });
 
@@ -327,7 +327,7 @@ describe("adding a visitor", () => {
     previous_job: "",
     sub_agent_name: "Himal Edu Link",
     note: "Wants Tokyo.",
-    assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+    assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
     created_at: "2026-11-01T10:15:00+05:45",
   };
 
@@ -428,7 +428,7 @@ describe("adding a visitor", () => {
       past_degree: "BBS",
       previous_job: "",
       note: "Wants Tokyo.",
-      assigned_counsellor: 5,
+      assigned_counsellor: uid(5),
     });
   });
 
@@ -565,7 +565,7 @@ describe("StudentsPage selection and export (issue 51)", () => {
     const fetchFn = backend(exported, listing(), counsellors);
     renderPage();
     await screen.findByRole("link", { name: "Sita Karki" });
-    await user.selectOptions(screen.getByRole("combobox", { name: "Counsellor" }), "5");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Counsellor" }), uid(5));
 
     await user.click(screen.getByRole("button", { name: "Export" }));
     const dialog = await screen.findByRole("dialog", { name: "Export students" });
@@ -578,7 +578,7 @@ describe("StudentsPage selection and export (issue 51)", () => {
         "/api/exports/",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ list: "students", filters: { counsellor: "5" } }),
+          body: JSON.stringify({ list: "students", filters: { counsellor: uid(5) } }),
         }),
       );
     });
@@ -635,7 +635,7 @@ describe("StudentsPage Assigned Counsellor filter (issue 70)", () => {
     await user.selectOptions(screen.getByRole("combobox", { name: "Counsellor" }), "Bikash Thapa");
 
     await waitFor(() => {
-      expect(lastListCall(fetchFn)).toBe("/api/students/?counsellor=5");
+      expect(lastListCall(fetchFn)).toBe(`/api/students/?counsellor=${uid(5)}`);
     });
   });
 

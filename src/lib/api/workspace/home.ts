@@ -12,7 +12,7 @@ import { APPOINTMENT_AT } from "../core/types";
 
 const PERCENT_MAX = 100;
 const Count = z.number().int().nonnegative();
-const PersonSchema = z.object({ id: z.number().int(), name: z.string() });
+const PersonSchema = z.object({ id: RecordIdSchema, name: z.string() });
 const StudentRefSchema = z.object({ id: RecordIdSchema, name: z.string() });
 
 /** One Student on a Home: how far along they are, the next step and their documents. */
@@ -96,7 +96,7 @@ const WaitingSchema = z
     documents_in_bin: Count.default(0),
     /** Admins with Clock-in on: Work From Home requests waiting, and whose is oldest (issue 87). */
     work_from_home_requests: z
-      .object({ count: Count, first_staff_id: z.number().int().positive().nullable() })
+      .object({ count: Count, first_staff_id: RecordIdSchema.nullable() })
       .default({ count: 0, first_staff_id: null }),
     visa_appointments: z.object({
       count: Count,

@@ -19,7 +19,7 @@ function backend(...answers: Answer[]) {
 }
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "payments", "accounts"],
   dateDisplay: "AD",
@@ -32,7 +32,7 @@ const ADMIN_WITHOUT_ACCOUNTS: StaffContext = { ...ADMIN, modules: ["students", "
 
 const COUNSELLOR: StaffContext = {
   ...ADMIN,
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
 };
 
 const PAYMENT = {
@@ -42,7 +42,7 @@ const PAYMENT = {
   amount: 25000,
   paid_on: "2026-11-01",
   method: "esewa",
-  fee_type: feeTypeRef(3),
+  fee_type: feeTypeRef(uid(3)),
   note: "first half",
   recorded_by: { name: "Ramesh KC" },
   recorded_at: "2026-11-01T10:15:00+05:45",
@@ -206,7 +206,7 @@ describe("Accounts", () => {
   });
 
   it("filters by dates, Student name or phone and Fee Type", async () => {
-    const filtered = "/api/payments/?from=2026-10-01&to=2026-10-31&q=Sita&fee_type=3&page=1";
+    const filtered = `/api/payments/?from=2026-10-01&to=2026-10-31&q=Sita&fee_type=${uid(3)}&page=1`;
     const fetchFn = backend(
       on("GET", THIS_MONTH, pageOf([PAYMENT])),
       on("GET", filtered, pageOf([])),
@@ -319,20 +319,22 @@ describe("editing a Payment", () => {
     expect(within(dialog).getByLabelText("Amount (NPR)")).toHaveValue(25000);
     expect(within(dialog).getByLabelText("Date")).toHaveValue("2026-11-01");
     expect(within(dialog).getByLabelText("Method")).toHaveValue("esewa");
-    expect(within(dialog).getByRole("combobox", { name: "Fee Type" })).toHaveValue("3");
+    expect(within(dialog).getByRole("combobox", { name: "Fee Type" })).toHaveValue(uid(3));
     expect(within(dialog).getByLabelText(/^Note/)).toHaveValue("first half");
     expect(within(dialog).getByText("The change is recorded in History.")).toBeInTheDocument();
   });
 
   it("keeps a hidden Fee Type the Payment already has, and offers no other hidden one", async () => {
-    backend(on("GET", THIS_MONTH, pageOf([{ ...PAYMENT, fee_type: feeTypeRef(5), note: "" }])));
+    backend(
+      on("GET", THIS_MONTH, pageOf([{ ...PAYMENT, fee_type: feeTypeRef(uid(5)), note: "" }])),
+    );
     await showMoneyIn();
 
     const dialog = await openEdit();
     const picker = within(dialog).getByRole("combobox", { name: "Fee Type" });
     await within(dialog).findByRole("option", { name: "Visa fee" });
 
-    expect(picker).toHaveValue("5");
+    expect(picker).toHaveValue(uid(5));
     expect(within(picker).getAllByRole("option", { name: "PTE class" })).toHaveLength(1);
   });
 
@@ -365,7 +367,7 @@ describe("editing a Payment", () => {
       amount: 30000,
       paid_on: "2026-11-01",
       method: "esewa",
-      fee_type: 3,
+      fee_type: uid(3),
       note: "first half",
     });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -544,7 +546,7 @@ describe("the Fees tab on a Student", () => {
   });
 
   it("loads the list again after an edit", async () => {
-    const changed = { ...PAYMENT, fee_type: feeTypeRef(4), note: "" };
+    const changed = { ...PAYMENT, fee_type: feeTypeRef(uid(4)), note: "" };
     backend(
       listChangingAfter(STUDENT_PAYMENTS, pageOf([changed])),
       on("GET", `/api/students/${uid(7)}/`, PROFILE),

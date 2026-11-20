@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -16,7 +17,7 @@ const navigate = vi.hoisted(() => vi.fn<(path: string) => void>());
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 
 const VISITOR: StaffContext = {
-  staff: { id: 0, name: "Ramesh", email: "ramesh@platform.test", role: "admin" },
+  staff: { id: uid(0), name: "Ramesh", email: "ramesh@platform.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "batches", "accounts"],
   dateDisplay: "AD",

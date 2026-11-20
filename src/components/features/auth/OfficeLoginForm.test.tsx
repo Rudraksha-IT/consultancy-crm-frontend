@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -12,7 +13,7 @@ vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => n
 
 const CONTEXT = {
   staff: {
-    id: 1,
+    id: uid(1),
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "counsellor",

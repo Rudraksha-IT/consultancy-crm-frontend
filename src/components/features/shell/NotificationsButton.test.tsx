@@ -11,7 +11,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students", "tasks"],
   dateDisplay: "AD",
@@ -21,98 +21,98 @@ const COUNSELLOR: StaffContext = {
 };
 
 const GIVEN = {
-  id: 3,
+  id: uid(3),
   kind: "assigned",
   created_at: "2026-11-02T09:12:00+05:45",
   is_read: false,
-  task: { id: 31, title: "First counselling call with Manisha", due_on: "2026-11-03" },
-  by: { id: 4, name: "Ramesh KC" },
+  task: { id: uid(31), title: "First counselling call with Manisha", due_on: "2026-11-03" },
+  by: { id: uid(4), name: "Ramesh KC" },
   student: { id: uid(7), name: "Manisha Rai" },
   transfer_request: null,
 };
 
 const ASKED = {
   ...GIVEN,
-  id: 6,
+  id: uid(6),
   kind: "transfer_asked",
   task: null,
-  by: { id: 3, name: "Anjali Gurung" },
+  by: { id: uid(3), name: "Anjali Gurung" },
   student: { id: uid(13), name: "Sarina Khadka" },
-  transfer_request: { id: 801, status: "waiting" },
+  transfer_request: { id: uid(801), status: "waiting" },
 };
 
 const APPROVED = {
   ...ASKED,
-  id: 5,
+  id: uid(5),
   kind: "transfer_approved",
   by: { id: null, name: "Ramesh (Platform Admin)" },
-  transfer_request: { id: 801, status: "approved" },
+  transfer_request: { id: uid(801), status: "approved" },
 };
 
-const DECLINED = { ...APPROVED, id: 4, kind: "transfer_declined", is_read: true };
+const DECLINED = { ...APPROVED, id: uid(4), kind: "transfer_declined", is_read: true };
 
 const BIN_ADDED = {
   ...ASKED,
-  id: 9,
+  id: uid(9),
   kind: "bin_added",
-  by: { id: 5, name: "Bikash Thapa" },
+  by: { id: uid(5), name: "Bikash Thapa" },
   transfer_request: null,
   bin: { item: "page-2.pdf of Passport", reason: "<b>Blurry</b>" },
 };
 const BIN_RESTORED = {
   ...BIN_ADDED,
-  id: 10,
+  id: uid(10),
   kind: "bin_restored",
-  by: { id: 1, name: "Anita Rai" },
+  by: { id: uid(1), name: "Anita Rai" },
 };
-const BIN_DELETED = { ...BIN_RESTORED, id: 11, kind: "bin_deleted" };
+const BIN_DELETED = { ...BIN_RESTORED, id: uid(11), kind: "bin_deleted" };
 
 const WFH = {
-  id: 20,
-  staff_id: 5,
+  id: uid(20),
+  staff_id: uid(5),
   starts_on: "2026-11-06",
   ends_on: "2026-11-12",
   status: "waiting",
 };
 const WFH_ASKED = {
   ...ASKED,
-  id: 20,
+  id: uid(20),
   kind: "work_from_home_asked",
-  by: { id: 5, name: "Bikash Thapa" },
+  by: { id: uid(5), name: "Bikash Thapa" },
   student: null,
   transfer_request: null,
   work_from_home: WFH,
 };
 const WFH_APPROVED = {
   ...WFH_ASKED,
-  id: 21,
+  id: uid(21),
   kind: "work_from_home_approved",
-  by: { id: 1, name: "Anita Rai" },
+  by: { id: uid(1), name: "Anita Rai" },
   work_from_home: { ...WFH, status: "approved" },
 };
-const WFH_DECLINED = { ...WFH_APPROVED, id: 22, kind: "work_from_home_declined" };
+const WFH_DECLINED = { ...WFH_APPROVED, id: uid(22), kind: "work_from_home_declined" };
 const WFH_SET = {
   ...WFH_APPROVED,
-  id: 23,
+  id: uid(23),
   kind: "work_from_home_set",
   work_from_home: { ...WFH, ends_on: null, status: "approved" },
 };
 
 const OVERDUE = {
   ...GIVEN,
-  id: 2,
+  id: uid(2),
   kind: "overdue",
-  task: { id: 30, title: "Call Sita about her IELTS retake date", due_on: "2026-10-30" },
+  task: { id: uid(30), title: "Call Sita about her IELTS retake date", due_on: "2026-10-30" },
   by: null,
   student: null,
 };
 
 const DUE_TODAY = {
   ...OVERDUE,
-  id: 1,
+  id: uid(1),
   kind: "due_today",
   is_read: true,
-  task: { id: 29, title: "Collect the bank statement", due_on: "2026-11-02" },
+  task: { id: uid(29), title: "Collect the bank statement", due_on: "2026-11-02" },
 };
 
 const URL = "/api/notifications/";
@@ -223,7 +223,7 @@ describe("The notification bell", () => {
     );
     expect(within(asked).getByRole("link", { name: "Open" })).toHaveAttribute(
       "href",
-      "/staff/5?tab=wfh",
+      `/staff/${uid(5)}?tab=wfh`,
     );
     expect(approved).toHaveTextContent(
       "Anita Rai approved your work from home dates: 6 Nov 2026 to 12 Nov 2026",
@@ -260,7 +260,7 @@ describe("The notification bell", () => {
   it("links to the Student, marking that one read", async () => {
     const fetchFn = backend(
       on("GET", URL, pageOf([GIVEN], 1)),
-      on("PATCH", "/api/notifications/3/", { ...GIVEN, is_read: true }),
+      on("PATCH", `/api/notifications/${uid(3)}/`, { ...GIVEN, is_read: true }),
     );
     renderBell();
     const panel = await openBell();
@@ -269,7 +269,7 @@ describe("The notification bell", () => {
     expect(link).toHaveAttribute("href", `/students/${uid(7)}`);
     await userEvent.click(link);
 
-    const [call] = callsTo(fetchFn, "PATCH", "/api/notifications/3/");
+    const [call] = callsTo(fetchFn, "PATCH", `/api/notifications/${uid(3)}/`);
     expect(call?.[1]?.body).toBe(JSON.stringify({ read: true }));
     expect(screen.queryByRole("dialog", { name: "Notifications" })).not.toBeInTheDocument();
   });

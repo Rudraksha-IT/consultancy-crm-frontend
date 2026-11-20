@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -12,7 +13,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { WorkingDaySettings } from "./WorkingDaySettings";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["clock_in"],
   dateDisplay: "AD",
@@ -79,7 +80,7 @@ describe("WorkingDaySettings", () => {
       weekly_off: "saturday",
       changes: [],
     };
-    const change = { id: 1, old_minutes: 480, new_minutes: 450, by: "Maya Shrestha", at: AT };
+    const change = { id: uid(1), old_minutes: 480, new_minutes: 450, by: "Maya Shrestha", at: AT };
     const fetchFn = backend(
       onEach("GET", PATH, () => answer),
       onEach("PUT", PATH, () => {

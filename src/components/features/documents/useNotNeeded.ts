@@ -13,10 +13,10 @@ import { dropStudentDocument, requirementRefusal, type Checklist } from "@/lib/a
 export function useNotNeeded(
   studentId: RecordId,
   onDropped: (checklist: Checklist) => void,
-): { drop: (documentTypeId: number) => Promise<void> } {
+): { drop: (documentTypeId: RecordId) => Promise<void> } {
   const { showToast } = useToast();
 
-  async function drop(documentTypeId: number): Promise<void> {
+  async function drop(documentTypeId: RecordId): Promise<void> {
     const saved = await dropStudentDocument(studentId, documentTypeId);
     showToast(DOCUMENT_TEXT.takenOff);
     onDropped(saved);

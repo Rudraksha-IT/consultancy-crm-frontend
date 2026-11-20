@@ -8,13 +8,13 @@ import { BATCH_TIMINGS, TEST_TYPES, type TestType } from "@/constants/batches";
 import { getJson, postJson, putJson, sendWithoutBody } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
 
-const PersonSchema = z.object({ id: z.number().int(), name: z.string() });
+const PersonSchema = z.object({ id: RecordIdSchema, name: z.string() });
 
 /** A share of class days attended, or null before any day is marked. */
 const AttendedSchema = z.number().int().min(0).max(100).nullable();
 
 const BatchFields = {
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string().min(1),
   test_type: z.enum(TEST_TYPES),
   teacher: PersonSchema,
@@ -123,7 +123,7 @@ export type BatchTeacher = z.infer<typeof BatchTeacherSchema>;
 export type BatchForm = {
   name: string;
   testType: TestType;
-  teacherId: number;
+  teacherId: RecordId;
   timeSlot: string;
   /** AD, "YYYY-MM-DD". */
   startsOn: string;
@@ -157,7 +157,10 @@ export function fetchBatches(page: number, fetchFn: typeof fetch = fetch): Promi
 }
 
 /** One class with its Students. */
-export function fetchBatch(id: number, fetchFn: typeof fetch = fetch): Promise<BatchWithStudents> {
+export function fetchBatch(
+  id: RecordId,
+  fetchFn: typeof fetch = fetch,
+): Promise<BatchWithStudents> {
   return getJson(API_PATHS.batch(id), BatchWithStudentsSchema, fetchFn);
 }
 
@@ -175,7 +178,7 @@ export async function createBatch(
 
 /** Save a whole class (spec 83). Rejects with `InvalidFieldsError` for refused fields. */
 export async function saveBatch(
-  id: number,
+  id: RecordId,
   batch: BatchForm,
   fetchFn: typeof fetch = fetch,
 ): Promise<BatchWithStudents> {
@@ -188,7 +191,7 @@ export async function saveBatch(
 
 /** Put a Student in a class (spec 84). Rejects with `InvalidFieldsError` naming why not. */
 export async function addStudentToBatch(
-  batchId: number,
+  batchId: RecordId,
   studentId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<BatchWithStudents> {
@@ -206,7 +209,7 @@ export async function addStudentToBatch(
 
 /** Take a Student out of a class (spec 84). */
 export function removeStudentFromBatch(
-  batchId: number,
+  batchId: RecordId,
   studentId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<void> {

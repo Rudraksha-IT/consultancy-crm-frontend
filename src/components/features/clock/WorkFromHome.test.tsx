@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -13,7 +14,7 @@ import { MyWorkingHoursPage } from "./MyWorkingHoursPage";
 import { PersonWorkFromHome } from "./PersonWorkFromHome";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 3, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(3), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students", "clock_in"],
   dateDisplay: "AD",
@@ -23,16 +24,16 @@ const COUNSELLOR: StaffContext = {
 };
 const ADMIN: StaffContext = {
   ...COUNSELLOR,
-  staff: { id: 1, name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
 };
 const MONTH = "/api/clock/month/?month=2026-11";
 const MINE = "/api/clock/work-from-home/";
-const PERSON = "/api/clock/staff/3/work-from-home/";
+const PERSON = `/api/clock/staff/${uid(3)}/work-from-home/`;
 
 function dates(overrides: Record<string, unknown> = {}) {
   return {
-    id: 7,
-    staff_id: 3,
+    id: uid(7),
+    staff_id: uid(3),
     starts_on: "2026-11-06",
     ends_on: "2026-11-12",
     reason: "Looking after my mother",
@@ -77,7 +78,7 @@ describe("My working hours: my Work from home dates", () => {
         results: [
           dates(),
           dates({
-            id: 6,
+            id: uid(6),
             starts_on: "2026-10-28",
             ends_on: "2026-10-28",
             status: "approved",
@@ -85,7 +86,7 @@ describe("My working hours: my Work from home dates", () => {
             answered_at: "2026-10-27T11:00:00Z",
             reason: "<b>Plumber</b>",
           }),
-          dates({ id: 5, starts_on: "2026-10-01", ends_on: null, status: "declined" }),
+          dates({ id: uid(5), starts_on: "2026-10-01", ends_on: null, status: "declined" }),
         ],
       }),
     );
@@ -176,7 +177,7 @@ describe("My working hours: my Work from home dates", () => {
     const fetchFn = backend(
       on("GET", MONTH, novemberMonth()),
       on("GET", MINE, { can_ask: true, results: [dates()] }),
-      on("POST", "/api/clock/work-from-home/7/cancel/", dates({ status: "cancelled" })),
+      on("POST", `/api/clock/work-from-home/${uid(7)}/cancel/`, dates({ status: "cancelled" })),
     );
     render(inContext(COUNSELLOR, <MyWorkingHoursPage />));
 
@@ -189,7 +190,7 @@ describe("My working hours: my Work from home dates", () => {
 
     expect(await screen.findByText("Request cancelled")).toBeInTheDocument();
     expect(await screen.findByText("Cancelled")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "POST", "/api/clock/work-from-home/7/cancel/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "POST", `/api/clock/work-from-home/${uid(7)}/cancel/`)).toHaveLength(1);
   });
 
   it("isn't shown to an Admin, who never needs dates", async () => {
@@ -238,13 +239,13 @@ describe("The Home label in the calendar", () => {
 
 describe("An employee's Work from home tab (Admins)", () => {
   function renderPerson() {
-    render(inContext(ADMIN, <PersonWorkFromHome staffId={3} />));
+    render(inContext(ADMIN, <PersonWorkFromHome staffId={uid(3)} />));
   }
 
   it("lists the dates with Approve and Decline on a waiting request", async () => {
     backend(
       on("GET", PERSON, {
-        staff: { id: 3, name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
+        staff: { id: uid(3), name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
         needs_dates: true,
         results: [dates()],
       }),
@@ -271,12 +272,12 @@ describe("An employee's Work from home tab (Admins)", () => {
     let current = dates();
     const fetchFn = backend(
       onEach("GET", PERSON, () => ({
-        staff: { id: 3, name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
+        staff: { id: uid(3), name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
         needs_dates: true,
         results: [current],
       })),
       (path, init) => {
-        if (path !== `/api/clock/work-from-home/7/${action}/` || init?.method !== "POST") {
+        if (path !== `/api/clock/work-from-home/${uid(7)}/${action}/` || init?.method !== "POST") {
           return undefined;
         }
         current = dates({ status, answered_by: "Maya Shrestha" });
@@ -288,7 +289,9 @@ describe("An employee's Work from home tab (Admins)", () => {
     await user.click(await screen.findByRole("button", { name: button }));
 
     expect(await screen.findAllByText(word)).not.toHaveLength(0);
-    expect(callsTo(fetchFn, "POST", `/api/clock/work-from-home/7/${action}/`)).toHaveLength(1);
+    expect(callsTo(fetchFn, "POST", `/api/clock/work-from-home/${uid(7)}/${action}/`)).toHaveLength(
+      1,
+    );
     expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
   });
 
@@ -296,13 +299,13 @@ describe("An employee's Work from home tab (Admins)", () => {
     const user = userEvent.setup();
     const fetchFn = backend(
       on("GET", PERSON, {
-        staff: { id: 3, name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
+        staff: { id: uid(3), name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
         needs_dates: true,
         results: [dates({ status: "approved", starts_on: "2026-11-01", ends_on: null })],
       }),
       on(
         "POST",
-        "/api/clock/work-from-home/7/end/",
+        `/api/clock/work-from-home/${uid(7)}/end/`,
         dates({ status: "approved", starts_on: "2026-11-01", ends_on: "2026-11-05" }),
       ),
     );
@@ -315,14 +318,14 @@ describe("An employee's Work from home tab (Admins)", () => {
 
     expect(await screen.findByText("Ends today")).toBeInTheDocument();
     expect(await screen.findByText("1 Nov 2026 to 5 Nov 2026")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "POST", "/api/clock/work-from-home/7/end/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "POST", `/api/clock/work-from-home/${uid(7)}/end/`)).toHaveLength(1);
   });
 
   it("sets dates directly", async () => {
     const user = userEvent.setup();
     const fetchFn = backend(
       on("GET", PERSON, {
-        staff: { id: 3, name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
+        staff: { id: uid(3), name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
         needs_dates: true,
         results: [],
       }),
@@ -350,7 +353,7 @@ describe("An employee's Work from home tab (Admins)", () => {
   it("says an Admin never needs dates", async () => {
     backend(
       on("GET", PERSON, {
-        staff: { id: 3, name: "Bikash Thapa", job_title: "Admin", has_left: false },
+        staff: { id: uid(3), name: "Bikash Thapa", job_title: "Admin", has_left: false },
         needs_dates: false,
         results: [],
       }),
@@ -370,13 +373,13 @@ describe("An employee's Work from home tab (Admins)", () => {
     const user = userEvent.setup();
     backend(
       on("GET", PERSON, {
-        staff: { id: 3, name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
+        staff: { id: uid(3), name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
         needs_dates: true,
         results: [dates()],
       }),
       on(
         "POST",
-        "/api/clock/work-from-home/7/approve/",
+        `/api/clock/work-from-home/${uid(7)}/approve/`,
         { detail: "These dates are no longer waiting for an answer." },
         409,
       ),

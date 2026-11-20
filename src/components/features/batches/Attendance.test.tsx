@@ -17,7 +17,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
 const TEACHER: StaffContext = {
-  staff: { id: 9, name: "Gita Lama", email: "gita@acme.test", role: "teacher" },
+  staff: { id: uid(9), name: "Gita Lama", email: "gita@acme.test", role: "teacher" },
   consultancy: consultancySummary(),
   modules: ["students", "tasks", "batches"],
   dateDisplay: "AD",
@@ -28,19 +28,19 @@ const TEACHER: StaffContext = {
 
 const COUNSELLOR: StaffContext = {
   ...TEACHER,
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
 };
 
 const DESK: StaffContext = {
   ...TEACHER,
-  staff: { id: 4, name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
+  staff: { id: uid(4), name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
 };
 
 const MORNING = {
-  id: 1,
+  id: uid(1),
   name: "IELTS Morning",
   test_type: "ielts",
-  teacher: { id: 9, name: "Gita Lama" },
+  teacher: { id: uid(9), name: "Gita Lama" },
   time_slot: "7:00-8:30 AM",
   starts_on: "2026-10-05",
   ends_on: "2026-12-04",
@@ -54,8 +54,8 @@ const SITA = { id: uid(7), name: "Sita Gurung", attended_percent: null };
 const RAM = { id: uid(8), name: "Ram Shrestha", attended_percent: 92 };
 const MORNING_WITH_STUDENTS = { ...MORNING, students: [RAM, SITA] };
 
-const ONE = "/api/batches/1/";
-const TODAY = "/api/batches/1/attendance/2026-11-02/";
+const ONE = `/api/batches/${uid(1)}/`;
+const TODAY = `/api/batches/${uid(1)}/attendance/2026-11-02/`;
 
 function dayAnswer(marks: Record<number, string | null>, canMark = true, day = "2026-11-02") {
   return {
@@ -99,7 +99,7 @@ afterEach(() => {
 describe("Taking attendance on a class's page", () => {
   it("opens on today, with the day in BS beside it and each Student's choices", async () => {
     backend(on("GET", ONE, MORNING_WITH_STUDENTS), on("GET", TODAY, dayAnswer({ 8: "late" })));
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
     const section = await attendanceSection();
 
     const dayField = section.getByLabelText("Day");
@@ -133,7 +133,7 @@ describe("Taking attendance on a class's page", () => {
         return new Response(JSON.stringify(dayAnswer({ 7: "present", 8: "absent" })));
       },
     );
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
     const section = await attendanceSection();
     const ram = await section.findByRole("radiogroup", { name: "Attendance for Ram Shrestha" });
     const sita = section.getByRole("radiogroup", { name: "Attendance for Sita Gurung" });
@@ -155,7 +155,7 @@ describe("Taking attendance on a class's page", () => {
 
   it("marks everyone present in one go, to change the odd one before saving", async () => {
     backend(on("GET", ONE, MORNING_WITH_STUDENTS), on("GET", TODAY, dayAnswer({ 8: "late" })));
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
     const section = await attendanceSection();
     await section.findByRole("radiogroup", { name: "Attendance for Ram Shrestha" });
 
@@ -167,13 +167,13 @@ describe("Taking attendance on a class's page", () => {
   });
 
   it("loads another day when the day is changed, and warns on a Saturday", async () => {
-    const saturday = "/api/batches/1/attendance/2026-11-07/";
+    const saturday = `/api/batches/${uid(1)}/attendance/2026-11-07/`;
     const fetchFn = backend(
       on("GET", ONE, MORNING_WITH_STUDENTS),
       on("GET", TODAY, dayAnswer({})),
       on("GET", saturday, dayAnswer({ 7: "leave" }, true, "2026-11-07")),
     );
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
     const section = await attendanceSection();
     expect(section.queryByText("This is a Saturday. There's usually no class.")).toBeNull();
 
@@ -198,7 +198,7 @@ describe("Taking attendance on a class's page", () => {
       on("GET", TODAY, dayAnswer({ 7: "present" })),
       on("PUT", TODAY, refused, 400),
     );
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
     const section = await attendanceSection();
     await section.findByRole("radiogroup", { name: "Attendance for Sita Gurung" });
 
@@ -214,7 +214,7 @@ describe("Taking attendance on a class's page", () => {
       on("GET", ONE, MORNING_WITH_STUDENTS),
       on("GET", TODAY, dayAnswer({ 8: "late" }, false)),
     );
-    renderWith(<BatchPage batchId={1} />, COUNSELLOR);
+    renderWith(<BatchPage batchId={uid(1)} />, COUNSELLOR);
     const section = await attendanceSection();
 
     expect(await section.findByText("Late")).toBeInTheDocument();
@@ -232,12 +232,12 @@ describe("Taking attendance on a class's page", () => {
 
   it("opens a class that hasn't started on its first day", async () => {
     const later = { ...MORNING_WITH_STUDENTS, starts_on: "2026-11-15", timing: "upcoming" };
-    const first = "/api/batches/1/attendance/2026-11-15/";
+    const first = `/api/batches/${uid(1)}/attendance/2026-11-15/`;
     const fetchFn = backend(
       on("GET", ONE, later),
       on("GET", first, dayAnswer({}, true, "2026-11-15")),
     );
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
     const section = await attendanceSection();
 
     expect(section.getByLabelText("Day")).toHaveValue("2026-11-15");
@@ -251,7 +251,7 @@ describe("Taking attendance on a class's page", () => {
       on("GET", ONE, { ...MORNING, student_count: 0, students: [] }),
       on("GET", TODAY, { day: "2026-11-02", can_mark: true, marks: [] }),
     );
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
     const section = await attendanceSection();
 
     expect(await section.findByText("Nobody in this class yet.")).toBeInTheDocument();
@@ -260,7 +260,7 @@ describe("Taking attendance on a class's page", () => {
 
   it("says when the day couldn't load", async () => {
     backend(on("GET", ONE, MORNING_WITH_STUDENTS), on("GET", TODAY, {}, 500));
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
     const section = await attendanceSection();
 
     expect(
@@ -271,8 +271,8 @@ describe("Taking attendance on a class's page", () => {
 
 describe("Teacher Home: your classes today", () => {
   const LIST = "/api/batches/?page=1";
-  const UPCOMING = { ...MORNING, id: 2, name: "PTE Later", timing: "upcoming" };
-  const TAKEN = { ...MORNING, id: 3, name: "IELTS Day", attendance_taken_today: true };
+  const UPCOMING = { ...MORNING, id: uid(2), name: "PTE Later", timing: "upcoming" };
+  const TAKEN = { ...MORNING, id: uid(3), name: "IELTS Day", attendance_taken_today: true };
 
   async function todayRows() {
     backend(
@@ -290,7 +290,7 @@ describe("Teacher Home: your classes today", () => {
     expect(taken).toBeDefined();
     expect(morning?.getByRole("link", { name: "IELTS Morning" })).toHaveAttribute(
       "href",
-      "/batches/1",
+      `/batches/${uid(1)}`,
     );
     expect(morning?.getByText("7:00-8:30 AM")).toBeInTheDocument();
     expect(morning?.getByText("2 Students")).toBeInTheDocument();
@@ -302,13 +302,13 @@ describe("Teacher Home: your classes today", () => {
 
     expect(morning?.getByRole("link", { name: "Take attendance IELTS Morning" })).toHaveAttribute(
       "href",
-      "/batches/1",
+      `/batches/${uid(1)}`,
     );
     expect(morning?.queryByText("Attendance done")).toBeNull();
     expect(taken?.getByText("Attendance done")).toBeInTheDocument();
     expect(taken?.getByRole("link", { name: "View IELTS Day" })).toHaveAttribute(
       "href",
-      "/batches/3",
+      `/batches/${uid(3)}`,
     );
   });
 
@@ -331,7 +331,7 @@ describe("Teacher Home: your classes today", () => {
 describe("A Student's classes on their profile", () => {
   const CLASSES = [
     {
-      id: 1,
+      id: uid(1),
       name: "IELTS Morning",
       time_slot: "7:00-8:30 AM",
       attended_percent: 67,
@@ -342,7 +342,7 @@ describe("A Student's classes on their profile", () => {
         { day: "2026-11-02", mark: null },
       ],
     },
-    { id: 2, name: "PTE Day", time_slot: "11 AM", attended_percent: null, recent_days: [] },
+    { id: uid(2), name: "PTE Day", time_slot: "11 AM", attended_percent: null, recent_days: [] },
   ];
 
   it("shows each class with the share attended and its latest days in words", () => {
@@ -352,7 +352,7 @@ describe("A Student's classes on their profile", () => {
     const morning = within(rows[0] ?? document.body);
     expect(morning.getByRole("link", { name: "IELTS Morning" })).toHaveAttribute(
       "href",
-      "/batches/1",
+      `/batches/${uid(1)}`,
     );
     expect(morning.getByText("67%")).toBeInTheDocument();
     expect(morning.getAllByText("classes attended")).toHaveLength(1);

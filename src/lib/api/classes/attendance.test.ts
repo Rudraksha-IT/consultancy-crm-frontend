@@ -27,9 +27,9 @@ describe("fetchAttendanceDay", () => {
   it("GETs one class day's marks in frontend naming", async () => {
     const fetchFn = answering(jsonResponse(DAY));
 
-    const day = await fetchAttendanceDay(3, "2026-11-02", fetchFn);
+    const day = await fetchAttendanceDay(uid(3), "2026-11-02", fetchFn);
 
-    expect(sent(fetchFn).path).toBe("/api/batches/3/attendance/2026-11-02/");
+    expect(sent(fetchFn).path).toBe(`/api/batches/${uid(3)}/attendance/2026-11-02/`);
     expect(day).toEqual({
       day: "2026-11-02",
       canMark: true,
@@ -45,13 +45,13 @@ describe("fetchAttendanceDay", () => {
   ])("refuses an answer with %s", async (_, change) => {
     const fetchFn = answering(jsonResponse({ ...DAY, ...change }));
 
-    await expect(fetchAttendanceDay(3, "2026-11-02", fetchFn)).rejects.toThrow();
+    await expect(fetchAttendanceDay(uid(3), "2026-11-02", fetchFn)).rejects.toThrow();
   });
 
   it("refuses to ask for a day that isn't one, without calling the API", async () => {
     const fetchFn = vi.fn<typeof fetch>();
 
-    await expect(fetchAttendanceDay(3, "../../staff", fetchFn)).rejects.toThrow();
+    await expect(fetchAttendanceDay(uid(3), "../../staff", fetchFn)).rejects.toThrow();
     expect(fetchFn).not.toHaveBeenCalled();
   });
 });
@@ -61,14 +61,14 @@ describe("saveAttendanceDay", () => {
     const fetchFn = answering(jsonResponse(DAY));
 
     const day = await saveAttendanceDay(
-      3,
+      uid(3),
       "2026-11-02",
       { [uid(7)]: "late", [uid(9)]: "present" },
       fetchFn,
     );
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/batches/3/attendance/2026-11-02/",
+      path: `/api/batches/${uid(3)}/attendance/2026-11-02/`,
       method: "PUT",
       body: {
         marks: [
@@ -84,7 +84,7 @@ describe("saveAttendanceDay", () => {
     const refused = { day: ["Choose a day from 2026-10-05 to 2026-12-04."] };
     const fetchFn = answering(jsonResponse(refused, 400));
 
-    const error: unknown = await saveAttendanceDay(3, "2026-12-30", {}, fetchFn).catch(
+    const error: unknown = await saveAttendanceDay(uid(3), "2026-12-30", {}, fetchFn).catch(
       (caught: unknown) => caught,
     );
 
@@ -99,7 +99,7 @@ describe("fetchStudentClasses", () => {
   it("GETs a Student's classes with their recent days", async () => {
     const classes = [
       {
-        id: 3,
+        id: uid(3),
         name: "IELTS Morning",
         time_slot: "7 AM",
         attended_percent: 50,
@@ -116,7 +116,7 @@ describe("fetchStudentClasses", () => {
     expect(sent(fetchFn).path).toBe(`/api/students/${uid(7)}/batches/`);
     expect(answer).toEqual([
       {
-        id: 3,
+        id: uid(3),
         name: "IELTS Morning",
         timeSlot: "7 AM",
         attendedPercent: 50,
@@ -129,7 +129,9 @@ describe("fetchStudentClasses", () => {
   });
 
   it("refuses a share over 100%", async () => {
-    const classes = [{ id: 3, name: "x", time_slot: "7", attended_percent: 120, recent_days: [] }];
+    const classes = [
+      { id: uid(3), name: "x", time_slot: "7", attended_percent: 120, recent_days: [] },
+    ];
     const fetchFn = answering(jsonResponse(classes));
 
     await expect(fetchStudentClasses(uid(7), fetchFn)).rejects.toThrow();

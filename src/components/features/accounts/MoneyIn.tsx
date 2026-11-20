@@ -1,5 +1,6 @@
 "use client";
 
+import { type RecordId, parseRecordId } from "@/lib/recordId";
 import { useCallback, useId, useState, type SubmitEvent } from "react";
 
 import { ExportButton } from "@/components/features/exports/ExportButton";
@@ -171,7 +172,7 @@ function useFiltersText(filters: PaymentFilters, choices: FeeTypeChoices): strin
   );
 }
 
-function feeTypeName(choices: FeeTypeChoices, id: number | null): string {
+function feeTypeName(choices: FeeTypeChoices, id: RecordId | null): string {
   const types = Array.isArray(choices) ? choices : [];
   return types.find((type) => type.id === id)?.name ?? "";
 }
@@ -231,12 +232,12 @@ function FilterForm({ filters, choices, fieldErrors, onShow }: FilterFormProps) 
         options={[
           { value: "", label: FEE_TYPE_TEXT.anyFeeType },
           ...(Array.isArray(choices) ? choices : []).map((type) => ({
-            value: String(type.id),
+            value: type.id,
             label: type.name,
           })),
         ]}
         isOptional
-        defaultValue={filters.feeTypeId === null ? "" : String(filters.feeTypeId)}
+        defaultValue={filters.feeTypeId ?? ""}
         errors={fieldErrors.feeTypeId}
       />
       <div className="tablet:col-span-2 wide:col-span-3 flex flex-wrap items-center gap-3">
@@ -254,8 +255,8 @@ function FilterForm({ filters, choices, fieldErrors, onShow }: FilterFormProps) 
   );
 }
 
-function chosenId(value: string): number | null {
-  return /^[0-9]+$/.test(value) ? Number(value) : null;
+function chosenId(value: string): RecordId | null {
+  return parseRecordId(value);
 }
 
 type PaymentsProps = {

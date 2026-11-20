@@ -19,8 +19,8 @@ describe("fetchFeesByType", () => {
   const ANSWER = {
     totals: TOTALS,
     fee_types: [
-      { fee_type: { id: 3, name: "Visa fee", hidden: false }, fees: 80000, received: 66000 },
-      { fee_type: { id: 5, name: "PTE class", hidden: true }, fees: 0, received: 5000 },
+      { fee_type: { id: uid(3), name: "Visa fee", hidden: false }, fees: 80000, received: 66000 },
+      { fee_type: { id: uid(5), name: "PTE class", hidden: true }, fees: 0, received: 5000 },
     ],
   };
 
@@ -39,8 +39,8 @@ describe("fetchFeesByType", () => {
         owing: 1,
       },
       feeTypes: [
-        { feeType: { id: 3, name: "Visa fee", hidden: false }, fees: 80000, received: 66000 },
-        { feeType: { id: 5, name: "PTE class", hidden: true }, fees: 0, received: 5000 },
+        { feeType: { id: uid(3), name: "Visa fee", hidden: false }, fees: 80000, received: 66000 },
+        { feeType: { id: uid(5), name: "PTE class", hidden: true }, fees: 0, received: 5000 },
       ],
     });
   });
@@ -48,7 +48,7 @@ describe("fetchFeesByType", () => {
   it.each([
     ["a negative amount", { ...ANSWER, totals: { ...TOTALS, received: -1 } }],
     ["a missing total", { ...ANSWER, totals: { ...TOTALS, remaining: undefined } }],
-    ["a name that isn't text", { ...ANSWER, fee_types: [{ fee_type: { id: 1, name: 5 } }] }],
+    ["a name that isn't text", { ...ANSWER, fee_types: [{ fee_type: { id: uid(1), name: 5 } }] }],
   ])("refuses an answer with %s", async (_, body) => {
     await expect(fetchFeesByType(answering(jsonResponse(body)))).rejects.toThrow();
   });
@@ -63,7 +63,7 @@ describe("fetchFeeTypeStudents", () => {
     still_to_pay: 25000,
   };
   const PAGE = {
-    fee_type: { id: 3, name: "Visa fee", hidden: false },
+    fee_type: { id: uid(3), name: "Visa fee", hidden: false },
     fees: 80000,
     received: 66000,
     part: "lost",
@@ -76,11 +76,13 @@ describe("fetchFeeTypeStudents", () => {
   it("GETs one page of one part, in frontend naming", async () => {
     const fetchFn = answering(jsonResponse(PAGE));
 
-    const found = await fetchFeeTypeStudents(3, "lost", 2, fetchFn);
+    const found = await fetchFeeTypeStudents(uid(3), "lost", 2, fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/accounts/fees-by-type/3/?part=lost&page=2");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(
+      `/api/accounts/fees-by-type/${uid(3)}/?part=lost&page=2`,
+    );
     expect(found).toEqual({
-      feeType: { id: 3, name: "Visa fee", hidden: false },
+      feeType: { id: uid(3), name: "Visa fee", hidden: false },
       fees: 80000,
       received: 66000,
       count: 1,
@@ -102,7 +104,7 @@ describe("fetchFeeTypeStudents", () => {
     const body = { ...PAGE, results: [{ ...ROW, student: { ...ROW.student, stage: "gone" } }] };
 
     await expect(
-      fetchFeeTypeStudents(3, "counted", 1, answering(jsonResponse(body))),
+      fetchFeeTypeStudents(uid(3), "counted", 1, answering(jsonResponse(body))),
     ).rejects.toThrow();
   });
 });

@@ -13,7 +13,7 @@ import type { BinNote, BinTarget, BinnedDocument, BinnedFile } from "@/lib/api";
 /** What the viewer may do with what is in the Bin. */
 export type BinViewer = {
   /** Their Staff id, to offer "Take it out" on what they put there; null for a Platform Admin. */
-  viewerId: number | null;
+  viewerId: RecordId | null;
   /** An Admin: they open the Bin tab to restore or delete for good. */
   deletesForGood: boolean;
   /** Take something the viewer put in the Bin back out. */
@@ -30,7 +30,7 @@ function BinNoteLine({ note }: { note: BinNote }) {
   );
 }
 
-function isMine(note: BinNote, viewerId: number | null): boolean {
+function isMine(note: BinNote, viewerId: RecordId | null): boolean {
   return viewerId !== null && note.by.id === viewerId;
 }
 

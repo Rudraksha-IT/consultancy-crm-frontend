@@ -5,7 +5,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { BATCH_TEXT } from "@/constants/batches";
 import { ROUTES } from "@/constants/routes";
-import { parseRecordNumber as parseId } from "@/lib/recordId";
+import { parseRecordId as parseId } from "@/lib/recordId";
 
 import { BatchPage } from "./BatchPage";
 

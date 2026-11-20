@@ -17,7 +17,7 @@ import { testHost } from "@/test/hosts";
 import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students", "tasks"],
   dateDisplay: "AD",
@@ -28,18 +28,18 @@ const COUNSELLOR: StaffContext = {
 
 const DESK: StaffContext = {
   ...COUNSELLOR,
-  staff: { id: 4, name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
+  staff: { id: uid(4), name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
 };
 
 const TEACHER: StaffContext = {
   ...COUNSELLOR,
-  staff: { id: 9, name: "Gita Lama", email: "gita@acme.test", role: "teacher" },
+  staff: { id: uid(9), name: "Gita Lama", email: "gita@acme.test", role: "teacher" },
 };
 
 const BS_COUNSELLOR: StaffContext = { ...COUNSELLOR, dateDisplay: "BS" };
 
 const TASK = {
-  id: 31,
+  id: uid(31),
   title: "Call Sita about her IELTS retake date",
   due_on: "2026-10-30",
   priority: "normal",
@@ -47,29 +47,29 @@ const TASK = {
   timing: "overdue",
   is_done: false,
   done_at: null,
-  assignee: { id: 5, name: "Bikash Thapa" },
-  created_by: { id: 5, name: "Bikash Thapa" },
+  assignee: { id: uid(5), name: "Bikash Thapa" },
+  created_by: { id: uid(5), name: "Bikash Thapa" },
   student: { id: uid(7), name: "Sita Gurung" },
   can_mark_done: true,
 };
 
 const TODAY_TASK = {
   ...TASK,
-  id: 32,
+  id: uid(32),
   title: "Collect the bank statement",
   due_on: "2026-11-02",
   timing: "today",
-  created_by: { id: 4, name: "Ramesh KC" },
+  created_by: { id: uid(4), name: "Ramesh KC" },
   student: null,
 };
 
-const LATER_TASK = { ...TASK, id: 33, title: "Book biometrics", due_on: "2026-11-06" };
+const LATER_TASK = { ...TASK, id: uid(33), title: "Book biometrics", due_on: "2026-11-06" };
 const LATER_TASK_ANSWER = { ...LATER_TASK, timing: "upcoming" };
 
 const ASSIGNEES = [
-  { id: 5, name: "Bikash Thapa", role: "counsellor" },
-  { id: 9, name: "Gita Lama", role: "teacher" },
-  { id: 4, name: "Ramesh KC", role: "front_desk" },
+  { id: uid(5), name: "Bikash Thapa", role: "counsellor" },
+  { id: uid(9), name: "Gita Lama", role: "teacher" },
+  { id: uid(4), name: "Ramesh KC", role: "front_desk" },
 ];
 
 const MINE = "/api/tasks/?view=mine&page=1";
@@ -166,7 +166,7 @@ describe("Tasks page", () => {
   });
 
   it("switches to Tasks given to others, naming who each is for", async () => {
-    const given = { ...TASK, assignee: { id: 2, name: "Anita Rai" } };
+    const given = { ...TASK, assignee: { id: uid(2), name: "Anita Rai" } };
     const fetchFn = backend(on("GET", MINE, pageOf([])), on("GET", GIVEN, pageOf([given])));
     renderTasks();
     await screen.findByText("You're all caught up.");
@@ -207,7 +207,7 @@ describe("Tasks page", () => {
     const fetchFn = backend(
       onEach("GET", MINE, () => pageOf(isDone ? [] : [TASK])),
       (path, init) => {
-        if (path !== "/api/tasks/31/" || init?.method !== "PATCH") return undefined;
+        if (path !== `/api/tasks/${uid(31)}/` || init?.method !== "PATCH") return undefined;
         isDone = true;
         return new Response(JSON.stringify({ ...TASK, is_done: true, timing: "done" }), {
           headers: { "Content-Type": "application/json" },
@@ -221,12 +221,15 @@ describe("Tasks page", () => {
     );
 
     expect(await screen.findByText("Task done")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PATCH", "/api/tasks/31/")).toEqual({ done: true });
+    expect(sentBody(fetchFn, "PATCH", `/api/tasks/${uid(31)}/`)).toEqual({ done: true });
     expect(await screen.findByText("You're all caught up.")).toBeInTheDocument();
   });
 
   it("says why when ticking is refused", async () => {
-    backend(on("GET", MINE, pageOf([TASK])), on("PATCH", "/api/tasks/31/", { detail: "No" }, 403));
+    backend(
+      on("GET", MINE, pageOf([TASK])),
+      on("PATCH", `/api/tasks/${uid(31)}/`, { detail: "No" }, 403),
+    );
     renderTasks();
 
     await userEvent.click(
@@ -241,7 +244,12 @@ describe("Tasks page", () => {
   it("says the app is being updated when that is why ticking failed (ticket 14)", async () => {
     backend(
       on("GET", MINE, pageOf([TASK])),
-      on("PATCH", "/api/tasks/31/", { detail: SESSION_TEXT.updating, code: "updating" }, 503),
+      on(
+        "PATCH",
+        `/api/tasks/${uid(31)}/`,
+        { detail: SESSION_TEXT.updating, code: "updating" },
+        503,
+      ),
     );
     renderTasks();
 
@@ -341,7 +349,7 @@ describe("The menu's Tasks count", () => {
     const refresh = vi.fn<() => void>();
     backend(
       on("GET", MINE, pageOf([TASK])),
-      on("PATCH", "/api/tasks/31/", { ...TASK, is_done: true, timing: "done" }),
+      on("PATCH", `/api/tasks/${uid(31)}/`, { ...TASK, is_done: true, timing: "done" }),
     );
     renderCounted(refresh);
 
@@ -405,7 +413,7 @@ describe("New Task priority and Only me", () => {
     renderTasks();
     const dialog = await openNewTask();
     await userEvent.type(within(dialog).getByLabelText("What needs doing"), "Renew my licence");
-    await userEvent.selectOptions(await within(dialog).findByLabelText("Assign to"), "4");
+    await userEvent.selectOptions(await within(dialog).findByLabelText("Assign to"), uid(4));
 
     await userEvent.click(
       within(dialog).getByRole("checkbox", {
@@ -421,7 +429,7 @@ describe("New Task priority and Only me", () => {
     expect(sentBody(fetchFn, "POST", "/api/tasks/")).toEqual({
       title: "Renew my licence",
       due_on: "2026-11-03",
-      assignee: 5,
+      assignee: uid(5),
       student: null,
       priority: "normal",
       only_me: true,
@@ -438,7 +446,7 @@ describe("New Task priority and Only me", () => {
     await userEvent.click(onlyMe);
     await userEvent.click(onlyMe);
 
-    expect(within(dialog).getByLabelText("Assign to")).toHaveValue("4");
+    expect(within(dialog).getByLabelText("Assign to")).toHaveValue(uid(4));
     expect(within(dialog).getByLabelText("About a Student (optional)")).toBeInTheDocument();
   });
 
@@ -446,7 +454,7 @@ describe("New Task priority and Only me", () => {
     backend(on("GET", MINE, pageOf([])), on("GET", "/api/tasks/assignees/", ASSIGNEES));
     renderTasks({
       ...COUNSELLOR,
-      staff: { ...COUNSELLOR.staff, id: 0, role: "admin" },
+      staff: { ...COUNSELLOR.staff, id: uid(0), role: "admin" },
       supportAccess: { platformAdminName: "Ramesh", platformHost: testHost("admin") },
     });
     const dialog = await openNewTask();
@@ -466,7 +474,7 @@ describe("New Task", () => {
     expect(within(dialog).getByLabelText("What needs doing")).toHaveFocus();
     expect(within(dialog).getByLabelText("Due")).toHaveValue("2026-11-03");
     const assignTo = await within(dialog).findByLabelText("Assign to");
-    expect(assignTo).toHaveValue("5");
+    expect(assignTo).toHaveValue(uid(5));
     expect(
       within(assignTo)
         .getAllByRole("option")
@@ -475,7 +483,7 @@ describe("New Task", () => {
   });
 
   it("gives a Counsellor a Task about a Student found by name, and says it was given", async () => {
-    const created = { ...TASK, assignee: { id: 5, name: "Bikash Thapa" } };
+    const created = { ...TASK, assignee: { id: uid(5), name: "Bikash Thapa" } };
     const fetchFn = backend(
       on("GET", MINE, pageOf([])),
       on("GET", "/api/tasks/assignees/", ASSIGNEES),
@@ -502,7 +510,7 @@ describe("New Task", () => {
     const dialog = await openNewTask();
 
     await userEvent.type(within(dialog).getByLabelText("What needs doing"), "Call Sita");
-    await userEvent.selectOptions(await within(dialog).findByLabelText("Assign to"), "5");
+    await userEvent.selectOptions(await within(dialog).findByLabelText("Assign to"), uid(5));
     await userEvent.type(within(dialog).getByLabelText("Find a Student (optional)"), "Sita");
     const about = within(dialog).getByLabelText("About a Student (optional)");
     await within(about).findByRole("option", { name: "Sita Gurung" });
@@ -515,7 +523,7 @@ describe("New Task", () => {
     expect(sentBody(fetchFn, "POST", "/api/tasks/")).toEqual({
       title: "Call Sita",
       due_on: "2026-11-03",
-      assignee: 5,
+      assignee: uid(5),
       student: uid(7),
       priority: "normal",
       only_me: false,
@@ -653,13 +661,13 @@ describe("A Student's Tasks tab", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Add a task" }));
     const dialog = screen.getByRole("dialog", { name: "New Task" });
     expect(within(dialog).getByText("Sita Gurung")).toBeInTheDocument();
-    expect(await within(dialog).findByLabelText("Assign to")).toHaveValue("5");
+    expect(await within(dialog).findByLabelText("Assign to")).toHaveValue(uid(5));
     await userEvent.type(within(dialog).getByLabelText("What needs doing"), "Call Sita");
     await userEvent.click(within(dialog).getByRole("button", { name: "Create Task" }));
 
     expect(await screen.findByRole("tab", { name: "Tasks 1" })).toBeInTheDocument();
     expect(sentBody(fetchFn, "POST", "/api/tasks/")).toMatchObject({
-      assignee: 5,
+      assignee: uid(5),
       student: uid(7),
     });
     expect(await screen.findByText(TASK.title)).toBeInTheDocument();

@@ -17,7 +17,7 @@ export const AttachableSchema = z
   .object({
     kind: z.enum(ATTACHMENT_KINDS),
     /** A Document file's UUID; Course Files and Document Examples by number until ticket 18. */
-    id: z.union([RecordIdSchema, z.number().int().positive()]),
+    id: RecordIdSchema,
     name: z.string().min(1),
     file_name: z.string().min(1),
     size: z.number().int().nonnegative(),
@@ -28,7 +28,7 @@ export const AttachableSchema = z
 export type Attachable = z.infer<typeof AttachableSchema>;
 
 /** A file as the API takes it when sending: only its kind and id. */
-export type AttachmentRef = { kind: AttachmentKind; id: RecordId | number };
+export type AttachmentRef = { kind: AttachmentKind; id: RecordId };
 
 const AttachableFilesSchema = z
   .object({

@@ -12,7 +12,7 @@ import { ApplicationsPage } from "./ApplicationsPage";
 import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Asha Admin", email: "asha@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "applications"],
   dateDisplay: "AD",
@@ -29,12 +29,12 @@ function row(overrides: Record<string, unknown>) {
   return {
     id: uid(11),
     student: { id: uid(2), name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
-    university: { id: 3, name: "Deakin University", country: "australia" },
-    course: { id: 4, name: "Master of IT", level: "master" },
+    university: { id: uid(3), name: "Deakin University", country: "australia" },
+    course: { id: uid(4), name: "Master of IT", level: "master" },
     intake: "2027-07",
     status: "offer",
     offer_kind: "conditional",
-    assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+    assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
     applied_on: "2026-10-02",
     added_on: "2026-09-30",
     ...overrides,
@@ -45,7 +45,7 @@ const SITA = row({});
 const GITA = row({
   id: uid(12),
   student: { id: uid(3), name: "Gita Rai", phone: "9801112222", email: "" },
-  university: { id: 6, name: "University of Toronto", country: "canada" },
+  university: { id: uid(6), name: "University of Toronto", country: "canada" },
   intake: "2028-02",
   status: "applied",
   offer_kind: "",
@@ -90,7 +90,7 @@ const choices: Answer = (path) =>
 
 const counsellors: Answer = (path) =>
   path === "/api/staff/counsellors/"
-    ? jsonResponse([{ id: 5, name: "Bikash Thapa", role: "counsellor" }])
+    ? jsonResponse([{ id: uid(5), name: "Bikash Thapa", role: "counsellor" }])
     : undefined;
 
 function lastListCall(fetchFn: ReturnType<typeof backend>): string | undefined {
@@ -211,7 +211,7 @@ describe("ApplicationsPage", () => {
 
     await waitFor(() => {
       expect(lastListCall(fetchFn)).toBe(
-        "/api/applications/?status=offer&intake=2028-02&year=2028&country=canada&counsellor=5",
+        `/api/applications/?status=offer&intake=2028-02&year=2028&country=canada&counsellor=${uid(5)}`,
       );
     });
   });

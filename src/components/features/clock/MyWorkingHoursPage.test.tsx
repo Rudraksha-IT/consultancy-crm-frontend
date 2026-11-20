@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -12,7 +13,7 @@ import { novemberMonth } from "./clockFixtures";
 import { MyWorkingHoursPage } from "./MyWorkingHoursPage";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 3, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(3), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students", "clock_in"],
   dateDisplay: "AD",
@@ -22,7 +23,7 @@ const COUNSELLOR: StaffContext = {
 };
 const ADMIN: StaffContext = {
   ...COUNSELLOR,
-  staff: { id: 1, name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
 };
 const MONTH = "/api/clock/month/?month=2026-11";
 

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
@@ -22,7 +23,7 @@ vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => v
 // A Teacher's sidebar: Home, Classes, Tasks, Inbox.
 const CONTEXT = {
   staff: {
-    id: 7,
+    id: uid(7),
     name: "Ram Thapa",
     email: "ram@acme.test",
     role: "teacher",
@@ -413,7 +414,7 @@ describe("where swiping between pages works", () => {
   });
 
   it("is off on a detail page", async () => {
-    await renderShell({ pathname: "/batches/3" });
+    await renderShell({ pathname: `/batches/${uid(3)}` });
     finger(400, [500, 1000]);
     letGo(LEAVE_MS);
 

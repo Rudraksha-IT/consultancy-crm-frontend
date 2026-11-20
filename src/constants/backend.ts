@@ -132,16 +132,17 @@ export const MAX_UPLOAD_BODY_BYTES = 20 * 1024 * 1024 + 64 * 1024;
 /** A Course File (ticket 10): one PDF of at most 5 MB, plus room for the form around it. */
 export const MAX_COURSE_FILE_BODY_BYTES = 5 * 1024 * 1024 + 64 * 1024;
 
-/** Where a Course File is uploaded: one Course's files. */
-export const COURSE_FILE_UPLOAD_PATH = /^\/api\/catalogue\/courses\/[0-9]{1,18}\/files\/$/;
-/**
- * Where a Document Example (ticket 11) is uploaded: added to a Document Type, or in place of one.
- * One file of at most 5 MB, like a Course File.
- */
-export const DOCUMENT_EXAMPLE_UPLOAD_PATH =
-  /^\/api\/configuration\/(?:document-types\/[0-9]{1,18}\/examples|document-examples\/[0-9]{1,18}\/replace)\/$/;
 // A record's UUID as the server writes it, in lower case (ADR 0027).
 const UUID_PART = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+/** Where a Course File is uploaded: one Course's files, the Course named by UUID. */
+export const COURSE_FILE_UPLOAD_PATH = new RegExp(`^/api/catalogue/courses/${UUID_PART}/files/$`);
+/**
+ * Where a Document Example (ticket 11) is uploaded: added to a Document Type, or in place of one,
+ * each named by UUID. One file of at most 5 MB, like a Course File.
+ */
+export const DOCUMENT_EXAMPLE_UPLOAD_PATH = new RegExp(
+  `^/api/configuration/(?:document-types/${UUID_PART}/examples|document-examples/${UUID_PART}/replace)/$`,
+);
 /**
  * The only calls that may carry an upload: a Student's Document (issue 16), files added to one
  * (issue 78), an Offer Letter (issue 76) and a visa letter (issue 77). Students, Documents and

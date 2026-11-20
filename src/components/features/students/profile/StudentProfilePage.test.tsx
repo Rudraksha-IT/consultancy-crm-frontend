@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -14,7 +15,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
@@ -23,7 +24,7 @@ const COUNSELLOR: StaffContext = {
   theme: DEFAULT_THEME,
 };
 
-function as(role: StaffContext["staff"]["role"], id = 9): StaffContext {
+function as(role: StaffContext["staff"]["role"], id = uid(9)): StaffContext {
   return { ...COUNSELLOR, staff: { ...COUNSELLOR.staff, id, name: "Someone Else", role } };
 }
 
@@ -77,7 +78,7 @@ const VISIT = {
   kind: "follow_up",
   purpose: "Bringing documents: Passport copy",
   at: "2026-10-23T10:15:00+05:45",
-  recorded_by: { id: 4, name: "Ramesh KC" },
+  recorded_by: { id: uid(4), name: "Ramesh KC" },
 };
 
 const visits =
@@ -564,8 +565,14 @@ describe("StudentProfilePage", () => {
 
     describe("as a timeline of Stages (issue 82)", () => {
       const NOW = new Date("2026-11-15T10:00:00+05:45");
-      const stageChange = (id: number, at: string, before: string, after: string, detail = "") => ({
-        id: uid(id),
+      const stageChange = (
+        id: RecordId,
+        at: string,
+        before: string,
+        after: string,
+        detail = "",
+      ) => ({
+        id,
         kind: "stage_changed",
         at,
         by: { name: "Bikash Thapa", is_platform_admin: false },
@@ -573,15 +580,20 @@ describe("StudentProfilePage", () => {
         after,
         detail,
       });
-      const TO_COUNSELLING = stageChange(11, "2026-10-04T10:00:00+05:45", "lead", "counselling");
+      const TO_COUNSELLING = stageChange(
+        uid(11),
+        "2026-10-04T10:00:00+05:45",
+        "lead",
+        "counselling",
+      );
       const TO_LOST = stageChange(
-        12,
+        uid(12),
         "2026-10-16T10:00:00+05:45",
         "counselling",
         "lost",
         "Went quiet.",
       );
-      const BACK = stageChange(13, "2026-11-06T10:00:00+05:45", "lost", "counselling");
+      const BACK = stageChange(uid(13), "2026-11-06T10:00:00+05:45", "lost", "counselling");
       const WAS_LOST = { ...PROFILE, stage_changes: [TO_COUNSELLING, TO_LOST, BACK] };
 
       beforeEach(() => {
@@ -690,7 +702,7 @@ describe("StudentProfilePage: Classes tab", () => {
   const WITH_CLASSES: StaffContext = { ...COUNSELLOR, modules: ["students", "batches"] };
   const CLASSES = `/api/students/${uid(7)}/batches/`;
   const MORNING = {
-    id: 1,
+    id: uid(1),
     name: "IELTS Morning",
     time_slot: "7:00-8:30 AM",
     attended_percent: 75,
@@ -705,7 +717,7 @@ describe("StudentProfilePage: Classes tab", () => {
 
     expect(await screen.findByRole("link", { name: "IELTS Morning" })).toHaveAttribute(
       "href",
-      "/batches/1",
+      `/batches/${uid(1)}`,
     );
     expect(screen.getByText("75%")).toBeInTheDocument();
     expect(screen.getByText("Last class day: 1 present")).toBeInTheDocument();
@@ -735,11 +747,11 @@ describe("StudentProfilePage: Classes tab", () => {
 describe("StudentProfilePage: who did each action, in Activity (issue 83)", () => {
   const FIRST = "2026-11-18T08:45:00+00:00";
   const LATER = "2026-11-20T04:15:00+00:00";
-  const entry = (id: number, kind: string, before: string, after: string, detail = "") => ({
+  const entry = (n: number, kind: string, before: string, after: string, detail = "") => ({
     ...ENTRY,
-    id: uid(id),
+    id: uid(n),
     kind,
-    at: `2026-11-1${String(id % 10)}T10:00:00+05:45`,
+    at: `2026-11-1${String(n % 10)}T10:00:00+05:45`,
     before,
     after,
     detail,

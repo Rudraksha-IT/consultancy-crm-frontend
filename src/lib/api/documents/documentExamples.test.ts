@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import {
   addDocumentExample,
   deleteDocumentExampleForGood,
@@ -19,21 +20,21 @@ import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 
 const EXAMPLE_ANSWER = {
-  id: 52,
+  id: uid(52),
   file_name: "sample-bank-statement.pdf",
   content_type: "application/pdf",
   size: 1_157_120,
   uploaded_at: "2026-11-20T10:00:00+05:45",
 };
 const EXAMPLE = {
-  id: 52,
+  id: uid(52),
   fileName: "sample-bank-statement.pdf",
   contentType: "application/pdf",
   size: 1_157_120,
   uploadedAt: "2026-11-20T10:00:00+05:45",
 };
 const TYPE_ANSWER = {
-  id: 7,
+  id: uid(7),
   name: "Bank Statement",
   needed_by_everyone: true,
   usual_group: "visa",
@@ -84,7 +85,7 @@ describe("ConfiguredDocumentTypeSchema", () => {
 
 describe("ChecklistSchema", () => {
   const item = {
-    document_type: { id: 7, name: "Bank Statement" },
+    document_type: { id: uid(7), name: "Bank Statement" },
     reason: "",
     is_required: true,
     added_for_student: false,
@@ -119,10 +120,10 @@ describe("setDocumentInstruction", () => {
   it("PUTs only the instruction and returns the type", async () => {
     const fetchFn = answering(jsonResponse(TYPE_ANSWER));
 
-    const saved = await setDocumentInstruction(7, "Last 6 months, stamped.", fetchFn);
+    const saved = await setDocumentInstruction(uid(7), "Last 6 months, stamped.", fetchFn);
 
     expect(call(fetchFn)).toEqual({
-      path: "/api/configuration/document-types/7/instruction/",
+      path: `/api/configuration/document-types/${uid(7)}/instruction/`,
       method: "PUT",
       body: { instruction: "Last 6 months, stamped." },
     });
@@ -133,7 +134,7 @@ describe("setDocumentInstruction", () => {
     const message = "Ensure this field has no more than 500 characters.";
     const fetchFn = answering(jsonResponse({ instruction: [message] }, 400));
 
-    const failure = await setDocumentInstruction(7, "x", fetchFn).catch((e: unknown) => e);
+    const failure = await setDocumentInstruction(uid(7), "x", fetchFn).catch((e: unknown) => e);
 
     expect(fieldErrorsOf(failure)).toEqual({ instruction: [message] });
   });
@@ -143,10 +144,10 @@ describe("addDocumentExample", () => {
   it("POSTs the file as a form and returns the example", async () => {
     const fetchFn = answering(jsonResponse(EXAMPLE_ANSWER, 201));
 
-    const saved = await addDocumentExample(7, aFile(), fetchFn);
+    const saved = await addDocumentExample(uid(7), aFile(), fetchFn);
 
     const { path, method, body } = call(fetchFn);
-    expect(path).toBe("/api/configuration/document-types/7/examples/");
+    expect(path).toBe(`/api/configuration/document-types/${uid(7)}/examples/`);
     expect(method).toBe("POST");
     if (!(body instanceof FormData)) throw new Error("Expected a form to be sent");
     expect(body.get("file")).toBeInstanceOf(File);
@@ -158,7 +159,7 @@ describe("addDocumentExample", () => {
     const message = "An example must be a PDF, JPEG or PNG file. That one isn't.";
     const fetchFn = answering(jsonResponse({ file: [message] }, 400));
 
-    const failure = await addDocumentExample(7, aFile(), fetchFn).catch((e: unknown) => e);
+    const failure = await addDocumentExample(uid(7), aFile(), fetchFn).catch((e: unknown) => e);
 
     expect(fieldErrorsOf(failure)).toEqual({ file: [message] });
   });
@@ -167,7 +168,7 @@ describe("addDocumentExample", () => {
     const reason = "A document can have at most 3 example files. Remove one to add another.";
     const fetchFn = answering(jsonResponse({ detail: reason }, 400));
 
-    const failure = await addDocumentExample(7, aFile(), fetchFn).catch((e: unknown) => e);
+    const failure = await addDocumentExample(uid(7), aFile(), fetchFn).catch((e: unknown) => e);
 
     expect(failure).toBeInstanceOf(ExampleRefusedError);
     expect(failure).toHaveProperty("message", reason);
@@ -176,7 +177,7 @@ describe("addDocumentExample", () => {
   it("passes on any other failure as it is", async () => {
     const fetchFn = answering(jsonResponse({ detail: "We couldn't store the file." }, 503));
 
-    const failure = await addDocumentExample(7, aFile(), fetchFn).catch((e: unknown) => e);
+    const failure = await addDocumentExample(uid(7), aFile(), fetchFn).catch((e: unknown) => e);
 
     expect(failure).toBeInstanceOf(ApiRequestError);
     expect(failure).not.toBeInstanceOf(ExampleRefusedError);
@@ -185,22 +186,22 @@ describe("addDocumentExample", () => {
 
 describe("the rest of an example's calls", () => {
   it("replaces one by POSTing the new file to its replace path", async () => {
-    const fetchFn = answering(jsonResponse({ ...EXAMPLE_ANSWER, id: 60 }, 201));
+    const fetchFn = answering(jsonResponse({ ...EXAMPLE_ANSWER, id: uid(60) }, 201));
 
-    const saved = await replaceDocumentExample(52, aFile(), fetchFn);
+    const saved = await replaceDocumentExample(uid(52), aFile(), fetchFn);
 
-    expect(call(fetchFn).path).toBe("/api/configuration/document-examples/52/replace/");
+    expect(call(fetchFn).path).toBe(`/api/configuration/document-examples/${uid(52)}/replace/`);
     expect(call(fetchFn).method).toBe("POST");
-    expect(saved.id).toBe(60);
+    expect(saved.id).toBe(uid(60));
   });
 
   it("removes one to the Bin with a DELETE", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await removeDocumentExample(52, fetchFn);
+    await removeDocumentExample(uid(52), fetchFn);
 
     expect(call(fetchFn)).toMatchObject({
-      path: "/api/configuration/document-examples/52/",
+      path: `/api/configuration/document-examples/${uid(52)}/`,
       method: "DELETE",
     });
   });
@@ -208,24 +209,24 @@ describe("the rest of an example's calls", () => {
   it.each(["open", "download"] as const)("asks for a link to %s one", async (action) => {
     const fetchFn = answering(jsonResponse(LINK));
 
-    const url = await fetchDocumentExampleLink(52, action, fetchFn);
+    const url = await fetchDocumentExampleLink(uid(52), action, fetchFn);
 
-    expect(call(fetchFn).path).toBe(`/api/documents/examples/52/link/?action=${action}`);
+    expect(call(fetchFn).path).toBe(`/api/documents/examples/${uid(52)}/link/?action=${action}`);
     expect(url).toBe(LINK.url);
   });
 
   it("refuses a link that isn't http or https", async () => {
     const fetchFn = answering(jsonResponse({ ...LINK, url: "javascript:alert(1)" }));
 
-    await expect(fetchDocumentExampleLink(52, "open", fetchFn)).rejects.toThrow();
+    await expect(fetchDocumentExampleLink(uid(52), "open", fetchFn)).rejects.toThrow();
   });
 
   it("restores one from the Bin with an empty POST", async () => {
     const fetchFn = answering(jsonResponse(EXAMPLE_ANSWER));
 
-    expect(await restoreDocumentExample(52, fetchFn)).toEqual(EXAMPLE);
+    expect(await restoreDocumentExample(uid(52), fetchFn)).toEqual(EXAMPLE);
     expect(call(fetchFn)).toEqual({
-      path: "/api/documents/bin/document-examples/52/restore/",
+      path: `/api/documents/bin/document-examples/${uid(52)}/restore/`,
       method: "POST",
       body: {},
     });
@@ -235,7 +236,7 @@ describe("the rest of an example's calls", () => {
     const reason = "This document already has 3 example files. Remove one first.";
     const fetchFn = answering(jsonResponse({ detail: reason }, 400));
 
-    const failure = await restoreDocumentExample(52, fetchFn).catch((e: unknown) => e);
+    const failure = await restoreDocumentExample(uid(52), fetchFn).catch((e: unknown) => e);
 
     expect(failure).toBeInstanceOf(ApiRequestError);
     expect(failure).toHaveProperty("body", { detail: reason });
@@ -244,10 +245,10 @@ describe("the rest of an example's calls", () => {
   it("deletes one in the Bin for good", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await deleteDocumentExampleForGood(52, fetchFn);
+    await deleteDocumentExampleForGood(uid(52), fetchFn);
 
     expect(call(fetchFn)).toMatchObject({
-      path: "/api/documents/bin/document-examples/52/",
+      path: `/api/documents/bin/document-examples/${uid(52)}/`,
       method: "DELETE",
     });
   });
@@ -255,17 +256,19 @@ describe("the rest of an example's calls", () => {
   it("asks for the Bin's own link to open one there", async () => {
     const fetchFn = answering(jsonResponse(LINK));
 
-    expect(await fetchBinDocumentExampleLink(52, fetchFn)).toBe(LINK.url);
-    expect(call(fetchFn).path).toBe("/api/documents/bin/document-examples/52/link/?action=open");
+    expect(await fetchBinDocumentExampleLink(uid(52), fetchFn)).toBe(LINK.url);
+    expect(call(fetchFn).path).toBe(
+      `/api/documents/bin/document-examples/${uid(52)}/link/?action=open`,
+    );
   });
 });
 
 describe("BinnedDocumentExampleSchema", () => {
   const answer = {
     kind: "document_example",
-    document_example: { id: 56, file_name: "old-sample.pdf" },
-    document_type: { id: 7, name: "Bank Statement" },
-    by: { id: 1, name: "Anita Sharma" },
+    document_example: { id: uid(56), file_name: "old-sample.pdf" },
+    document_type: { id: uid(7), name: "Bank Statement" },
+    by: { id: uid(1), name: "Anita Sharma" },
     at: "2026-10-20T09:40:00+05:45",
     reason: "Replaced",
   };
@@ -273,9 +276,9 @@ describe("BinnedDocumentExampleSchema", () => {
   it("reads an example in the Bin in frontend naming", () => {
     expect(BinnedDocumentExampleSchema.parse(answer)).toEqual({
       kind: "document_example",
-      example: { id: 56, fileName: "old-sample.pdf" },
-      documentType: { id: 7, name: "Bank Statement" },
-      bin: { by: { id: 1, name: "Anita Sharma" }, at: answer.at, reason: "Replaced" },
+      example: { id: uid(56), fileName: "old-sample.pdf" },
+      documentType: { id: uid(7), name: "Bank Statement" },
+      bin: { by: { id: uid(1), name: "Anita Sharma" }, at: answer.at, reason: "Replaced" },
     });
   });
 

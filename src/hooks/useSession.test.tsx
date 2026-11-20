@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { z } from "zod";
 
@@ -113,7 +114,7 @@ describe("useSession", () => {
       });
 
       await act(async () => {
-        await postJson("/api/students/12/note/", { text: "Called" }, z.unknown(), () =>
+        await postJson(`/api/students/${uid(12)}/note/`, { text: "Called" }, z.unknown(), () =>
           Promise.resolve(ended),
         ).catch(() => undefined);
       });

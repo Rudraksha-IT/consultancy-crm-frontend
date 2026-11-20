@@ -32,8 +32,8 @@ const STARTED_AGAIN: Record<PickerField, Partial<Picked>> = {
 /** University, then one of its Courses, then one of that Course's Intakes. */
 export function useApplicationPicker(universities: readonly University[]): ApplicationPicker {
   const [picked, setPicked] = useState<Picked>(NOTHING_PICKED);
-  const university = universities.find((found) => String(found.id) === picked.university);
-  const course = university?.courses.find((found) => String(found.id) === picked.course);
+  const university = universities.find((found) => found.id === picked.university);
+  const course = university?.courses.find((found) => found.id === picked.course);
   const intake = course?.intakes.find((month) => month === picked.intake);
   const found: Record<PickerField, unknown> = { university, course, intake };
 

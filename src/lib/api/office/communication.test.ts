@@ -22,10 +22,10 @@ const MESSAGE = {
   sent_to: "sita@example.test",
   attachments: ["brochure.pdf"],
   sent_at: "2026-11-02T10:04:00+05:45",
-  sent_by: { id: 2, name: "Ram Counsellor" },
+  sent_by: { id: uid(2), name: "Ram Counsellor" },
 };
 
-const FILES = [{ kind: "course_file" as const, id: 3 }];
+const FILES = [{ kind: "course_file" as const, id: uid(3) }];
 const PAGE = { count: 1, page: 1, page_size: 25, results: [MESSAGE] };
 const NO_CONTACT = {
   detail: "Your Admin needs to add the office's contact email in Configuration first.",
@@ -61,7 +61,7 @@ describe("fetchMessages and fetchStudentMessages", () => {
       sentTo: "sita@example.test",
       attachments: ["brochure.pdf"],
       sentAt: "2026-11-02T10:04:00+05:45",
-      sentBy: { id: 2, name: "Ram Counsellor" },
+      sentBy: { id: uid(2), name: "Ram Counsellor" },
     });
   });
 
@@ -183,9 +183,9 @@ describe("fetchChoosable", () => {
   it("asks for a class's Students", async () => {
     const fetchFn = answering(jsonResponse(CHOOSABLE));
 
-    const answer = await fetchChoosable({ kind: "batch", batchId: 3 }, fetchFn);
+    const answer = await fetchChoosable({ kind: "batch", batchId: uid(3) }, fetchFn);
 
-    expect(sent(fetchFn).path).toBe("/api/messages/bulk/?batch=3");
+    expect(sent(fetchFn).path).toBe(`/api/messages/bulk/?batch=${uid(3)}`);
     expect(answer).toEqual(CHOOSABLE);
   });
 
@@ -208,7 +208,7 @@ describe("fetchChoosable", () => {
   it("refuses an answer that isn't the right shape", async () => {
     const fetchFn = answering(jsonResponse({ ...CHOOSABLE, count: "one" }));
 
-    await expect(fetchChoosable({ kind: "batch", batchId: 3 }, fetchFn)).rejects.toThrow();
+    await expect(fetchChoosable({ kind: "batch", batchId: uid(3) }, fetchFn)).rejects.toThrow();
   });
 });
 

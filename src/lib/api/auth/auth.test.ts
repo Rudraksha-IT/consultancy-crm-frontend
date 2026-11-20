@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { fetchStaffContext, logIn, logOut } from "./auth";
 import { ApiRequestError, InvalidCredentialsError, NotLoggedInError } from "../core/errors";
@@ -13,7 +14,7 @@ const THEME = {
 
 const CONTEXT = {
   staff: {
-    id: 1,
+    id: uid(1),
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "counsellor",
@@ -41,7 +42,7 @@ const CONTEXT = {
 };
 
 const SESSION = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "counsellor" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "counsellor" },
   consultancy: {
     name: "Acme Education",
     logo: null,

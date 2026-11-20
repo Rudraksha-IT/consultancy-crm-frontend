@@ -36,7 +36,7 @@ export type AttendanceDay = z.infer<typeof AttendanceDaySchema>;
 /** One class a Student is in, with their Attendance in it (spec 86). */
 export const StudentClassSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string().min(1),
     time_slot: z.string(),
     attended_percent: AttendedSchema,
@@ -55,13 +55,13 @@ export type StudentClass = z.infer<typeof StudentClassSchema>;
 /** A class day as the API names it: AD, "YYYY-MM-DD". Anything else never reaches a URL. */
 const DaySchema = z.iso.date();
 
-function dayPath(batchId: number, day: string): string {
+function dayPath(batchId: RecordId, day: string): string {
   return API_PATHS.batchAttendance(batchId, DaySchema.parse(day));
 }
 
 /** One class day's marks. */
 export function fetchAttendanceDay(
-  batchId: number,
+  batchId: RecordId,
   day: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<AttendanceDay> {
@@ -75,7 +75,7 @@ export function fetchAttendanceDay(
  * `InvalidFieldsError` naming the refused day or marks.
  */
 export async function saveAttendanceDay(
-  batchId: number,
+  batchId: RecordId,
   day: string,
   marks: DayMarks,
   fetchFn: typeof fetch = fetch,

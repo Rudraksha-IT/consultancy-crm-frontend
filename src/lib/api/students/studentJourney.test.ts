@@ -78,20 +78,20 @@ describe("assignCounsellor", () => {
   it("POSTs the counsellor's id and returns the profile", async () => {
     const fetchFn = answering(jsonResponse(PROFILE));
 
-    const profile = await assignCounsellor(uid(7), 5, fetchFn);
+    const profile = await assignCounsellor(uid(7), uid(5), fetchFn);
 
     expect(sent(fetchFn)).toEqual({
       path: `/api/students/${uid(7)}/assign/`,
       method: "POST",
-      body: { counsellor: 5 },
+      body: { counsellor: uid(5) },
     });
-    expect(profile.assignedCounsellor).toEqual({ id: 5, name: "Bikash Thapa" });
+    expect(profile.assignedCounsellor).toEqual({ id: uid(5), name: "Bikash Thapa" });
   });
 
   it("names a refused counsellor", async () => {
     const fetchFn = answering(jsonResponse({ counsellor: ["Choose a counsellor."] }, 400));
 
-    const error: unknown = await assignCounsellor(uid(7), 9, fetchFn).catch(
+    const error: unknown = await assignCounsellor(uid(7), uid(9), fetchFn).catch(
       (caught: unknown) => caught,
     );
 
@@ -103,18 +103,18 @@ describe("transferStudent", () => {
   it("POSTs the new counsellor's id and returns the profile", async () => {
     const fetchFn = answering(jsonResponse(PROFILE));
 
-    await transferStudent(uid(7), 5, fetchFn);
+    await transferStudent(uid(7), uid(5), fetchFn);
 
     expect(sent(fetchFn)).toEqual({
       path: `/api/students/${uid(7)}/transfer/`,
       method: "POST",
-      body: { counsellor: 5 },
+      body: { counsellor: uid(5) },
     });
   });
 
   it("refuses an answer of the wrong shape", async () => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, can_transfer: "yes" }));
 
-    await expect(transferStudent(uid(7), 5, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(transferStudent(uid(7), uid(5), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });

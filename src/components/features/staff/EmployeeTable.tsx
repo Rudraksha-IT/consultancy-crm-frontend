@@ -1,3 +1,5 @@
+import type { RecordId } from "@/lib/recordId";
+
 import Link from "next/link";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -16,8 +18,8 @@ import { EmployeeTwoFactorChip } from "./EmployeeTwoFactor";
 type EmployeeTableProps = {
   employees: readonly Employee[];
   /** The logged-in Admin, who can't manage themselves. */
-  myId: number;
-  busyId: number | null;
+  myId: RecordId;
+  busyId: RecordId | null;
   onManage: (employee: Employee) => void;
   onResend: (employee: Employee) => void;
   onCancelInvite: (employee: Employee) => void;

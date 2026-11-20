@@ -16,7 +16,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Ramesh Adhikari", email: "admin@office.com", role: "admin" },
+  staff: { id: uid(1), name: "Ramesh Adhikari", email: "admin@office.com", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "tasks"],
   dateDisplay: "AD",
@@ -44,7 +44,7 @@ function paperworkRow(counts: Partial<PaperworkRow>): PaperworkRow {
       name: "Aarav Sharma",
       stage: Stage.Applying,
       country: Country.Australia,
-      assignedCounsellor: { id: 2, name: "Sita Karki" },
+      assignedCounsellor: { id: uid(2), name: "Sita Karki" },
     },
     done: 5,
     total: 13,
@@ -99,7 +99,7 @@ describe("Email on a phone", () => {
     sentTo: "aarav@example.com",
     attachments: [],
     sentAt: "2026-11-10T09:20:00+05:45",
-    sentBy: { id: 2, name: "Sita Karki" },
+    sentBy: { id: uid(2), name: "Sita Karki" },
   };
 
   it("show name and status, kind and time, and the subject line cut to two lines", () => {
@@ -116,10 +116,10 @@ describe("Email on a phone", () => {
 
 describe("Classes on a phone", () => {
   const BATCH = BatchSchema.parse({
-    id: 1,
+    id: uid(1),
     name: "IELTS Morning",
     test_type: "ielts",
-    teacher: { id: 3, name: "Hari Thapa" },
+    teacher: { id: uid(3), name: "Hari Thapa" },
     time_slot: "7:00 to 8:30",
     starts_on: "2026-11-01",
     ends_on: "2026-12-20",

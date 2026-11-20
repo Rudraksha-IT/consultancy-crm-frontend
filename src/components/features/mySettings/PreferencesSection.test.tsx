@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -13,7 +14,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { PreferencesSection } from "./PreferencesSection";
 
 const TEACHER: StaffContext = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "teacher" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "teacher" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",

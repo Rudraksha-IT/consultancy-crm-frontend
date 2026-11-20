@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import Link from "next/link";
 import { useCallback, useState, type ReactNode } from "react";
 
@@ -38,7 +39,7 @@ const NOT_FOUND = 404;
 /** A part of the Students, or that the Fee Type isn't this office's (or doesn't exist). */
 type Part = { found: true; page: FeeTypeStudents } | { found: false };
 
-async function loadPart(feeTypeId: number, part: FeeTypePart, page: number): Promise<Part> {
+async function loadPart(feeTypeId: RecordId, part: FeeTypePart, page: number): Promise<Part> {
   try {
     return { found: true, page: await fetchFeeTypeStudents(feeTypeId, part, page) };
   } catch (error) {
@@ -48,7 +49,7 @@ async function loadPart(feeTypeId: number, part: FeeTypePart, page: number): Pro
 }
 
 /** One part of the Students, a page at a time. */
-function usePart(feeTypeId: number, part: FeeTypePart) {
+function usePart(feeTypeId: RecordId, part: FeeTypePart) {
   const [page, setPage] = useState(1);
   const load = useCallback(() => loadPart(feeTypeId, part, page), [feeTypeId, part, page]);
   return { state: useLoaded(load, 0), onPage: setPage };
@@ -59,7 +60,7 @@ function usePart(feeTypeId: number, part: FeeTypePart) {
  * the Fee and what they paid for this Fee Type and their whole still to pay; then the Lost ones,
  * not counted. A Student opens on their Fees tab.
  */
-export function FeeTypeStudentsPage({ feeTypeId }: { feeTypeId: number }) {
+export function FeeTypeStudentsPage({ feeTypeId }: { feeTypeId: RecordId }) {
   return (
     <AdminAccountsOnly>
       <FeeTypeStudentsBody feeTypeId={feeTypeId} />
@@ -83,7 +84,7 @@ function useShownPage(state: Loaded<Part>): FeeTypeStudents | null {
   return loaded ?? shown;
 }
 
-function FeeTypeStudentsBody({ feeTypeId }: { feeTypeId: number }) {
+function FeeTypeStudentsBody({ feeTypeId }: { feeTypeId: RecordId }) {
   const counted = usePart(feeTypeId, "counted");
   const lost = usePart(feeTypeId, "lost");
   const shown = useShownPage(counted.state);

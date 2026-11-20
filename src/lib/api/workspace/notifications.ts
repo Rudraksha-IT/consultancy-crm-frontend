@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { RecordIdSchema } from "@/lib/recordId";
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 
 import { API_PATHS } from "@/constants/api";
 import { NOTIFICATION_KINDS } from "@/constants/notifications";
@@ -11,18 +11,18 @@ import { getJson, patchJson, postJson } from "../core/client";
 
 const StudentRefSchema = z.object({ id: RecordIdSchema, name: z.string() });
 /** Who did it; a Platform Admin who answered a Transfer Request has no Staff id. */
-const ActorSchema = z.object({ id: z.number().int().nullable(), name: z.string() });
+const ActorSchema = z.object({ id: RecordIdSchema.nullable(), name: z.string() });
 
 /** One notification as the API answers it (spec 80). */
 export const NotificationSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     kind: z.enum(NOTIFICATION_KINDS),
     created_at: z.iso.datetime({ offset: true }),
     is_read: z.boolean(),
     /** The Task it's about; null for a Transfer Request. */
     task: z
-      .object({ id: z.number().int(), title: z.string().min(1), due_on: z.iso.date() })
+      .object({ id: RecordIdSchema, title: z.string().min(1), due_on: z.iso.date() })
       .nullable(),
     /** Who gave the Task ("assigned"), or who asked or answered a Transfer Request. */
     by: ActorSchema.nullable(),
@@ -30,15 +30,15 @@ export const NotificationSchema = z
     student: StudentRefSchema.nullable(),
     /** The Transfer Request it's about; null for a Task. */
     transfer_request: z
-      .object({ id: z.number().int(), status: z.enum(TRANSFER_REQUEST_STATUSES) })
+      .object({ id: RecordIdSchema, status: z.enum(TRANSFER_REQUEST_STATUSES) })
       .nullable(),
     /** What was put in, restored from or deleted from the Bin, and why (issue 79). */
     bin: z.object({ item: z.string(), reason: z.string() }).nullable().default(null),
     /** The Work From Home dates asked for, answered or set (issue 87). */
     work_from_home: z
       .object({
-        id: z.number().int(),
-        staff_id: z.number().int(),
+        id: RecordIdSchema,
+        staff_id: RecordIdSchema,
         starts_on: z.iso.date(),
         ends_on: z.iso.date().nullable(),
         status: z.enum(WORK_FROM_HOME_STATUSES),
@@ -99,7 +99,7 @@ export function fetchNotifications(fetchFn: typeof fetch = fetch): Promise<Notif
 
 /** Mark one of my notifications read, or unread again. */
 export function setNotificationRead(
-  id: number,
+  id: RecordId,
   read: boolean,
   fetchFn: typeof fetch = fetch,
 ): Promise<AppNotification> {

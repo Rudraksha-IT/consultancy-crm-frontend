@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { createContext, useContext } from "react";
 
 /** The Inbox check, shared by the AppShell: the menu's count, and a sign of new messages. */
@@ -7,7 +8,7 @@ export type InboxCheckState = {
   /** Conversations with unread messages: the Inbox menu item's count (never the bell). */
   unread: number;
   /** The newest message's id; when it changes, the Inbox page loads again. */
-  latest: number | null;
+  latest: RecordId | null;
   /** Check again now, e.g. after reading or sending. */
   refresh: () => void;
 };

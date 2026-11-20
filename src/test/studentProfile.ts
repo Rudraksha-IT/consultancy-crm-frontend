@@ -50,7 +50,7 @@ export const PROFILE = {
   sub_agent_name: "",
   note: "Wants Melbourne only.",
   stage: "counselling",
-  assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
   created_at: "2026-10-01T10:00:00+05:45",
   academic_records: [
     { id: uid(1), level: "bachelor", institution: "TU", finished_year: 2024, result: "GPA 3.2" },

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -17,7 +18,7 @@ import { consultancySummary } from "@/test/consultancy";
 import { testHost } from "@/test/hosts";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 3, name: "Sita Sharma", email: "sita@acme.test", role: "counsellor" },
+  staff: { id: uid(3), name: "Sita Sharma", email: "sita@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
@@ -643,7 +644,7 @@ describe("MySettingsPage for a Platform Admin inside the office", () => {
       <StaffContextContext
         value={{
           ...COUNSELLOR,
-          staff: { id: 0, name: "Ramesh", email: "ramesh@platform.test", role: "admin" },
+          staff: { id: uid(0), name: "Ramesh", email: "ramesh@platform.test", role: "admin" },
           supportAccess: { platformAdminName: "Ramesh", platformHost: testHost("admin") },
         }}
       >

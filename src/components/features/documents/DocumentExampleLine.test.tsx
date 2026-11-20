@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -16,17 +17,22 @@ vi.mock("@/lib/documents/tab", () => ({ openBlankTab }));
 
 const CHECKLIST_PATH = `/api/students/${uid(7)}/documents/`;
 const SAMPLE = {
-  id: 52,
+  id: uid(52),
   file_name: "sample-bank-statement.pdf",
   content_type: "application/pdf",
   size: 1_157_120,
   uploaded_at: "2026-11-20T10:00:00+05:45",
 };
-const PHOTO = { ...SAMPLE, id: 53, file_name: "sample-balance.jpg", content_type: "image/jpeg" };
+const PHOTO = {
+  ...SAMPLE,
+  id: uid(53),
+  file_name: "sample-balance.jpg",
+  content_type: "image/jpeg",
+};
 const INSTRUCTION = "Last 6 months, with the bank's stamp on every page.";
 
 /** The checklist with examples on the given rows, by type id. */
-function checklistWith(guides: Record<number, { instruction: string; examples: unknown[] }>) {
+function checklistWith(guides: Record<RecordId, { instruction: string; examples: unknown[] }>) {
   return {
     ...CHECKLIST,
     items: CHECKLIST.items.map((one) => ({ ...one, ...guides[one.document_type.id] })),
@@ -57,7 +63,9 @@ afterEach(() => {
 
 describe("a Document Type's examples on the checklist (ticket 11)", () => {
   it("shows the instruction and how many examples beside a Document not received", async () => {
-    renderSection(checklistWith({ 4: { instruction: INSTRUCTION, examples: [SAMPLE, PHOTO] } }));
+    renderSection(
+      checklistWith({ [uid(4)]: { instruction: INSTRUCTION, examples: [SAMPLE, PHOTO] } }),
+    );
 
     const row = await rowFor("Bank Statement");
 
@@ -68,7 +76,7 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
   });
 
   it("shows them beside a Rejected Document too, which needs a new copy", async () => {
-    renderSection(checklistWith({ 3: { instruction: "Both sides", examples: [SAMPLE] } }));
+    renderSection(checklistWith({ [uid(3)]: { instruction: "Both sides", examples: [SAMPLE] } }));
 
     const row = await rowFor("SEE Marksheet");
 
@@ -79,7 +87,7 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
   });
 
   it("leaves them out beside a Document already in", async () => {
-    renderSection(checklistWith({ 1: { instruction: "Every page", examples: [SAMPLE] } }));
+    renderSection(checklistWith({ [uid(1)]: { instruction: "Every page", examples: [SAMPLE] } }));
 
     const row = await rowFor("Passport");
 
@@ -88,7 +96,7 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
   });
 
   it("asks to see what it should look like when there is no instruction", async () => {
-    renderSection(checklistWith({ 4: { instruction: "", examples: [SAMPLE] } }));
+    renderSection(checklistWith({ [uid(4)]: { instruction: "", examples: [SAMPLE] } }));
 
     expect(
       within(await rowFor("Bank Statement")).getByText("See what it should look like."),
@@ -96,7 +104,7 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
   });
 
   it("shows only the instruction when there are no example files", async () => {
-    renderSection(checklistWith({ 4: { instruction: INSTRUCTION, examples: [] } }));
+    renderSection(checklistWith({ [uid(4)]: { instruction: INSTRUCTION, examples: [] } }));
 
     const row = await rowFor("Bank Statement");
 
@@ -114,7 +122,7 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
 
   it("shows an instruction written like markup as words", async () => {
     const markup = '<img src=x onerror="alert(1)">';
-    renderSection(checklistWith({ 4: { instruction: markup, examples: [SAMPLE] } }));
+    renderSection(checklistWith({ [uid(4)]: { instruction: markup, examples: [SAMPLE] } }));
 
     const row = await rowFor("Bank Statement");
 
@@ -129,9 +137,9 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
       on(
         "GET",
         CHECKLIST_PATH,
-        checklistWith({ 4: { instruction: INSTRUCTION, examples: [SAMPLE, PHOTO] } }),
+        checklistWith({ [uid(4)]: { instruction: INSTRUCTION, examples: [SAMPLE, PHOTO] } }),
       ),
-      on("GET", "/api/documents/examples/53/link/?action=download", {
+      on("GET", `/api/documents/examples/${uid(53)}/link/?action=download`, {
         url: "https://files.test/e53?sig=1",
         expires_in: 300,
       }),
@@ -174,8 +182,12 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
   it("says when an example can't be opened", async () => {
     openBlankTab.mockReturnValue(null);
     backend(
-      on("GET", CHECKLIST_PATH, checklistWith({ 4: { instruction: "", examples: [SAMPLE] } })),
-      on("GET", "/api/documents/examples/52/link/?action=open", { detail: "x" }, 404),
+      on(
+        "GET",
+        CHECKLIST_PATH,
+        checklistWith({ [uid(4)]: { instruction: "", examples: [SAMPLE] } }),
+      ),
+      on("GET", `/api/documents/examples/${uid(52)}/link/?action=open`, { detail: "x" }, 404),
     );
     render(
       <ToastProvider>
@@ -209,7 +221,7 @@ describe.each(THEME_CASES)("examples on the checklist in the $name Theme", ({ co
   });
 
   it("shows the instruction and the button to see the example", async () => {
-    renderSection(checklistWith({ 4: { instruction: INSTRUCTION, examples: [SAMPLE] } }));
+    renderSection(checklistWith({ [uid(4)]: { instruction: INSTRUCTION, examples: [SAMPLE] } }));
 
     const row = await rowFor("Bank Statement");
 

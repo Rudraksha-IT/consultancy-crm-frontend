@@ -100,8 +100,8 @@ function itemName(item: BinEntry): string {
 
 /** Stays the same for an item while the Bin is shown. */
 function keyOf(item: BinEntry): string {
-  if (item.kind === "course_file") return `course-file-${String(item.courseFile.id)}`;
-  if (item.kind === "document_example") return `example-${String(item.example.id)}`;
+  if (item.kind === "course_file") return `course-file-${item.courseFile.id}`;
+  if (item.kind === "document_example") return `example-${item.example.id}`;
   return `${item.kind}-${targetOf(item).fileId ?? item.document.id}`;
 }
 

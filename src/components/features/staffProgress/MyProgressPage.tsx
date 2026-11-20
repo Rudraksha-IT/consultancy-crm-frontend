@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import Link from "next/link";
 
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
@@ -45,7 +46,7 @@ export function MyProgressPage() {
   return <MyProgress staffId={staff.id} canOpenStudents={staff.role !== Role.Teacher} />;
 }
 
-function MyProgress({ staffId, canOpenStudents }: { staffId: number; canOpenStudents: boolean }) {
+function MyProgress({ staffId, canOpenStudents }: { staffId: RecordId; canOpenStudents: boolean }) {
   const choice = useProgressPeriod();
   const { state } = useStaffProgress(staffId, choice.range);
   return (

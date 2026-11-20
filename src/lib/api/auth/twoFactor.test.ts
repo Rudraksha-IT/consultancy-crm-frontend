@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { API_PATHS } from "@/constants/api";
 
 import { ApiRequestError, WrongCurrentPasswordError } from "../core/errors";
@@ -216,7 +217,7 @@ describe("Staff, on the office's address (issue 62)", () => {
   });
 
   it("verifies on the office's address and expects a Staff login", async () => {
-    const fetchFn = answering(jsonResponse({ context: { staff: { id: 3 } } }));
+    const fetchFn = answering(jsonResponse({ context: { staff: { id: uid(3) } } }));
 
     await verifyStaffTwoFactor({ recoveryCode: "abcd-efgh-jkmn" }, fetchFn);
 

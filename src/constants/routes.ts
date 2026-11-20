@@ -22,27 +22,27 @@ export const ROUTES = {
   /** One-to-one messages between Staff (issue 86). */
   inbox: "/inbox",
   /** The Inbox with one conversation open. */
-  inboxWith: (personId: number) => `/inbox?with=${String(personId)}`,
+  inboxWith: (personId: RecordId) => `/inbox?with=${personId}`,
   batches: "/batches",
   /** One class's page (issue 23). */
-  batch: (id: number) => `/batches/${String(id)}`,
+  batch: (id: RecordId) => `/batches/${id}`,
   messages: "/messages",
   accounts: "/accounts",
   /** Fees by type, and one Fee Type's Students (ticket 08). */
   feesByType: "/accounts/fees-by-type",
-  feeTypeStudents: (id: number) => `/accounts/fees-by-type/${String(id)}`,
+  feeTypeStudents: (id: RecordId) => `/accounts/fees-by-type/${id}`,
   /** One Student's page opened on their Fees tab. */
   studentFees: (id: RecordId) => `/students/${id}?tab=fees`,
   reports: "/reports",
   /** Configuration opened on Universities, the Catalogue and its Course Files (ticket 10). */
   universities: "/configuration?section=universities",
   /** One University's edit page: it and every Course, saved at once (issue 92). */
-  universityEdit: (id: number) => `/configuration/universities/${String(id)}/edit`,
+  universityEdit: (id: RecordId) => `/configuration/universities/${id}/edit`,
   staff: "/staff",
   /** One employee's page, on its Progress tab (issue 84). */
-  employee: (id: number) => `/staff/${String(id)}`,
+  employee: (id: RecordId) => `/staff/${id}`,
   /** One employee's Work from home tab (issue 87). */
-  employeeWorkFromHome: (id: number) => `/staff/${String(id)}?tab=wfh`,
+  employeeWorkFromHome: (id: RecordId) => `/staff/${id}?tab=wfh`,
   /** Employees opened on the Working hours tab (issue 56). */
   workingHours: "/staff?tab=hours",
   /** My working hours: my own month of clock-ins (issue 56). */

@@ -645,10 +645,13 @@ describe("request bodies", () => {
     const size = 5 * 1024 * KIB + 64 * KIB;
 
     const response = await POST(
-      incoming("/api/catalogue/courses/12/files/", { method: "POST", body: new Uint8Array(size) }),
+      incoming(`/api/catalogue/courses/${uid(12)}/files/`, {
+        method: "POST",
+        body: new Uint8Array(size),
+      }),
     );
     const tooBig = await POST(
-      incoming("/api/catalogue/courses/12/files/", {
+      incoming(`/api/catalogue/courses/${uid(12)}/files/`, {
         method: "POST",
         body: new Uint8Array(size + 1),
       }),
@@ -660,8 +663,8 @@ describe("request bodies", () => {
   });
 
   it.each([
-    ["adding an example", "/api/configuration/document-types/4/examples/"],
-    ["replacing an example", "/api/configuration/document-examples/9/replace/"],
+    ["adding an example", `/api/configuration/document-types/${uid(4)}/examples/`],
+    ["replacing an example", `/api/configuration/document-examples/${uid(9)}/replace/`],
   ])("may be as large as a Document Example when %s (ticket 11)", async (_case, path) => {
     const { sent } = fakeBackend();
     const size = 5 * 1024 * KIB + 64 * KIB;
@@ -703,10 +706,17 @@ describe("request bodies", () => {
     ],
     ["a Student named by number, not UUID (ADR 0027)", "POST", "/api/students/7/documents/"],
     ["another method", "PUT", UPLOAD_PATH],
-    ["a Course File's rename", "POST", "/api/catalogue/course-files/3/"],
+    ["a Course File's rename", "POST", `/api/catalogue/course-files/${uid(3)}/`],
+    ["a Course named by number (ADR 0027)", "POST", "/api/catalogue/courses/12/files/"],
+    ["a Document Type named by number", "POST", "/api/configuration/document-types/4/examples/"],
+    ["an example named by number", "POST", "/api/configuration/document-examples/9/replace/"],
     ["a path that only looks like a Course's files", "POST", "/api/catalogue/courses/x/files/"],
-    ["a Document Type's instruction", "PUT", "/api/configuration/document-types/4/instruction/"],
-    ["an example's own path", "POST", "/api/configuration/document-examples/9/"],
+    [
+      "a Document Type's instruction",
+      "PUT",
+      `/api/configuration/document-types/${uid(4)}/instruction/`,
+    ],
+    ["an example's own path", "POST", `/api/configuration/document-examples/${uid(9)}/`],
     [
       "a path that only looks like examples",
       "POST",
@@ -1234,7 +1244,7 @@ describe("changes from another site (Origin check)", () => {
 });
 
 describe("logging in", () => {
-  const CONTEXT = { staff: { id: 1, name: "Sita" } };
+  const CONTEXT = { staff: { id: uid(1), name: "Sita" } };
 
   it("keeps the tokens in a sealed cookie and gives the browser the rest", async () => {
     fakeBackend(() => Response.json({ access: "acc", refresh: "ref", context: CONTEXT }));
@@ -1328,7 +1338,7 @@ describe.each([
   ["joining with an Invite Code", "/api/auth/join/complete/"],
   ["a Platform Admin entering an office with its one-time code", "/api/support-access/enter/"],
 ])("%s", (_name, PATH) => {
-  const CONTEXT = { staff: { id: 1, name: "Sita" } };
+  const CONTEXT = { staff: { id: uid(1), name: "Sita" } };
 
   it("logs the person in like a login: tokens in the sealed cookie, the rest to the browser", async () => {
     fakeBackend(() => Response.json({ access: "acc", refresh: "ref", context: CONTEXT }));
@@ -2187,7 +2197,7 @@ describe("two-step login (issue 61)", () => {
     it.each(["/api/auth/two-factor/confirm/", "/api/auth/two-factor/verify/"])(
       "%s sends the cookie's challenge and keeps Staff tokens",
       async (path) => {
-        const context = { staff: { id: 3 } };
+        const context = { staff: { id: uid(3) } };
         const { sent } = fakeBackend(() =>
           Response.json({ access: "acc", refresh: "ref", context }),
         );
@@ -2261,11 +2271,11 @@ describe("two-step login (issue 61)", () => {
     });
 
     it("an Admin's switch and reset on Employees are ordinary calls", async () => {
-      const employee = { id: 4, two_factor_required: true };
+      const employee = { id: uid(4), two_factor_required: true };
       const { sent } = fakeBackend(() => Response.json(employee));
 
       const response = await POST(
-        incoming("/api/staff/4/two-factor/reset/", {
+        incoming(`/api/staff/${uid(4)}/two-factor/reset/`, {
           method: "POST",
           body: "{}",
           tokens: newTokens("staff"),
@@ -2312,7 +2322,7 @@ describe("the Platform's forgot password (issue 63)", () => {
 });
 
 describe("the browser a login comes from (issue 71)", () => {
-  const CONTEXT = { staff: { id: 1 } };
+  const CONTEXT = { staff: { id: uid(1) } };
   const CHROME =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
   const KNOWN_KEY = "0123456789abcdef0123456789abcdef";
