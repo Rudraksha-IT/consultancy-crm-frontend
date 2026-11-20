@@ -2,22 +2,17 @@
 
 import { useState } from "react";
 
-import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
-import { ButtonLink } from "@/components/ui/ButtonLink";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { PageHeader } from "@/components/ui/PageHeader";
 import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { Switch } from "@/components/ui/Switch";
 import { useToast } from "@/components/ui/useToast";
 import { CATALOGUE_TEXT } from "@/constants/catalogue";
-import { LABELS, MESSAGES } from "@/constants/messages";
-import { Role } from "@/constants/roles";
-import { ROUTES } from "@/constants/routes";
+import { MESSAGES } from "@/constants/messages";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { CatalogueRefusedError, setCourseIntakes, type Course } from "@/lib/api";
 import { formatIntake } from "@/lib/dates";
@@ -33,22 +28,11 @@ const SEARCH_DELAY_MS = 300;
 /** An Intake waiting to be removed from a Course, after asking. */
 type Removing = { course: Course; intake: string } | null;
 
-/** The Catalogue, for Admins: each University as a card with all its Courses (issue 92). */
-export function CataloguePage() {
-  const { staff } = useCurrentStaff();
-  if (staff.role !== Role.Admin) {
-    return (
-      <Panel>
-        <EmptyState action={<ButtonLink href={ROUTES.home}>{LABELS.goHome}</ButtonLink>}>
-          {MESSAGES.notAvailable}
-        </EmptyState>
-      </Panel>
-    );
-  }
-  return <AdminCataloguePage />;
-}
-
-function AdminCataloguePage() {
+/**
+ * Configuration → Universities (ticket 10): the Catalogue, each University as a card with all its
+ * Courses and each Course's Course Files (issue 92). Configuration is for Admins only.
+ */
+export function UniversitiesSettings() {
   const { showToast } = useToast();
   const [search, setSearch] = useState("");
   const [includeArchived, setIncludeArchived] = useState(false);
@@ -73,35 +57,30 @@ function AdminCataloguePage() {
     onRemoveIntake: (course, intake) => {
       setRemoving({ course, intake });
     },
+    onChanged: reload,
   };
 
   return (
-    <>
-      <PageHeader
-        title={CATALOGUE_TEXT.title}
-        subtitle={CATALOGUE_TEXT.intro}
-        actions={
-          <>
-            <Button
-              icon="upload"
-              onClick={() => {
-                setIsImporting(true);
-              }}
-            >
-              {CATALOGUE_TEXT.importButton}
-            </Button>
-            <Button
-              variant="primary"
-              icon="plus"
-              onClick={() => {
-                setDialog({ kind: "university" });
-              }}
-            >
-              {CATALOGUE_TEXT.addUniversity}
-            </Button>
-          </>
-        }
-      />
+    <div className="grid min-w-0 gap-6">
+      <div className="flex flex-wrap gap-3">
+        <Button
+          variant="primary"
+          icon="plus"
+          onClick={() => {
+            setDialog({ kind: "university" });
+          }}
+        >
+          {CATALOGUE_TEXT.addUniversity}
+        </Button>
+        <Button
+          icon="upload"
+          onClick={() => {
+            setIsImporting(true);
+          }}
+        >
+          {CATALOGUE_TEXT.importButton}
+        </Button>
+      </div>
       <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <SearchBox
           label={CATALOGUE_TEXT.search}
@@ -173,7 +152,7 @@ function AdminCataloguePage() {
           onImported={reload}
         />
       )}
-    </>
+    </div>
   );
 }
 

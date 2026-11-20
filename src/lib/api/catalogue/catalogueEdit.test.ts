@@ -18,6 +18,8 @@ const COURSE = {
   archived: false,
   documents: [{ id: 21, name: "CV" }],
   applications: 2,
+  files: [],
+  file_count: 0,
 };
 const UNIVERSITY = {
   id: 1,

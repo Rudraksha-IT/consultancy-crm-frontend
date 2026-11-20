@@ -29,7 +29,11 @@ const ADMIN: StaffContext = {
   theme: DEFAULT_THEME,
 };
 
-function renderPage(context: StaffContext, setTheme = vi.fn<(theme: ThemeConfig) => void>()) {
+function renderPage(
+  context: StaffContext,
+  setTheme = vi.fn<(theme: ThemeConfig) => void>(),
+  startSection?: string,
+) {
   render(
     <StaffContextContext value={context}>
       <SetDateDisplayContext value={vi.fn()}>
@@ -38,7 +42,7 @@ function renderPage(context: StaffContext, setTheme = vi.fn<(theme: ThemeConfig)
             <SetOfficeDetailsContext value={vi.fn()}>
               <SetPageSwipeContext value={vi.fn()}>
                 <ToastProvider>
-                  <ConfigurationPage />
+                  <ConfigurationPage startSection={startSection} />
                 </ToastProvider>
               </SetPageSwipeContext>
             </SetOfficeDetailsContext>
@@ -80,11 +84,11 @@ function partTitles(section: HTMLElement): (string | null)[] {
 const ALL_MODULES: StaffContext["modules"] = ["configuration", "communication", "clock_in"];
 
 describe("ConfigurationPage", () => {
-  it("has a menu of General, Documents, Fees and Exports, and opens on General", () => {
+  it("has a menu of General, Documents, Universities, Fees and Exports, and opens on General", () => {
     backend(on("GET", TYPES_PATH, NO_TYPES));
     renderPage(ADMIN);
 
-    expect(menuItems()).toEqual(["General", "Documents", "Fees", "Exports"]);
+    expect(menuItems()).toEqual(["General", "Documents", "Universities", "Fees", "Exports"]);
     const general = screen.getByRole("region", { name: "General" });
     expect(partTitles(general)).toEqual(["Office logo", "Office details", "Dates"]);
     expect(screen.queryByRole("region", { name: "Documents" })).not.toBeInTheDocument();
@@ -97,7 +101,14 @@ describe("ConfigurationPage", () => {
     backend(on("GET", TYPES_PATH, NO_TYPES));
     renderPage({ ...ADMIN, modules: ALL_MODULES });
 
-    expect(menuItems()).toEqual(["General", "Documents", "Fees", "Working hours", "Exports"]);
+    expect(menuItems()).toEqual([
+      "General",
+      "Documents",
+      "Universities",
+      "Fees",
+      "Working hours",
+      "Exports",
+    ]);
   });
 
   it("shows the Documents section with its lists", async () => {
@@ -169,11 +180,38 @@ describe("ConfigurationPage", () => {
     backend(on("GET", TYPES_PATH, NO_TYPES));
     renderPage(ADMIN);
 
-    expect(menuItems()).toEqual(["General", "Documents", "Fees", "Exports"]);
+    expect(menuItems()).toEqual(["General", "Documents", "Universities", "Fees", "Exports"]);
     expect(screen.queryByRole("region", { name: "General" })).not.toBeInTheDocument();
 
     await open("Exports");
     expect(screen.getByRole("button", { name: "All of Configuration" })).toBeVisible();
+  });
+
+  it("opens on Universities from its link, even at phone width (ticket 10)", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    backend(
+      on("GET", TYPES_PATH, NO_TYPES),
+      on("GET", "/api/catalogue/universities/", { count: 0, page: 1, page_size: 25, results: [] }),
+    );
+    renderPage(ADMIN, undefined, "universities");
+
+    const section = screen.getByRole("region", { name: "Universities" });
+    expect(await within(section).findByRole("button", { name: /Add university/ })).toBeVisible();
+    expect(screen.getByRole("button", { name: "All of Configuration" })).toBeVisible();
+  });
+
+  it("opens on General when the link names no known section", () => {
+    backend(on("GET", TYPES_PATH, NO_TYPES));
+    renderPage(ADMIN, undefined, "<script>");
+
+    expect(screen.getByRole("region", { name: "General" })).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Universities" })).not.toBeInTheDocument();
   });
 
   it.each(["counsellor", "front_desk", "teacher"] as const)("is not available to a %s", (role) => {

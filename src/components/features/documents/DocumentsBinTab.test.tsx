@@ -53,6 +53,14 @@ const ONE_FILE = {
   ...NOTE,
   reason: "<b>Blurry</b>",
 };
+const BROCHURE = {
+  kind: "course_file",
+  course_file: { id: 31, name: "Deakin IT brochure", file_name: "deakin-it.pdf" },
+  university: { id: 1, name: "Deakin University" },
+  course: { id: 11, name: "Master of IT" },
+  ...NOTE,
+  reason: "Deleted from the Catalogue",
+};
 const BIN = { count: 2, page: 1, page_size: 25, results: [WHOLE, ONE_FILE] };
 const EMPTY = { count: 0, page: 1, page_size: 25, results: [] };
 const PAPERWORK = {
@@ -190,6 +198,86 @@ describe("the Bin tab (Admins, issue 79)", () => {
     await userEvent.keyboard("{Escape}");
 
     expect(fetchFn.mock.calls.filter(([, init]) => init?.method === "DELETE")).toHaveLength(0);
+  });
+
+  it("lists a Course File with its kind, University and Course, apart from Documents", async () => {
+    backend(on("GET", BIN_PATH, { ...BIN, count: 3, results: [BROCHURE, WHOLE, ONE_FILE] }));
+    renderPage("admin");
+
+    const row = await itemFor("Deakin IT brochure");
+    expect(within(row).getByText("Course File")).toBeVisible();
+    expect(row).toHaveTextContent("Deakin University, Master of IT");
+    expect(row).toHaveTextContent("Why: Deleted from the Catalogue");
+    expect(within(row).getByRole("button", { name: "Open deakin-it.pdf" })).toBeVisible();
+    expect(within(row).queryByRole("link")).toBeNull();
+    expect(within(await itemFor("Passport")).getByText("Document")).toBeVisible();
+  });
+
+  it("opens a Course File through its own Bin link", async () => {
+    const tab = { opener: {}, location: { replace: vi.fn() }, close: vi.fn() };
+    openBlankTab.mockReturnValue(tab);
+    backend(
+      on("GET", BIN_PATH, { ...BIN, count: 1, results: [BROCHURE] }),
+      on("GET", "/api/documents/bin/course-files/31/link/?action=open", {
+        url: "https://files.test/c?sig=1",
+        expires_in: 300,
+      }),
+    );
+    renderPage("admin");
+
+    await userEvent.click(
+      within(await itemFor("Deakin IT brochure")).getByRole("button", {
+        name: "Open deakin-it.pdf",
+      }),
+    );
+
+    await waitFor(() => {
+      expect(tab.location.replace).toHaveBeenCalledWith("https://files.test/c?sig=1");
+    });
+  });
+
+  it("restores a Course File to its Course", async () => {
+    const fetchFn = backend(
+      on("GET", BIN_PATH, { ...BIN, count: 1, results: [BROCHURE] }),
+      on("POST", "/api/documents/bin/course-files/31/restore/", {
+        id: 31,
+        name: "Deakin IT brochure",
+        file_name: "deakin-it.pdf",
+        size: 1000,
+        uploaded_at: "2026-11-19T10:00:00+05:45",
+      }),
+    );
+    renderPage("admin");
+
+    await userEvent.click(
+      within(await itemFor("Deakin IT brochure")).getByRole("button", {
+        name: "Restore Deakin IT brochure",
+      }),
+    );
+
+    expect(await screen.findByText("Deakin IT brochure restored")).toBeVisible();
+    expect(callsTo(fetchFn, "POST", "/api/documents/bin/course-files/31/restore/")).toHaveLength(1);
+  });
+
+  it("deletes a Course File for good after asking", async () => {
+    const fetchFn = backend(
+      on("GET", BIN_PATH, { ...BIN, count: 1, results: [BROCHURE] }),
+      (path, init) =>
+        init?.method === "DELETE" && path === "/api/documents/bin/course-files/31/"
+          ? new Response(null, { status: 204 })
+          : undefined,
+    );
+    renderPage("admin");
+
+    await userEvent.click(
+      within(await itemFor("Deakin IT brochure")).getByRole("button", {
+        name: "Delete Deakin IT brochure for good",
+      }),
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Delete for good" }));
+
+    expect(await screen.findByText("Deakin IT brochure deleted for good")).toBeVisible();
+    expect(callsTo(fetchFn, "DELETE", "/api/documents/bin/course-files/31/")).toHaveLength(1);
   });
 
   it("says when the Bin is empty", async () => {

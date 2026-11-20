@@ -129,14 +129,6 @@ export const NAV_ENTRIES: readonly NavEntry[] = [
     roles: ADMIN_ONLY,
   },
   {
-    label: "Catalogue",
-    href: ROUTES.catalogue,
-    icon: "school",
-    group: "business",
-    module: Module.Catalogue,
-    roles: ADMIN_ONLY,
-  },
-  {
     label: "Configuration",
     href: ROUTES.configuration,
     icon: "sliders",

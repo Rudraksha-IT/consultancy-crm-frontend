@@ -1,5 +1,6 @@
 "use client";
 
+import { UniversitiesSettings } from "@/components/features/catalogue/UniversitiesSettings";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { PlatformControls } from "@/components/features/supportAccess/PlatformControls";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -28,14 +29,24 @@ import { WorkingDaySettings } from "./WorkingDaySettings";
 
 /**
  * The Consultancy's own settings, for Admins only, one section at a time (issue 96): General
- * (Office logo, Office details, Dates), Documents, Fees (Fee Types, issue 06), Working hours
+ * (Office logo, Office details, Dates), Documents, Universities (the Catalogue and its Course
+ * Files, ticket 10), Fees (Fee Types, issue 06), Working hours
  * while Clock-in is on, and Exports. Email needs no settings: it goes from the product's own
  * account (ADR 0023). A Platform Admin inside the office also has the Platform controls, last
  * (issue 27).
  */
-export function ConfigurationPage() {
+/** Sections a link may open, `/configuration?section=universities`. */
+const LINKABLE_SECTIONS: readonly string[] = ["general", "documents", "universities", "fees"];
+
+/** The section a link asked for, if it is one a link may open. */
+function linkedSection(asked: string | undefined): string | null {
+  return asked !== undefined && LINKABLE_SECTIONS.includes(asked) ? asked : null;
+}
+
+export function ConfigurationPage({ startSection }: { startSection?: string | undefined }) {
   const { staff, modules, supportAccess } = useCurrentStaff();
-  const choice = useSectionChoice("general");
+  const start = linkedSection(startSection);
+  const choice = useSectionChoice(start ?? "general", start !== null);
 
   if (staff.role !== Role.Admin) {
     return (
@@ -64,6 +75,7 @@ export function ConfigurationPage() {
       ...TEXT.documents,
       content: <DocumentsSettings />,
     },
+    { id: "universities", ...TEXT.universities, content: <UniversitiesSettings /> },
     { id: "fees", ...TEXT.fees, content: <FeeTypesSettings /> },
   ];
   if (modules.includes(Module.ClockIn)) {

@@ -100,6 +100,18 @@ export type {
   UniversityPage,
 } from "./catalogue/catalogueTypes";
 export {
+  binCourseFile,
+  COURSE_FILE_API_FIELDS,
+  deleteCourseFileForGood,
+  fetchBinCourseFileLink,
+  fetchCourseFileLink,
+  renameCourseFile,
+  restoreCourseFile,
+  uploadCourseFile,
+} from "./catalogue/courseFiles";
+export type { CourseFileField } from "./catalogue/courseFiles";
+export type { BinnedCourseFile, CourseFile } from "./catalogue/courseFileTypes";
+export {
   CatalogueRefusedError,
   deleteUniversity,
   fetchUniversity,
@@ -179,6 +191,7 @@ export {
 } from "./documents/documents";
 export type { UploadField } from "./documents/documents";
 export type {
+  BinEntry,
   BinItem,
   BinNote,
   BinPage,

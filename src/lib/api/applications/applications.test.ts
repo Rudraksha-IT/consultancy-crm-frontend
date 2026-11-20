@@ -18,6 +18,7 @@ const APPLICATION = {
   status: "applied",
   offer_kind: "",
   offered_on: null,
+  course_files: [],
   offer_letter: null,
   documents: [],
 };
@@ -79,6 +80,7 @@ describe("addApplication", () => {
         offeredOn: null,
         offerLetter: null,
         documents: [],
+        courseFiles: [],
       },
     ]);
   });

@@ -33,6 +33,7 @@ const DEAKIN = {
   status: "applied",
   offer_kind: "",
   offered_on: null,
+  course_files: [],
   offer_letter: null,
   documents: [],
 };
@@ -44,6 +45,7 @@ const RMIT = {
   status: "rejected",
   offer_kind: "",
   offered_on: null,
+  course_files: [],
   offer_letter: null,
   documents: [],
 };
@@ -70,6 +72,8 @@ const CATALOGUE = {
           archived: false,
           documents: [],
           applications: 0,
+          files: [],
+          file_count: 0,
         },
         {
           id: 5,
@@ -80,6 +84,8 @@ const CATALOGUE = {
           archived: false,
           documents: [],
           applications: 0,
+          files: [],
+          file_count: 0,
         },
       ],
     },
@@ -100,6 +106,8 @@ const CATALOGUE = {
           archived: false,
           documents: [],
           applications: 0,
+          files: [],
+          file_count: 0,
         },
       ],
     },
@@ -314,6 +322,97 @@ describe("Documents linked to an Application", () => {
   });
 });
 
+describe("Course brochures under an Application (ticket 10)", () => {
+  const BROCHURE = {
+    id: 31,
+    name: "Deakin IT brochure",
+    file_name: "deakin-it.pdf",
+    size: 2_516_582,
+    uploaded_at: "2026-11-19T10:00:00+05:45",
+  };
+  const FEES = { ...BROCHURE, id: 32, name: "Fees 2027", file_name: "fees.pdf" };
+  const WITH_BROCHURES = {
+    ...WITH_APPLICATIONS,
+    applications: [{ ...DEAKIN, course_files: [BROCHURE, FEES] }, RMIT],
+  };
+  const EMAILING: StaffContext = {
+    ...COUNSELLOR,
+    consultancy: { ...COUNSELLOR.consultancy, hasContactEmail: true },
+    modules: ["students", "communication"],
+  };
+  const PLAIN = {
+    subject: "",
+    body: "Dear Sita,\n\nKind regards,\nBikash Thapa\nAcme Education",
+  };
+
+  it("lists the Course's PDFs under its Application, and nothing under a Course with none", async () => {
+    backend(profile(WITH_BROCHURES));
+    renderPage();
+
+    const line = await screen.findByRole("group", { name: "Course brochures of Master of IT" });
+    expect(line).toHaveTextContent("Course brochures:");
+    expect(within(line).getByRole("button", { name: "Open Deakin IT brochure" })).toBeVisible();
+    expect(within(line).getByRole("button", { name: "Open Fees 2027" })).toBeVisible();
+    expect(
+      screen.queryByRole("group", { name: "Course brochures of Master of Data Science" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens a brochure through a short-lived link", async () => {
+    const url = "https://files.test/course-files/31.pdf?sig=1";
+    backend(
+      profile(WITH_BROCHURES),
+      on("GET", "/api/catalogue/course-files/31/link/?action=open", { url, expires_in: 300 }),
+    );
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Open Deakin IT brochure" }));
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(url);
+    });
+  });
+
+  it("has no Email button without the Communication Module", async () => {
+    backend(profile(WITH_BROCHURES));
+    renderPage();
+
+    await screen.findByRole("group", { name: "Course brochures of Master of IT" });
+    expect(screen.queryByRole("button", { name: /^Email them to/ })).not.toBeInTheDocument();
+  });
+
+  it("has no Email button for a Student without an email", async () => {
+    backend(profile({ ...WITH_BROCHURES, email: "" }));
+    renderPage(EMAILING);
+
+    await screen.findByRole("group", { name: "Course brochures of Master of IT" });
+    expect(screen.queryByRole("button", { name: /^Email them to/ })).not.toBeInTheDocument();
+  });
+
+  it("emails them to the Student: the Plain email with the Course in the subject and a line", async () => {
+    backend(
+      profile(WITH_BROCHURES),
+      on("GET", "/api/students/7/emails/ready-made/", {
+        kinds: [{ kind: "plain", record: null, records: [], unavailable: null }],
+      }),
+      on("GET", "/api/students/7/emails/draft/?kind=plain", PLAIN),
+    );
+    renderPage(EMAILING);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Email them to Sita" }));
+
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() => {
+      expect(within(dialog).getByRole("textbox", { name: "Subject" })).toHaveValue(
+        "Master of IT at Deakin University",
+      );
+    });
+    expect(within(dialog).getByRole("textbox", { name: "Message" })).toHaveValue(
+      "Dear Sita,\n\nHere are the brochures for Master of IT at Deakin University.\n\nKind regards,\nBikash Thapa\nAcme Education",
+    );
+  });
+});
+
 describe("changing an Application's Status", () => {
   it("saves it, and every Application rejected leaves the Student applying", async () => {
     const saved = {
@@ -471,6 +570,44 @@ describe("Add application", () => {
     });
     expect(within(await applicationsList()).getAllByRole("listitem")).toHaveLength(3);
     expect(screen.getByRole("tab", { name: /Applications/ })).toHaveTextContent("Applications 3");
+  });
+
+  it("shows the picked Course's brochures, which open in a new tab", async () => {
+    const brochure = {
+      id: 31,
+      name: "Nursing guide",
+      file_name: "nursing.pdf",
+      size: 1_048_576,
+      uploaded_at: "2026-11-19T10:00:00+05:45",
+    };
+    const [deakin, ...others] = CATALOGUE.results;
+    const withFiles = {
+      ...CATALOGUE,
+      results: [
+        {
+          ...deakin,
+          courses: deakin?.courses.map((course) =>
+            course.id === 5 ? { ...course, files: [brochure], file_count: 1 } : course,
+          ),
+        },
+        ...others,
+      ],
+    };
+    backend(profile(), catalogue(withFiles));
+    renderPage();
+    const dialog = await openAddDialog();
+
+    await userEvent.selectOptions(within(dialog).getByLabelText("University"), "3");
+    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), "4");
+    expect(within(dialog).queryByRole("group", { name: /^Course brochures/ })).toBeNull();
+    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), "5");
+
+    const line = within(dialog).getByRole("group", {
+      name: "Course brochures of Bachelor of Nursing",
+    });
+    expect(line).toHaveTextContent("Course brochure:");
+    expect(within(line).getByRole("button", { name: "Open Nursing guide" })).toBeVisible();
+    expect(within(line).queryByRole("button", { name: /^Email/ })).toBeNull();
   });
 
   it("offers only Universities with a course, and each course's own Intakes", async () => {

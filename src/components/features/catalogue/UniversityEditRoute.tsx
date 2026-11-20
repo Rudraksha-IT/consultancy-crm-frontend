@@ -46,7 +46,7 @@ export function UniversityEditRoute({ idText }: { idText: string }) {
 function BackToCatalogue() {
   return (
     <Link
-      href={ROUTES.catalogue}
+      href={ROUTES.universities}
       className="text-secondary text-ink-2 min-h-control inline-flex items-center gap-1.5 self-start"
     >
       <Icon name="left" />
@@ -59,7 +59,9 @@ function NotFound() {
   return (
     <Panel>
       <EmptyState
-        action={<ButtonLink href={ROUTES.catalogue}>{CATALOGUE_TEXT.backToCatalogue}</ButtonLink>}
+        action={
+          <ButtonLink href={ROUTES.universities}>{CATALOGUE_TEXT.backToCatalogue}</ButtonLink>
+        }
       >
         {CATALOGUE_TEXT.universityNotFound}
       </EmptyState>

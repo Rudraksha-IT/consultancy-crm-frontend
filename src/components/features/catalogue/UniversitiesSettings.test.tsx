@@ -8,7 +8,7 @@ import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
 
-import { CataloguePage } from "./CataloguePage";
+import { UniversitiesSettings } from "./UniversitiesSettings";
 
 const ADMIN: StaffContext = {
   staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
@@ -29,6 +29,8 @@ const MIT = {
   archived: false,
   documents: [{ id: 21, name: "Work Reference" }],
   applications: 0,
+  files: [],
+  file_count: 0,
 };
 const OLD_COURSE = {
   ...MIT,
@@ -103,7 +105,7 @@ function renderPage(context: StaffContext = ADMIN) {
   render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <CataloguePage />
+        <UniversitiesSettings />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -115,8 +117,8 @@ async function cardFor(name: string): Promise<HTMLElement> {
 }
 
 function courseRow(card: HTMLElement, name: string): HTMLElement {
-  const header = within(card).getByRole("rowheader", { name: new RegExp(`^${name}`) });
-  const row = header.closest("tr");
+  const header = within(card).getByRole("heading", { level: 3, name: new RegExp(`^${name}`) });
+  const row = header.closest("li");
   if (row === null) throw new Error(`No row for ${name}`);
   return row;
 }
@@ -132,25 +134,22 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("CataloguePage", () => {
-  it("shows each university as a card with every course in a table, never folded", async () => {
+describe("UniversitiesSettings", () => {
+  it("shows each university as a card with every course as a stacked row, never folded", async () => {
     listing();
     renderPage();
 
     const deakin = await cardFor("Deakin University");
-    expect(screen.getByRole("heading", { level: 1, name: "Catalogue" })).toBeInTheDocument();
-    expect(
-      screen.getByText("Universities, their courses and intakes, which counsellors choose from."),
-    ).toBeInTheDocument();
     expect(
       within(deakin).getByText("Australia · Documents follow Australia's list in Configuration"),
     ).toBeInTheDocument();
-    expect(
-      within(deakin)
-        .getAllByRole("columnheader")
-        .map((cell) => cell.textContent),
-    ).toEqual(["Course", "Level", "Intakes", "Required documents"]);
+    expect(within(deakin).queryByRole("table")).toBeNull();
     const mit = courseRow(deakin, "Master of Information Technology");
+    expect(
+      within(mit)
+        .getAllByRole("term")
+        .map((term) => term.textContent),
+    ).toEqual(["Intakes", "Required documents", "Course Files"]);
     expect(within(mit).getByText("Master")).toBeInTheDocument();
     expect(within(mit).getByText("Mar 2027")).toBeInTheDocument();
     expect(within(mit).getByText("Jul 2027")).toBeInTheDocument();
@@ -177,16 +176,8 @@ describe("CataloguePage", () => {
 
     expect(
       within(deakin).getByRole("link", { name: "Edit Deakin University and its courses" }),
-    ).toHaveAttribute("href", "/catalogue/1/edit");
+    ).toHaveAttribute("href", "/configuration/universities/1/edit");
     expect(within(deakin).queryByRole("button", { name: /Archive/ })).toBeNull();
-  });
-
-  it("shows the page only to Admins", async () => {
-    const fetchFn = listing();
-    renderPage({ ...ADMIN, staff: { ...ADMIN.staff, role: "counsellor" } });
-
-    expect(await screen.findByText("This page isn't available to you.")).toBeInTheDocument();
-    expect(fetchFn).not.toHaveBeenCalled();
   });
 
   it("says when there are no universities yet", async () => {
@@ -484,7 +475,7 @@ describe("adding a course", () => {
   });
 });
 
-describe("CataloguePage import", () => {
+describe("UniversitiesSettings import", () => {
   const IMPORT = "POST /api/catalogue/import/";
   const TEXT = "university,country,course,level,intakes\nDeakin,Australia,MIT,Master,Feb 2027\n";
 

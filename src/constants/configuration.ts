@@ -11,6 +11,11 @@ export const CONFIGURATION_SECTIONS_TEXT = {
     description:
       "What every Student needs, the extra documents asked for only sometimes, and what each country asks for.",
   },
+  universities: {
+    title: "Universities",
+    description:
+      "Universities, their courses and intakes, and each course's PDF brochures (Course Files).",
+  },
   fees: {
     title: "Fees",
     description: "What Fees and Payments can be for, in the order staff see them.",

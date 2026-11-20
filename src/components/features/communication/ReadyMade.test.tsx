@@ -255,6 +255,46 @@ describe("Ready-made emails to one Student", () => {
     expect(within(dialog).getByRole("combobox", { name: "Payment" })).toHaveValue("9");
   });
 
+  it("starts from given words: a subject, and a line under the greeting (Course brochures)", async () => {
+    const plain = {
+      subject: "",
+      body: "Dear Sita,\n\nKind regards,\nBikash Thapa\nAcme Education",
+    };
+    oneStudentBackend(on("GET", draftPath(DRAFT_PATH, "plain"), plain));
+    const { kind, subject, message } = renderComposer({
+      startWith: {
+        kind: "plain",
+        text: { subject: "Master of IT at Deakin", line: "Here is the brochure for Master of IT." },
+      },
+    });
+
+    await waitFor(() => {
+      expect(subject()).toHaveValue("Master of IT at Deakin");
+    });
+    expect(kind()).toHaveValue("plain");
+    expect(message()).toHaveValue(
+      "Dear Sita,\n\nHere is the brochure for Master of IT.\n\nKind regards,\nBikash Thapa\nAcme Education",
+    );
+  });
+
+  it("uses the given words only once: choosing another email replaces them", async () => {
+    const plain = { subject: "", body: "Dear Sita,\n\nKind regards,\nBikash Thapa" };
+    oneStudentBackend(on("GET", draftPath(DRAFT_PATH, "plain"), plain));
+    const { kind, subject, message } = renderComposer({
+      startWith: { kind: "plain", text: { subject: "Brochures", line: "Here they are." } },
+    });
+    await waitFor(() => {
+      expect(subject()).toHaveValue("Brochures");
+    });
+
+    await userEvent.selectOptions(kind(), "welcome");
+
+    await waitFor(() => {
+      expect(subject()).toHaveValue(WELCOME.subject);
+    });
+    expect(message()).toHaveValue(WELCOME.body);
+  });
+
   it("keeps what was typed before the ready-made emails arrived", async () => {
     let answer: (response: Response) => void = () => undefined;
     const menu = new Promise<Response>((resolve) => {

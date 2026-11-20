@@ -16,6 +16,8 @@ export type CourseDraft = {
   documents: number[];
   /** How many Applications use it; such a Course can't be deleted. */
   applications: number;
+  /** How many Course Files it keeps, counting the Bin; such a Course can't be deleted. */
+  fileCount: number;
   /** Marked to be deleted on Save, with Undo until then. */
   isDeleted: boolean;
 };
@@ -53,6 +55,7 @@ export function draftOf(university: University): UniversityDraft {
       savedArchived: course.archived,
       documents: course.documents.map((document) => document.id),
       applications: course.applications,
+      fileCount: course.fileCount,
       isDeleted: false,
     })),
   };
@@ -70,13 +73,22 @@ export function newCourseDraft(key: string): CourseDraft {
     savedArchived: false,
     documents: [],
     applications: 0,
+    fileCount: 0,
     isDeleted: false,
   };
 }
 
-/** Whether a Course may be deleted: saved as archived and used by no Application. */
+/**
+ * Whether a Course may be deleted: saved as archived, used by no Application, and keeping no
+ * Course Files, even in the Bin (ticket 10).
+ */
 export function canDelete(course: CourseDraft): boolean {
-  return course.id !== null && course.savedArchived && course.applications === 0;
+  return (
+    course.id !== null &&
+    course.savedArchived &&
+    course.applications === 0 &&
+    course.fileCount === 0
+  );
 }
 
 /** What Save sends: every Course still on the page, and the ids of those marked deleted. */

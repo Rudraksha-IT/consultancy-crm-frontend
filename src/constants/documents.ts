@@ -137,7 +137,11 @@ export const BIN_TEXT = {
   tabStudents: "Students",
   tabBin: "Bin",
   binIntro:
-    "Documents that Staff asked to delete. Nobody can use them while they wait here. Open the files to check, then delete for good or restore. Nothing is emptied automatically.",
+    "Documents, Course Files and Document Examples that were deleted. Nobody can use them while they wait here. Open the files to check, then delete for good or restore. Nothing is emptied automatically.",
+  /** The kind of each item on the Bin tab, shown as a chip (ticket 10). */
+  kindDocument: "Document",
+  kindCourseFile: "Course File",
+  courseOf: (university: string, course: string) => `${university}, ${course}`,
   binEmpty: "The Bin is empty.",
   itemsCount: (count: number) => `${String(count)} ${count === 1 ? "item" : "items"} in the Bin`,
   binLoading: "Loading the Bin…",

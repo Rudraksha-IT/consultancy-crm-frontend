@@ -33,9 +33,10 @@ export const ROUTES = {
   /** One Student's page opened on their Fees tab. */
   studentFees: (id: number) => `/students/${String(id)}?tab=fees`,
   reports: "/reports",
-  catalogue: "/catalogue",
+  /** Configuration opened on Universities, the Catalogue and its Course Files (ticket 10). */
+  universities: "/configuration?section=universities",
   /** One University's edit page: it and every Course, saved at once (issue 92). */
-  catalogueEdit: (id: number) => `/catalogue/${String(id)}/edit`,
+  universityEdit: (id: number) => `/configuration/universities/${String(id)}/edit`,
   staff: "/staff",
   /** One employee's page, on its Progress tab (issue 84). */
   employee: (id: number) => `/staff/${String(id)}`,

@@ -8,7 +8,9 @@ import {
   CHANGING_METHODS,
   FORWARDED_METHODS,
   type ForwardedMethod,
+  COURSE_FILE_UPLOAD_PATH,
   LOGO_UPLOAD_PATH,
+  MAX_COURSE_FILE_BODY_BYTES,
   MAX_LOGO_UPLOAD_BODY_BYTES,
   MAX_REQUEST_BODY_BYTES,
   MAX_UPLOAD_BODY_BYTES,
@@ -64,12 +66,13 @@ function isFromOwnPage(request: Request, host: string): boolean {
   return URL.canParse(origin) && new URL(origin).host === host;
 }
 
-/** How large the body may be: a Document or logo upload may be larger than any other call. */
+/** How large the body may be: a Document, logo or Course File upload may be larger than others. */
 function bodyLimit(request: Request): number {
   if (request.method !== "POST") return MAX_REQUEST_BODY_BYTES;
   const path = new URL(request.url).pathname;
   if (UPLOAD_PATH.test(path)) return MAX_UPLOAD_BODY_BYTES;
   if (LOGO_UPLOAD_PATH.test(path)) return MAX_LOGO_UPLOAD_BODY_BYTES;
+  if (COURSE_FILE_UPLOAD_PATH.test(path)) return MAX_COURSE_FILE_BODY_BYTES;
   return MAX_REQUEST_BODY_BYTES;
 }
 

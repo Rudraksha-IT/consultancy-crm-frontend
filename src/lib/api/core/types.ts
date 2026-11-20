@@ -29,6 +29,7 @@ import {
 import { PASSWORD_RULE_IDS, type PasswordRuleId } from "@/lib/password";
 import { normaliseThemeConfig, type ThemeConfig } from "@/lib/theme";
 
+import { CourseFileSchema } from "../catalogue/courseFileTypes";
 import { LinkedDocumentSchema, NamedFileSchema } from "../documents/documentsTypes";
 import { TransferRequestSchema } from "../students/transferRequestTypes";
 
@@ -506,11 +507,14 @@ export const ApplicationSchema = z
       .object({ id: z.number().int(), files: z.array(NamedFileSchema).nonempty() })
       .nullable(),
     documents: z.array(LinkedDocumentSchema),
+    /** The Course's PDF brochures in use (ticket 10). */
+    course_files: z.array(CourseFileSchema),
   })
-  .transform(({ offered_on, offer_letter, ...rest }) => ({
+  .transform(({ offered_on, offer_letter, course_files, ...rest }) => ({
     ...rest,
     offeredOn: offered_on,
     offerLetter: offer_letter,
+    courseFiles: course_files,
   }));
 
 export type Application = z.infer<typeof ApplicationSchema>;

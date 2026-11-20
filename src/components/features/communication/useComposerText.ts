@@ -14,7 +14,15 @@ import {
 import type { Pane } from "./ComposerParts";
 
 /** The ready-made email to open on, e.g. Payment received from a receipt. */
-export type StartWith = { kind: ReadyMadeKind; record?: number };
+/**
+ * The ready-made email to open on, the record it is about, and words to start from instead of
+ * its own: a subject line, and a line added under the greeting (a Course's brochures, ticket 10).
+ */
+export type StartWith = {
+  kind: ReadyMadeKind;
+  record?: number;
+  text?: { subject: string; line: string };
+};
 
 /** The ready-made emails offered, while they load, or that they couldn't load. */
 export type ReadyMadeMenu =
@@ -81,9 +89,12 @@ export function useComposerText({
     setChoice(first);
     setRequest({ ...first, turn: 0 });
   });
+  const startText = useRef(startWith?.text);
   const hasDraftFailed = useDraft(target, request, (draft) => {
-    setSubjectText(draft.subject);
-    setBodyText(draft.body);
+    const text = startText.current;
+    startText.current = undefined;
+    setSubjectText(text?.subject ?? draft.subject);
+    setBodyText(text === undefined ? draft.body : withLine(draft.body, text.line));
     setSubjectError(null);
     setEdited(false);
   });
@@ -230,6 +241,14 @@ function firstUsable(
 function firstRecordOf(menu: ReadyMadeMenu, kind: ReadyMadeKind): number | null {
   if (menu.status !== "ready") return null;
   return menu.entries.find((entry) => entry.kind === kind)?.records[0]?.id ?? null;
+}
+
+/** The message with `line` as its first paragraph after the greeting. */
+function withLine(body: string, line: string): string {
+  const greetingEnd = body.indexOf("\n\n");
+  if (greetingEnd === -1) return `${line}\n\n${body}`;
+  const rest = body.slice(greetingEnd + 2).replace(/^\n+/, "");
+  return `${body.slice(0, greetingEnd)}\n\n${line}\n\n${rest}`;
 }
 
 function focusField(form: HTMLFormElement, name: string): void {

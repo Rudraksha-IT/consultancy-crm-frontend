@@ -26,7 +26,6 @@ describe("buildNavigation", () => {
       "Accounts",
       "Employees",
       "Reports",
-      "Catalogue",
       "Configuration",
     ]);
   });
@@ -95,7 +94,6 @@ describe("buildNavigation", () => {
       "Inbox",
       "Transfer requests",
       "Employees",
-      "Catalogue",
       "Configuration",
     ]);
   });
@@ -124,6 +122,6 @@ describe("buildNavigation", () => {
       .filter((item) => item.group === "business")
       .map((item) => item.label);
 
-    expect(business).toEqual(["Accounts", "Employees", "Reports", "Catalogue", "Configuration"]);
+    expect(business).toEqual(["Accounts", "Employees", "Reports", "Configuration"]);
   });
 });

@@ -5,6 +5,8 @@ import { COUNTRIES } from "@/constants/students";
 
 import { NamedDocumentTypeSchema } from "../documents/documentsTypes";
 
+import { CourseFileSchema } from "./courseFileTypes";
+
 const INTAKE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 /** One Course of a University, with its Intakes ("YYYY-MM", always AD), oldest first. */
@@ -20,8 +22,16 @@ export const CourseSchema = z
     documents: z.array(NamedDocumentTypeSchema),
     /** How many Applications use it; such a Course can't be deleted (issue 92). */
     applications: z.number().int().nonnegative(),
+    /** Its Course Files in use, oldest first (ticket 10). */
+    files: z.array(CourseFileSchema),
+    /** How many Course Files it keeps, counting the Bin: such a Course is never deleted. */
+    file_count: z.number().int().nonnegative(),
   })
-  .transform(({ university_id, ...rest }) => ({ ...rest, universityId: university_id }));
+  .transform(({ university_id, file_count, ...rest }) => ({
+    ...rest,
+    universityId: university_id,
+    fileCount: file_count,
+  }));
 
 export type Course = z.infer<typeof CourseSchema>;
 

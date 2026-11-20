@@ -10,6 +10,8 @@ import {
 import { Stage } from "@/constants/stages";
 import { COUNTRIES } from "@/constants/students";
 
+import { BinnedCourseFileSchema, type BinnedCourseFile } from "../catalogue/courseFileTypes";
+
 const PersonSchema = z.object({ id: z.number().int(), name: z.string() });
 
 const GroupSchema = z.enum(DOCUMENT_GROUPS);
@@ -343,13 +345,16 @@ const BinItemSchema = z
 
 export type BinItem = z.infer<typeof BinItemSchema>;
 
+/** Anything on the Bin tab: a Document, one of its files, or a Course File (ticket 10). */
+export type BinEntry = BinItem | BinnedCourseFile;
+
 /** One page of the Bin tab, newest first. */
 export const BinPageSchema = z
   .object({
     count: z.number().int().nonnegative(),
     page: z.number().int().positive(),
     page_size: z.number().int().positive(),
-    results: z.array(BinItemSchema),
+    results: z.array(z.union([BinItemSchema, BinnedCourseFileSchema])),
   })
   .transform(({ page_size, results, ...rest }) => ({
     ...rest,

@@ -30,6 +30,7 @@ const DEAKIN = {
   status: "offer",
   offer_kind: "unconditional",
   offered_on: null,
+  course_files: [],
   offer_letter: null,
   documents: [],
 };
@@ -41,6 +42,7 @@ const RMIT = {
   status: "applied",
   offer_kind: "",
   offered_on: null,
+  course_files: [],
   offer_letter: null,
   documents: [],
 };

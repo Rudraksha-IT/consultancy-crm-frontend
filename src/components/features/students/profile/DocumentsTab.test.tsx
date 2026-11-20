@@ -105,6 +105,7 @@ describe("the profile's Documents tab", () => {
       status: "offer",
       offer_kind: "",
       offered_on: null,
+      course_files: [],
       offer_letter: null,
       documents: [],
     };
@@ -152,6 +153,7 @@ describe("the profile's Documents tab", () => {
       status: "applied",
       offer_kind: "",
       offered_on: null,
+      course_files: [],
       offer_letter: null,
     };
     const linked = {

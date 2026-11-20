@@ -32,6 +32,8 @@ const NURSING = {
   archived: false,
   documents: [{ id: 21, name: "Work Reference" }],
   applications: 3,
+  files: [],
+  file_count: 0,
 };
 const OLD = {
   ...NURSING,
@@ -160,7 +162,7 @@ describe("a university's edit page", () => {
     expect(within(course("Diploma of Old Things")).getByText("Archived")).toBeInTheDocument();
   });
 
-  it("saves the university and every course in one go, then goes back to the Catalogue", async () => {
+  it("saves the university and every course in one go, then goes back to Configuration: Universities", async () => {
     const fetchFn = backend(stored(), types, saving());
     renderPage();
     await opened();
@@ -182,7 +184,7 @@ describe("a university's edit page", () => {
     await save();
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith("/catalogue");
+      expect(router.push).toHaveBeenCalledWith("/configuration?section=universities");
     });
     expect(sent(fetchFn, "PUT")).toEqual({
       name: "Deakin University Melbourne",
@@ -387,6 +389,19 @@ describe("deleting courses", () => {
     ).toBeInTheDocument();
   });
 
+  it("keeps a course with Course Files, counting the Bin, and says why (ticket 10)", async () => {
+    const withFiles = { ...OLD, id: 14, name: "Master of Brochures", file_count: 1 };
+    backend(stored({ ...DEAKIN, courses: [NURSING, withFiles] }), types);
+    renderPage();
+    await opened();
+    const kept = course("Master of Brochures");
+
+    expect(within(kept).getByRole("button", { name: "Delete course" })).toBeDisabled();
+    expect(
+      within(kept).getByText("It has 1 Course File (counting the Bin), so it stays archived."),
+    ).toBeInTheDocument();
+  });
+
   it("takes a course added on the page off again with Remove", async () => {
     backend(stored(), types);
     renderPage();
@@ -412,7 +427,7 @@ describe("deleting the university", () => {
     expect(screen.queryByRole("button", { name: "Delete university" })).toBeNull();
   });
 
-  it("deletes it and its courses after asking, then goes back to the Catalogue", async () => {
+  it("deletes it and its courses after asking, then goes back to Configuration: Universities", async () => {
     const fetchFn = backend(stored(ARCHIVED), types, deleting());
     renderPage();
     await opened();
@@ -427,7 +442,7 @@ describe("deleting the university", () => {
     await userEvent.click(within(confirm).getByRole("button", { name: "Delete university" }));
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith("/catalogue");
+      expect(router.push).toHaveBeenCalledWith("/configuration?section=universities");
     });
     expect(calls(fetchFn, "DELETE")).toBe(1);
     expect(await screen.findByText("Deakin University deleted")).toBeInTheDocument();
@@ -464,6 +479,20 @@ describe("deleting the university", () => {
       within(university).getByText("Used by 2 applications, so it stays archived."),
     ).toBeInTheDocument();
   });
+
+  it("can't be deleted while its courses keep Course Files (ticket 10)", async () => {
+    backend(stored({ ...ARCHIVED, courses: [{ ...OLD, file_count: 2 }] }), types);
+    renderPage();
+    await opened();
+
+    const university = screen.getByRole("region", { name: "University" });
+    expect(within(university).getByRole("button", { name: "Delete university" })).toBeDisabled();
+    expect(
+      within(university).getByText(
+        "Its courses have 2 Course Files (counting the Bin), so it stays archived.",
+      ),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("leaving and access", () => {
@@ -474,7 +503,7 @@ describe("leaving and access", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
-    expect(router.push).toHaveBeenCalledWith("/catalogue");
+    expect(router.push).toHaveBeenCalledWith("/configuration?section=universities");
   });
 
   it("asks before leaving with unsaved changes", async () => {
@@ -490,7 +519,7 @@ describe("leaving and access", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     await userEvent.click(screen.getByRole("button", { name: "Leave without saving" }));
 
-    expect(router.push).toHaveBeenCalledWith("/catalogue");
+    expect(router.push).toHaveBeenCalledWith("/configuration?section=universities");
   });
 
   it.each(["counsellor", "front_desk", "teacher"] as const)(

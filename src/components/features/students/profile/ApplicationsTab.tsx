@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 
+import { CourseBrochures } from "@/components/features/catalogue/CourseBrochures";
+import { canMessageStudents } from "@/components/features/communication/canMessage";
+import { EmailComposer } from "@/components/features/communication/EmailComposer";
+import { firstNameOf } from "@/components/features/communication/recipients";
+import type { StartWith } from "@/components/features/communication/useComposerText";
 import { LinkedDocuments } from "@/components/features/documents/LinkedDocuments";
+import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { APPLICATION_STATUS_TONES } from "@/components/features/applications/statusTones";
@@ -22,6 +28,7 @@ import {
   applicationStatusText,
   type StatusByHand,
 } from "@/constants/applications";
+import { CATALOGUE_TEXT } from "@/constants/catalogue";
 import { changeApplicationStatus, type Application, type StudentProfile } from "@/lib/api";
 import { formatIntake } from "@/lib/dates";
 
@@ -60,6 +67,7 @@ export function ApplicationsTab({ profile, onSaved }: ApplicationsTabProps) {
 function ApplicationsSection({ profile, onSaved }: ApplicationsTabProps) {
   const { showToast } = useToast();
   const [isAdding, setIsAdding] = useState(false);
+  const [emailing, setEmailing] = useState<Application | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
   const canChange = profile.canChangeApplications;
 
@@ -131,11 +139,29 @@ function ApplicationsSection({ profile, onSaved }: ApplicationsTabProps) {
                   record={application.university.name}
                   documents={application.documents}
                 />
+                <ApplicationBrochures
+                  application={application}
+                  profile={profile}
+                  onEmail={() => {
+                    setEmailing(application);
+                  }}
+                />
               </RowItem>
             ))}
           </RowList>
         )}
       </Panel>
+      <BrochuresComposer
+        emailing={emailing}
+        profile={profile}
+        onClose={() => {
+          setEmailing(null);
+        }}
+        onSent={() => {
+          setEmailing(null);
+          onSaved(profile);
+        }}
+      />
       {isAdding && (
         <AddApplicationDialog
           profile={profile}
@@ -150,6 +176,60 @@ function ApplicationsSection({ profile, onSaved }: ApplicationsTabProps) {
       )}
     </Section>
   );
+}
+
+type ApplicationBrochuresProps = {
+  application: Application;
+  profile: StudentProfile;
+  onEmail: () => void;
+};
+
+/** The Course's brochures under an Application, with "Email it to" for a Student with an email. */
+function ApplicationBrochures({ application, profile, onEmail }: ApplicationBrochuresProps) {
+  const canEmail = canMessageStudents(useCurrentStaff()) && profile.email !== "";
+  return (
+    <CourseBrochures
+      courseName={application.course.name}
+      files={application.courseFiles}
+      email={canEmail ? { firstName: firstNameOf(profile.name), onEmail } : undefined}
+    />
+  );
+}
+
+type BrochuresComposerProps = {
+  /** The Application whose brochures are being emailed, or null while none is. */
+  emailing: Application | null;
+  profile: StudentProfile;
+  onClose: () => void;
+  onSent: () => void;
+};
+
+function BrochuresComposer({ emailing, profile, onClose, onSent }: BrochuresComposerProps) {
+  if (emailing === null) return null;
+  return (
+    <EmailComposer
+      recipients={[profile]}
+      isBulk={false}
+      startWith={brochuresEmail(emailing)}
+      onClose={onClose}
+      onSent={onSent}
+    />
+  );
+}
+
+/**
+ * "Email it to <first name>" (ticket 10): the Plain email about the Course's brochures. The files
+ * are attached once emails carry attachments (ticket 12).
+ */
+function brochuresEmail(application: Application): StartWith {
+  const { course, university, courseFiles } = application;
+  return {
+    kind: "plain",
+    text: {
+      subject: CATALOGUE_TEXT.brochureSubject(course.name, university.name),
+      line: CATALOGUE_TEXT.brochureLine(courseFiles.length, course.name, university.name),
+    },
+  };
 }
 
 /** An Application's Status as a chip: "Offer, conditional" when the kind of offer is known. */

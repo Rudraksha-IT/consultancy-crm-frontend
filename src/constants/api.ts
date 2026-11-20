@@ -157,6 +157,13 @@ export const API_PATHS = {
     `/api/catalogue/universities/${String(universityId)}/courses/`,
   catalogueCourse: (id: number) => `/api/catalogue/courses/${String(id)}/`,
   catalogueImport: "/api/catalogue/import/",
+  /** Course Files (ticket 10): upload to a Course; rename, bin or open one; the Bin's own. */
+  courseFiles: (courseId: number) => `/api/catalogue/courses/${String(courseId)}/files/`,
+  courseFile: (id: number) => `/api/catalogue/course-files/${String(id)}/`,
+  courseFileLink: (id: number) => `/api/catalogue/course-files/${String(id)}/link/`,
+  binCourseFile: (id: number) => `/api/documents/bin/course-files/${String(id)}/`,
+  binCourseFileRestore: (id: number) => `/api/documents/bin/course-files/${String(id)}/restore/`,
+  binCourseFileLink: (id: number) => `/api/documents/bin/course-files/${String(id)}/link/`,
   catalogueIntakes: "/api/catalogue/intakes/",
   configurationDates: "/api/configuration/dates/",
   configurationLogo: "/api/configuration/logo/",

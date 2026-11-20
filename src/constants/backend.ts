@@ -126,6 +126,12 @@ export const LOGO_UPLOAD_PATH = /^\/api\/(?:configuration\/logo|platform\/brand\
  * room for the form around them. It is held in memory, so it stays small for the 1 GiB server.
  */
 export const MAX_UPLOAD_BODY_BYTES = 20 * 1024 * 1024 + 64 * 1024;
+
+/** A Course File (ticket 10): one PDF of at most 5 MB, plus room for the form around it. */
+export const MAX_COURSE_FILE_BODY_BYTES = 5 * 1024 * 1024 + 64 * 1024;
+
+/** Where a Course File is uploaded: one Course's files. */
+export const COURSE_FILE_UPLOAD_PATH = /^\/api\/catalogue\/courses\/[0-9]{1,18}\/files\/$/;
 /**
  * The only calls that may carry an upload: a Student's Document (issue 16), files added to one
  * (issue 78), an Offer Letter (issue 76) and a visa letter (issue 77).

@@ -11,6 +11,8 @@ const COURSE = {
   archived: false,
   documents: [{ id: 21, name: "CV" }],
   applications: 0,
+  files: [],
+  file_count: 0,
 };
 
 const UNIVERSITY = {
@@ -60,6 +62,8 @@ describe("fetchUniversities", () => {
               archived: false,
               documents: [{ id: 21, name: "CV" }],
               applications: 0,
+              files: [],
+              fileCount: 0,
             },
           ],
         },

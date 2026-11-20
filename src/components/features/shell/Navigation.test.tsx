@@ -39,7 +39,6 @@ describe("Navigation", () => {
       "Accounts",
       "Employees",
       "Reports",
-      "Catalogue",
       "Configuration",
     ]);
     expect(screen.getByRole("heading", { name: "Business" })).toBeInTheDocument();

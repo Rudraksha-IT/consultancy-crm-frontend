@@ -616,6 +616,25 @@ describe("request bodies", () => {
     expect((await sentBody(sent)).length).toBe(MAX_LOGO_UPLOAD_BYTES);
   });
 
+  it("may be as large as a Course File on a Course's files path only (ticket 10)", async () => {
+    const { sent } = fakeBackend();
+    const size = 5 * 1024 * KIB + 64 * KIB;
+
+    const response = await POST(
+      incoming("/api/catalogue/courses/12/files/", { method: "POST", body: new Uint8Array(size) }),
+    );
+    const tooBig = await POST(
+      incoming("/api/catalogue/courses/12/files/", {
+        method: "POST",
+        body: new Uint8Array(size + 1),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect((await sentBody(sent)).length).toBe(size);
+    expect(tooBig.status).toBe(413);
+  });
+
   it("are refused over the logo limit on the logo path", async () => {
     const { fetchFn } = fakeBackend();
 
@@ -640,6 +659,8 @@ describe("request bodies", () => {
     ["a file's link", "POST", "/api/students/7/documents/1/files/2/link/"],
     ["a path that only looks like adding files", "POST", "/api/students/7/documents/x/files/"],
     ["another method", "PUT", UPLOAD_PATH],
+    ["a Course File's rename", "POST", "/api/catalogue/course-files/3/"],
+    ["a path that only looks like a Course's files", "POST", "/api/catalogue/courses/x/files/"],
   ])("keep the usual limit for %s", async (_case, method, path) => {
     const { fetchFn } = fakeBackend();
 

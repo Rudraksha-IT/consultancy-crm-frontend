@@ -24,6 +24,8 @@ const UNIVERSITY: University = {
       archived: false,
       documents: [{ id: 21, name: "CV" }],
       applications: 2,
+      files: [],
+      fileCount: 0,
     },
     {
       id: 12,
@@ -34,6 +36,8 @@ const UNIVERSITY: University = {
       archived: true,
       documents: [],
       applications: 0,
+      files: [],
+      fileCount: 0,
     },
   ],
 };
