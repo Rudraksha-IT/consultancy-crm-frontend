@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
 import { EmailComposer } from "@/components/features/communication/EmailComposer";
-import { ReceiptDialog } from "@/components/features/payments/ReceiptDialog";
 import { TakePaymentDialog } from "@/components/features/payments/TakePaymentDialog";
 import { canMessageStudents } from "@/components/features/communication/canMessage";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
@@ -20,7 +19,7 @@ import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { Stage } from "@/constants/stages";
 import { COUNTRY_LABELS } from "@/constants/students";
-import type { Receipt, StudentProfile } from "@/lib/api";
+import type { StudentProfile } from "@/lib/api";
 
 import { AssignCounsellorDialog, TransferDialog } from "./CounsellorDialog";
 import { MarkLostDialog } from "./MarkLostDialog";
@@ -110,78 +109,30 @@ export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
 }
 
 type PaymentFlowProps = {
-  /** With an email address, the receipt can be emailed to them (ticket 09). */
-  profile: Pick<StudentProfile, "id" | "name"> & { email?: string };
+  profile: Pick<StudentProfile, "id" | "name">;
   onClose: () => void;
-  /** The Payment was saved; History has a new entry. Also after it was emailed (Activity). */
+  /** The Payment was saved; History has a new entry. */
   onRecorded: () => void;
 };
 
 /**
- * Take a payment, then show its receipt (spec 71-72), which can be emailed to the Student as
- * Payment received (ticket 09). Closing the receipt or the email ends it.
+ * Take a payment (spec 71); saving says so and closes. No receipt is shown or printed for now
+ * (asked 2026-11-20); the Payment received email stays under Send email.
  */
 export function PaymentFlow({ profile, onClose, onRecorded }: PaymentFlowProps) {
   const { staff } = useCurrentStaff();
   const { showToast } = useToast();
-  const [receipt, setReceipt] = useState<Receipt | null>(null);
-  if (receipt !== null) {
-    return (
-      <ReceiptStep receipt={receipt} profile={profile} onClose={onClose} onRecorded={onRecorded} />
-    );
-  }
   return (
     <TakePaymentDialog
       studentId={profile.id}
       studentName={profile.name}
       isAdmin={staff.role === Role.Admin}
       onClose={onClose}
-      onRecorded={(recorded) => {
+      onRecorded={() => {
         showToast(PAYMENT_TEXT.recorded);
-        setReceipt(recorded);
         onRecorded();
+        onClose();
       }}
-    />
-  );
-}
-
-/** The receipt just recorded; "Email it" opens Payment received for its Payment. */
-function ReceiptStep({
-  receipt,
-  profile,
-  onClose,
-  onRecorded,
-}: PaymentFlowProps & { receipt: Receipt }) {
-  const { consultancy } = useCurrentStaff();
-  const canEmail = useCanMessage() && profile.email !== undefined;
-  const [isEmailing, setEmailing] = useState(false);
-  if (isEmailing) {
-    return (
-      <EmailComposer
-        recipients={[{ id: profile.id, name: profile.name, email: profile.email ?? "" }]}
-        isBulk={false}
-        startWith={{ kind: "payment_received", record: receipt.id }}
-        onClose={onClose}
-        onSent={() => {
-          onRecorded();
-          onClose();
-        }}
-      />
-    );
-  }
-  return (
-    <ReceiptDialog
-      receipt={receipt}
-      officeName={consultancy.name}
-      officeLogo={consultancy.logo}
-      onClose={onClose}
-      onEmail={
-        canEmail
-          ? () => {
-              setEmailing(true);
-            }
-          : undefined
-      }
     />
   );
 }

@@ -102,7 +102,7 @@ async function fillLine(
 }
 
 function save(dialog: HTMLElement): Promise<void> {
-  return userEvent.click(within(dialog).getByRole("button", { name: "Save and show receipt" }));
+  return userEvent.click(within(dialog).getByRole("button", { name: "Save payment" }));
 }
 
 async function fillAndSave(dialog: HTMLElement): Promise<void> {
@@ -138,9 +138,7 @@ describe("taking a payment", () => {
     expect(within(dialog).getByText("16 Kartik 2083 BS")).toBeInTheDocument();
     expect(within(dialog).getByLabelText("Method")).toHaveValue("cash");
     expect(
-      within(dialog).getByText(
-        "After saving you'll see the receipt. Other Payments and totals stay with the Admin.",
-      ),
+      within(dialog).getByText("Other Payments and totals stay with the Admin."),
     ).toBeInTheDocument();
   });
 
@@ -162,11 +160,12 @@ describe("taking a payment", () => {
 
     const dialog = await openPaymentDialog();
 
-    expect(within(dialog).getByText("After saving you'll see the receipt.")).toBeInTheDocument();
+    // No receipt is shown or printed for now (asked 2026-11-20).
+    expect(within(dialog).queryByText(/receipt/i)).not.toBeInTheDocument();
     expect(within(dialog).queryByText(/stay with the Admin/)).not.toBeInTheDocument();
   });
 
-  it("saves the Payment and shows its receipt", async () => {
+  it("saves the Payment, says so and closes, with no receipt to show or print (2026-11-20)", async () => {
     const fetchFn = backend(
       on("GET", "/api/students/7/", DESK_PROFILE),
       on("POST", PAYMENTS, RECEIPT, 201),
@@ -175,131 +174,14 @@ describe("taking a payment", () => {
 
     await fillAndSave(await openPaymentDialog());
 
-    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
+    expect(await screen.findByText("Payment recorded")).toBeInTheDocument();
     expect(sentBody(fetchFn)).toEqual({
       paid_on: "2026-11-02",
       method: "esewa",
       lines: [{ fee_type: 1, note: "", amount: 25000 }],
     });
-    expect(screen.getByText("Payment recorded")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("dialog", { name: "Record a payment from Sita Gurung" }),
-    ).not.toBeInTheDocument();
-    expect(within(receipt).getByRole("heading", { name: "Acme Education" })).toBeInTheDocument();
-    for (const text of [
-      "000412",
-      "2 Nov 2026",
-      "16 Kartik 2083 BS",
-      "Sita Gurung, 9841000001",
-      "Application fee",
-      "eSewa",
-      "Rupees Twenty-Five Thousand only",
-      "Received by Ramesh KC",
-    ]) {
-      expect(within(receipt).getByText(text)).toBeInTheDocument();
-    }
-  });
-
-  it("puts the office logo on the receipt, with the office name", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE), on("POST", PAYMENTS, RECEIPT, 201));
-    const logo = { url: "/api/consultancy/logo/2/", showName: false };
-    renderPage({ ...FRONT_DESK, consultancy: { ...consultancySummary(), logo } });
-
-    await fillAndSave(await openPaymentDialog());
-
-    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
-    expect(receipt.querySelector("img")).toHaveAttribute("src", "/api/consultancy/logo/2/");
-    // A receipt always names the office, whatever the sidebar shows.
-    expect(within(receipt).getByRole("heading", { name: "Acme Education" })).toBeInTheDocument();
-  });
-
-  it("prints the receipt with the browser's print dialog", async () => {
-    const print = vi.fn();
-    vi.stubGlobal("print", print);
-    backend(on("GET", "/api/students/7/", DESK_PROFILE), on("POST", PAYMENTS, RECEIPT, 201));
-    renderPage();
-    await fillAndSave(await openPaymentDialog());
-    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
-
-    await userEvent.click(within(receipt).getByRole("button", { name: "Print receipt" }));
-
-    expect(print).toHaveBeenCalledOnce();
-  });
-
-  it("emails the receipt's Payment from the receipt, as Payment received", async () => {
-    const draft = {
-      subject: "Payment received: receipt 000412",
-      body: "Dear Sita,",
-      attachments: [],
-    };
-    const menu = {
-      kinds: [
-        {
-          kind: "payment_received",
-          record: "payment",
-          records: [{ id: 412, label: "Receipt 000412: Application fee, NPR 25,000" }],
-          unavailable: null,
-        },
-        { kind: "plain", record: null, records: [], unavailable: null },
-      ],
-    };
-    backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
-      on("POST", PAYMENTS, RECEIPT, 201),
-      on("GET", "/api/students/7/emails/ready-made/", menu),
-      on("GET", "/api/students/7/emails/draft/?kind=payment_received&record=412", draft),
-    );
-    renderPage({ ...FRONT_DESK, modules: ["students", "communication"] });
-    await fillAndSave(await openPaymentDialog());
-    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
-
-    await userEvent.click(within(receipt).getByRole("button", { name: "Email it" }));
-
-    const composer = await screen.findByRole("dialog", { name: "New email" });
-    expect(await within(composer).findByDisplayValue(draft.subject)).toBeInTheDocument();
-    expect(within(composer).getByRole("combobox", { name: "Payment" })).toHaveValue("412");
-    expect(screen.queryByRole("dialog", { name: "Receipt" })).toBeNull();
-  });
-
-  it("offers no Email it while Email is switched off", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE), on("POST", PAYMENTS, RECEIPT, 201));
-    renderPage();
-    await fillAndSave(await openPaymentDialog());
-
-    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
-
-    expect(within(receipt).queryByRole("button", { name: "Email it" })).toBeNull();
-  });
-
-  it("closes the receipt with Escape", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE), on("POST", PAYMENTS, RECEIPT, 201));
-    renderPage();
-    await fillAndSave(await openPaymentDialog());
-    await screen.findByRole("dialog", { name: "Receipt" });
-
-    await userEvent.keyboard("{Escape}");
-
-    expect(screen.queryByRole("dialog", { name: "Receipt" })).not.toBeInTheDocument();
-  });
-
-  it("shows text the person typed as text, never as HTML", async () => {
-    const note = "<img src=x onerror=alert(1)>";
-    backend(
-      on("GET", "/api/students/7/", DESK_PROFILE),
-      on(
-        "POST",
-        PAYMENTS,
-        receiptWith({ id: 412, fee_type: feeTypeRef(1), note, amount: 25000 }),
-        201,
-      ),
-    );
-    renderPage();
-
-    await fillAndSave(await openPaymentDialog());
-
-    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
-    expect(within(receipt).getByText(`Application fee (${note})`)).toBeInTheDocument();
-    expect(receipt.querySelector("img")).toBeNull();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Print receipt" })).not.toBeInTheDocument();
   });
 
   it("shows the server's message under a refused field and stays open", async () => {
@@ -355,7 +237,7 @@ describe("taking a payment", () => {
       "Other",
     ]);
     await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "500");
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save and show receipt" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save payment" }));
 
     expect(within(dialog).getByText("Choose a Fee Type.")).toBeInTheDocument();
     expect(callsTo(fetchFn, "POST", PAYMENTS)).toHaveLength(0);
@@ -380,18 +262,17 @@ describe("taking a payment", () => {
     );
     expect(within(dialog).getByText("Needed for Other: say what it is for.")).toBeInTheDocument();
 
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save and show receipt" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save payment" }));
     expect(within(dialog).getByText("Add a short note for Other.")).toBeInTheDocument();
     expect(callsTo(fetchFn, "POST", PAYMENTS)).toHaveLength(0);
 
     await userEvent.type(within(dialog).getByLabelText("Note"), "  SOP check ");
-    await userEvent.click(within(dialog).getByRole("button", { name: "Save and show receipt" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save payment" }));
 
-    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
+    expect(await screen.findByText("Payment recorded")).toBeInTheDocument();
     expect(sentBody(fetchFn)).toMatchObject({
       lines: [{ fee_type: 7, note: "SOP check", amount: 500 }],
     });
-    expect(within(receipt).getByText("Other (SOP check)")).toBeInTheDocument();
   });
 
   it("says so when the Fee Types can't be loaded", async () => {
@@ -429,7 +310,7 @@ describe("taking a payment", () => {
     ).toBeInTheDocument();
   });
 
-  it("splits one visit across Fee Types and shows one receipt with every line and the total", async () => {
+  it("splits one visit across Fee Types and saves every line together", async () => {
     const fetchFn = backend(
       on("GET", "/api/students/7/", DESK_PROFILE),
       on(
@@ -453,7 +334,7 @@ describe("taking a payment", () => {
     expect(within(dialog).getByRole("status")).toHaveTextContent("Total NPR 50,000");
     await save(dialog);
 
-    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
+    expect(await screen.findByText("Payment recorded")).toBeInTheDocument();
     expect(sentBody(fetchFn)).toEqual({
       paid_on: "2026-11-02",
       method: "cash",
@@ -462,14 +343,7 @@ describe("taking a payment", () => {
         { fee_type: 4, note: "first half", amount: 10000 },
       ],
     });
-    const rows = within(within(receipt).getByRole("table")).getAllByRole("row");
-    expect(rows.map((row) => row.textContent)).toEqual([
-      "ForAmount",
-      "Visa feeNPR 40,000",
-      "IELTS class (first half)NPR 10,000",
-      "TotalNPR 50,000",
-    ]);
-    expect(within(receipt).getByText("Rupees Fifty Thousand only")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
   it("removes a line, keeps focus on the line now in its place, and updates the total", async () => {
@@ -509,7 +383,7 @@ describe("taking a payment", () => {
     expect(
       within(dialog).queryByRole("button", { name: "Add another line" }),
     ).not.toBeInTheDocument();
-    expect(within(dialog).getByText("Up to 10 lines on one receipt.")).toBeInTheDocument();
+    expect(within(dialog).getByText("Up to 10 lines in one payment.")).toBeInTheDocument();
   });
 
   it("names a refused line before sending anything", async () => {
@@ -651,21 +525,8 @@ describe("when the office shows dates in BS", () => {
     await userEvent.selectOptions(within(dialog).getByRole("combobox", { name: "Day" }), "3");
     await fillAndSave(dialog);
 
-    await screen.findByRole("dialog", { name: "Receipt" });
+    await screen.findByText("Payment recorded");
     expect(sentBody(fetchFn)).toMatchObject({ paid_on: "2026-10-20" });
-  });
-
-  it("shows the receipt's date in BS with the AD date under it", async () => {
-    backend(on("GET", "/api/students/7/", DESK_PROFILE), on("POST", PAYMENTS, RECEIPT, 201));
-    renderPage(BS_DESK);
-
-    await fillAndSave(await openPaymentDialog());
-
-    const receipt = await screen.findByRole("dialog", { name: "Receipt" });
-    // Once at the top and once on the "Received" stamp.
-    expect(within(receipt).getAllByText("16 Kartik 2083")).toHaveLength(2);
-    expect(within(receipt).getByText("2 Nov 2026 AD")).toBeInTheDocument();
-    expect(within(receipt).queryByText("16 Kartik 2083 BS")).not.toBeInTheDocument();
   });
 
   it("dates Activity in BS", async () => {

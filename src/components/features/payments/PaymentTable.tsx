@@ -1,21 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
-import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Button } from "@/components/ui/Button";
 import { DataCell, DataRow, DataTable } from "@/components/ui/DataTable";
 import { OneLine } from "@/components/ui/OneLine";
 import { useToast } from "@/components/ui/useToast";
 import { PAYMENT_METHOD_LABELS, PAYMENT_TEXT } from "@/constants/payments";
 import { ROUTES } from "@/constants/routes";
-import { describeFeeType, fetchReceipt, type Payment } from "@/lib/api";
+import { describeFeeType, type Payment } from "@/lib/api";
 import { formatNpr } from "@/lib/money";
 
 import { EditPaymentDialog } from "./EditPaymentDialog";
-import { ReceiptDialog, type ReceiptState } from "./ReceiptDialog";
 
 type PaymentTableProps = {
   payments: readonly Payment[];
@@ -25,16 +23,16 @@ type PaymentTableProps = {
   onChanged: () => void;
 };
 
-type Open = { kind: "receipt" | "edit"; payment: Payment } | null;
+type Open = { kind: "edit"; payment: Payment } | null;
 
 const HEAD = "text-small text-ink-2 bg-fill px-6 py-3 text-left font-semibold";
 const CELL = "px-6 py-4 align-middle max-tablet:p-0";
 
 /**
- * Payments with their date and method, Student, purpose and amount, each with Receipt and Edit
- * (spec 74-75). Below tablet width each row stacks into a card, so the page never scrolls
+ * Payments with their date and method, Student, purpose and amount, each with Edit (spec 74-75;
+ * no receipt is shown or printed for now, 2026-11-20). Below tablet width each row stacks into a card, so the page never scrolls
  * sideways. On a phone a row is the date, who paid (or what it was for) and the amount, with
- * Receipt and Edit on their own line.
+ * Edit on its own line.
  */
 export function PaymentTable({ payments, showsStudent, onChanged }: PaymentTableProps) {
   const [open, setOpen] = useState<Open>(null);
@@ -58,7 +56,7 @@ export function PaymentTable({ payments, showsStudent, onChanged }: PaymentTable
               {PAYMENT_TEXT.amountHeading}
             </th>
             <th scope="col" className={HEAD}>
-              <span className="sr-only">{PAYMENT_TEXT.receipt}</span>
+              <span className="sr-only">{PAYMENT_TEXT.edit}</span>
             </th>
           </tr>
         </thead>
@@ -129,15 +127,6 @@ function PaymentRow({ payment, showsStudent, onOpen }: PaymentRowProps) {
       <DataCell part="actions" className={CELL}>
         <div className="tablet:justify-end wide:flex-nowrap flex flex-wrap gap-2">
           <Button
-            icon="receipt"
-            onClick={() => {
-              onOpen({ kind: "receipt", payment });
-            }}
-          >
-            <span aria-hidden="true">{PAYMENT_TEXT.receipt}</span>
-            <span className="sr-only">{PAYMENT_TEXT.receiptFor(payment.receiptNumber)}</span>
-          </Button>
-          <Button
             variant="ghost"
             icon="edit"
             onClick={() => {
@@ -160,19 +149,8 @@ type PaymentDialogProps = {
 };
 
 function PaymentDialog({ open, onClose, onChanged }: PaymentDialogProps) {
-  const { consultancy } = useCurrentStaff();
   const { showToast } = useToast();
   if (open === null) return null;
-  if (open.kind === "receipt") {
-    return (
-      <PaymentReceipt
-        paymentId={open.payment.id}
-        officeName={consultancy.name}
-        officeLogo={consultancy.logo}
-        onClose={onClose}
-      />
-    );
-  }
   return (
     <EditPaymentDialog
       payment={open.payment}
@@ -189,28 +167,4 @@ function PaymentDialog({ open, onClose, onChanged }: PaymentDialogProps) {
       }}
     />
   );
-}
-
-type PaymentReceiptProps = Omit<Parameters<typeof ReceiptDialog>[0], "receipt"> & {
-  paymentId: number;
-};
-
-/** The receipt a Payment is on, loaded when opened so it shows every line as it is now. */
-function PaymentReceipt({ paymentId, ...dialog }: PaymentReceiptProps) {
-  const [receipt, setReceipt] = useState<ReceiptState>("loading");
-  useEffect(() => {
-    let isCancelled = false;
-    fetchReceipt(paymentId).then(
-      (loaded) => {
-        if (!isCancelled) setReceipt(loaded);
-      },
-      () => {
-        if (!isCancelled) setReceipt("failed");
-      },
-    );
-    return () => {
-      isCancelled = true;
-    };
-  }, [paymentId]);
-  return <ReceiptDialog receipt={receipt} {...dialog} />;
 }

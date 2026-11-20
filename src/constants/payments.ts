@@ -33,17 +33,17 @@ export const PAYMENT_TEXT = {
   amount: "Amount (NPR)",
   date: "Date",
   method: "Method",
-  afterSaving: "After saving you'll see the receipt.",
   othersStayWithAdmin: "Other Payments and totals stay with the Admin.",
-  saveAndShowReceipt: "Save and show receipt",
+  // No receipt is shown or printed for now (asked 2026-11-20); receipt numbers stay.
+  savePayment: "Save payment",
   // One visit split across Fee Types: a Payment per line, one receipt (spec 73).
   whatItsFor: "What it's for",
   splitHelp:
-    "Split one visit's money across Fee Types. Each line is its own Payment, all on one receipt.",
+    "Split one visit's money across Fee Types. Each line is its own Payment, saved together.",
   line: (place: number) => `Line ${String(place)}`,
   removeLine: (place: number) => `Remove line ${String(place)}`,
   addLine: "Add another line",
-  linesFull: `Up to ${String(MAX_PAYMENT_LINES)} lines on one receipt.`,
+  linesFull: `Up to ${String(MAX_PAYMENT_LINES)} lines in one payment.`,
   total: "Total",
   totalOf: (amount: string) => `Total ${amount}`,
   paidDifferently: (method: string, date: string) => `${method}, ${date}`,

@@ -67,7 +67,7 @@ describe("OfficeLogoSettings", () => {
 
     expect(
       within(section).getByText(
-        "Shown at the top of the menu and on receipts. A square or wide PNG, SVG or JPG works best.",
+        "Shown at the top of the menu and in emails. A square or wide PNG, SVG or JPG works best.",
       ),
     ).toBeInTheDocument();
     const preview = within(section).getByTestId("logo-preview");

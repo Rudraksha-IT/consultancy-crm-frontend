@@ -68,7 +68,7 @@ export function TakePaymentDialog(props: TakePaymentDialogProps) {
     <SaveDialog
       title={PAYMENT_TEXT.recordFrom(studentName)}
       formId={formId}
-      saveLabel={PAYMENT_TEXT.saveAndShowReceipt}
+      saveLabel={PAYMENT_TEXT.savePayment}
       saveIcon="receipt"
       isSaving={isSaving}
       failure={failure}
@@ -101,11 +101,7 @@ export function TakePaymentDialog(props: TakePaymentDialogProps) {
           choices={choices}
           fieldErrors={fieldErrors}
         />
-        <p className="text-small text-ink-2">
-          {isAdmin
-            ? PAYMENT_TEXT.afterSaving
-            : `${PAYMENT_TEXT.afterSaving} ${PAYMENT_TEXT.othersStayWithAdmin}`}
-        </p>
+        {!isAdmin && <p className="text-small text-ink-2">{PAYMENT_TEXT.othersStayWithAdmin}</p>}
       </form>
     </SaveDialog>
   );
