@@ -10,20 +10,21 @@ import { DEFAULT_THEME } from "@/lib/theme";
 import { EmployeesPage } from "./EmployeesPage";
 import { consultancySummary } from "@/test/consultancy";
 import { testHost } from "@/test/hosts";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Asha Admin", email: "asha@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["staff"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
 
 function row(overrides: Record<string, unknown>) {
   return {
-    id: 1,
+    id: uid(1),
     name: "Asha Admin",
     email: "asha@acme.test",
     mobile: "9800000001",
@@ -39,14 +40,14 @@ function row(overrides: Record<string, unknown>) {
 
 const ME = row({});
 const RAM = row({
-  id: 2,
+  id: uid(2),
   name: "Ram Thapa",
   email: "ram@acme.test",
   job_title: "Senior counsellor",
   role: "counsellor",
 });
 const SITA = row({
-  id: 3,
+  id: uid(3),
   name: "Sita Sharma",
   email: "sita@acme.test",
   job_title: "Receptionist",
@@ -54,7 +55,7 @@ const SITA = row({
   joined_on: "2026-11-01",
   status: "invited",
 });
-const HARI = row({ id: 4, name: "Hari KC", email: "hari@acme.test", status: "deactivated" });
+const HARI = row({ id: uid(4), name: "Hari KC", email: "hari@acme.test", status: "deactivated" });
 
 type Route = Record<string, Response | (() => Response)>;
 
@@ -125,10 +126,10 @@ describe("EmployeesPage", () => {
 
     expect(
       within(await rowFor("Ram Thapa")).getByRole("link", { name: "Ram Thapa" }),
-    ).toHaveAttribute("href", "/staff/2");
+    ).toHaveAttribute("href", `/staff/${uid(2)}`);
     expect(within(await rowFor("Hari KC")).getByRole("link", { name: "Hari KC" })).toHaveAttribute(
       "href",
-      "/staff/4",
+      `/staff/${uid(4)}`,
     );
     expect(within(await rowFor("Sita Sharma")).queryByRole("link")).toBeNull();
   });
@@ -176,7 +177,7 @@ describe("EmployeesPage", () => {
     });
 
     it("takes the joining date in BS and sends it in AD", async () => {
-      const fetchFn = listing({ "POST /api/staff/": jsonResponse(row({ id: 9 }), 201) });
+      const fetchFn = listing({ "POST /api/staff/": jsonResponse(row({ id: uid(9) }), 201) });
       renderPage({ ...ADMIN, dateDisplay: "BS" });
       await userEvent.click(await screen.findByRole("button", { name: "Add an employee" }));
       const dialog = screen.getByRole("dialog", { name: "Add an employee" });
@@ -198,7 +199,7 @@ describe("EmployeesPage", () => {
   });
 
   describe("adding an employee", () => {
-    const NEW = row({ id: 9, name: "Gita Rai", email: "gita@acme.test", status: "invited" });
+    const NEW = row({ id: uid(9), name: "Gita Rai", email: "gita@acme.test", status: "invited" });
 
     async function fillAndSend(): Promise<HTMLElement> {
       await userEvent.click(await screen.findByRole("button", { name: "Add an employee" }));
@@ -301,7 +302,7 @@ describe("EmployeesPage", () => {
 
   describe("invites", () => {
     it("sends the code again", async () => {
-      listing({ "POST /api/staff/3/invite/": jsonResponse(SITA, 202) });
+      listing({ [`POST /api/staff/${uid(3)}/invite/`]: jsonResponse(SITA, 202) });
       renderPage();
 
       await userEvent.click(
@@ -314,7 +315,7 @@ describe("EmployeesPage", () => {
     });
 
     it("explains the hourly limit", async () => {
-      listing({ "POST /api/staff/3/invite/": jsonResponse({}, 429) });
+      listing({ [`POST /api/staff/${uid(3)}/invite/`]: jsonResponse({}, 429) });
       renderPage();
 
       await userEvent.click(
@@ -325,7 +326,7 @@ describe("EmployeesPage", () => {
     });
 
     it("cancels the invite and removes the row", async () => {
-      listing({ "DELETE /api/staff/3/invite/": new Response(null, { status: 204 }) });
+      listing({ [`DELETE /api/staff/${uid(3)}/invite/`]: new Response(null, { status: 204 }) });
       renderPage();
 
       await userEvent.click(
@@ -342,7 +343,7 @@ describe("EmployeesPage", () => {
     });
 
     it("says when cancelling fails", async () => {
-      listing({ "DELETE /api/staff/3/invite/": jsonResponse({}, 400) });
+      listing({ [`DELETE /api/staff/${uid(3)}/invite/`]: jsonResponse({}, 400) });
       renderPage();
 
       await userEvent.click(
@@ -380,7 +381,9 @@ describe("EmployeesPage", () => {
     }
 
     it("changes the Role", async () => {
-      const fetchFn = listing({ "PATCH /api/staff/2/": jsonResponse({ ...RAM, role: "admin" }) });
+      const fetchFn = listing({
+        [`PATCH /api/staff/${uid(2)}/`]: jsonResponse({ ...RAM, role: "admin" }),
+      });
       renderPage();
 
       const dialog = await openManage();
@@ -391,7 +394,7 @@ describe("EmployeesPage", () => {
       await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
 
       expect(await screen.findByText("Ram Thapa is now Admin")).toBeInTheDocument();
-      expect(sentBody(fetchFn, "PATCH /api/staff/2/")).toEqual({ role: "admin" });
+      expect(sentBody(fetchFn, `PATCH /api/staff/${uid(2)}/`)).toEqual({ role: "admin" });
       expect(within(await rowFor("Ram Thapa")).getByText("Admin")).toBeInTheDocument();
     });
 
@@ -403,11 +406,11 @@ describe("EmployeesPage", () => {
       await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
 
       expect(screen.queryByRole("dialog")).toBeNull();
-      expect(sentBody(fetchFn, "PATCH /api/staff/2/")).toBeUndefined();
+      expect(sentBody(fetchFn, `PATCH /api/staff/${uid(2)}/`)).toBeUndefined();
     });
 
     it("says when the change fails", async () => {
-      listing({ "PATCH /api/staff/2/": jsonResponse({}, 500) });
+      listing({ [`PATCH /api/staff/${uid(2)}/`]: jsonResponse({}, 500) });
       renderPage();
 
       const dialog = await openManage();
@@ -419,8 +422,8 @@ describe("EmployeesPage", () => {
 
     it("deactivates after confirming, and shows them as having left", async () => {
       listing({
-        "GET /api/staff/2/assigned-students/": jsonResponse([]),
-        "POST /api/staff/2/deactivate/": jsonResponse({ ...RAM, status: "deactivated" }),
+        [`GET /api/staff/${uid(2)}/assigned-students/`]: jsonResponse([]),
+        [`POST /api/staff/${uid(2)}/deactivate/`]: jsonResponse({ ...RAM, status: "deactivated" }),
       });
       renderPage();
 
@@ -437,8 +440,8 @@ describe("EmployeesPage", () => {
 
     it("says when deactivating fails", async () => {
       listing({
-        "GET /api/staff/2/assigned-students/": jsonResponse([]),
-        "POST /api/staff/2/deactivate/": jsonResponse({}, 500),
+        [`GET /api/staff/${uid(2)}/assigned-students/`]: jsonResponse([]),
+        [`POST /api/staff/${uid(2)}/deactivate/`]: jsonResponse({}, 500),
       });
       renderPage();
 
@@ -452,11 +455,11 @@ describe("EmployeesPage", () => {
 
     it("lists the Students still assigned to them before confirming", async () => {
       const fetchFn = listing({
-        "GET /api/staff/2/assigned-students/": jsonResponse([
-          { id: 4, name: "Rohan Bhandari", stage: "counselling" },
-          { id: 1, name: "Sita Karki", stage: "applying" },
+        [`GET /api/staff/${uid(2)}/assigned-students/`]: jsonResponse([
+          { id: uid(4), name: "Rohan Bhandari", stage: "counselling" },
+          { id: uid(1), name: "Sita Karki", stage: "applying" },
         ]),
-        "POST /api/staff/2/deactivate/": jsonResponse({ ...RAM, status: "deactivated" }),
+        [`POST /api/staff/${uid(2)}/deactivate/`]: jsonResponse({ ...RAM, status: "deactivated" }),
       });
       renderPage();
 
@@ -474,19 +477,19 @@ describe("EmployeesPage", () => {
       ).toBeInTheDocument();
       expect(within(confirm).getByRole("link", { name: "Rohan Bhandari" })).toHaveAttribute(
         "href",
-        "/students/4",
+        `/students/${uid(4)}`,
       );
       expect(within(confirm).getByText(/, Applying$/)).toBeInTheDocument();
       await userEvent.click(within(confirm).getByRole("button", { name: "Deactivate anyway" }));
 
       expect(await screen.findByText("Staff member deactivated")).toBeInTheDocument();
-      expect(sentBody(fetchFn, "POST /api/staff/2/deactivate/")).toEqual({});
+      expect(sentBody(fetchFn, `POST /api/staff/${uid(2)}/deactivate/`)).toEqual({});
     });
 
     it("names one Student in the singular", async () => {
       listing({
-        "GET /api/staff/2/assigned-students/": jsonResponse([
-          { id: 4, name: "Rohan Bhandari", stage: "lead" },
+        [`GET /api/staff/${uid(2)}/assigned-students/`]: jsonResponse([
+          { id: uid(4), name: "Rohan Bhandari", stage: "lead" },
         ]),
       });
       renderPage();
@@ -499,8 +502,8 @@ describe("EmployeesPage", () => {
 
     it("still lets them be deactivated when the check fails, and says so", async () => {
       listing({
-        "GET /api/staff/2/assigned-students/": jsonResponse({}, 500),
-        "POST /api/staff/2/deactivate/": jsonResponse({ ...RAM, status: "deactivated" }),
+        [`GET /api/staff/${uid(2)}/assigned-students/`]: jsonResponse({}, 500),
+        [`POST /api/staff/${uid(2)}/deactivate/`]: jsonResponse({ ...RAM, status: "deactivated" }),
       });
       renderPage();
 
@@ -553,7 +556,10 @@ describe("EmployeesPage: two-step login (issue 62)", () => {
 
   it("switches it on with Save, saying they'll be signed out", async () => {
     const fetchFn = listing({
-      "PATCH /api/staff/2/two-factor/": jsonResponse({ ...RAM, two_factor_required: true }),
+      [`PATCH /api/staff/${uid(2)}/two-factor/`]: jsonResponse({
+        ...RAM,
+        two_factor_required: true,
+      }),
     });
     renderPage();
 
@@ -565,15 +571,15 @@ describe("EmployeesPage: two-step login (issue 62)", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Two-step login switched on for Ram Thapa")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PATCH /api/staff/2/two-factor/")).toEqual({ required: true });
-    expect(sentBody(fetchFn, "PATCH /api/staff/2/")).toBeUndefined();
+    expect(sentBody(fetchFn, `PATCH /api/staff/${uid(2)}/two-factor/`)).toEqual({ required: true });
+    expect(sentBody(fetchFn, `PATCH /api/staff/${uid(2)}/`)).toBeUndefined();
     expect(within(await rowFor("Ram Thapa")).getByText("On, not set up")).toBeInTheDocument();
   });
 
   it("switches it off", async () => {
     const fetchFn = backend({
       "GET /api/staff/": jsonResponse([ME, RAM_ON]),
-      "PATCH /api/staff/2/two-factor/": jsonResponse(RAM),
+      [`PATCH /api/staff/${uid(2)}/two-factor/`]: jsonResponse(RAM),
     });
     renderPage();
 
@@ -584,13 +590,18 @@ describe("EmployeesPage: two-step login (issue 62)", () => {
     expect(
       await screen.findByText("Two-step login switched off for Ram Thapa"),
     ).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PATCH /api/staff/2/two-factor/")).toEqual({ required: false });
+    expect(sentBody(fetchFn, `PATCH /api/staff/${uid(2)}/two-factor/`)).toEqual({
+      required: false,
+    });
   });
 
   it("resets it after a warning that they'll be signed out", async () => {
     const fetchFn = backend({
       "GET /api/staff/": jsonResponse([ME, RAM_ON]),
-      "POST /api/staff/2/two-factor/reset/": jsonResponse({ ...RAM_ON, two_factor_set_up: false }),
+      [`POST /api/staff/${uid(2)}/two-factor/reset/`]: jsonResponse({
+        ...RAM_ON,
+        two_factor_set_up: false,
+      }),
     });
     renderPage();
 
@@ -602,7 +613,7 @@ describe("EmployeesPage: two-step login (issue 62)", () => {
     await userEvent.click(within(confirm).getByRole("button", { name: "Reset" }));
 
     expect(await screen.findByText("Two-step login reset for Ram Thapa")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST /api/staff/2/two-factor/reset/")).toEqual({});
+    expect(sentBody(fetchFn, `POST /api/staff/${uid(2)}/two-factor/reset/`)).toEqual({});
     expect(within(await rowFor("Ram Thapa")).getByText("On, not set up")).toBeInTheDocument();
   });
 
@@ -618,7 +629,7 @@ describe("EmployeesPage: two-step login (issue 62)", () => {
   it("says when the reset fails", async () => {
     backend({
       "GET /api/staff/": jsonResponse([ME, RAM_ON]),
-      "POST /api/staff/2/two-factor/reset/": jsonResponse({}, 500),
+      [`POST /api/staff/${uid(2)}/two-factor/reset/`]: jsonResponse({}, 500),
     });
     renderPage();
 
@@ -634,13 +645,15 @@ describe("EmployeesPage: two-step login (issue 62)", () => {
 describe("EmployeesPage for a Platform Admin inside the office", () => {
   const VISITOR: StaffContext = {
     ...ADMIN,
-    staff: { id: 0, name: "Ramesh", email: "ramesh@platform.test", role: "admin" },
+    staff: { id: uid(0), name: "Ramesh", email: "ramesh@platform.test", role: "admin" },
     supportAccess: { platformAdminName: "Ramesh", platformHost: testHost("admin") },
   };
 
   it("can manage every active person, Admins included, and send a reset code", async () => {
     const fetchFn = listing({
-      "POST /api/support-access/staff/1/reset-code/": jsonResponse({ detail: "Reset code sent." }),
+      [`POST /api/support-access/staff/${uid(1)}/reset-code/`]: jsonResponse({
+        detail: "Reset code sent.",
+      }),
     });
     renderPage(VISITOR);
 
@@ -653,13 +666,16 @@ describe("EmployeesPage for a Platform Admin inside the office", () => {
 
     expect(await screen.findByText("Reset code sent to asha@acme.test")).toBeInTheDocument();
     expect(
-      fetchFn.mock.calls.some(([path]) => path === "/api/support-access/staff/1/reset-code/"),
+      fetchFn.mock.calls.some(
+        ([path]) => path === `/api/support-access/staff/${uid(1)}/reset-code/`,
+      ),
     ).toBe(true);
   });
 
   it("signs someone out of every device", async () => {
     listing({
-      "POST /api/support-access/staff/2/sign-out/": () => new Response(null, { status: 204 }),
+      [`POST /api/support-access/staff/${uid(2)}/sign-out/`]: () =>
+        new Response(null, { status: 204 }),
     });
     renderPage(VISITOR);
 

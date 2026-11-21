@@ -1,10 +1,11 @@
 import { InvalidFieldsError } from "../core/errors";
 import { fetchStaffProgress } from "./staffProgress";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const ANSWER = {
   staff: {
-    id: 3,
+    id: uid(3),
     name: "Bikash Thapa",
     job_title: "Senior counsellor",
     mobile: "9841000001",
@@ -28,7 +29,7 @@ const ANSWER = {
           before: "",
           after: "Deakin University",
           detail: "Master of IT",
-          student: { id: 7, name: "Sita Gurung" },
+          student: { id: uid(7), name: "Sita Gurung" },
         },
         {
           kind: "attendance_marked",
@@ -54,11 +55,13 @@ describe("fetchStaffProgress", () => {
   it("sends the person and dates and returns the answer in frontend naming", async () => {
     const fetchFn = answering(jsonResponse(ANSWER));
 
-    const progress = await fetchStaffProgress(3, RANGE, fetchFn);
+    const progress = await fetchStaffProgress(uid(3), RANGE, fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/staff/3/progress/?from=2026-11-01&to=2026-11-15");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(
+      `/api/staff/${uid(3)}/progress/?from=2026-11-01&to=2026-11-15`,
+    );
     expect(progress.staff).toEqual({
-      id: 3,
+      id: uid(3),
       name: "Bikash Thapa",
       jobTitle: "Senior counsellor",
       mobile: "9841000001",
@@ -76,7 +79,7 @@ describe("fetchStaffProgress", () => {
       before: "",
       after: "Deakin University",
       detail: "Master of IT",
-      student: { id: 7, name: "Sita Gurung" },
+      student: { id: uid(7), name: "Sita Gurung" },
     });
     expect(progress.days[0]?.entries[1]?.student).toBeNull();
     expect(progress.more).toBe(false);
@@ -88,7 +91,7 @@ describe("fetchStaffProgress", () => {
       jsonResponse({ ...ANSWER, days: [{ day: "2026-11-04", entries: [entry] }] }),
     );
 
-    const progress = await fetchStaffProgress(3, RANGE, fetchFn);
+    const progress = await fetchStaffProgress(uid(3), RANGE, fetchFn);
 
     expect(progress.days[0]?.entries[0]?.kind).toBe("stage_changed");
   });
@@ -115,13 +118,13 @@ describe("fetchStaffProgress", () => {
   ])("refuses %s", async (_, change) => {
     const fetchFn = answering(jsonResponse({ ...ANSWER, ...change }));
 
-    await expect(fetchStaffProgress(3, RANGE, fetchFn)).rejects.toThrow();
+    await expect(fetchStaffProgress(uid(3), RANGE, fetchFn)).rejects.toThrow();
   });
 
   it("turns refused dates into field errors", async () => {
     const fetchFn = answering(jsonResponse({ to: ["Choose a period of one year or less."] }, 400));
 
-    const failure = fetchStaffProgress(3, RANGE, fetchFn);
+    const failure = fetchStaffProgress(uid(3), RANGE, fetchFn);
 
     await expect(failure).rejects.toBeInstanceOf(InvalidFieldsError);
     await expect(failure).rejects.toMatchObject({

@@ -1,7 +1,7 @@
 /** A person's own Settings (issue 38): their sections, choices and words on screen. */
 
-/** Light, dark, or (until the person chooses) the same as their device. */
-export const COLOUR_MODE_CHOICES = ["device", "light", "dark"] as const;
+/** Light or dark: light until the person picks dark; never the device's (2026-11-20). */
+export const COLOUR_MODE_CHOICES = ["light", "dark"] as const;
 export type ColourModeChoice = (typeof COLOUR_MODE_CHOICES)[number];
 
 /** The emails a person can choose to get, in the order they are shown. */

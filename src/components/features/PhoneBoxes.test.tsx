@@ -13,13 +13,14 @@ import { BatchSchema } from "@/lib/api/classes/batches";
 import type { Message, PaperworkRow, StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Ramesh Adhikari", email: "admin@office.com", role: "admin" },
+  staff: { id: uid(1), name: "Ramesh Adhikari", email: "admin@office.com", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "tasks"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -39,11 +40,11 @@ function isHiddenOnPhone(element: Element | null | undefined): boolean {
 function paperworkRow(counts: Partial<PaperworkRow>): PaperworkRow {
   return {
     student: {
-      id: 7,
+      id: uid(7),
       name: "Aarav Sharma",
       stage: Stage.Applying,
       country: Country.Australia,
-      assignedCounsellor: { id: 2, name: "Sita Karki" },
+      assignedCounsellor: { id: uid(2), name: "Sita Karki" },
     },
     done: 5,
     total: 13,
@@ -86,25 +87,27 @@ describe("Documents on a phone", () => {
   });
 });
 
-describe("Email & SMS on a phone", () => {
+describe("Email on a phone", () => {
   const MESSAGE: Message = {
-    id: 1,
-    student: { id: 7, name: "Aarav Sharma" },
+    id: uid(1),
+    student: { id: uid(7), name: "Aarav Sharma" },
     channel: "email",
-    body: "Your visa interview is on Monday.",
+    subject: "Your visa interview is on Monday.",
+    body: "Dear Aarav,",
     status: "sent",
     error: "",
     sentTo: "aarav@example.com",
+    attachments: [],
     sentAt: "2026-11-10T09:20:00+05:45",
-    sentBy: { id: 2, name: "Sita Karki" },
+    sentBy: { id: uid(2), name: "Sita Karki" },
   };
 
-  it("show name and status, channel and time, and the message cut to two lines", () => {
+  it("show name and status, kind and time, and the subject line cut to two lines", () => {
     inOffice(<MessageList label="Messages" messages={[MESSAGE]} showsStudent />);
 
     expect(isHiddenOnPhone(screen.getByText(/Sita Karki/))).toBe(true);
     expect(isHiddenOnPhone(screen.getByText("Email"))).toBe(false);
-    expect(screen.getByText(MESSAGE.body)).toHaveClass("max-phone:line-clamp-2");
+    expect(screen.getByText(MESSAGE.subject)).toHaveClass("max-phone:line-clamp-2");
     expect(screen.getByText("Sent").closest("li")).toHaveClass(
       "max-phone:grid-cols-[minmax(0,1fr)_auto]",
     );
@@ -113,10 +116,10 @@ describe("Email & SMS on a phone", () => {
 
 describe("Classes on a phone", () => {
   const BATCH = BatchSchema.parse({
-    id: 1,
+    id: uid(1),
     name: "IELTS Morning",
     test_type: "ielts",
-    teacher: { id: 3, name: "Hari Thapa" },
+    teacher: { id: uid(3), name: "Hari Thapa" },
     time_slot: "7:00 to 8:30",
     starts_on: "2026-11-01",
     ends_on: "2026-12-20",

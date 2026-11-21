@@ -5,6 +5,7 @@ import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import { getJson, postJson } from "../core/client";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { FieldErrorsSchema } from "../core/types";
+import type { RecordId } from "@/lib/recordId";
 
 /**
  * Admins are added to a Consultancy from the Platform once it is set up, never while creating it
@@ -43,7 +44,7 @@ const DetailRefusalSchema = z.object({ detail: z.string() });
  * refused fields, or `detail` when the office can't take an Admin now.
  */
 export async function addConsultancyAdmin(
-  consultancyId: number,
+  consultancyId: RecordId,
   admin: NewOfficeAdmin,
   fetchFn: typeof fetch = fetch,
 ): Promise<InvitedAdmin> {

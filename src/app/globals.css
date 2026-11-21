@@ -99,53 +99,6 @@
   }
 }
 
-/* Dark before the person's choice is known: follow the device. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --paper: #2b2b2d;
-    --canvas: #1f1f21;
-    --fill: #323234;
-    --fill-2: #3a3a3c;
-    --rule: #3c3c3e;
-    --rule-2: #4c4c4d;
-    --ink: #ededed;
-    --ink-2: #bcbcbc;
-    --ink-3: #9a9a9b;
-    --accent: #66ad99;
-    --accent-hover: #85bdad;
-    --accent-ink: #0c0c0d;
-    --tint: #34403e;
-    --side-bg: #131314;
-    --side-ink: #ededed;
-    --side-muted: #a5a5a6;
-    --side-hover: #1f1f20;
-    --side-active: #2b2b2c;
-    --side-active-ink: #66ad99;
-    --side-rule: #242424;
-
-    --good: #63c38e;
-    --good-tint: #16231a;
-    --warn: #e2a64e;
-    --warn-tint: #2a2214;
-    --bad: #f08a80;
-    --bad-tint: #321b19;
-    --note: #23211a;
-    --note-rule: #3a3626;
-    --on-status: #0c0c0d;
-    --c1: #3987e5;
-    --c2: #d95926;
-    --c3: #199e70;
-    --scrim: rgb(0 0 0 / 0.6);
-    --raise: none;
-    --lift: 0 18px 48px rgb(0 0 0 / 0.6);
-    --gap: color-mix(in srgb, black 35%, var(--canvas));
-    --edge-top: 0 -10px 24px -12px rgb(0 0 0 / 0.6), 0 -1px 0 var(--rule-2);
-    --edge-bottom: 0 10px 24px -12px rgb(0 0 0 / 0.6), 0 1px 0 var(--rule-2);
-
-    color-scheme: dark;
-  }
-}
-
 /* Dark by the person's choice. Same values as above. */
 :root[data-theme="dark"] {
   --paper: #2b2b2d;
@@ -284,6 +237,8 @@
   --spacing-grab: 2.25rem;
   /* the tallest a bottom sheet grows on a phone, leaving the page peeking above it */
   --spacing-sheet: 92dvh;
+  /* the email composer's height above 640 px: the window less a margin, so it never scrolls */
+  --spacing-composer: calc(100dvh - 2rem);
   --spacing-grab-h: 0.3125rem;
   --spacing-sidebar: 18.75rem;
   --spacing-drawer: 20rem;
@@ -330,6 +285,8 @@
   --container-login: 28.75rem;
   --container-dialog: 37.5rem;
   --container-dialog-wide: 52.5rem;
+  /* the email composer (issue 04): near full screen, writing beside the preview */
+  --container-composer: 73.75rem;
   --container-prose: 64ch;
   /* how wide an office logo may be (issue 39): in the sidebar, on the login screens, collapsed */
   --container-logo: 10.5rem;

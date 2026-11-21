@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { API_PATHS } from "@/constants/api";
 import { catalogueListQuery, type CatalogueFilters } from "@/lib/catalogue";
 
@@ -43,7 +44,7 @@ export async function addUniversity(
 
 /** Add a Course to a University. Rejects with `InvalidFieldsError` for refused fields. */
 export async function addCourse(
-  universityId: number,
+  universityId: RecordId,
   input: CourseInput,
   fetchFn: typeof fetch = fetch,
 ): Promise<Course> {

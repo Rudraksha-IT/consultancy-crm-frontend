@@ -26,6 +26,8 @@ export function useDocumentTypes(): {
   move: (type: DocumentType) => Promise<void>;
   remove: (type: DocumentType) => Promise<void>;
   keep: (added: DocumentType) => void;
+  /** Show a type as it is now, e.g. after its examples changed (ticket 11). */
+  change: (changed: DocumentType) => void;
 } {
   const { showToast } = useToast();
   const [state, setState] = useState<DocumentTypesState>({ status: "loading" });
@@ -81,6 +83,9 @@ export function useDocumentTypes(): {
     remove,
     keep: (added) => {
       update((types) => [...types, added]);
+    },
+    change: (changed) => {
+      update((types) => types.map((known) => (known.id === changed.id ? changed : known)));
     },
   };
 }

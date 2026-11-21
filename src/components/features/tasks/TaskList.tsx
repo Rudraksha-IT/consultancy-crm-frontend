@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import clsx from "clsx";
 import Link from "next/link";
 import { useId, useState, type ReactNode } from "react";
@@ -13,7 +14,7 @@ import { useToast } from "@/components/ui/useToast";
 import { HTTP_STATUS } from "@/constants/api";
 import { ROUTES } from "@/constants/routes";
 import { TASK_TEXT, TaskPriority, TaskTiming } from "@/constants/tasks";
-import { ApiRequestError, setTaskDone, type Task } from "@/lib/api";
+import { ApiRequestError, setTaskDone, type Task, updatingOr } from "@/lib/api";
 import { localDayIso } from "@/lib/dates";
 
 type TaskListProps = {
@@ -95,7 +96,7 @@ function useToggle(task: Task, onChanged: () => void) {
       refreshCount();
     } catch (error) {
       const isRefused = error instanceof ApiRequestError && error.status === HTTP_STATUS.forbidden;
-      showToast(isRefused ? TASK_TEXT.cantTick : TASK_TEXT.tickFailed);
+      showToast(isRefused ? TASK_TEXT.cantTick : updatingOr(error, TASK_TEXT.tickFailed));
     } finally {
       setIsBusy(false);
     }
@@ -156,7 +157,7 @@ function TaskMeta({ task, showsStudent }: { task: Task; showsStudent: boolean })
   );
 }
 
-function metaParts(task: Task, myId: number, showsStudent: boolean): ReactNode[] {
+function metaParts(task: Task, myId: RecordId, showsStudent: boolean): ReactNode[] {
   const student = showsStudent ? task.student : null;
   const parts: ReactNode[] = [];
   if (student !== null) parts.push(<StudentLink key="student" student={student} />);
@@ -178,11 +179,11 @@ function metaParts(task: Task, myId: number, showsStudent: boolean): ReactNode[]
 }
 
 /** Whether one of `ids` gave the Task. */
-function isGivenBy(task: Task, ids: readonly number[]): boolean {
+function isGivenBy(task: Task, ids: readonly RecordId[]): boolean {
   return ids.includes(task.createdBy.id);
 }
 
-function StudentLink({ student }: { student: { id: number; name: string } }) {
+function StudentLink({ student }: { student: { id: RecordId; name: string } }) {
   return (
     <Link
       href={ROUTES.student(student.id)}

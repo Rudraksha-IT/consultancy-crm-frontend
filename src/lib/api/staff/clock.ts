@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import { WEEKLY_OFF_CHOICES, type WeeklyOff } from "@/constants/clock";
 
@@ -21,7 +23,7 @@ const MyClockSchema = z
     office_network: z.enum(["on", "off", "none"]),
     /** Why I may clock in from any network: an Admin, or on Work From Home dates (issue 87). */
     anywhere: z.enum(["admin", "work_from_home"]).nullable(),
-    open: z.object({ id: z.number().int(), clocked_in_at: MomentSchema }).nullable(),
+    open: z.object({ id: RecordIdSchema, clocked_in_at: MomentSchema }).nullable(),
     forgotten_day: DaySchema.nullable(),
     today_minutes: MinutesSchema,
     last_out: MomentSchema.nullable(),
@@ -46,7 +48,7 @@ const ClockInAnswerSchema = z
 const ClockOutAnswerSchema = z.object({ clock: MyClockSchema, minutes: MinutesSchema });
 
 const StaffSchema = z
-  .object({ id: z.number().int(), name: z.string(), job_title: z.string(), has_left: z.boolean() })
+  .object({ id: RecordIdSchema, name: z.string(), job_title: z.string(), has_left: z.boolean() })
   .transform((staff) => ({
     id: staff.id,
     name: staff.name,
@@ -82,7 +84,7 @@ function figuresOf(figures: RawFigures) {
 
 const SessionSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     clocked_in_at: MomentSchema,
     clocked_out_at: MomentSchema.nullable(),
     missing_clock_out: z.boolean(),
@@ -141,7 +143,7 @@ const DayEntrySchema = z
   }));
 
 const CorrectionSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   day: DaySchema,
   before: z.string(),
   after: z.string(),
@@ -172,7 +174,7 @@ const ClockMonthSchema = z
 
 const PersonNowSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     job_title: z.string(),
     state: z.enum(["in", "left", "not_in"]),
@@ -220,7 +222,7 @@ const WorkingDaySchema = z
     weekly_off: z.enum(WEEKLY_OFF_CHOICES),
     changes: z.array(
       z.object({
-        id: z.number().int(),
+        id: RecordIdSchema,
         old_minutes: z.number().int().positive(),
         new_minutes: z.number().int().positive(),
         by: z.string(),
@@ -259,7 +261,7 @@ export type TeamMonthRow = TeamMonth["rows"][number];
 export type WorkingDay = z.infer<typeof WorkingDaySchema>;
 
 const HolidaySchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   date: DaySchema,
   name: z.string().min(1).max(HOLIDAY_NAME_MAX),
 });
@@ -314,11 +316,11 @@ export async function clockOut(fetchFn: typeof fetch = fetch) {
 /** One month, day by day: my own, or (Admins) someone else's by their id. */
 export function fetchClockMonth(
   month: string,
-  staffId: number | null = null,
+  staffId: RecordId | null = null,
   fetchFn: typeof fetch = fetch,
 ): Promise<ClockMonth> {
   const query = new URLSearchParams({ month });
-  if (staffId !== null) query.set("staff", String(staffId));
+  if (staffId !== null) query.set("staff", staffId);
   return getJson(`${API_PATHS.clockMonth}?${query.toString()}`, ClockMonthSchema, fetchFn);
 }
 
@@ -377,7 +379,7 @@ export async function addHoliday(
 }
 
 /** Remove a holiday. */
-export function removeHoliday(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function removeHoliday(id: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.clockHoliday(id), fetchFn);
 }
 
@@ -386,7 +388,7 @@ export function removeHoliday(id: number, fetchFn: typeof fetch = fetch): Promis
  * `InvalidFieldsError` on a field, or `ClockRefusedError` when the rules don't allow it.
  */
 export async function setMissingClockOut(
-  sessionId: number,
+  sessionId: RecordId,
   correction: { clockedOutAt: string; reason: string },
   fetchFn: typeof fetch = fetch,
 ): Promise<ClockCorrection> {
@@ -407,7 +409,7 @@ export async function setMissingClockOut(
  * `InvalidFieldsError` on a field, or `ClockRefusedError` when the rules don't allow it.
  */
 export async function addMissedTime(
-  staffId: number,
+  staffId: RecordId,
   missed: { day: string; from: string; to: string; reason: string },
   fetchFn: typeof fetch = fetch,
 ): Promise<ClockCorrection> {

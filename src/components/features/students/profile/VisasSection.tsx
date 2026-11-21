@@ -159,7 +159,7 @@ export function VisasSection({ profile, onSaved }: VisasSectionProps) {
                       <SelectField
                         label={VISA_TEXT.statusOf(visa.university.name)}
                         isLabelHidden
-                        name={`visa-status-${String(visa.id)}`}
+                        name={`visa-status-${visa.id}`}
                         options={STATUS_OPTIONS}
                         value={visa.status}
                         onChange={(value) => {

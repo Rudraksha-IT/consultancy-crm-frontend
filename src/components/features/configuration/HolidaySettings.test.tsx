@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { z } from "zod";
@@ -14,17 +15,17 @@ import { consultancySummary } from "@/test/consultancy";
 import { HolidaySettings } from "./HolidaySettings";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["clock_in"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
 const PATH = "/api/clock/holidays/";
-const DASHAIN = { id: 4, date: "2026-10-21", name: "Dashain" };
-const TIHAR = { id: 5, date: "2026-11-09", name: "Tihar" };
+const DASHAIN = { id: uid(4), date: "2026-10-21", name: "Dashain" };
+const TIHAR = { id: uid(5), date: "2026-11-09", name: "Tihar" };
 
 const TODAY = "2026-10-15";
 const HolidayBody = z.object({ date: z.string(), name: z.string() });
@@ -170,7 +171,7 @@ describe("HolidaySettings (asked 2026-11-16)", () => {
         const sent = HolidayBody.parse(
           JSON.parse(typeof init.body === "string" ? init.body : "{}"),
         );
-        const made = { id: holidays.length + 10, ...sent };
+        const made = { id: uid(holidays.length + 10), ...sent };
         holidays = [...holidays, made];
         return jsonResponse(made, 201);
       },
@@ -251,7 +252,7 @@ describe("HolidaySettings (asked 2026-11-16)", () => {
     let holidays: unknown[] = [DASHAIN];
     const fetchFn = backend(
       onEach("GET", PATH, () => ({ holidays })),
-      onEach("DELETE", `${PATH}4/`, () => {
+      onEach("DELETE", `${PATH}${uid(4)}/`, () => {
         holidays = [];
         return null;
       }),
@@ -263,11 +264,11 @@ describe("HolidaySettings (asked 2026-11-16)", () => {
     expect(dialog).toHaveTextContent(
       `${formatAdDate("2026-10-21")} will count as an ordinary working day again.`,
     );
-    expect(callsTo(fetchFn, "DELETE", `${PATH}4/`)).toHaveLength(0);
+    expect(callsTo(fetchFn, "DELETE", `${PATH}${uid(4)}/`)).toHaveLength(0);
     await user.click(within(dialog).getByRole("button", { name: "Remove" }));
 
     expect(await screen.findByText("Dashain removed")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", `${PATH}4/`)).toHaveLength(1);
+    expect(callsTo(fetchFn, "DELETE", `${PATH}${uid(4)}/`)).toHaveLength(1);
     expect(await screen.findByText("No holidays yet.")).toBeInTheDocument();
   });
 

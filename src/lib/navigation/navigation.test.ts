@@ -22,11 +22,10 @@ describe("buildNavigation", () => {
       "Tasks",
       "Inbox",
       "Transfer requests",
-      "Email & SMS",
+      "Email",
       "Accounts",
       "Employees",
       "Reports",
-      "Catalogue",
       "Configuration",
     ]);
   });
@@ -42,7 +41,7 @@ describe("buildNavigation", () => {
       "Tasks",
       "Inbox",
       "Transfer requests",
-      "Email & SMS",
+      "Email",
     ]);
   });
 
@@ -56,7 +55,7 @@ describe("buildNavigation", () => {
       "Tasks",
       "Inbox",
       "Transfer requests",
-      "Email & SMS",
+      "Email",
     ]);
   });
 
@@ -95,7 +94,6 @@ describe("buildNavigation", () => {
       "Inbox",
       "Transfer requests",
       "Employees",
-      "Catalogue",
       "Configuration",
     ]);
   });
@@ -124,6 +122,6 @@ describe("buildNavigation", () => {
       .filter((item) => item.group === "business")
       .map((item) => item.label);
 
-    expect(business).toEqual(["Accounts", "Employees", "Reports", "Catalogue", "Configuration"]);
+    expect(business).toEqual(["Accounts", "Employees", "Reports", "Configuration"]);
   });
 });

@@ -10,7 +10,7 @@ import { DEFAULT_THEME } from "@/lib/theme";
 
 import { useCurrentConsultancy } from "./useCurrentConsultancy";
 
-/** Nobody is logged in yet, so light or dark simply follows the device. */
+/** Nobody is logged in yet: light, unless this browser's visitor switched to dark. */
 const VISITOR = VISITOR_KEY;
 
 /** The office's mark and name, large and centred, on the login and password screens. */

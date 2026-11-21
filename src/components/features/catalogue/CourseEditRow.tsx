@@ -146,7 +146,10 @@ function CourseNote({ course }: { course: CourseDraft }) {
 
 type DeleteCourseProps = Pick<CourseEditRowProps, "course" | "onChange" | "onAskDelete">;
 
-/** Delete (asking first), Undo once marked, or disabled with why when an Application uses it. */
+/**
+ * Delete (asking first), Undo once marked, or disabled with why: it keeps Course Files, or an
+ * Application uses it.
+ */
 function DeleteCourse({ course, onChange, onAskDelete }: DeleteCourseProps) {
   if (course.isDeleted) {
     return (
@@ -167,7 +170,11 @@ function DeleteCourse({ course, onChange, onAskDelete }: DeleteCourseProps) {
         <Button variant="ghost" size="sm" icon="trash" isDisabled>
           {CATALOGUE_TEXT.deleteCourse}
         </Button>
-        <span className="text-small text-ink-2">{CATALOGUE_TEXT.usedBy(course.applications)}</span>
+        <span className="text-small text-ink-2">
+          {course.fileCount > 0
+            ? CATALOGUE_TEXT.keepsFiles(course.fileCount)
+            : CATALOGUE_TEXT.usedBy(course.applications)}
+        </span>
       </>
     );
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { useToast } from "@/components/ui/useToast";
@@ -26,7 +27,7 @@ type DocumentChecks = {
  * `onChecked` gets the checklist as it is after the mark.
  */
 export function useDocumentChecks(
-  studentId: number,
+  studentId: RecordId,
   onChecked: (checklist: Checklist) => void,
 ): DocumentChecks {
   const { showToast } = useToast();

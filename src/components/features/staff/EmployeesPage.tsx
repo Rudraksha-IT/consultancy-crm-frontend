@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState, type ReactNode } from "react";
 
 import { WorkingHoursTab } from "@/components/features/clock/WorkingHoursTab";
@@ -74,7 +75,7 @@ export function EmployeesPage({ initialTab = "people" }: { initialTab?: Employee
   return <AdminEmployeesPage myId={staff.id} tabs={tabs} />;
 }
 
-function AdminEmployeesPage({ myId, tabs }: { myId: number; tabs?: ReactNode }) {
+function AdminEmployeesPage({ myId, tabs }: { myId: RecordId; tabs?: ReactNode }) {
   const employees = useEmployees();
   const invites = useInviteActions(employees.remove);
   const [dialog, setDialog] = useState<OpenDialog>(null);

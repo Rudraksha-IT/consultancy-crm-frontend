@@ -8,6 +8,7 @@ import { backend, callsTo, on } from "@/test/backend";
 import { CHECKLIST, PASSPORT_DOCUMENT, apiFile, checklistRow, item } from "@/test/documents";
 
 import { DocumentsSection } from "./DocumentsSection";
+import { uid } from "@/test/ids";
 
 const { navigate, openBlankTab } = vi.hoisted(() => ({
   navigate: vi.fn<(path: string) => void>(),
@@ -16,7 +17,7 @@ const { navigate, openBlankTab } = vi.hoisted(() => ({
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 vi.mock("@/lib/documents/tab", () => ({ openBlankTab }));
 
-const CHECKLIST_PATH = "/api/students/7/documents/";
+const CHECKLIST_PATH = `/api/students/${uid(7)}/documents/`;
 const checklist = (body: unknown = CHECKLIST, status = 200) =>
   on("GET", CHECKLIST_PATH, body, status);
 
@@ -33,7 +34,7 @@ function renderSection(
   render(
     <ToastProvider>
       <DocumentsSection
-        studentId={7}
+        studentId={uid(7)}
         studentName="Sita Gurung"
         links={links}
         onProgress={onProgress}
@@ -124,13 +125,13 @@ describe("the checklist", () => {
         ...CHECKLIST,
         items: [
           item({
-            id: 5,
+            id: uid(5),
             name: "Genuine Student statement",
             state: "not_received",
             reason: "For Deakin",
           }),
           item({
-            id: 6,
+            id: uid(6),
             name: "Police report",
             state: "waiting",
             isRequired: false,
@@ -152,23 +153,23 @@ describe("the checklist", () => {
       checklist({
         ...CHECKLIST,
         items: [
-          item({ id: 1, name: "Passport", state: "not_received" }),
+          item({ id: uid(1), name: "Passport", state: "not_received" }),
           item({
-            id: 5,
+            id: uid(5),
             name: "Police report",
             state: "not_received",
             reason: "For Australia",
             group: "visa",
           }),
           item({
-            id: 6,
+            id: uid(6),
             name: "Genuine Student statement",
             state: "not_received",
             reason: "For Australia",
             group: "statements",
           }),
           item({
-            id: 7,
+            id: uid(7),
             name: "Sponsor Letter",
             state: "verified",
             isRequired: false,
@@ -206,7 +207,7 @@ describe("the checklist", () => {
     backend(
       checklist({
         ...CHECKLIST,
-        items: [item({ id: 1, name: "Passport", state: "not_received" })],
+        items: [item({ id: uid(1), name: "Passport", state: "not_received" })],
       }),
     );
     renderSection();
@@ -243,14 +244,14 @@ describe("the checklist", () => {
   it("shows what a Document is linked to", async () => {
     const visaLinked = {
       ...PASSPORT_DOCUMENT,
-      link: { kind: "visa", id: 3, university: "Deakin University" },
+      link: { kind: "visa", id: uid(3), university: "Deakin University" },
     };
     backend(
       checklist({
         ...CHECKLIST,
         items: [
           ...CHECKLIST.items,
-          item({ id: 9, name: "Visa grant", state: "waiting", document: visaLinked }),
+          item({ id: uid(9), name: "Visa grant", state: "waiting", document: visaLinked }),
         ],
       }),
     );
@@ -272,7 +273,7 @@ describe("the checklist", () => {
         ...CHECKLIST,
         items: [
           item({
-            id: 3,
+            id: uid(3),
             name: "SEE Marksheet",
             state: "rejected",
             document: { ...PASSPORT_DOCUMENT, verification: "rejected", rejection_reason: reason },
@@ -311,10 +312,10 @@ describe("the checklist", () => {
         ...CHECKLIST,
         items: [
           item({
-            id: 1,
+            id: uid(1),
             name: "Passport",
             state: "waiting",
-            document: { ...PASSPORT_DOCUMENT, files: [apiFile(41, name)] },
+            document: { ...PASSPORT_DOCUMENT, files: [apiFile(uid(41), name)] },
           }),
         ],
       }),
@@ -328,10 +329,10 @@ describe("the checklist", () => {
 
 describe("opening a file", () => {
   it("opens a new tab at the click and sends it to the short-lived link", async () => {
-    const url = "https://files.test/abc/documents/7/x.pdf?sig=1";
+    const url = `https://files.test/abc/documents/${uid(7)}/x.pdf?sig=1`;
     backend(
       checklist(),
-      on("GET", "/api/students/7/documents/31/files/41/link/?action=open", {
+      on("GET", `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=open`, {
         url,
         expires_in: 300,
       }),
@@ -350,13 +351,17 @@ describe("opening a file", () => {
   });
 
   it("saves a file by going to its download link", async () => {
-    const url = "https://files.test/abc/documents/7/x.pdf?sig=2";
+    const url = `https://files.test/abc/documents/${uid(7)}/x.pdf?sig=2`;
     backend(
       checklist(),
-      on("GET", "/api/students/7/documents/31/files/41/link/?action=download", {
-        url,
-        expires_in: 300,
-      }),
+      on(
+        "GET",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=download`,
+        {
+          url,
+          expires_in: 300,
+        },
+      ),
     );
     renderSection();
 
@@ -372,7 +377,7 @@ describe("opening a file", () => {
     const url = "https://files.test/x.pdf";
     backend(
       checklist(),
-      on("GET", "/api/students/7/documents/31/files/41/link/?action=open", {
+      on("GET", `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=open`, {
         url,
         expires_in: 300,
       }),
@@ -390,7 +395,12 @@ describe("opening a file", () => {
   it("closes the new tab and says so when no link comes", async () => {
     backend(
       checklist(),
-      on("GET", "/api/students/7/documents/31/files/41/link/?action=open", {}, 404),
+      on(
+        "GET",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=open`,
+        {},
+        404,
+      ),
     );
     const tab = { opener: {}, location: { replace: vi.fn() }, close: vi.fn() };
     openBlankTab.mockReturnValue(tab);
@@ -409,8 +419,13 @@ describe("uploading", () => {
     ...CHECKLIST,
     done: 3,
     items: CHECKLIST.items.map((one) =>
-      one.document_type.id === 4
-        ? item({ id: 4, name: "Bank Statement", state: "waiting", document: PASSPORT_DOCUMENT })
+      one.document_type.id === uid(4)
+        ? item({
+            id: uid(4),
+            name: "Bank Statement",
+            state: "waiting",
+            document: PASSPORT_DOCUMENT,
+          })
         : one,
     ),
   };
@@ -431,7 +446,7 @@ describe("uploading", () => {
     const dialog = await openUpload();
 
     const type = within(dialog).getByRole("combobox", { name: "Document Type" });
-    expect(type).toHaveValue("4");
+    expect(type).toHaveValue(uid(4));
     expect(type).toHaveFocus();
     expect(
       within(dialog).getByText(
@@ -457,7 +472,7 @@ describe("uploading", () => {
     const [call] = callsTo(fetchFn, "POST", CHECKLIST_PATH);
     const body = call?.[1]?.body;
     if (!(body instanceof FormData)) throw new Error("expected a form");
-    expect(body.get("document_type")).toBe("4");
+    expect(body.get("document_type")).toBe(uid(4));
   });
 
   it("uploads several files as one Document and says so (issue 78)", async () => {
@@ -565,12 +580,12 @@ describe("a Document with several files (issue 78)", () => {
     ...CHECKLIST,
     items: [
       item({
-        id: 1,
+        id: uid(1),
         name: "Passport",
         state: "waiting",
         document: {
           ...PASSPORT_DOCUMENT,
-          files: [apiFile(41, "front.jpg"), apiFile(44, "back.jpg")],
+          files: [apiFile(uid(41), "front.jpg"), apiFile(uid(44), "back.jpg")],
         },
       }),
     ],
@@ -590,13 +605,17 @@ describe("a Document with several files (issue 78)", () => {
   });
 
   it("opens the file asked for, not the first one", async () => {
-    const url = "https://files.test/abc/documents/7/back.jpg?sig=1";
+    const url = `https://files.test/abc/documents/${uid(7)}/back.jpg?sig=1`;
     backend(
       checklist(twoPages),
-      on("GET", "/api/students/7/documents/31/files/44/link/?action=download", {
-        url,
-        expires_in: 300,
-      }),
+      on(
+        "GET",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(44)}/link/?action=download`,
+        {
+          url,
+          expires_in: 300,
+        },
+      ),
     );
     renderSection();
 
@@ -609,19 +628,22 @@ describe("a Document with several files (issue 78)", () => {
 });
 
 describe("adding a file to a Document (issue 78)", () => {
-  const FILES_PATH = "/api/students/7/documents/32/files/";
+  const FILES_PATH = `/api/students/${uid(7)}/documents/${uid(32)}/files/`;
   const added = {
     ...CHECKLIST,
     items: CHECKLIST.items.map((one) =>
-      one.document_type.id === 2
+      one.document_type.id === uid(2)
         ? item({
-            id: 2,
+            id: uid(2),
             name: "Citizenship",
             state: "waiting",
             document: {
               ...PASSPORT_DOCUMENT,
-              id: 32,
-              files: [apiFile(42, "citizenship.jpg"), apiFile(45, "citizenship-back.jpg")],
+              id: uid(32),
+              files: [
+                apiFile(uid(42), "citizenship.jpg"),
+                apiFile(uid(45), "citizenship-back.jpg"),
+              ],
             },
           })
         : one,
@@ -687,7 +709,10 @@ describe("adding a file to a Document (issue 78)", () => {
   });
 
   it("confirms plainly when the Document was waiting for a check anyway", async () => {
-    backend(checklist(), on("POST", "/api/students/7/documents/31/files/", CHECKLIST, 201));
+    backend(
+      checklist(),
+      on("POST", `/api/students/${uid(7)}/documents/${uid(31)}/files/`, CHECKLIST, 201),
+    );
     renderSection();
     const dialog = await openAddFile("Passport");
 
@@ -761,13 +786,13 @@ describe("adding a file to a Document (issue 78)", () => {
 });
 
 describe("checking a document", () => {
-  const VERIFY_PATH = "/api/students/7/documents/31/verification/";
+  const VERIFY_PATH = `/api/students/${uid(7)}/documents/${uid(31)}/verification/`;
   const verified = {
     ...CHECKLIST,
     items: CHECKLIST.items.map((one) =>
-      one.document_type.id === 1
+      one.document_type.id === uid(1)
         ? item({
-            id: 1,
+            id: uid(1),
             name: "Passport",
             state: "verified",
             document: { ...PASSPORT_DOCUMENT, verification: "verified" },
@@ -779,9 +804,9 @@ describe("checking a document", () => {
     ...CHECKLIST,
     done: 1,
     items: CHECKLIST.items.map((one) =>
-      one.document_type.id === 1
+      one.document_type.id === uid(1)
         ? item({
-            id: 1,
+            id: uid(1),
             name: "Passport",
             state: "rejected",
             document: {
@@ -940,8 +965,12 @@ describe("checking a document", () => {
 
 describe("linking an upload", () => {
   const LINKS: DocumentLinkOption[] = [
-    { kind: "application", id: 11, label: "Application: Federation University, Bachelor of IT" },
-    { kind: "visa", id: 3, label: "Visa: Deakin University, Master of IT" },
+    {
+      kind: "application",
+      id: uid(11),
+      label: "Application: Federation University, Bachelor of IT",
+    },
+    { kind: "visa", id: uid(3), label: "Visa: Deakin University, Master of IT" },
   ];
 
   async function openUpload(): Promise<HTMLElement> {
@@ -987,7 +1016,7 @@ describe("linking an upload", () => {
     const [call] = callsTo(fetchFn, "POST", CHECKLIST_PATH);
     const body = call?.[1]?.body;
     if (!(body instanceof FormData)) throw new Error("expected a form");
-    expect(body.get("visa")).toBe("3");
+    expect(body.get("visa")).toBe(uid(3));
     expect(body.has("application")).toBe(false);
   });
 
@@ -1029,16 +1058,16 @@ describe("linking an upload", () => {
 
 describe("documents asked for this Student alone", () => {
   const TYPES_PATH = "/api/documents/types/";
-  const ASKED_PATH = "/api/students/7/documents/asked/";
+  const ASKED_PATH = `/api/students/${uid(7)}/documents/asked/`;
   const TYPES = {
     results: [
-      { id: 1, name: "Passport", needed_by_everyone: true, usual_group: "applying" },
-      { id: 20, name: "Portfolio", needed_by_everyone: false, usual_group: "applying" },
-      { id: 21, name: "CV", needed_by_everyone: false, usual_group: "applying" },
+      { id: uid(1), name: "Passport", needed_by_everyone: true, usual_group: "applying" },
+      { id: uid(20), name: "Portfolio", needed_by_everyone: false, usual_group: "applying" },
+      { id: uid(21), name: "CV", needed_by_everyone: false, usual_group: "applying" },
     ],
   };
   const portfolio = item({
-    id: 20,
+    id: uid(20),
     name: "Portfolio",
     state: "not_received",
     reason: "Added for this Student",
@@ -1047,7 +1076,7 @@ describe("documents asked for this Student alone", () => {
   const WITH_PORTFOLIO = {
     ...CHECKLIST,
     total: 5,
-    asked: [20],
+    asked: [uid(20)],
     items: [...CHECKLIST.items, portfolio],
   };
 
@@ -1070,11 +1099,11 @@ describe("documents asked for this Student alone", () => {
       on("PUT", ASKED_PATH, {
         ...WITH_PORTFOLIO,
         total: 6,
-        asked: [20, 21],
+        asked: [uid(20), uid(21)],
         items: [
           ...WITH_PORTFOLIO.items,
           item({
-            id: 21,
+            id: uid(21),
             name: "CV",
             state: "not_received",
             reason: "Added for this Student",
@@ -1098,7 +1127,7 @@ describe("documents asked for this Student alone", () => {
 
     expect(await screen.findByText("Document list saved")).toBeInTheDocument();
     expect(callsTo(fetchFn, "PUT", ASKED_PATH)[0]?.[1]?.body).toBe(
-      JSON.stringify({ document_types: [20, 21] }),
+      JSON.stringify({ document_types: [uid(20), uid(21)] }),
     );
     expect(await rowFor("CV")).toHaveTextContent("Added for this Student");
     expect(onProgress).toHaveBeenLastCalledWith({ done: 2, total: 6 });
@@ -1106,7 +1135,10 @@ describe("documents asked for this Student alone", () => {
   });
 
   it("takes one asked for this Student off with Not needed", async () => {
-    const fetchFn = backend(checklist(WITH_PORTFOLIO), on("DELETE", `${ASKED_PATH}20/`, CHECKLIST));
+    const fetchFn = backend(
+      checklist(WITH_PORTFOLIO),
+      on("DELETE", `${ASKED_PATH}${uid(20)}/`, CHECKLIST),
+    );
     const onProgress = renderSection();
 
     await userEvent.click(
@@ -1115,7 +1147,7 @@ describe("documents asked for this Student alone", () => {
     await confirmTakeOff();
 
     expect(await screen.findByText("Taken off the checklist")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", `${ASKED_PATH}20/`)).toHaveLength(1);
+    expect(callsTo(fetchFn, "DELETE", `${ASKED_PATH}${uid(20)}/`)).toHaveLength(1);
     await waitFor(() => {
       expect(screen.queryByText("Portfolio")).not.toBeInTheDocument();
     });
@@ -1124,7 +1156,10 @@ describe("documents asked for this Student alone", () => {
 
   it("says why Not needed was refused", async () => {
     const reason = "A file is already uploaded for Portfolio, so it stays on the checklist.";
-    backend(checklist(WITH_PORTFOLIO), on("DELETE", `${ASKED_PATH}20/`, { detail: reason }, 400));
+    backend(
+      checklist(WITH_PORTFOLIO),
+      on("DELETE", `${ASKED_PATH}${uid(20)}/`, { detail: reason }, 400),
+    );
     renderSection();
 
     await userEvent.click(
@@ -1150,7 +1185,7 @@ describe("documents asked for this Student alone", () => {
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.getByText("Portfolio")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", `${ASKED_PATH}20/`)).toHaveLength(0);
+    expect(callsTo(fetchFn, "DELETE", `${ASKED_PATH}${uid(20)}/`)).toHaveLength(0);
   });
 
   it("closes the picker with Cancel, changing nothing", async () => {
@@ -1168,7 +1203,7 @@ describe("documents asked for this Student alone", () => {
   });
 
   it("says when Not needed failed for another reason", async () => {
-    backend(checklist(WITH_PORTFOLIO), on("DELETE", `${ASKED_PATH}20/`, {}, 500));
+    backend(checklist(WITH_PORTFOLIO), on("DELETE", `${ASKED_PATH}${uid(20)}/`, {}, 500));
     renderSection();
 
     await userEvent.click(

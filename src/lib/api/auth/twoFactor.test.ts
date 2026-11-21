@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { API_PATHS } from "@/constants/api";
 
 import { ApiRequestError, WrongCurrentPasswordError } from "../core/errors";
@@ -19,7 +20,7 @@ import {
 const SECRET = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
 const URI = `otpauth://totp/Consultancy%20CRM:ops%40platform.test?secret=${SECRET}&issuer=Consultancy%20CRM`;
 const CODES = Array.from({ length: 10 }, (_, n) => `abcd-efgh-jk${"mnpqrstuvw"[n] ?? "x"}m`);
-const ADMIN = { id: 1, name: "Platform Ops", email: "ops@platform.test" };
+const ADMIN = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 
 function answering(response: Response) {
   return vi.fn<typeof fetch>().mockResolvedValue(response);
@@ -216,7 +217,7 @@ describe("Staff, on the office's address (issue 62)", () => {
   });
 
   it("verifies on the office's address and expects a Staff login", async () => {
-    const fetchFn = answering(jsonResponse({ context: { staff: { id: 3 } } }));
+    const fetchFn = answering(jsonResponse({ context: { staff: { id: uid(3) } } }));
 
     await verifyStaffTwoFactor({ recoveryCode: "abcd-efgh-jkmn" }, fetchFn);
 

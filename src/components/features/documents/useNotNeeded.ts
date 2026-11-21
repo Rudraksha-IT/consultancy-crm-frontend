@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useToast } from "@/components/ui/useToast";
 import { DOCUMENT_TEXT } from "@/constants/documents";
 import { dropStudentDocument, requirementRefusal, type Checklist } from "@/lib/api";
@@ -10,12 +11,12 @@ import { dropStudentDocument, requirementRefusal, type Checklist } from "@/lib/a
  * `notNeededFailure` gives the words.
  */
 export function useNotNeeded(
-  studentId: number,
+  studentId: RecordId,
   onDropped: (checklist: Checklist) => void,
-): { drop: (documentTypeId: number) => Promise<void> } {
+): { drop: (documentTypeId: RecordId) => Promise<void> } {
   const { showToast } = useToast();
 
-  async function drop(documentTypeId: number): Promise<void> {
+  async function drop(documentTypeId: RecordId): Promise<void> {
     const saved = await dropStudentDocument(studentId, documentTypeId);
     showToast(DOCUMENT_TEXT.takenOff);
     onDropped(saved);

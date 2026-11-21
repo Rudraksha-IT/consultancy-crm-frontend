@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import { WORK_FROM_HOME_STATUSES } from "@/constants/workFromHome";
 
@@ -13,8 +15,8 @@ const DaySchema = z.iso.date();
 /** One set of Work From Home dates (spec 131-133, issue 87). */
 const DatesSchema = z
   .object({
-    id: z.number().int(),
-    staff_id: z.number().int(),
+    id: RecordIdSchema,
+    staff_id: RecordIdSchema,
     starts_on: DaySchema,
     ends_on: DaySchema.nullable(),
     reason: z.string(),
@@ -45,7 +47,7 @@ const MineSchema = z
 
 const PersonSchema = z
   .object({
-    staff: z.object({ id: z.number().int(), name: z.string() }),
+    staff: z.object({ id: RecordIdSchema, name: z.string() }),
     needs_dates: z.boolean(),
     results: z.array(DatesSchema),
   })
@@ -82,7 +84,7 @@ export function fetchMyWorkFromHome(fetchFn: typeof fetch = fetch): Promise<MyWo
 
 /** One person's dates, and whether they need any (Admins). */
 export function fetchPersonWorkFromHome(
-  staffId: number,
+  staffId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<PersonWorkFromHome> {
   return getJson(API_PATHS.personWorkFromHome(staffId), PersonSchema, fetchFn);
@@ -98,7 +100,7 @@ export function askForWorkFromHome(
 
 /** An Admin sets dates for someone directly: Approved at once, and they are told. */
 export function setWorkFromHome(
-  staffId: number,
+  staffId: RecordId,
   dates: NewWorkFromHome,
   fetchFn: typeof fetch = fetch,
 ): Promise<WorkFromHomeDates> {
@@ -107,7 +109,7 @@ export function setWorkFromHome(
 
 /** Take back my own waiting request. */
 export function cancelWorkFromHome(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<WorkFromHomeDates> {
   return send(API_PATHS.workFromHomeAction(id, "cancel"), {}, fetchFn);
@@ -115,7 +117,7 @@ export function cancelWorkFromHome(
 
 /** Approve or decline a waiting request (Admins). */
 export function answerWorkFromHome(
-  id: number,
+  id: RecordId,
   answer: "approve" | "decline",
   fetchFn: typeof fetch = fetch,
 ): Promise<WorkFromHomeDates> {
@@ -124,7 +126,7 @@ export function answerWorkFromHome(
 
 /** End Approved dates today (Admins). */
 export function endWorkFromHome(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<WorkFromHomeDates> {
   return send(API_PATHS.workFromHomeAction(id, "end"), {}, fetchFn);

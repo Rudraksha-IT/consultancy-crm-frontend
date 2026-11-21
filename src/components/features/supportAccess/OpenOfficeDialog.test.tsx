@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -8,11 +9,11 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { OpenOfficeDialog } from "./OpenOfficeDialog";
 import { testHost } from "@/test/hosts";
 
-const OFFICE = { id: 3, name: "Acme Education" };
+const OFFICE = { id: uid(3), name: "Acme Education" };
 const CODE = "Xy_9-abcdefghijklmnopqrstuvwxyz0123456789AB";
 const STARTED = {
   visit: {
-    id: 7,
+    id: uid(7),
     platform_admin: { name: "Ramesh" },
     consultancy: OFFICE,
     reason: "Fees",

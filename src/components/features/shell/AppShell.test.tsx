@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -30,11 +31,11 @@ const CRIMSON_THEME = {
 
 const TEACHER_CONTEXT = {
   staff: {
-    id: 7,
+    id: uid(7),
     name: "Ram Thapa",
     email: "ram@acme.test",
     role: "teacher",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: { name: "Acme Education" },
   modules: ["students", "tasks", "batches"],
@@ -46,11 +47,11 @@ const TEACHER_CONTEXT = {
 const ADMIN_CONTEXT = {
   ...TEACHER_CONTEXT,
   staff: {
-    id: 1,
+    id: uid(1),
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "admin",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   modules: ["students", "tasks", "documents", "configuration"],
 };
@@ -327,7 +328,9 @@ describe("AppShell's Theme", () => {
       staff: { ...TEACHER_CONTEXT.staff, colour_mode: "dark" },
     });
 
-    expect(document.documentElement.dataset.theme).toBe("dark");
+    await waitFor(() => {
+      expect(document.documentElement.dataset.theme).toBe("dark");
+    });
   });
 });
 
@@ -516,7 +519,7 @@ describe("AppShell's search", () => {
 
 const VISITOR_CONTEXT = {
   ...ADMIN_CONTEXT,
-  staff: { ...ADMIN_CONTEXT.staff, id: 0, name: "Ramesh", email: "ramesh@platform.test" },
+  staff: { ...ADMIN_CONTEXT.staff, id: uid(0), name: "Ramesh", email: "ramesh@platform.test" },
   support_access: { platform_admin_name: "Ramesh", platform_host: testHost("admin") },
 };
 

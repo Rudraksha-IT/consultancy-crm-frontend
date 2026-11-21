@@ -12,34 +12,35 @@ import { BatchesPage } from "./BatchesPage";
 import { BatchPage } from "./BatchPage";
 import { ClassesSection } from "./ClassesSection";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students", "tasks", "batches"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
 
 const TEACHER: StaffContext = {
   ...COUNSELLOR,
-  staff: { id: 9, name: "Gita Lama", email: "gita@acme.test", role: "teacher" },
+  staff: { id: uid(9), name: "Gita Lama", email: "gita@acme.test", role: "teacher" },
 };
 
 const DESK: StaffContext = {
   ...COUNSELLOR,
-  staff: { id: 4, name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
+  staff: { id: uid(4), name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
 };
 
 const CLASSES_OFF: StaffContext = { ...COUNSELLOR, modules: ["students", "tasks"] };
 
 const MORNING = {
-  id: 1,
+  id: uid(1),
   name: "IELTS Morning",
   test_type: "ielts",
-  teacher: { id: 9, name: "Gita Lama" },
+  teacher: { id: uid(9), name: "Gita Lama" },
   time_slot: "7:00-8:30 AM",
   starts_on: "2026-10-05",
   ends_on: "2026-12-04",
@@ -51,10 +52,10 @@ const MORNING = {
 
 const JAPANESE = {
   ...MORNING,
-  id: 2,
+  id: uid(2),
   name: "Japanese N5 Evening",
   test_type: "japanese",
-  teacher: { id: 11, name: "Hari Rai" },
+  teacher: { id: uid(11), name: "Hari Rai" },
   time_slot: "5:30-7:00 PM",
   starts_on: "2026-11-15",
   ends_on: "2027-01-29",
@@ -64,7 +65,7 @@ const JAPANESE = {
 
 const OLD = {
   ...MORNING,
-  id: 3,
+  id: uid(3),
   name: "PTE Summer",
   starts_on: "2026-06-01",
   ends_on: "2026-07-31",
@@ -72,14 +73,14 @@ const OLD = {
   student_count: 0,
 };
 
-const SITA = { id: 7, name: "Sita Gurung", attended_percent: null };
-const RAM = { id: 8, name: "Ram Shrestha", attended_percent: 92 };
+const SITA = { id: uid(7), name: "Sita Gurung", attended_percent: null };
+const RAM = { id: uid(8), name: "Ram Shrestha", attended_percent: 92 };
 
 const MORNING_WITH_STUDENTS = { ...MORNING, students: [RAM, SITA] };
 
 const TEACHERS = [
-  { id: 9, name: "Gita Lama" },
-  { id: 11, name: "Hari Rai" },
+  { id: uid(9), name: "Gita Lama" },
+  { id: uid(11), name: "Hari Rai" },
 ];
 
 const LIST = "/api/batches/?page=1";
@@ -94,7 +95,7 @@ function asTeacher(batch: object) {
 }
 
 const SEARCH_RESULT = {
-  id: 7,
+  id: uid(7),
   name: "Sita Gurung",
   phone: "9841000001",
   email: "",
@@ -155,7 +156,7 @@ describe("Classes page", () => {
     expect(old).toHaveTextContent("Finished");
     expect(screen.getByRole("link", { name: "IELTS Morning" })).toHaveAttribute(
       "href",
-      "/batches/1",
+      `/batches/${uid(1)}`,
     );
     expect(screen.getByText("3 classes")).toBeInTheDocument();
   });
@@ -175,7 +176,7 @@ describe("Classes page", () => {
     expect(screen.getByText("The classes you teach.")).toBeInTheDocument();
     expect(await screen.findByRole("link", { name: "IELTS Morning" })).toHaveAttribute(
       "href",
-      "/batches/1",
+      `/batches/${uid(1)}`,
     );
     expect(screen.queryByRole("button", { name: /Who's in it/ })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "New class" })).not.toBeInTheDocument();
@@ -236,7 +237,7 @@ describe("New class", () => {
 
     await userEvent.type(within(dialog).getByLabelText("Name"), "IELTS Morning");
     await userEvent.selectOptions(within(dialog).getByLabelText("Test type"), "ielts");
-    await userEvent.selectOptions(await within(dialog).findByLabelText("Teacher"), "9");
+    await userEvent.selectOptions(await within(dialog).findByLabelText("Teacher"), uid(9));
     await userEvent.type(within(dialog).getByLabelText("Time slot"), "7:00-8:30 AM");
     await userEvent.click(within(dialog).getByRole("button", { name: "Create class" }));
 
@@ -244,7 +245,7 @@ describe("New class", () => {
     expect(sentBody(fetchFn, "POST", "/api/batches/")).toEqual({
       name: "IELTS Morning",
       test_type: "ielts",
-      teacher: 9,
+      teacher: uid(9),
       time_slot: "7:00-8:30 AM",
       starts_on: "2026-11-07",
       ends_on: "2027-01-06",
@@ -329,14 +330,14 @@ describe("Who's in a class", () => {
   it("lists its Students with their attendance, linking each to their profile", async () => {
     backend(
       on("GET", LIST, pageOf([MORNING])),
-      on("GET", "/api/batches/1/", MORNING_WITH_STUDENTS),
+      on("GET", `/api/batches/${uid(1)}/`, MORNING_WITH_STUDENTS),
     );
     renderWith(<BatchesPage />);
     const dialog = await openMorning();
 
     expect(await within(dialog).findByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(within(dialog).getByText("Attended 92%")).toBeInTheDocument();
     expect(within(dialog).getByText("No classes yet")).toBeInTheDocument();
@@ -349,14 +350,14 @@ describe("Who's in a class", () => {
   it("never offers a Lost Student to add", async () => {
     backend(
       on("GET", LIST, pageOf([MORNING])),
-      on("GET", "/api/batches/1/", { ...MORNING, students: [] }),
+      on("GET", `/api/batches/${uid(1)}/`, { ...MORNING, students: [] }),
       on("GET", "/api/students/?q=Sita", {
         count: 2,
         page: 1,
         page_size: 25,
         results: [
-          { ...SEARCH_RESULT, id: 7, name: "Sita Gurung" },
-          { ...SEARCH_RESULT, id: 12, name: "Sita Lost", stage: "lost" },
+          { ...SEARCH_RESULT, id: uid(7), name: "Sita Gurung" },
+          { ...SEARCH_RESULT, id: uid(12), name: "Sita Lost", stage: "lost" },
         ],
       }),
     );
@@ -374,9 +375,10 @@ describe("Who's in a class", () => {
     let current: object = MORNING_WITH_STUDENTS;
     const fetchFn = backend(
       on("GET", LIST, pageOf([MORNING])),
-      onEach("GET", "/api/batches/1/", () => current),
+      onEach("GET", `/api/batches/${uid(1)}/`, () => current),
       (path, init) => {
-        if (init?.method !== "DELETE" || path !== "/api/batches/1/students/7/") return undefined;
+        if (init?.method !== "DELETE" || path !== `/api/batches/${uid(1)}/students/${uid(7)}/`)
+          return undefined;
         current = { ...MORNING, student_count: 1, students: [RAM] };
         return new Response(null, { status: 204 });
       },
@@ -392,7 +394,9 @@ describe("Who's in a class", () => {
     await userEvent.click(within(confirm).getByRole("button", { name: "Remove" }));
 
     expect(await screen.findByText("Removed from the class")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", "/api/batches/1/students/7/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "DELETE", `/api/batches/${uid(1)}/students/${uid(7)}/`)).toHaveLength(
+      1,
+    );
     await waitFor(() => {
       expect(within(dialog).queryByText("Sita Gurung")).not.toBeInTheDocument();
     });
@@ -401,7 +405,7 @@ describe("Who's in a class", () => {
   it("removes nobody until the popup is confirmed", async () => {
     const fetchFn = backend(
       on("GET", LIST, pageOf([MORNING])),
-      on("GET", "/api/batches/1/", MORNING_WITH_STUDENTS),
+      on("GET", `/api/batches/${uid(1)}/`, MORNING_WITH_STUDENTS),
     );
     renderWith(<BatchesPage />);
     const dialog = await openMorning();
@@ -413,15 +417,17 @@ describe("Who's in a class", () => {
 
     expect(screen.queryByRole("dialog", { name: /^Remove Sita Gurung/ })).toBeNull();
     expect(within(dialog).getByText("Sita Gurung")).toBeVisible();
-    expect(callsTo(fetchFn, "DELETE", "/api/batches/1/students/7/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "DELETE", `/api/batches/${uid(1)}/students/${uid(7)}/`)).toHaveLength(
+      0,
+    );
   });
 
   it("adds a Student found by name", async () => {
     const fetchFn = backend(
       on("GET", LIST, pageOf([MORNING])),
-      on("GET", "/api/batches/1/", { ...MORNING, students: [RAM] }),
+      on("GET", `/api/batches/${uid(1)}/`, { ...MORNING, students: [RAM] }),
       SEARCH_SITA,
-      on("POST", "/api/batches/1/students/", MORNING_WITH_STUDENTS, 201),
+      on("POST", `/api/batches/${uid(1)}/students/`, MORNING_WITH_STUDENTS, 201),
     );
     renderWith(<BatchesPage />);
     const dialog = await openMorning();
@@ -429,19 +435,21 @@ describe("Who's in a class", () => {
     await userEvent.type(await within(dialog).findByLabelText("Find a Student"), "Sita");
     const choice = within(dialog).getByLabelText("Student to add");
     await within(choice).findByRole("option", { name: "Sita Gurung" });
-    await userEvent.selectOptions(choice, "7");
+    await userEvent.selectOptions(choice, uid(7));
     await userEvent.click(within(dialog).getByRole("button", { name: "Add to class" }));
 
     expect(await screen.findByText("Sita Gurung added to IELTS Morning")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/batches/1/students/")).toEqual({ student: 7 });
+    expect(sentBody(fetchFn, "POST", `/api/batches/${uid(1)}/students/`)).toEqual({
+      student: uid(7),
+    });
   });
 
   it("shows why a Student couldn't be added", async () => {
     backend(
       on("GET", LIST, pageOf([MORNING])),
-      on("GET", "/api/batches/1/", { ...MORNING, students: [RAM] }),
+      on("GET", `/api/batches/${uid(1)}/`, { ...MORNING, students: [RAM] }),
       SEARCH_SITA,
-      on("POST", "/api/batches/1/students/", { student: ["Already in this class."] }, 400),
+      on("POST", `/api/batches/${uid(1)}/students/`, { student: ["Already in this class."] }, 400),
     );
     renderWith(<BatchesPage />);
     const dialog = await openMorning();
@@ -449,14 +457,14 @@ describe("Who's in a class", () => {
     await userEvent.type(await within(dialog).findByLabelText("Find a Student"), "Sita");
     const choice = within(dialog).getByLabelText("Student to add");
     await within(choice).findByRole("option", { name: "Sita Gurung" });
-    await userEvent.selectOptions(choice, "7");
+    await userEvent.selectOptions(choice, uid(7));
     await userEvent.click(within(dialog).getByRole("button", { name: "Add to class" }));
 
     expect(await within(dialog).findByText("Already in this class.")).toBeInTheDocument();
   });
 
   it("says when the class couldn't load", async () => {
-    backend(on("GET", LIST, pageOf([MORNING])), on("GET", "/api/batches/1/", {}, 404));
+    backend(on("GET", LIST, pageOf([MORNING])), on("GET", `/api/batches/${uid(1)}/`, {}, 404));
     renderWith(<BatchesPage />);
     const dialog = await openMorning();
 
@@ -471,7 +479,7 @@ describe("Enroll a Student", () => {
     const fetchFn = backend(
       on("GET", LIST, pageOf([MORNING, JAPANESE, OLD])),
       SEARCH_SITA,
-      on("POST", "/api/batches/2/students/", { ...JAPANESE, students: [SITA] }, 201),
+      on("POST", `/api/batches/${uid(2)}/students/`, { ...JAPANESE, students: [SITA] }, 201),
     );
     renderWith(<BatchesPage />);
     await userEvent.click(await screen.findByRole("button", { name: "Enroll a Student" }));
@@ -480,7 +488,7 @@ describe("Enroll a Student", () => {
     await userEvent.type(within(dialog).getByLabelText("Find a Student"), "Sita");
     const student = within(dialog).getByLabelText("Student");
     await within(student).findByRole("option", { name: "Sita Gurung" });
-    await userEvent.selectOptions(student, "7");
+    await userEvent.selectOptions(student, uid(7));
     const classes = within(dialog).getByLabelText("Class");
     // Finished classes aren't offered.
     expect(
@@ -488,13 +496,15 @@ describe("Enroll a Student", () => {
         .getAllByRole("option")
         .map((option) => option.textContent),
     ).toEqual(["IELTS Morning (7:00-8:30 AM)", "Japanese N5 Evening (5:30-7:00 PM)"]);
-    await userEvent.selectOptions(classes, "2");
+    await userEvent.selectOptions(classes, uid(2));
     await userEvent.click(within(dialog).getByRole("button", { name: "Enroll" }));
 
     expect(
       await screen.findByText("Sita Gurung enrolled in Japanese N5 Evening"),
     ).toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/batches/2/students/")).toEqual({ student: 7 });
+    expect(sentBody(fetchFn, "POST", `/api/batches/${uid(2)}/students/`)).toEqual({
+      student: uid(7),
+    });
   });
 
   it("asks for a Student before enrolling", async () => {
@@ -506,25 +516,25 @@ describe("Enroll a Student", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Enroll" }));
 
     expect(await within(dialog).findByText("Choose a Student from the list.")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "POST", "/api/batches/1/students/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "POST", `/api/batches/${uid(1)}/students/`)).toHaveLength(0);
   });
 });
 
 describe("Counsellor Home: Classes section", () => {
   const ENROLLED_PAGE = pageOf([
     {
-      id: 7,
+      id: uid(7),
       name: "Sita Gurung",
       batches: [
-        { id: 1, name: "IELTS Morning" },
-        { id: 2, name: "Japanese N5 Evening" },
+        { id: uid(1), name: "IELTS Morning" },
+        { id: uid(2), name: "Japanese N5 Evening" },
       ],
       attended_percent: null,
     },
     {
-      id: 8,
+      id: uid(8),
       name: "Ram Shrestha",
-      batches: [{ id: 1, name: "IELTS Morning" }],
+      batches: [{ id: uid(1), name: "IELTS Morning" }],
       attended_percent: 92,
     },
   ]);
@@ -533,7 +543,7 @@ describe("Counsellor Home: Classes section", () => {
     backend(
       on("GET", LIST, pageOf([MORNING, JAPANESE, OLD])),
       on("GET", ENROLLED, ENROLLED_PAGE),
-      on("GET", "/api/batches/1/", MORNING_WITH_STUDENTS),
+      on("GET", `/api/batches/${uid(1)}/`, MORNING_WITH_STUDENTS),
     );
     renderWith(<ClassesSection />);
 
@@ -560,7 +570,7 @@ describe("Counsellor Home: Classes section", () => {
     backend(
       on("GET", LIST, pageOf([MORNING, JAPANESE])),
       on("GET", ENROLLED, ENROLLED_PAGE),
-      on("GET", "/api/batches/2/", { ...JAPANESE, students: [SITA] }),
+      on("GET", `/api/batches/${uid(2)}/`, { ...JAPANESE, students: [SITA] }),
     );
     renderWith(<ClassesSection />);
     const section = await screen.findByRole("region", { name: "Classes" });
@@ -577,7 +587,7 @@ describe("Counsellor Home: Classes section", () => {
     ).toEqual(["Student", "Classes", "Attended"]);
     expect(within(table).getByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(within(table).getByText("92%")).toBeInTheDocument();
     expect(within(table).getByText("—")).toBeInTheDocument();
@@ -616,19 +626,19 @@ describe("Counsellor Home: Classes section", () => {
 });
 
 describe("One class's page", () => {
-  const ONE = "/api/batches/1/";
-  const TODAY = on("GET", "/api/batches/1/attendance/2026-11-02/", {
+  const ONE = `/api/batches/${uid(1)}/`;
+  const TODAY = on("GET", `/api/batches/${uid(1)}/attendance/2026-11-02/`, {
     day: "2026-11-02",
     can_mark: false,
     marks: [
-      { student: 8, mark: null },
-      { student: 7, mark: null },
+      { student: uid(8), mark: null },
+      { student: uid(7), mark: null },
     ],
   });
 
   it("names the class with its time and teacher, and lists its Students", async () => {
     backend(on("GET", ONE, MORNING_WITH_STUDENTS), TODAY);
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
 
     expect(
       await screen.findByRole("heading", { level: 1, name: "IELTS Morning" }),
@@ -637,7 +647,7 @@ describe("One class's page", () => {
     expect(screen.getByRole("link", { name: "All classes" })).toHaveAttribute("href", "/batches");
     expect(await screen.findByRole("link", { name: "Sita Gurung" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(screen.getByText("Attended 92% of classes")).toBeInTheDocument();
     expect(screen.getByText("No classes yet")).toBeInTheDocument();
@@ -645,7 +655,7 @@ describe("One class's page", () => {
 
   it("opens who is in it from Add Students", async () => {
     backend(on("GET", ONE, MORNING_WITH_STUDENTS));
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Add Students" }));
 
@@ -663,12 +673,12 @@ describe("One class's page", () => {
         return new Response(JSON.stringify(current));
       },
     );
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
     await userEvent.click(await screen.findByRole("button", { name: "Edit class details" }));
     const dialog = screen.getByRole("dialog", { name: "Edit class" });
 
     expect(within(dialog).getByLabelText("Name")).toHaveValue("IELTS Morning");
-    expect(await within(dialog).findByLabelText("Teacher")).toHaveValue("9");
+    expect(await within(dialog).findByLabelText("Teacher")).toHaveValue(uid(9));
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.type(within(dialog).getByLabelText("Name"), "IELTS Early");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -677,7 +687,7 @@ describe("One class's page", () => {
     expect(sentBody(fetchFn, "PUT", ONE)).toEqual({
       name: "IELTS Early",
       test_type: "ielts",
-      teacher: 9,
+      teacher: uid(9),
       time_slot: "7:00-8:30 AM",
       starts_on: "2026-10-05",
       ends_on: "2026-12-04",
@@ -689,7 +699,7 @@ describe("One class's page", () => {
 
   it("shows a Teacher the Students by name only, with nothing to change", async () => {
     backend(on("GET", ONE, asTeacher(MORNING_WITH_STUDENTS)), TODAY);
-    renderWith(<BatchPage batchId={1} />, TEACHER);
+    renderWith(<BatchPage batchId={uid(1)} />, TEACHER);
 
     expect(await screen.findByText("Sita Gurung")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Sita Gurung" })).toBeNull();
@@ -699,7 +709,7 @@ describe("One class's page", () => {
 
   it("says the class wasn't found, e.g. another Teacher's", async () => {
     backend(on("GET", ONE, { detail: "Not found." }, 404));
-    renderWith(<BatchPage batchId={1} />, TEACHER);
+    renderWith(<BatchPage batchId={uid(1)} />, TEACHER);
 
     expect(await screen.findByText("Class not found.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "All classes" })).toHaveAttribute("href", "/batches");
@@ -707,7 +717,7 @@ describe("One class's page", () => {
 
   it("says when the class couldn't load", async () => {
     backend(on("GET", ONE, {}, 500));
-    renderWith(<BatchPage batchId={1} />);
+    renderWith(<BatchPage batchId={uid(1)} />);
 
     expect(
       await screen.findByText("We couldn't load this class. Please try again."),
@@ -719,7 +729,7 @@ describe("One class's page", () => {
     ["anyone, while classes are switched off", CLASSES_OFF],
   ])("isn't available to %s and asks the API nothing", (_, context) => {
     const fetchFn = backend();
-    renderWith(<BatchPage batchId={1} />, context);
+    renderWith(<BatchPage batchId={uid(1)} />, context);
 
     expect(screen.getByText("This page isn't available to you.")).toBeInTheDocument();
     expect(fetchFn).not.toHaveBeenCalled();

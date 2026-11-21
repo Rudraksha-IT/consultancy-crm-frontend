@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 
 import { putJson } from "../core/client";
@@ -22,7 +23,7 @@ import {
 } from "../core/types";
 
 /** A stored row (with its id) or a new one (id null). */
-type Row<Input> = Input & { id: number | null };
+type Row<Input> = Input & { id: RecordId | null };
 
 /** The three lists on the Edit details page, by their frontend names. */
 export const EDIT_LISTS = ["academicRecords", "testScores", "workExperience"] as const;
@@ -54,7 +55,7 @@ const LIST_API: Record<EditList, { name: string; fields: Record<string, string> 
  * `ApiRequestError` for anything else, such as 409 when someone changed the Student meanwhile.
  */
 export async function saveEditDetails(
-  id: number,
+  id: RecordId,
   input: EditDetailsInput,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
@@ -75,7 +76,7 @@ function body(input: EditDetailsInput): Record<string, unknown> {
   };
 }
 
-function withId(row: { id: number | null }, sent: Record<string, unknown>) {
+function withId(row: { id: RecordId | null }, sent: Record<string, unknown>) {
   return row.id === null ? sent : { id: row.id, ...sent };
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { useToast } from "@/components/ui/useToast";
@@ -8,7 +9,7 @@ import { cancelInvite, resendInvite, TooManyCodesError, type Employee } from "@/
 
 export type InviteActionsState = {
   /** The employee whose invite is being changed, if any. */
-  busyId: number | null;
+  busyId: RecordId | null;
   error: string | null;
   resend: (employee: Employee) => Promise<void>;
   /** Rejects when it failed, so the confirm dialog says so. */
@@ -16,9 +17,9 @@ export type InviteActionsState = {
 };
 
 /** "Send the code again" and "Cancel invite" for people who haven't joined yet. */
-export function useInviteActions(onCancelled: (id: number) => void): InviteActionsState {
+export function useInviteActions(onCancelled: (id: RecordId) => void): InviteActionsState {
   const { showToast } = useToast();
-  const [busyId, setBusyId] = useState<number | null>(null);
+  const [busyId, setBusyId] = useState<RecordId | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function run(employee: Employee, task: () => Promise<void>): Promise<void> {

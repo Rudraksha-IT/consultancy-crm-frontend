@@ -1,10 +1,11 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { SetMyNameContext } from "@/components/features/shell/myName";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
-import type { StaffContext } from "@/lib/api";
+import { reportServerAnswer, type StaffContext } from "@/lib/api";
 import { formatAdDate } from "@/lib/dates";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
@@ -17,11 +18,11 @@ import { consultancySummary } from "@/test/consultancy";
 import { testHost } from "@/test/hosts";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 3, name: "Sita Sharma", email: "sita@acme.test", role: "counsellor" },
+  staff: { id: uid(3), name: "Sita Sharma", email: "sita@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -33,7 +34,7 @@ const ME = {
   job_title: "Senior Counsellor",
   role: "counsellor",
   joined_on: "2026-11-01",
-  colour_mode: "device",
+  colour_mode: "light",
   page_swipe: false,
   notifications: { task_given: true, task_due_tomorrow: true, morning_summary: false },
 };
@@ -467,6 +468,36 @@ describe("MySettingsPage", () => {
       );
     });
 
+    it("says the app is being updated, keeping what was typed and the focus (ticket 14)", async () => {
+      backend(
+        on("GET", ME_PATH, ME),
+        on(
+          "PATCH",
+          ME_PATH,
+          { detail: "The app is being updated. Please try again in a moment.", code: "updating" },
+          503,
+        ),
+      );
+      renderPage();
+      const details = await screen.findByRole("region", { name: "My Details" });
+      await userEvent.click(await within(details).findByRole("button", { name: "Edit details" }));
+      const name = within(details).getByLabelText("Full Name");
+      await userEvent.clear(name);
+      await userEvent.type(name, "Sita Rai");
+      const save = within(details).getByRole("button", { name: "Save details" });
+
+      await userEvent.click(save);
+
+      expect(
+        await within(details).findByText("The app is being updated. Please try again in a moment."),
+      ).toBeInTheDocument();
+      expect(within(details).queryByText("That didn't save. Try again in a moment.")).toBeNull();
+      expect(within(details).queryByRole("alert")).toBeNull();
+      expect(within(details).getByLabelText("Full Name")).toHaveValue("Sita Rai");
+      expect(save).toHaveFocus();
+      reportServerAnswer(false);
+    });
+
     it("says so when changing the password fails for another reason", async () => {
       backend(on("GET", ME_PATH, ME), on("POST", PASSWORD_PATH, {}, 500));
       renderPage();
@@ -613,7 +644,7 @@ describe("MySettingsPage for a Platform Admin inside the office", () => {
       <StaffContextContext
         value={{
           ...COUNSELLOR,
-          staff: { id: 0, name: "Ramesh", email: "ramesh@platform.test", role: "admin" },
+          staff: { id: uid(0), name: "Ramesh", email: "ramesh@platform.test", role: "admin" },
           supportAccess: { platformAdminName: "Ramesh", platformHost: testHost("admin") },
         }}
       >

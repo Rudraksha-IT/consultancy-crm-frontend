@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -12,25 +13,25 @@ import { consultancySummary } from "@/test/consultancy";
 import { novemberMonth } from "./clockFixtures";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "clock_in"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
 
 const NOW_PATH = "/api/clock/team/now/";
 const TEAM_PATH = "/api/clock/team/?month=2026-11";
-const BIKASH_MONTH = "/api/clock/month/?month=2026-11&staff=3";
+const BIKASH_MONTH = `/api/clock/month/?month=2026-11&staff=${uid(3)}`;
 const TEAM_NOW = {
   now: "2026-11-05T05:15:00Z",
   office_network: "on",
   clocked_in_count: 1,
   people: [
     {
-      id: 3,
+      id: uid(3),
       name: "Bikash Thapa",
       job_title: "Counsellor",
       state: "in",
@@ -38,14 +39,21 @@ const TEAM_NOW = {
       left_at: null,
     },
     {
-      id: 4,
+      id: uid(4),
       name: "Asha Rai",
       job_title: "Front desk",
       state: "left",
       since: null,
       left_at: "2026-11-05T05:00:00Z",
     },
-    { id: 1, name: "Maya Shrestha", job_title: "", state: "not_in", since: null, left_at: null },
+    {
+      id: uid(1),
+      name: "Maya Shrestha",
+      job_title: "",
+      state: "not_in",
+      since: null,
+      left_at: null,
+    },
   ],
 };
 const FIGURES = {
@@ -60,11 +68,11 @@ const TEAM = {
   working_day_minutes: 480,
   rows: [
     {
-      staff: { id: 3, name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
+      staff: { id: uid(3), name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
       ...FIGURES,
     },
     {
-      staff: { id: 8, name: "Hari Karki", job_title: "Teacher", has_left: true },
+      staff: { id: uid(8), name: "Hari Karki", job_title: "Teacher", has_left: true },
       days_worked: 0,
       minutes: 0,
       short_days: 0,
@@ -74,7 +82,7 @@ const TEAM = {
   ],
 };
 const SAVED = {
-  id: 10,
+  id: uid(10),
   day: "2026-11-04",
   before: "In 9:00 AM, no clock-out",
   after: "Out 5:00 PM",
@@ -235,7 +243,7 @@ describe("Employees → Working hours", () => {
       on("GET", NOW_PATH, TEAM_NOW),
       on("GET", TEAM_PATH, TEAM),
       onEach("GET", BIKASH_MONTH, () => month),
-      on("POST", "/api/clock/sessions/3/clock-out/", SAVED, 201),
+      on("POST", `/api/clock/sessions/${uid(3)}/clock-out/`, SAVED, 201),
     );
     renderPage();
     const dialog = await openBikashsMonth(user);
@@ -253,7 +261,7 @@ describe("Employees → Working hours", () => {
     await user.click(within(form).getByRole("button", { name: "Save correction" }));
     expect(within(form).getByText("Enter the time.")).toBeInTheDocument();
     expect(within(form).getByText("Say why you're correcting it.")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "POST", "/api/clock/sessions/3/clock-out/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "POST", `/api/clock/sessions/${uid(3)}/clock-out/`)).toHaveLength(0);
 
     await user.type(within(form).getByLabelText("Clocked out"), "17:00");
     month = { ...month, corrections: [...month.corrections, SAVED] };
@@ -264,7 +272,7 @@ describe("Employees → Working hours", () => {
     await user.type(why, "Left at five.{Control>}{Enter}{/Control}");
 
     expect(await screen.findByText("Correction saved")).toBeInTheDocument();
-    const [, init] = callsTo(fetchFn, "POST", "/api/clock/sessions/3/clock-out/")[0] ?? [];
+    const [, init] = callsTo(fetchFn, "POST", `/api/clock/sessions/${uid(3)}/clock-out/`)[0] ?? [];
     expect(init?.body).toBe('{"clocked_out_at":"17:00","reason":"Left at five."}');
     expect(
       await screen.findByRole("dialog", { name: "Bikash Thapa, November 2026" }),
@@ -280,7 +288,7 @@ describe("Employees → Working hours", () => {
       on("GET", NOW_PATH, TEAM_NOW),
       on("GET", TEAM_PATH, TEAM),
       on("GET", BIKASH_MONTH, novemberMonth()),
-      on("POST", "/api/clock/staff/3/missed-time/", { detail }, 400),
+      on("POST", `/api/clock/staff/${uid(3)}/missed-time/`, { detail }, 400),
     );
     renderPage();
     const dialog = await openBikashsMonth(user);
@@ -300,7 +308,7 @@ describe("Employees → Working hours", () => {
     await user.click(within(form).getByRole("button", { name: "Save correction" }));
 
     expect(await within(form).findByText(detail)).toBeInTheDocument();
-    const [, init] = callsTo(fetchFn, "POST", "/api/clock/staff/3/missed-time/")[0] ?? [];
+    const [, init] = callsTo(fetchFn, "POST", `/api/clock/staff/${uid(3)}/missed-time/`)[0] ?? [];
     expect(init?.body).toBe(
       '{"day":"2026-11-03","from":"13:00","to":"17:30","reason":"Client visit."}',
     );
@@ -320,7 +328,12 @@ describe("Employees → Working hours", () => {
       on("GET", NOW_PATH, TEAM_NOW),
       on("GET", TEAM_PATH, TEAM),
       on("GET", BIKASH_MONTH, novemberMonth()),
-      on("POST", "/api/clock/staff/3/missed-time/", { from: ["Enter a time such as 17:30."] }, 400),
+      on(
+        "POST",
+        `/api/clock/staff/${uid(3)}/missed-time/`,
+        { from: ["Enter a time such as 17:30."] },
+        400,
+      ),
     );
     renderPage();
     const dialog = await openBikashsMonth(user);

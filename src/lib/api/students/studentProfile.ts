@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { API_PATHS } from "@/constants/api";
 
 import { getJson, putJson } from "../core/client";
@@ -31,7 +32,7 @@ type AddressField = (typeof ADDRESS_FIELDS)[number];
 
 /** One Student's profile. A missing Student rejects with an `ApiRequestError` of status 404. */
 export function fetchStudentProfile(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
   return getJson(API_PATHS.student(id), StudentProfileSchema, fetchFn);
@@ -82,7 +83,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 /** Replace the Student's Note. The API keeps the old text in History. */
 export async function saveNote(
-  id: number,
+  id: RecordId,
   note: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
@@ -95,7 +96,7 @@ export async function saveNote(
 
 /** One page of the Student's History, newest first. */
 export function fetchStudentHistory(
-  id: number,
+  id: RecordId,
   page: number,
   fetchFn: typeof fetch = fetch,
 ): Promise<HistoryPage> {

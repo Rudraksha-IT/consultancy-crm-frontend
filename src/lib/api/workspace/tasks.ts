@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { ROLES } from "@/constants/roles";
 import { TASK_PRIORITIES, TASK_TIMINGS, type TaskPriority, type TaskView } from "@/constants/tasks";
@@ -7,12 +9,13 @@ import { TASK_PRIORITIES, TASK_TIMINGS, type TaskPriority, type TaskView } from 
 import { getJson, patchJson, postJson } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
 
-const PersonSchema = z.object({ id: z.number().int(), name: z.string() });
+const PersonSchema = z.object({ id: RecordIdSchema, name: z.string() });
+const StudentRefSchema = z.object({ id: RecordIdSchema, name: z.string() });
 
 /** One Task as the API answers it (spec 77-82). `due_on` is AD, "YYYY-MM-DD". */
 export const TaskSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     title: z.string().min(1),
     due_on: z.iso.date(),
     priority: z.enum(TASK_PRIORITIES),
@@ -24,7 +27,7 @@ export const TaskSchema = z
     assignee: PersonSchema,
     created_by: PersonSchema,
     /** Never sent to Teachers, who don't see Students. */
-    student: PersonSchema.nullable(),
+    student: StudentRefSchema.nullable(),
     can_mark_done: z.boolean(),
   })
   .transform((task) => ({
@@ -63,7 +66,7 @@ export type TaskPage = z.infer<typeof TaskPageSchema>;
 
 /** Someone a Task can be given to: any active Staff member. */
 export const TaskAssigneeSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   role: z.enum(ROLES),
 });
@@ -75,8 +78,8 @@ export type NewTask = {
   title: string;
   /** AD, "YYYY-MM-DD". */
   dueOn: string;
-  assigneeId: number;
-  studentId: number | null;
+  assigneeId: RecordId;
+  studentId: RecordId | null;
   priority: TaskPriority;
   /** For me alone: the assignee must be me and there's no Student (spec 77b). */
   isOnlyMe: boolean;
@@ -120,7 +123,7 @@ export async function fetchTaskCount(fetchFn: typeof fetch = fetch): Promise<num
 
 /** One page of a Student's open Tasks, soonest first (spec 82). */
 export function fetchStudentTasks(
-  studentId: number,
+  studentId: RecordId,
   page: number,
   fetchFn: typeof fetch = fetch,
 ): Promise<TaskPage> {
@@ -154,7 +157,7 @@ export async function createTask(task: NewTask, fetchFn: typeof fetch = fetch): 
 
 /** Mark a Task done, or not done again (spec 81). */
 export function setTaskDone(
-  taskId: number,
+  taskId: RecordId,
   done: boolean,
   fetchFn: typeof fetch = fetch,
 ): Promise<Task> {

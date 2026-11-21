@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -12,11 +13,11 @@ import { consultancySummary } from "@/test/consultancy";
 import { OfficeNetworkSettings } from "./OfficeNetworkSettings";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["configuration", "clock_in"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -25,9 +26,9 @@ const LIST_PATH = "/api/office-networks/";
 const CURRENT_PATH = "/api/office-networks/current/";
 const AT = "2026-10-12T04:19:00+00:00";
 const LIMITS = { max_networks: 20, ipv4_widest_prefix: 24, ipv6_widest_prefix: 48 };
-const MAIN = { id: 901, label: "Main office wifi", network: "110.44.115.82" };
+const MAIN = { id: uid(901), label: "Main office wifi", network: "110.44.115.82" };
 const ADDED_MAIN = {
-  id: 1,
+  id: uid(1),
   action: "added",
   label: "Main office wifi",
   network: "110.44.115.82",
@@ -132,7 +133,7 @@ describe("OfficeNetworkSettings", () => {
         })),
         (path, init) => {
           if (path !== LIST_PATH || init?.method !== "POST") return undefined;
-          networks = [{ id: 7, label: "Office network", network: "110.44.115.82" }];
+          networks = [{ id: uid(7), label: "Office network", network: "110.44.115.82" }];
           return new Response(JSON.stringify(networks[0]), { status: 201 });
         },
       );
@@ -228,7 +229,7 @@ describe("OfficeNetworkSettings", () => {
         on("GET", CURRENT_PATH, { address: null, covered: false }),
         (path, init) => {
           if (path !== LIST_PATH || init?.method !== "POST") return undefined;
-          networks = [{ id: 8, label: "Second floor wifi", network: "27.34.20.0/24" }];
+          networks = [{ id: uid(8), label: "Second floor wifi", network: "27.34.20.0/24" }];
           return new Response(JSON.stringify(networks[0]), { status: 201 });
         },
       );
@@ -334,7 +335,8 @@ describe("OfficeNetworkSettings", () => {
         onEach("GET", LIST_PATH, () => listOf(networks)),
         on("GET", CURRENT_PATH, { address: null, covered: false }),
         (path, init) => {
-          if (path !== "/api/office-networks/901/" || init?.method !== "DELETE") return undefined;
+          if (path !== `/api/office-networks/${uid(901)}/` || init?.method !== "DELETE")
+            return undefined;
           networks = [];
           return new Response(null, { status: 204 });
         },
@@ -352,7 +354,7 @@ describe("OfficeNetworkSettings", () => {
       ).toBeVisible();
       await userEvent.click(dialog.getByRole("button", { name: "Remove" }));
 
-      expect(callsTo(fetchFn, "DELETE", "/api/office-networks/901/")).toHaveLength(1);
+      expect(callsTo(fetchFn, "DELETE", `/api/office-networks/${uid(901)}/`)).toHaveLength(1);
       expect(await screen.findByText("Main office wifi removed")).toBeVisible();
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       expect(await within(section).findByText(/No office network yet/)).toBeVisible();
@@ -371,7 +373,7 @@ describe("OfficeNetworkSettings", () => {
       await userEvent.keyboard("{Escape}");
 
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      expect(callsTo(fetchFn, "DELETE", "/api/office-networks/901/")).toHaveLength(0);
+      expect(callsTo(fetchFn, "DELETE", `/api/office-networks/${uid(901)}/`)).toHaveLength(0);
     });
 
     it("keeps the dialog open with a problem when removing fails", async () => {

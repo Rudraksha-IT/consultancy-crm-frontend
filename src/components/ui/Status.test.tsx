@@ -1,4 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
+
+import { reportServerAnswer } from "@/lib/api";
 
 import { Avatar } from "./Avatar";
 import { Banner } from "./Banner";
@@ -69,6 +71,48 @@ describe("Banner", () => {
     render(<Banner tone="info">{"You're viewing this Student."}</Banner>);
 
     expect(screen.getByRole("status")).toHaveTextContent("You're viewing this Student.");
+  });
+
+  describe("while the app is being updated (ticket 14)", () => {
+    afterEach(() => {
+      reportServerAnswer(false);
+    });
+
+    it("says so as a warning instead of the screen's generic problem, keeping its action", () => {
+      reportServerAnswer(true);
+
+      render(
+        <Banner tone="problem" action={<button type="button">Try again</button>}>
+          {"We couldn't save the visit."}
+        </Banner>,
+      );
+
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "The app is being updated. Please try again in a moment.",
+      );
+      expect(screen.queryByText("We couldn't save the visit.")).not.toBeInTheDocument();
+      expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    });
+
+    it("goes back to the screen's own words once the server answers again", () => {
+      reportServerAnswer(true);
+      render(<Banner tone="problem">{"We couldn't save the visit."}</Banner>);
+
+      act(() => {
+        reportServerAnswer(false);
+      });
+
+      expect(screen.getByRole("alert")).toHaveTextContent("We couldn't save the visit.");
+    });
+
+    it("leaves every other kind of message as it is", () => {
+      reportServerAnswer(true);
+
+      render(<Banner tone="info">{"You're viewing this Student."}</Banner>);
+
+      expect(screen.getByRole("status")).toHaveTextContent("You're viewing this Student.");
+    });
   });
 });
 

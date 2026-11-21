@@ -24,7 +24,7 @@ const ME = {
   job_title: "Senior Counsellor",
   role: "counsellor",
   joined_on: "2026-11-01",
-  colour_mode: "device",
+  colour_mode: "light",
   notifications: { task_given: true, task_due_tomorrow: true, morning_summary: false },
   page_swipe: false,
 };
@@ -36,7 +36,7 @@ const MY_DETAILS = {
   jobTitle: "Senior Counsellor",
   role: "counsellor",
   joinedOn: "2026-11-01",
-  colourMode: "device",
+  colourMode: "light",
   notifications: { taskGiven: true, taskDueTomorrow: true, morningSummary: false },
   pageSwipe: false,
 };

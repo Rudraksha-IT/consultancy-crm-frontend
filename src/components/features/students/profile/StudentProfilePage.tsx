@@ -1,7 +1,9 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState, type ReactNode } from "react";
 
+import { canMessageStudents } from "@/components/features/communication/canMessage";
 import { StudentFees } from "@/components/features/fees/StudentFees";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Banner } from "@/components/ui/Banner";
@@ -52,12 +54,24 @@ type Tab = (typeof TAB)[keyof typeof TAB];
 
 const TAB_IDS: readonly Tab[] = Object.values(TAB);
 
+/** The tab named in the address (`?tab=fees`), or none for anything else. */
+export function profileTabFrom(text: string | undefined): Tab | undefined {
+  return TAB_IDS.find((id) => id === text);
+}
+
 /**
  * One Student: Note, Stage journey and their sections (spec 32-37, 45, 57, 64, 74, 76a, 86). Admins
  * and the Student's counsellor see the Fees tab while Accounts is on; Classes shows while test-prep
  * is on and they're in a class.
  */
-export function StudentProfilePage({ studentId }: { studentId: number }) {
+export function StudentProfilePage({
+  studentId,
+  startTab = TAB.applications,
+}: {
+  studentId: RecordId;
+  /** The tab to open on, e.g. Fees from Fees by type; Applications if it isn't shown. */
+  startTab?: Tab;
+}) {
   const { staff } = useCurrentStaff();
   if (staff.role === Role.Teacher) {
     return (
@@ -68,7 +82,7 @@ export function StudentProfilePage({ studentId }: { studentId: number }) {
       </Panel>
     );
   }
-  return <LoadedProfile studentId={studentId} role={staff.role} />;
+  return <LoadedProfile studentId={studentId} role={staff.role} startTab={startTab} />;
 }
 
 /**
@@ -82,13 +96,15 @@ function useSeesFees(profile: StudentProfile): boolean {
 }
 
 /** The Student's classes, asked for only while the test-prep Module is on. */
-function useClassesTab(studentId: number): StudentClass[] {
+function useClassesTab(studentId: RecordId): StudentClass[] {
   const { modules } = useCurrentStaff();
   const state = useStudentClasses(studentId, modules.includes(Module.Batches));
   return state.status === "loaded" ? state.data : [];
 }
 
-function LoadedProfile({ studentId, role }: { studentId: number; role: Role }) {
+type LoadedProfileProps = { studentId: RecordId; role: Role; startTab: Tab };
+
+function LoadedProfile({ studentId, role, startTab }: LoadedProfileProps) {
   const { state, replace, update, refresh } = useStudentProfile(studentId);
   if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
   if (state.status === "failed") return <Banner tone="problem">{MESSAGES.studentFailed}</Banner>;
@@ -105,6 +121,7 @@ function LoadedProfile({ studentId, role }: { studentId: number; role: Role }) {
     <Profile
       profile={state.profile}
       role={role}
+      startTab={startTab}
       onReplace={replace}
       onUpdate={update}
       onRefresh={refresh}
@@ -115,14 +132,15 @@ function LoadedProfile({ studentId, role }: { studentId: number; role: Role }) {
 type ProfileProps = {
   profile: StudentProfile;
   role: Role;
+  startTab: Tab;
   onReplace: (profile: StudentProfile) => void;
   onUpdate: (change: (profile: StudentProfile) => StudentProfile) => void;
   /** Load the profile again, e.g. so Documents linked to an Application show on it. */
   onRefresh: () => Promise<void>;
 };
 
-function Profile({ profile, role, onReplace, onUpdate, onRefresh }: ProfileProps) {
-  const [tab, setTab] = useState<Tab>(TAB.applications);
+function Profile({ profile, role, startTab, onReplace, onUpdate, onRefresh }: ProfileProps) {
+  const [tab, setTab] = useState<Tab>(startTab);
   const seesFees = useSeesFees(profile);
   const classes = useClassesTab(profile.id);
   const shownTab = visibleTab(tab, seesFees, classes.length > 0);
@@ -280,6 +298,23 @@ function documentLinks(profile: StudentProfile): DocumentLinkOption[] {
   ];
 }
 
+/** The checklist, with "Email the examples" when this person can email the Student (ticket 12). */
+function ProfileDocuments({ profile, onUpdate, onRefresh }: TabContentProps) {
+  const canEmail = canMessageStudents(useCurrentStaff()) && profile.email !== "";
+  return (
+    <DocumentsSection
+      studentId={profile.id}
+      studentName={profile.name}
+      emailTo={canEmail ? profile : undefined}
+      links={documentLinks(profile)}
+      onProgress={(documents) => {
+        onUpdate((current) => ({ ...current, documents }));
+        void onRefresh();
+      }}
+    />
+  );
+}
+
 /** The open tab's section. */
 function TabContent(props: TabContentProps) {
   return TAB_CONTENT[props.tab](props);
@@ -287,17 +322,7 @@ function TabContent(props: TabContentProps) {
 
 const TAB_CONTENT: Record<Tab, (props: TabContentProps) => ReactNode> = {
   applications: ({ profile, onSaved }) => <ApplicationsTab profile={profile} onSaved={onSaved} />,
-  documents: ({ profile, onUpdate, onRefresh }) => (
-    <DocumentsSection
-      studentId={profile.id}
-      studentName={profile.name}
-      links={documentLinks(profile)}
-      onProgress={(documents) => {
-        onUpdate((current) => ({ ...current, documents }));
-        void onRefresh();
-      }}
-    />
-  ),
+  documents: (props) => <ProfileDocuments {...props} />,
   tasks: ({ profile, onRefresh }) => (
     <StudentTasks
       student={{

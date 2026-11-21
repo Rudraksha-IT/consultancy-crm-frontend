@@ -4,6 +4,7 @@ import { fetchStudentProfile } from "./studentProfile";
 import { PROFILE } from "@/test/studentProfile";
 
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 function answering(response: Response) {
   return vi.fn<typeof fetch>().mockResolvedValue(response);
@@ -26,18 +27,18 @@ const INPUT: EditDetailsInput = {
     mailingSameAsPermanent: true,
   },
   academicRecords: [
-    { id: 1, level: "bachelor", institution: "TU", finishedYear: "2024", result: "" },
+    { id: uid(1), level: "bachelor", institution: "TU", finishedYear: "2024", result: "" },
     { id: null, level: "see", institution: "BNKS", finishedYear: "", result: "A" },
   ],
   testScores: [{ id: null, test: "pte", overall: " 65 ", takenOn: "", details: "" }],
   workExperience: [
-    { id: 2, employer: "Bir", jobTitle: "Nurse", startedOn: "2024-04", endedOn: "" },
+    { id: uid(2), employer: "Bir", jobTitle: "Nurse", startedOn: "2024-04", endedOn: "" },
   ],
 };
 
 describe("the profile", () => {
   it("carries the details version and whether the viewer may edit details", async () => {
-    const profile = await fetchStudentProfile(7, answering(jsonResponse(PROFILE)));
+    const profile = await fetchStudentProfile(uid(7), answering(jsonResponse(PROFILE)));
 
     expect(profile.detailsVersion).toBe(3);
     expect(profile.canEditDetails).toBe(true);
@@ -48,9 +49,9 @@ describe("saveEditDetails", () => {
   it("puts every field and the three whole lists in API naming", async () => {
     const fetchFn = answering(jsonResponse(PROFILE));
 
-    const saved = await saveEditDetails(7, INPUT, fetchFn);
+    const saved = await saveEditDetails(uid(7), INPUT, fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/students/7/details/");
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/students/${uid(7)}/details/`);
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("PUT");
     expect(sentBody(fetchFn)).toEqual({
       version: 3,
@@ -60,15 +61,15 @@ describe("saveEditDetails", () => {
       permanent_address: { ...ADDRESS, ward: 6 },
       mailing_same_as_permanent: true,
       academic_records: [
-        { id: 1, level: "bachelor", institution: "TU", finished_year: 2024, result: "" },
+        { id: uid(1), level: "bachelor", institution: "TU", finished_year: 2024, result: "" },
         { level: "see", institution: "BNKS", finished_year: null, result: "A" },
       ],
       test_scores: [{ test: "pte", overall: "65", taken_on: null, details: "" }],
       work_experience: [
-        { id: 2, employer: "Bir", job_title: "Nurse", started_on: "2024-04", ended_on: null },
+        { id: uid(2), employer: "Bir", job_title: "Nurse", started_on: "2024-04", ended_on: null },
       ],
     });
-    expect(saved.id).toBe(7);
+    expect(saved.id).toBe(uid(7));
   });
 
   it("sends a separate mailing address, an empty ward as null and a typed one as typed", async () => {
@@ -76,7 +77,7 @@ describe("saveEditDetails", () => {
     const empty = { province: "", district: "", municipality: "", street: "" };
 
     await saveEditDetails(
-      7,
+      uid(7),
       {
         ...INPUT,
         details: {
@@ -102,7 +103,7 @@ describe("saveEditDetails", () => {
   it("passes on a refusal that isn't about fields", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Not your Student." }, 403));
 
-    await expect(saveEditDetails(7, INPUT, fetchFn)).rejects.toMatchObject({ status: 403 });
+    await expect(saveEditDetails(uid(7), INPUT, fetchFn)).rejects.toMatchObject({ status: 403 });
   });
 
   it("names refused fields and rows in frontend naming", async () => {
@@ -119,7 +120,7 @@ describe("saveEditDetails", () => {
       ),
     );
 
-    const error: unknown = await saveEditDetails(7, INPUT, fetchFn).catch((e: unknown) => e);
+    const error: unknown = await saveEditDetails(uid(7), INPUT, fetchFn).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(InvalidFieldsError);
     expect(error instanceof InvalidFieldsError ? error.fieldErrors : null).toEqual({
@@ -136,7 +137,7 @@ describe("saveEditDetails", () => {
       jsonResponse({ detail: "Someone else just changed this Student. Refresh the page." }, 409),
     );
 
-    const error: unknown = await saveEditDetails(7, INPUT, fetchFn).catch((e: unknown) => e);
+    const error: unknown = await saveEditDetails(uid(7), INPUT, fetchFn).catch((e: unknown) => e);
 
     expect(error).toBeInstanceOf(ApiRequestError);
     expect(error instanceof ApiRequestError ? error.status : null).toBe(409);
@@ -145,6 +146,6 @@ describe("saveEditDetails", () => {
   it("refuses an answer of the wrong shape", async () => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, details_version: "3" }));
 
-    await expect(saveEditDetails(7, INPUT, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(saveEditDetails(uid(7), INPUT, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });

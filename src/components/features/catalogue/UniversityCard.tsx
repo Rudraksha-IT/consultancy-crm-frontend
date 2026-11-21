@@ -1,14 +1,15 @@
 import clsx from "clsx";
+import type { ReactNode } from "react";
 
 import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Chip } from "@/components/ui/Chip";
-import { DataCell, DataRow, DataTable } from "@/components/ui/DataTable";
 import { Panel } from "@/components/ui/Panel";
 import { CATALOGUE_TEXT } from "@/constants/catalogue";
 import { ROUTES } from "@/constants/routes";
 import type { Course, University } from "@/lib/api";
 
+import { CourseFilesCell } from "./CourseFilesCell";
 import { IntakeChips } from "./IntakePicker";
 import { countryLabel, levelLabel } from "./options";
 
@@ -16,27 +17,26 @@ export type CardActions = {
   onAddCourse: (university: University) => void;
   onAddIntake: (course: Course) => void;
   onRemoveIntake: (course: Course, intake: string) => void;
+  /** A Course File was added, renamed or deleted: load the Catalogue again in place. */
+  onChanged: () => void;
 };
 
 type UniversityCardProps = CardActions & { university: University };
 
-const HEAD = "text-small text-ink-2 bg-fill px-4 py-3 text-left font-semibold";
-const CELL = "border-rule border-t px-4 py-3 align-middle";
-
 /**
- * One University as a card with all its Courses in a table, never folded away: Course, level,
- * Intakes as chips (with × and "Add intake") and Required documents (issue 92). The card has
- * only Edit; archiving is on the edit page.
+ * One University as a card with all its Courses, never folded away: each Course's level, Intakes
+ * as chips (with × and "Add intake"), Required documents and Course Files (issue 92, ticket 10).
+ * The card has only Edit; archiving is on the edit page.
  */
 export function UniversityCard({ university, ...actions }: UniversityCardProps) {
   const country = countryLabel(university.country);
   return (
-    <section aria-labelledby={`university-${String(university.id)}`} className="min-w-0">
+    <section aria-labelledby={`university-${university.id}`} className="min-w-0">
       <Panel>
         <header className="border-rule flex flex-wrap items-center justify-between gap-x-5 gap-y-3 border-b px-6 py-4">
           <div className="grid min-w-0 gap-1">
             <h2
-              id={`university-${String(university.id)}`}
+              id={`university-${university.id}`}
               className="text-section-title text-ink flex flex-wrap items-center gap-2 break-words"
             >
               {university.name}
@@ -44,14 +44,14 @@ export function UniversityCard({ university, ...actions }: UniversityCardProps) 
             </h2>
             <p className="text-secondary text-ink-2">{CATALOGUE_TEXT.countryLine(country)}</p>
           </div>
-          <ButtonLink href={ROUTES.catalogueEdit(university.id)} icon="edit" size="sm">
+          <ButtonLink href={ROUTES.universityEdit(university.id)} icon="edit" size="sm">
             <span aria-hidden="true">{CATALOGUE_TEXT.edit}</span>
             <span className="sr-only">
               {CATALOGUE_TEXT.editUniversityAndCourses(university.name)}
             </span>
           </ButtonLink>
         </header>
-        <CourseTable university={university} {...actions} />
+        <CourseRows university={university} {...actions} />
         {!university.archived && (
           <div className="border-rule bg-fill border-t px-6 py-3">
             <Button
@@ -71,46 +71,25 @@ export function UniversityCard({ university, ...actions }: UniversityCardProps) 
   );
 }
 
-function CourseTable({ university, ...actions }: UniversityCardProps) {
+/**
+ * The Courses as stacked rows, never a table that scrolls sideways (ticket 10): name and level,
+ * then Intakes, Required documents and Course Files side by side, wrapping on narrow screens.
+ */
+function CourseRows({ university, ...actions }: UniversityCardProps) {
   if (university.courses.length === 0) {
     return <p className="text-ink-2 px-6 py-4">{CATALOGUE_TEXT.noCourses}</p>;
   }
   return (
-    // Fits the card at every width: Intakes and documents wrap (asked 2026-11-17: tables never
-    // scroll sideways). On a phone each Course is a card with every column.
-    <div className="relative min-w-0">
-      <DataTable>
-        <caption className="sr-only">
-          {CATALOGUE_TEXT.courseCount(university.courses.length)}
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col" className={HEAD}>
-              {CATALOGUE_TEXT.course}
-            </th>
-            <th scope="col" className={HEAD}>
-              {CATALOGUE_TEXT.level}
-            </th>
-            <th scope="col" className={HEAD}>
-              {CATALOGUE_TEXT.intakes}
-            </th>
-            <th scope="col" className={HEAD}>
-              {CATALOGUE_TEXT.requiredDocuments}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {university.courses.map((course) => (
-            <CourseRow
-              key={course.id}
-              course={course}
-              isEditable={!university.archived && !course.archived}
-              {...actions}
-            />
-          ))}
-        </tbody>
-      </DataTable>
-    </div>
+    <ul aria-label={CATALOGUE_TEXT.courseCount(university.courses.length)} className="min-w-0">
+      {university.courses.map((course) => (
+        <CourseRow
+          key={course.id}
+          course={course}
+          isEditable={!university.archived && !course.archived}
+          {...actions}
+        />
+      ))}
+    </ul>
   );
 }
 
@@ -149,34 +128,47 @@ function IntakeCell({ course, isEditable, onAddIntake, onRemoveIntake }: CourseR
   );
 }
 
-function CourseRow({ course, isEditable, onAddIntake, onRemoveIntake }: CourseRowProps) {
+const FACTS = "tablet:grid-cols-3 grid gap-x-6 gap-y-3";
+
+function CourseRow(props: CourseRowProps) {
+  const { course, isEditable, onChanged } = props;
   const documents = course.documents.map((document) => document.name).join(", ");
   return (
-    <DataRow className={clsx(course.archived && "text-ink-2")}>
-      <th scope="row" className={clsx(CELL, "text-left font-semibold")}>
-        <span className="flex flex-wrap items-center gap-2">
-          {course.name}
-          {course.archived && <Chip hasDot={false}>{CATALOGUE_TEXT.archived}</Chip>}
-        </span>
-      </th>
-      <DataCell label={CATALOGUE_TEXT.level} className={CELL}>
-        {levelLabel(course.level)}
-      </DataCell>
-      <DataCell label={CATALOGUE_TEXT.intakes} className={CELL}>
-        <IntakeCell
-          course={course}
-          isEditable={isEditable}
-          onAddIntake={onAddIntake}
-          onRemoveIntake={onRemoveIntake}
-        />
-      </DataCell>
-      <DataCell label={CATALOGUE_TEXT.requiredDocuments} className={clsx(CELL, "text-secondary")}>
-        {documents === "" ? (
-          <span className="text-ink-2">{CATALOGUE_TEXT.onlyCountryList}</span>
-        ) : (
-          documents
-        )}
-      </DataCell>
-    </DataRow>
+    <li
+      className={clsx(
+        "border-rule phone:px-6 grid min-w-0 gap-3 border-t px-4 py-4",
+        course.archived && "text-ink-2",
+      )}
+    >
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="text-body text-ink font-semibold break-words">{course.name}</h3>
+        <Chip hasDot={false}>{levelLabel(course.level)}</Chip>
+        {course.archived && <Chip hasDot={false}>{CATALOGUE_TEXT.archived}</Chip>}
+      </div>
+      <dl className={FACTS}>
+        <Fact label={CATALOGUE_TEXT.intakes}>
+          <IntakeCell {...props} />
+        </Fact>
+        <Fact label={CATALOGUE_TEXT.requiredDocuments}>
+          {documents === "" ? (
+            <span className="text-ink-2">{CATALOGUE_TEXT.onlyCountryList}</span>
+          ) : (
+            <span className="text-secondary">{documents}</span>
+          )}
+        </Fact>
+        <Fact label={CATALOGUE_TEXT.courseFiles}>
+          <CourseFilesCell course={course} isLive={isEditable} onChanged={onChanged} />
+        </Fact>
+      </dl>
+    </li>
+  );
+}
+
+function Fact({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-small text-ink-2 mb-1 font-semibold">{label}</dt>
+      <dd className="break-words">{children}</dd>
+    </div>
   );
 }

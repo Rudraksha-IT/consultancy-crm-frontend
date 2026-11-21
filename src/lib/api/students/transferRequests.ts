@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { z } from "zod";
 
 import { API_PATHS } from "@/constants/api";
@@ -57,7 +58,7 @@ export async function fetchTransferRequestCount(fetchFn: typeof fetch = fetch): 
  * already).
  */
 export async function askToTakeStudent(
-  studentId: number,
+  studentId: RecordId,
   reason: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<TransferRequest> {
@@ -75,7 +76,7 @@ export async function askToTakeStudent(
 
 /** Approve: the Student is Transferred to whoever asked (spec 44b). */
 export function approveTransferRequest(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<TransferRequest> {
   return postJson(API_PATHS.transferRequestApprove(id), {}, TransferRequestSchema, fetchFn);
@@ -83,7 +84,7 @@ export function approveTransferRequest(
 
 /** Decline, with an optional reason the asker sees (spec 44b). */
 export async function declineTransferRequest(
-  id: number,
+  id: RecordId,
   reason: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<TransferRequest> {
@@ -101,7 +102,7 @@ export async function declineTransferRequest(
 
 /** Cancel my own request while it waits (spec 44c). */
 export function cancelTransferRequest(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<TransferRequest> {
   return postJson(API_PATHS.transferRequestCancel(id), {}, TransferRequestSchema, fetchFn);

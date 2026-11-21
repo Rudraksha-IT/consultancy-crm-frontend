@@ -23,6 +23,13 @@ type DialogProps = {
   isWide?: boolean;
   /** Printing the page prints only this dialog's body, e.g. a receipt. */
   isPrintable?: boolean;
+  /**
+   * Near full screen with a fixed height, e.g. the email composer: the body has no padding and
+   * its children lay out and scroll their own areas.
+   */
+  isFull?: boolean;
+  /** Shown in the header between the title and the close button, e.g. Write / Preview. */
+  headerAside?: ReactNode;
 };
 
 /**
@@ -35,7 +42,8 @@ export function Dialog(props: DialogProps) {
   return createPortal(<OpenDialog {...props} />, document.body);
 }
 
-function OpenDialog({ title, onClose, children, footer, isWide, isPrintable }: DialogProps) {
+function OpenDialog(props: DialogProps) {
+  const { title, onClose, children, footer, isWide, isPrintable, isFull, headerAside } = props;
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -84,27 +92,41 @@ function OpenDialog({ title, onClose, children, footer, isWide, isPrintable }: D
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={panelClasses(isWide)}
+        className={panelClasses(isWide, isFull)}
       >
         <div
           aria-hidden="true"
           data-grab-handle=""
           className="phone:hidden bg-rule-2 rounded-pill h-grab-h w-grab mx-auto mt-2 flex-none print:hidden"
         />
-        <header className="phone:px-8 max-phone:flex-none max-phone:px-4 max-phone:pt-3 flex items-center justify-between gap-4 px-5 pt-7 pb-1 print:hidden">
-          <h2 id={titleId} className="text-section-title">
+        <header
+          className={clsx(
+            "phone:px-8 max-phone:flex-none max-phone:px-4 max-phone:pt-3 flex items-center justify-between gap-4 px-5 print:hidden",
+            isFull === true
+              ? "border-rule max-phone:flex-wrap flex-none border-b pt-5 pb-4"
+              : "pt-7 pb-1",
+          )}
+        >
+          <h2 id={titleId} className="text-section-title min-w-0 truncate">
             {title}
           </h2>
+          {headerAside !== undefined && (
+            <div className="max-phone:order-last max-phone:basis-full ml-auto">{headerAside}</div>
+          )}
           <IconButton icon="x" label={LABELS.close} onClick={onClose} />
         </header>
         <div
           data-dialog-body=""
-          className="phone:px-8 max-phone:min-h-0 max-phone:flex-1 max-phone:overflow-y-auto max-phone:overscroll-contain max-phone:px-4 max-phone:pb-5 grid gap-5 px-5 pt-5 pb-7 print:p-0"
+          className={
+            isFull === true
+              ? "min-h-0 flex-1 overflow-hidden"
+              : "phone:px-8 max-phone:min-h-0 max-phone:flex-1 max-phone:overflow-y-auto max-phone:overscroll-contain max-phone:px-4 max-phone:pb-5 grid gap-5 px-5 pt-5 pb-7 print:p-0"
+          }
         >
           {children}
         </div>
         {footer !== undefined && (
-          <footer className="border-rule bg-fill phone:px-8 max-phone:flex-none max-phone:gap-2 max-phone:px-4 max-phone:pt-3 max-phone:pb-sheet-safe max-phone:*:flex-1 flex flex-wrap justify-end gap-3 border-t px-5 py-5 print:hidden">
+          <footer className="border-rule bg-fill phone:px-8 max-phone:flex-none max-phone:gap-2 max-phone:px-4 max-phone:pt-3 max-phone:pb-sheet-safe max-phone:*:flex-1 flex flex-none flex-wrap justify-end gap-3 border-t px-5 py-5 print:hidden">
             {footer}
           </footer>
         )}
@@ -127,11 +149,15 @@ function printMark(isPrintable: boolean | undefined): { "data-print"?: "" } {
   return isPrintable === true ? { "data-print": "" } : {};
 }
 
-function panelClasses(isWide: boolean | undefined): string {
+function panelClasses(isWide: boolean | undefined, isFull: boolean | undefined): string {
   return clsx(
     "rounded-dialog bg-paper shadow-lift max-h-full w-full overflow-auto",
     "max-phone:max-w-none max-phone:max-h-sheet max-phone:rounded-t-sheet max-phone:rounded-b-none max-phone:animate-sheet-up max-phone:flex max-phone:flex-col max-phone:overflow-hidden",
     "print:max-h-none print:max-w-none print:overflow-visible print:shadow-none",
-    isWide === true ? "max-w-dialog-wide" : "max-w-dialog",
+    isFull === true
+      ? "max-w-composer h-composer max-phone:h-sheet flex flex-col overflow-hidden"
+      : isWide === true
+        ? "max-w-dialog-wide"
+        : "max-w-dialog",
   );
 }

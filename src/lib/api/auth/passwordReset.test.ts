@@ -1,14 +1,15 @@
+import { uid } from "@/test/ids";
 import { InvalidCodeError, PasswordRulesNotMetError } from "../core/errors";
 import { checkResetCode, completePasswordReset, requestResetCode } from "./passwordReset";
 import { jsonResponse } from "../core/test-helpers";
 
 const CONTEXT = {
   staff: {
-    id: 1,
+    id: uid(1),
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "counsellor",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: { name: "Acme Education" },
   modules: ["students"],

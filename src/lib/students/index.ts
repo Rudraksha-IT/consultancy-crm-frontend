@@ -6,7 +6,7 @@ export {
   studentListQuery,
 } from "./filters";
 export type { StudentFilters } from "./filters";
-export { addressText, ageOn, parseStudentId, viewOnlyReason } from "./profile";
+export { addressText, ageOn, viewOnlyReason } from "./profile";
 export type { AddressParts } from "./profile";
 export { mergeActivity, sourcesToLoadNext } from "./activity";
 export type { ActivitySource, Dated, MergedActivity } from "./activity";

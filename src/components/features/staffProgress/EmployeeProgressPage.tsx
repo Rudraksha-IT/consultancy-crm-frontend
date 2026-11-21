@@ -18,7 +18,7 @@ import { ROUTES } from "@/constants/routes";
 import { PROGRESS_TEXT } from "@/constants/staffProgress";
 import { WORK_FROM_HOME_TAB, WORK_FROM_HOME_TEXT } from "@/constants/workFromHome";
 import type { StaffProgress } from "@/lib/api";
-import { parseStudentId } from "@/lib/students";
+import { parseRecordId, type RecordId } from "@/lib/recordId";
 
 import { ProgressBody } from "./ProgressBody";
 import { useProgressPeriod } from "./useProgressPeriod";
@@ -50,8 +50,7 @@ type EmployeeProgressPageProps = {
  */
 export function EmployeeProgressPage({ idText, initialTab }: EmployeeProgressPageProps) {
   const { staff } = useCurrentStaff();
-  // Ids are whole numbers from 1, like a Student's.
-  const staffId = parseStudentId(idText);
+  const staffId = parseRecordId(idText);
   if (staff.role !== Role.Admin) return <NotAvailable />;
   if (staffId === null) return <NotFound />;
   return <EmployeePage key={staffId} staffId={staffId} initialTab={initialTab} />;
@@ -61,7 +60,7 @@ function EmployeePage({
   staffId,
   initialTab,
 }: {
-  staffId: number;
+  staffId: RecordId;
   initialTab: string | undefined;
 }) {
   const { tabs, tab, setTab } = useEmployeeTabs(initialTab);

@@ -2,6 +2,7 @@
 
 import { useId, useState, type SubmitEvent } from "react";
 
+import { CourseBrochures } from "@/components/features/catalogue/CourseBrochures";
 import { Banner } from "@/components/ui/Banner";
 import { SelectField, type SelectOption } from "@/components/ui/SelectField";
 import { useToast } from "@/components/ui/useToast";
@@ -80,6 +81,9 @@ export function AddApplicationDialog({ profile, onClose, onSaved }: AddApplicati
       <form id={formId} noValidate onSubmit={handleSubmit} className="grid gap-4">
         {select("university", APPLICATION_TEXT.university, universityOptions(universities))}
         {select("course", APPLICATION_TEXT.course, courseOptions(picker.university))}
+        {picker.course !== undefined && (
+          <CourseBrochures courseName={picker.course.name} files={picker.course.files} />
+        )}
         {select("intake", APPLICATION_TEXT.intake, intakeOptions(picker.course))}
         <p className="text-small text-ink-2">{APPLICATION_TEXT.pickerNote}</p>
       </form>
@@ -105,7 +109,7 @@ function universityOptions(universities: readonly University[]): SelectOption[] 
   return [
     { value: NOTHING, label: APPLICATION_TEXT.chooseUniversity },
     ...universities.map((university) => ({
-      value: String(university.id),
+      value: university.id,
       label: APPLICATION_TEXT.universityOption(university.name, COUNTRY_LABELS[university.country]),
     })),
   ];
@@ -115,7 +119,7 @@ function courseOptions(university: University | undefined): SelectOption[] {
   return [
     { value: NOTHING, label: APPLICATION_TEXT.chooseCourse },
     ...(university?.courses ?? []).map((course) => ({
-      value: String(course.id),
+      value: course.id,
       label: APPLICATION_TEXT.courseOption(course.name, COURSE_LEVEL_LABELS[course.level]),
     })),
   ];

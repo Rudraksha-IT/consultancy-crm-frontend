@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -12,16 +13,18 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { consultancySummary } from "@/test/consultancy";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "payments", "accounts"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
 
 const OWING_URL = "/api/accounts/student-fees/?page=1";
+/** The Admin's Home leaves Lost Students out, as Fees by type does. */
+const HOME_OWING_URL = "/api/accounts/student-fees/?page=1&leave_out=lost";
 const THIS_MONTH_URL = "/api/accounts/expenses/?month=2026-11&page=1";
 const OCTOBER_URL = "/api/accounts/expenses/?month=2026-10&page=1";
 const LIST_URL = "/api/accounts/expenses/";
@@ -38,7 +41,7 @@ const NO_COMMISSION = {
 };
 
 const RENT = {
-  id: 601,
+  id: uid(601),
   spent_on: "2026-10-01",
   category: "office_rent",
   paid_to: "Office landlord",
@@ -48,7 +51,7 @@ const RENT = {
 };
 const INTERNET = {
   ...RENT,
-  id: 602,
+  id: uid(602),
   spent_on: "2026-10-03",
   category: "internet",
   paid_to: "WorldLink",
@@ -347,7 +350,10 @@ describe("changing and deleting an expense", () => {
       ),
       (path, init) => {
         if (init?.method === "PUT") changed = true;
-        return on("PUT", "/api/accounts/expenses/601/", { ...RENT, amount: 90000 })(path, init);
+        return on("PUT", `/api/accounts/expenses/${uid(601)}/`, { ...RENT, amount: 90000 })(
+          path,
+          init,
+        );
       },
     );
     await openMoneyOut();
@@ -366,7 +372,7 @@ describe("changing and deleting an expense", () => {
     await userEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
 
     expect(await screen.findByText("Changes saved")).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PUT", "/api/accounts/expenses/601/")).toEqual({
+    expect(sentBody(fetchFn, "PUT", `/api/accounts/expenses/${uid(601)}/`)).toEqual({
       spent_on: "2026-10-01",
       category: "office_rent",
       paid_to: "Office landlord",
@@ -383,7 +389,8 @@ describe("changing and deleting an expense", () => {
       on("GET", THIS_MONTH_URL, NOVEMBER),
       onEach("GET", OCTOBER_URL, () => (deleted ? monthOf("2026-10", [INTERNET]) : OCTOBER)),
       (path, init) => {
-        if (init?.method !== "DELETE" || path !== "/api/accounts/expenses/601/") return undefined;
+        if (init?.method !== "DELETE" || path !== `/api/accounts/expenses/${uid(601)}/`)
+          return undefined;
         deleted = true;
         return new Response(null, { status: 204 });
       },
@@ -402,7 +409,7 @@ describe("changing and deleting an expense", () => {
     await userEvent.click(within(confirm).getByRole("button", { name: "Delete expense" }));
 
     expect(await screen.findByText("Expense deleted")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", "/api/accounts/expenses/601/")).toHaveLength(1);
+    expect(callsTo(fetchFn, "DELETE", `/api/accounts/expenses/${uid(601)}/`)).toHaveLength(1);
     expect(await screen.findByText("NPR 3,500", { selector: ".text-figure" })).toBeInTheDocument();
   });
 
@@ -421,7 +428,7 @@ describe("changing and deleting an expense", () => {
     await userEvent.keyboard("{Escape}");
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", "/api/accounts/expenses/601/")).toHaveLength(0);
+    expect(callsTo(fetchFn, "DELETE", `/api/accounts/expenses/${uid(601)}/`)).toHaveLength(0);
   });
 
   it("says when a delete fails", async () => {
@@ -448,7 +455,7 @@ describe("changing and deleting an expense", () => {
 describe("Money out on the Admin's Home", () => {
   it("shows this month's money out beside money in", async () => {
     backend(
-      on("GET", OWING_URL, OWING),
+      on("GET", HOME_OWING_URL, OWING),
       on("GET", PAYMENTS_THIS_MONTH, NO_PAYMENTS),
       on("GET", HOME_MONEY_OUT, monthOf("2026-11", [{ ...RENT, spent_on: "2026-11-01" }])),
       on("GET", RECEIVED_THIS_MONTH, { total: 0, count: 0 }),

@@ -1,23 +1,28 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 
 import { getJson, postJson, putJson, sendWithoutBody } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
+import { FeeTypeRefSchema } from "./feeTypes";
 
 const Npr = z.number().int().nonnegative();
 
 /** One Fee as the API answers it (spec 76a). */
 const FeeSchema = z
   .object({
-    id: z.number().int(),
-    purpose: z.string(),
+    id: RecordIdSchema,
+    fee_type: FeeTypeRefSchema,
+    note: z.string(),
     amount: z.number().int().positive(),
     added_by: z.object({ name: z.string() }),
   })
   .transform((fee) => ({
     id: fee.id,
-    purpose: fee.purpose,
+    feeType: fee.fee_type,
+    note: fee.note,
     amount: fee.amount,
     addedBy: { name: fee.added_by.name },
   }));
@@ -49,14 +54,22 @@ const StudentFeesSchema = z
 
 export type StudentFees = z.infer<typeof StudentFeesSchema>;
 
-/** A Fee as the form sends it: what it's for and whole NPR. */
-export type NewFee = { purpose: string; amount: number };
+/** A Fee as the form sends it: its Fee Type, a short note (needed for Other) and whole NPR. */
+export type NewFee = { feeTypeId: RecordId | null; note: string; amount: number };
 
-const FEE_FIELDS: Record<keyof NewFee, string> = { purpose: "purpose", amount: "amount" };
+const FEE_FIELDS: Record<keyof NewFee, string> = {
+  feeTypeId: "fee_type",
+  note: "note",
+  amount: "amount",
+};
+
+function feeBody(fee: NewFee): Record<string, unknown> {
+  return { fee_type: fee.feeTypeId, note: fee.note, amount: fee.amount };
+}
 
 /** The Student's Fees, their total and (for Admins) the Balance (Accounts on). */
 export function fetchStudentFees(
-  studentId: number,
+  studentId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentFees> {
   return getJson(API_PATHS.studentFees(studentId), StudentFeesSchema, fetchFn);
@@ -67,32 +80,37 @@ export function fetchStudentFees(
  * Rejects with `InvalidFieldsError` for refused fields.
  */
 export async function addFee(
-  studentId: number,
+  studentId: RecordId,
   fee: NewFee,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentFees> {
   try {
-    return await postJson(API_PATHS.studentFees(studentId), fee, StudentFeesSchema, fetchFn);
+    return await postJson(
+      API_PATHS.studentFees(studentId),
+      feeBody(fee),
+      StudentFeesSchema,
+      fetchFn,
+    );
   } catch (error) {
     throw toFieldErrors(error, FEE_FIELDS) ?? error;
   }
 }
 
-/** Replace a Fee's purpose and amount and return the Student's Fees. */
+/** Replace a Fee's Fee Type, note and amount and return the Student's Fees. */
 export async function changeFee(
-  feeId: number,
+  feeId: RecordId,
   fee: NewFee,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentFees> {
   try {
-    return await putJson(API_PATHS.fee(feeId), fee, StudentFeesSchema, fetchFn);
+    return await putJson(API_PATHS.fee(feeId), feeBody(fee), StudentFeesSchema, fetchFn);
   } catch (error) {
     throw toFieldErrors(error, FEE_FIELDS) ?? error;
   }
 }
 
 /** Delete a Fee. History keeps it. */
-export function deleteFee(feeId: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function deleteFee(feeId: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.fee(feeId), fetchFn);
 }
 
@@ -111,7 +129,7 @@ const OwingPageSchema = z
     }),
     results: z.array(
       z.object({
-        student: z.object({ id: z.number().int(), name: z.string() }),
+        student: z.object({ id: RecordIdSchema, name: z.string() }),
         fees: Npr,
         paid: Npr,
         still_to_pay: Npr,
@@ -146,4 +164,19 @@ export function fetchOwingStudents(
   fetchFn: typeof fetch = fetch,
 ): Promise<OwingPage> {
   return getJson(`${API_PATHS.accountsStudentFees}?page=${String(page)}`, OwingPageSchema, fetchFn);
+}
+
+/**
+ * One page of Students who still owe, leaving out Lost Students: the same rules as Fees by type,
+ * for the Admin's Home (spec 87, 91).
+ */
+export function fetchCountedOwingStudents(
+  page: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<OwingPage> {
+  return getJson(
+    `${API_PATHS.accountsStudentFees}?page=${String(page)}&leave_out=lost`,
+    OwingPageSchema,
+    fetchFn,
+  );
 }

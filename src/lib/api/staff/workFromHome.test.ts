@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 import {
@@ -12,8 +13,8 @@ import {
 } from "./workFromHome";
 
 const DATES = {
-  id: 7,
-  staff_id: 3,
+  id: uid(7),
+  staff_id: uid(3),
   starts_on: "2026-11-06",
   ends_on: "2026-11-12",
   reason: "Looking after my mother",
@@ -26,8 +27,8 @@ const DATES = {
 };
 
 const READ = {
-  id: 7,
-  staffId: 3,
+  id: uid(7),
+  staffId: uid(3),
   startsOn: "2026-11-06",
   endsOn: "2026-11-12",
   reason: "Looking after my mother",
@@ -90,7 +91,7 @@ describe("my Work From Home dates", () => {
       ends_on: null,
       reason: "Plumber",
     });
-    expect(asked.id).toBe(7);
+    expect(asked.id).toBe(uid(7));
   });
 
   it("a refused field comes back named in frontend terms", async () => {
@@ -124,10 +125,10 @@ describe("my Work From Home dates", () => {
   it("cancels a waiting request with an empty body", async () => {
     const fetchFn = answering(jsonResponse({ ...DATES, status: "cancelled" }));
 
-    const cancelled = await cancelWorkFromHome(7, fetchFn);
+    const cancelled = await cancelWorkFromHome(uid(7), fetchFn);
 
     const [path, init] = sent(fetchFn);
-    expect(path).toBe("/api/clock/work-from-home/7/cancel/");
+    expect(path).toBe(`/api/clock/work-from-home/${uid(7)}/cancel/`);
     expect(init).toMatchObject({ method: "POST", body: "{}" });
     expect(cancelled.status).toBe("cancelled");
   });
@@ -137,35 +138,39 @@ describe("an Admin and someone's dates", () => {
   it("reads a person's dates and whether they need any", async () => {
     const fetchFn = answering(
       jsonResponse({
-        staff: { id: 3, name: "Sita Karki", job_title: "Counsellor", has_left: false },
+        staff: { id: uid(3), name: "Sita Karki", job_title: "Counsellor", has_left: false },
         needs_dates: true,
         results: [DATES],
       }),
     );
 
-    const person = await fetchPersonWorkFromHome(3, fetchFn);
+    const person = await fetchPersonWorkFromHome(uid(3), fetchFn);
 
-    expect(sent(fetchFn)[0]).toBe("/api/clock/staff/3/work-from-home/");
+    expect(sent(fetchFn)[0]).toBe(`/api/clock/staff/${uid(3)}/work-from-home/`);
     expect(person).toEqual({ name: "Sita Karki", needsDates: true, dates: [READ] });
   });
 
   it("sets dates directly", async () => {
     const fetchFn = answering(jsonResponse({ ...DATES, status: "approved" }, 201));
 
-    await setWorkFromHome(3, { startsOn: "2026-11-06", endsOn: "", reason: "Pokhara" }, fetchFn);
+    await setWorkFromHome(
+      uid(3),
+      { startsOn: "2026-11-06", endsOn: "", reason: "Pokhara" },
+      fetchFn,
+    );
 
     const [path, init] = sent(fetchFn);
-    expect(path).toBe("/api/clock/staff/3/work-from-home/");
+    expect(path).toBe(`/api/clock/staff/${uid(3)}/work-from-home/`);
     expect(bodyOf(init)).toMatchObject({ ends_on: null, reason: "Pokhara" });
   });
 
   it.each([
-    ["approve", "/api/clock/work-from-home/7/approve/"],
-    ["decline", "/api/clock/work-from-home/7/decline/"],
+    ["approve", `/api/clock/work-from-home/${uid(7)}/approve/`],
+    ["decline", `/api/clock/work-from-home/${uid(7)}/decline/`],
   ] as const)("%s POSTs nothing", async (answer, path) => {
     const fetchFn = answering(jsonResponse({ ...DATES, status: "approved" }));
 
-    await answerWorkFromHome(7, answer, fetchFn);
+    await answerWorkFromHome(uid(7), answer, fetchFn);
 
     expect(sent(fetchFn)).toEqual([path, expect.objectContaining({ body: "{}" })]);
   });
@@ -173,16 +178,16 @@ describe("an Admin and someone's dates", () => {
   it("ends approved dates", async () => {
     const fetchFn = answering(jsonResponse({ ...DATES, status: "approved", ends_on: null }));
 
-    const ended = await endWorkFromHome(7, fetchFn);
+    const ended = await endWorkFromHome(uid(7), fetchFn);
 
-    expect(sent(fetchFn)[0]).toBe("/api/clock/work-from-home/7/end/");
+    expect(sent(fetchFn)[0]).toBe(`/api/clock/work-from-home/${uid(7)}/end/`);
     expect(ended.endsOn).toBeNull();
   });
 
   it("a conflict comes back as the server's reason", async () => {
     const detail = "These dates are no longer waiting for an answer.";
 
-    const refused = answerWorkFromHome(7, "approve", answering(jsonResponse({ detail }, 409)));
+    const refused = answerWorkFromHome(uid(7), "approve", answering(jsonResponse({ detail }, 409)));
 
     await expect(refused).rejects.toThrow(detail);
   });

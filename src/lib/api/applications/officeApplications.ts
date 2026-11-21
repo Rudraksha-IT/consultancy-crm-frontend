@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { APPLICATION_STATUSES, OFFER_KINDS } from "@/constants/applications";
 import { COURSE_LEVELS } from "@/constants/catalogue";
@@ -15,19 +17,19 @@ const DAY = z.iso.date();
 /** One row of the office-wide Applications list (spec 57a), in frontend naming. */
 const OfficeApplicationSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     student: z.object({
-      id: z.number().int(),
+      id: RecordIdSchema,
       name: z.string(),
       phone: z.string(),
       email: z.string(),
     }),
-    university: z.object({ id: z.number().int(), name: z.string(), country: z.enum(COUNTRIES) }),
-    course: z.object({ id: z.number().int(), name: z.string(), level: z.enum(COURSE_LEVELS) }),
+    university: z.object({ id: RecordIdSchema, name: z.string(), country: z.enum(COUNTRIES) }),
+    course: z.object({ id: RecordIdSchema, name: z.string(), level: z.enum(COURSE_LEVELS) }),
     intake: INTAKE,
     status: z.enum(APPLICATION_STATUSES),
     offer_kind: z.enum(OFFER_KINDS).or(z.literal("")),
-    assigned_counsellor: z.object({ id: z.number().int(), name: z.string() }).nullable(),
+    assigned_counsellor: z.object({ id: RecordIdSchema, name: z.string() }).nullable(),
     applied_on: DAY.nullable(),
     added_on: DAY,
   })

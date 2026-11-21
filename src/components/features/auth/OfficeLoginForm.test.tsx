@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -9,6 +10,20 @@ const query = vi.hoisted(() => ({ current: "" }));
 vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(query.current) }));
 const navigate = vi.hoisted(() => vi.fn<(path: string) => void>());
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
+
+const CONTEXT = {
+  staff: {
+    id: uid(1),
+    name: "Sita Sharma",
+    email: "sita@acme.test",
+    role: "counsellor",
+    colour_mode: "light",
+  },
+  consultancy: { name: "Acme Education" },
+  modules: ["students"],
+  date_display: "AD",
+  support_access: null,
+};
 
 async function logIn(): Promise<void> {
   await userEvent.type(screen.getByLabelText("Email"), "sita@acme.test");
@@ -113,6 +128,84 @@ describe("OfficeLoginForm", () => {
       await userEvent.click(await screen.findByRole("button", { name: "Back to log in" }));
 
       expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    });
+  });
+
+  describe("after the login ended (ticket 14)", () => {
+    beforeEach(() => {
+      navigate.mockClear();
+    });
+
+    it("says the person was logged out, as an info banner", () => {
+      query.current = "session=ended&next=%2Fstudents%2F12";
+
+      render(<OfficeLoginForm />);
+
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "You've been logged out. Please log in again.",
+      );
+    });
+
+    it("says nothing when the person logged out themselves", () => {
+      query.current = "next=%2Fstudents%2F12";
+
+      render(<OfficeLoginForm />);
+
+      expect(screen.queryByText(/logged out/)).not.toBeInTheDocument();
+    });
+
+    it("brings the person back to the page they were on", async () => {
+      query.current = "session=ended&next=%2Fstudents%2F12%3Fptab%3Ddocs";
+      backend(
+        on("POST", "/api/auth/login/next/", { next: "password" }),
+        on("POST", "/api/auth/login/", { context: CONTEXT }),
+      );
+      render(<OfficeLoginForm />);
+
+      await logIn();
+
+      await waitFor(() => {
+        expect(navigate).toHaveBeenCalledWith("/students/12?ptab=docs");
+      });
+    });
+
+    it("brings them back after two-step login too", async () => {
+      query.current = "session=ended&next=%2Ftasks";
+      backend(
+        on("POST", "/api/auth/login/next/", { next: "password" }),
+        on("POST", "/api/auth/login/", { two_factor: "verify" }),
+        on("POST", "/api/auth/two-factor/verify/", { context: {} }),
+      );
+      render(<OfficeLoginForm />);
+      await logIn();
+
+      await userEvent.type(await screen.findByLabelText("6-digit number"), "123456");
+      await userEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+      await waitFor(() => {
+        expect(navigate).toHaveBeenCalledWith("/tasks");
+      });
+    });
+
+    it.each([
+      "next=%2F%2Fevil.example",
+      "next=https%3A%2F%2Fevil.example%2F",
+      "next=javascript%3Aalert(1)",
+      "next=%2F%252F%252Fevil.example",
+      "next=%2F%5Cevil.example",
+    ])("drops a page that isn't on this site (%s) and opens Home", async (search) => {
+      query.current = `session=ended&${search}`;
+      backend(
+        on("POST", "/api/auth/login/next/", { next: "password" }),
+        on("POST", "/api/auth/login/", { context: CONTEXT }),
+      );
+      render(<OfficeLoginForm />);
+
+      await logIn();
+
+      await waitFor(() => {
+        expect(navigate).toHaveBeenCalledWith("/");
+      });
     });
   });
 });

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ReactNode, Ref } from "react";
 
 import { buttonClasses, type ButtonSize, type ButtonVariant } from "./buttonStyles";
 import { Icon, type IconName } from "./Icon";
@@ -19,6 +19,10 @@ type ButtonProps = {
   onClick?: () => void;
   /** Takes focus when its Dialog opens, e.g. Cancel in a confirm dialog. */
   hasFirstFocus?: boolean;
+  /** Whether what the button opens is open (a picker shown under it). */
+  isExpanded?: boolean;
+  /** For giving the cursor back to the button, such as after what it opened closes. */
+  ref?: Ref<HTMLButtonElement>;
 };
 
 const DEFAULTS = {
@@ -44,14 +48,18 @@ export function Button(props: ButtonProps) {
     loadingLabel,
     onClick,
     hasFirstFocus,
+    isExpanded,
+    ref,
   } = {
     ...DEFAULTS,
     ...props,
   };
   return (
     <button
+      ref={ref}
       type={type}
       form={form}
+      aria-expanded={isExpanded}
       disabled={isDisabled || isLoading}
       aria-busy={isLoading}
       onClick={onClick}

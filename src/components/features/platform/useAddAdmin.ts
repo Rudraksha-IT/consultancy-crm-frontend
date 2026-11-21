@@ -9,6 +9,7 @@ import {
   type NewOfficeAdmin,
   type OfficeAdminField,
 } from "@/lib/api";
+import type { RecordId } from "@/lib/recordId";
 
 export type AdminFieldErrors = Partial<Record<OfficeAdminField, string[]>>;
 
@@ -21,7 +22,7 @@ export type AddAdminState = {
 };
 
 /** Invite an Admin into one office (issue 64); `onAdded` gets their name once invited. */
-export function useAddAdmin(officeId: number, onAdded: (name: string) => void): AddAdminState {
+export function useAddAdmin(officeId: RecordId, onAdded: (name: string) => void): AddAdminState {
   const [isSending, setIsSending] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<AdminFieldErrors>({});
   const [error, setError] = useState<string | null>(null);

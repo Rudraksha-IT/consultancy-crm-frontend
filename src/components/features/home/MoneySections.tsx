@@ -15,12 +15,13 @@ import { Section } from "@/components/ui/Section";
 import { COMMISSION_TEXT } from "@/constants/commission";
 import { EXPENSE_TEXT } from "@/constants/expenses";
 import { FEE_TEXT, OWING_ON_HOME } from "@/constants/fees";
+import { FEES_BY_TYPE_TEXT } from "@/constants/feesByType";
 import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import {
   fetchCommission,
+  fetchCountedOwingStudents,
   fetchExpenses,
-  fetchOwingStudents,
   fetchPayments,
   fetchReceivedCommission,
   type CommissionPage,
@@ -51,7 +52,7 @@ async function loadThisMonth(): Promise<ThisMonth> {
   const days = { from: startOfMonth(), to: todayIso() };
   // Expenses use the server's this month; one page is enough for its total.
   const [payments, commissionReceived, expenses, commission] = await Promise.all([
-    fetchPayments({ ...days, search: "", purpose: "", studentId: null }, 1),
+    fetchPayments({ ...days, search: "", feeTypeId: null, studentId: null }, 1),
     fetchReceivedCommission(days),
     fetchExpenses(null, 1),
     fetchCommission(1),
@@ -59,8 +60,9 @@ async function loadThisMonth(): Promise<ThisMonth> {
   return { payments, commissionReceived, expenses, commission };
 }
 
+/** Who still owes, Lost Students left out: the same rules as Fees by type (spec 87, 91). */
 export function loadOwing(): Promise<OwingPage> {
-  return fetchOwingStudents(1);
+  return fetchCountedOwingStudents(1);
 }
 
 const ACCOUNTS_LINK = "min-h-control inline-flex items-center";
@@ -126,7 +128,8 @@ function GlanceFigures({ owing, month }: { owing: OwingPage; month: ThisMonth })
       <FigureTile
         label={FEE_TEXT.feesToCollect}
         value={formatNpr(totals.stillToCollect)}
-        footnote={FEE_TEXT.oweMoney(totals.owing)}
+        footnote={FEES_BY_TYPE_TEXT.seeByType(totals.owing)}
+        href={ROUTES.feesByType}
         {...(totals.stillToCollect > 0 && { tone: "warn" as const })}
       />
       <FigureTile

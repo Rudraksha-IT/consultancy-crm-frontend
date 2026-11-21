@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useCallback, useState, type ReactNode, type SubmitEvent } from "react";
 
 import { useLoaded } from "@/components/features/home/useLoaded";
@@ -48,7 +49,7 @@ const REASON_OPTIONS = VISIT_REASONS.map((value) => ({
 
 type Picked = { profile: StudentProfile; progress: StudentProgress; lastVisit: Visit | null };
 
-async function loadPicked(studentId: number): Promise<Picked> {
+async function loadPicked(studentId: RecordId): Promise<Picked> {
   const [profile, progress, visits] = await Promise.all([
     fetchStudentProfile(studentId),
     fetchStudentProgress(studentId),
@@ -58,7 +59,7 @@ async function loadPicked(studentId: number): Promise<Picked> {
 }
 
 type ReturningVisitorProps = {
-  studentId: number;
+  studentId: RecordId;
   onChooseAnother: () => void;
   onLogged: () => void;
 };
@@ -204,7 +205,7 @@ function LastVisit({ visit }: { visit: Visit }) {
 }
 
 type VisitFormProps = {
-  studentId: number;
+  studentId: RecordId;
   onLogged: () => void;
   payment: ReactNode;
 };

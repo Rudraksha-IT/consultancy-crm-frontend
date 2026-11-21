@@ -9,13 +9,14 @@ import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
 
 import { VisasPage } from "./VisasPage";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Asha Admin", email: "asha@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "applications", "visas"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -26,25 +27,25 @@ function as(role: StaffContext["staff"]["role"]): StaffContext {
 
 function row(overrides: Record<string, unknown>) {
   return {
-    id: 21,
-    student: { id: 2, name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
-    university: { id: 3, name: "University of Toronto", country: "canada" },
-    course: { id: 4, name: "Master of IT", level: "master" },
+    id: uid(21),
+    student: { id: uid(2), name: "Sita Karki", phone: "9841234567", email: "sita@gmail.test" },
+    university: { id: uid(3), name: "University of Toronto", country: "canada" },
+    course: { id: uid(4), name: "Master of IT", level: "master" },
     intake: "2027-09",
     status: "applied",
     next_appointment: { kind: "biometrics", at: "2026-11-20T14:00" },
     started_on: "2026-10-12",
     documents: { done: 5, total: 13, rejected: 1, waiting: 2 },
-    assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+    assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
     ...overrides,
   };
 }
 
 const SITA = row({});
 const GITA = row({
-  id: 22,
-  student: { id: 3, name: "Gita Rai", phone: "9801112222", email: "" },
-  university: { id: 6, name: "Deakin University", country: "australia" },
+  id: uid(22),
+  student: { id: uid(3), name: "Gita Rai", phone: "9801112222", email: "" },
+  university: { id: uid(6), name: "Deakin University", country: "australia" },
   intake: "2027-02",
   status: "refused",
   next_appointment: null,
@@ -84,7 +85,7 @@ const choices: Answer = (path) =>
 
 const counsellors: Answer = (path) =>
   path === "/api/staff/counsellors/"
-    ? jsonResponse([{ id: 5, name: "Bikash Thapa", role: "counsellor" }])
+    ? jsonResponse([{ id: uid(5), name: "Bikash Thapa", role: "counsellor" }])
     : undefined;
 
 function lastListCall(fetchFn: ReturnType<typeof backend>): string | undefined {
@@ -159,7 +160,7 @@ describe("VisasPage", () => {
 
     expect(await screen.findByRole("link", { name: "Sita Karki" })).toHaveAttribute(
       "href",
-      "/students/2",
+      `/students/${uid(2)}`,
     );
   });
 
@@ -221,7 +222,7 @@ describe("VisasPage", () => {
 
     await waitFor(() => {
       expect(lastListCall(fetchFn)).toBe(
-        "/api/visas/?status=applied&country=canada&intake=2027-09&counsellor=5",
+        `/api/visas/?status=applied&country=canada&intake=2027-09&counsellor=${uid(5)}`,
       );
     });
   });
@@ -324,7 +325,7 @@ describe("VisasPage", () => {
   });
 
   it("shows text as typed, never as markup", async () => {
-    const student = { id: 2, name: "<b>Sita</b>", phone: "9841234567", email: "" };
+    const student = { id: uid(2), name: "<b>Sita</b>", phone: "9841234567", email: "" };
     backend(listing(pageOf([row({ student })])), choices, counsellors);
     renderPage();
 

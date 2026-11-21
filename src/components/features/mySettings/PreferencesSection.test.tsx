@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -13,11 +14,11 @@ import { consultancySummary } from "@/test/consultancy";
 import { PreferencesSection } from "./PreferencesSection";
 
 const TEACHER: StaffContext = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "teacher" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "teacher" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -29,7 +30,7 @@ const ME = {
   job_title: "Teacher",
   role: "teacher",
   joined_on: "2026-11-01",
-  colour_mode: "device",
+  colour_mode: "light",
   page_swipe: false,
   notifications: { task_given: true, task_due_tomorrow: true, morning_summary: false },
 };

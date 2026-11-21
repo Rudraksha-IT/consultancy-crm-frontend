@@ -24,7 +24,7 @@ describe("phone page actions", () => {
         title="Students"
         actions={
           <>
-            <Button icon="send">Message this list</Button>
+            <Button icon="send">Email this list</Button>
             <Button>Export</Button>
             <Button variant="primary" icon="plus">
               Add a visitor

@@ -15,6 +15,7 @@ import {
   updateConsultancyTheme,
   updateModules,
   type ConsultancyOverview,
+  updatingOr,
 } from "@/lib/api";
 
 import { AddAdminDialog } from "./AddAdminDialog";
@@ -44,8 +45,8 @@ export function ConsultancyList() {
       const updated = await retryConsultancySetup(consultancy.id);
       showToast(SETUP_TEXT.setupStartedAgain(updated.name));
       replace(updated);
-    } catch {
-      showToast(SETUP_TEXT.tryAgainFailed);
+    } catch (error) {
+      showToast(updatingOr(error, SETUP_TEXT.tryAgainFailed));
     }
   }
 

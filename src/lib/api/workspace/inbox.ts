@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { INBOX_MESSAGE_MAX_LENGTH } from "@/constants/inbox";
 
@@ -10,7 +12,7 @@ import { MomentSchema } from "../core/types";
 /** The form's field names and the API's. */
 const SEND_API_FIELDS = { text: "text" } as const;
 
-const IdSchema = z.number().int().positive();
+const IdSchema = RecordIdSchema;
 const TextSchema = z.string().max(INBOX_MESSAGE_MAX_LENGTH);
 
 /** Who a conversation is with. */
@@ -109,7 +111,7 @@ export async function fetchInboxPeople(fetchFn: typeof fetch = fetch): Promise<I
 
 /** The conversation with one person, oldest first. Opening it marks their messages read. */
 export function fetchConversation(
-  personId: number,
+  personId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<InboxThread> {
   return getJson(API_PATHS.inboxConversation(personId), ThreadSchema, fetchFn);
@@ -120,7 +122,7 @@ export function fetchConversation(
  * otherwise (403: they have left, or the office is read-only).
  */
 export async function sendInboxMessage(
-  personId: number,
+  personId: RecordId,
   text: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<InboxMessage> {

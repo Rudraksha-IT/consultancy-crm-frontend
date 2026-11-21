@@ -31,6 +31,6 @@ export function counsellorFilterOptions(
     { value: CounsellorFilter.Any, label: labels.any },
     ...(canBeAssigned ? [{ value: CounsellorFilter.Me, label: labels.me }] : []),
     ...(labels.none === undefined ? [] : [{ value: CounsellorFilter.None, label: labels.none }]),
-    ...counsellors.map(({ id, name }) => ({ value: String(id), label: name })),
+    ...counsellors.map(({ id, name }) => ({ value: id, label: name })),
   ];
 }

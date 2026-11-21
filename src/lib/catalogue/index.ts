@@ -1,3 +1,4 @@
+export { courseFileProblem, formatFileSize, nameFromFile } from "./courseFiles";
 export { CSV_FILE_MAX_BYTES, readCsvFile } from "./csvFile";
 export type { CsvFileRead } from "./csvFile";
 export { catalogueListQuery } from "./intakes";

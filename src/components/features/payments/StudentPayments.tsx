@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState, type ReactNode } from "react";
 
 import { Banner } from "@/components/ui/Banner";
@@ -15,7 +16,7 @@ import { PaymentTable } from "./PaymentTable";
 import { usePaymentPage } from "./usePaymentPage";
 
 type StudentPaymentsProps = {
-  studentId: number;
+  studentId: RecordId;
   /** A Payment was changed or deleted: History has a new entry, and this list remounts. */
   onChanged: () => void;
   /** Shown beside the title, e.g. "Take a payment". */
@@ -25,7 +26,11 @@ type StudentPaymentsProps = {
 /** The Payments one Student has made, on their Fees tab (Admins only; spec 74-75). */
 export function StudentPayments({ studentId, onChanged, aside }: StudentPaymentsProps) {
   const [page, setPage] = useState(1);
-  const state = usePaymentPage({ from: "", to: "", search: "", purpose: "", studentId }, page, 0);
+  const state = usePaymentPage(
+    { from: "", to: "", search: "", feeTypeId: null, studentId },
+    page,
+    0,
+  );
 
   return (
     <Section title={PAYMENT_TEXT.paymentsReceived} aside={aside}>

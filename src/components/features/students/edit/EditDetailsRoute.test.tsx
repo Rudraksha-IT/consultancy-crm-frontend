@@ -12,16 +12,17 @@ import { fakeMatchMedia } from "@/test/matchMedia";
 import { PROFILE } from "@/test/studentProfile";
 
 import { EditDetailsRoute } from "./EditDetailsRoute";
+import { uid } from "@/test/ids";
 
 const router = { push: vi.fn(), replace: vi.fn(), back: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/" }));
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -45,12 +46,12 @@ function backend(...answers: Answer[]) {
 const profile =
   (body: unknown = PROFILE): Answer =>
   (path, init) =>
-    method(init) === "GET" && path === "/api/students/7/" ? jsonResponse(body) : undefined;
+    method(init) === "GET" && path === `/api/students/${uid(7)}/` ? jsonResponse(body) : undefined;
 
 const saving =
   (body: unknown = PROFILE, status = 200): Answer =>
   (path, init) =>
-    method(init) === "PUT" && path === "/api/students/7/details/"
+    method(init) === "PUT" && path === `/api/students/${uid(7)}/details/`
       ? jsonResponse(body, status)
       : undefined;
 
@@ -73,7 +74,7 @@ function sentSave(fetchFn: ReturnType<typeof backend>): Record<string, unknown> 
   return sent;
 }
 
-function renderPage(context: StaffContext = COUNSELLOR, idText = "7") {
+function renderPage(context: StaffContext = COUNSELLOR, idText: string = uid(7)) {
   return render(
     <StaffContextContext value={context}>
       <ToastProvider>
@@ -159,7 +160,7 @@ describe("Edit details", () => {
     );
     expect(screen.getByRole("link", { name: /Sita Gurung/ })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
   });
 
@@ -174,7 +175,7 @@ describe("Edit details", () => {
     await user.click(screen.getByRole("button", { name: "Save all changes" }));
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith("/students/7");
+      expect(router.push).toHaveBeenCalledWith(`/students/${uid(7)}`);
     });
     const sent = sentSave(fetchFn);
     expect(sent).toMatchObject({
@@ -184,14 +185,26 @@ describe("Edit details", () => {
       permanent_address: { province: "gandaki", ward: 6, street: "Lakeside" },
       mailing_same_as_permanent: true,
       academic_records: [
-        { id: 1, level: "bachelor", institution: "TU", finished_year: 2024, result: "GPA 3.2" },
+        {
+          id: uid(1),
+          level: "bachelor",
+          institution: "TU",
+          finished_year: 2024,
+          result: "GPA 3.2",
+        },
       ],
       test_scores: [
-        { id: 3, test: "ielts", overall: "6.5", taken_on: "2026-09-14", details: "L 7, R 6.5" },
+        {
+          id: uid(3),
+          test: "ielts",
+          overall: "6.5",
+          taken_on: "2026-09-14",
+          details: "L 7, R 6.5",
+        },
       ],
       work_experience: [
         {
-          id: 2,
+          id: uid(2),
           employer: "Bir Hospital",
           job_title: "Staff nurse",
           started_on: "2024-04",
@@ -275,7 +288,7 @@ describe("Edit details", () => {
     });
     const sent = sentSave(fetchFn);
     expect(sent.academic_records).toEqual([
-      { id: 1, level: "bachelor", institution: "TU", finished_year: 2024, result: "GPA 3.2" },
+      { id: uid(1), level: "bachelor", institution: "TU", finished_year: 2024, result: "GPA 3.2" },
       {
         level: "plus_two",
         institution: "Budhanilkantha School",
@@ -286,7 +299,7 @@ describe("Edit details", () => {
     expect(sent.test_scores).toEqual([]);
     expect(sent.work_experience).toEqual([
       {
-        id: 2,
+        id: uid(2),
         employer: "Bir Hospital",
         job_title: "Nurse",
         started_on: "2024-04",
@@ -346,7 +359,7 @@ describe("Edit details", () => {
         ...PROFILE,
         academic_records: [
           ...PROFILE.academic_records,
-          { id: 4, level: "see", institution: "BNKS", finished_year: 2018, result: "" },
+          { id: uid(4), level: "see", institution: "BNKS", finished_year: 2018, result: "" },
         ],
       }),
       saving({ academic_records: { "0": { institution: ["Too long."] } } }, 400),
@@ -457,7 +470,7 @@ describe("Edit details", () => {
 
     await userEvent.setup().click(screen.getByRole("button", { name: "Cancel" }));
 
-    expect(router.push).toHaveBeenCalledWith("/students/7");
+    expect(router.push).toHaveBeenCalledWith(`/students/${uid(7)}`);
   });
 
   it("asks before leaving with unsaved changes", async () => {
@@ -477,7 +490,7 @@ describe("Edit details", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     await user.click(screen.getByRole("button", { name: "Leave without saving" }));
 
-    expect(router.push).toHaveBeenCalledWith("/students/7");
+    expect(router.push).toHaveBeenCalledWith(`/students/${uid(7)}`);
   });
 
   it("asks before following a link away with unsaved changes", async () => {
@@ -494,7 +507,7 @@ describe("Edit details", () => {
     expect(screen.getByRole("dialog", { name: "Leave without saving?" })).toBeInTheDocument();
     expect(router.push).not.toHaveBeenCalled();
     await user.click(screen.getByRole("button", { name: "Leave without saving" }));
-    expect(router.push).toHaveBeenCalledWith("/students/7");
+    expect(router.push).toHaveBeenCalledWith(`/students/${uid(7)}`);
   });
 
   it("asks the browser to warn before closing or reloading with unsaved changes", async () => {
@@ -546,12 +559,16 @@ describe("Edit details", () => {
     expect(await screen.findByText(/isn't available/i)).toBeInTheDocument();
   });
 
-  it("finds nobody for an address that isn't an id", () => {
-    backend();
-    renderPage(COUNSELLOR, "abc");
+  it.each(["abc", "7", "1;drop", uid(7).replaceAll("-", "")])(
+    "finds nobody for an address that isn't a Student's UUID (%s), without asking the API",
+    (idText) => {
+      const fetchFn = backend();
+      renderPage(COUNSELLOR, idText);
 
-    expect(screen.getByRole("link", { name: "All Students" })).toBeInTheDocument();
-  });
+      expect(screen.getByRole("link", { name: "All Students" })).toBeInTheDocument();
+      expect(fetchFn).not.toHaveBeenCalled();
+    },
+  );
 });
 
 describe("Edit details, one section at a time", () => {
@@ -586,7 +603,7 @@ describe("Edit details, one section at a time", () => {
     await user.click(screen.getByRole("button", { name: "Save all changes" }));
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith("/students/7");
+      expect(router.push).toHaveBeenCalledWith(`/students/${uid(7)}`);
     });
     const sent = sentSave(fetchFn);
     expect(sent).toMatchObject({ name: "Sita Karki", father_name: "Ram Gurung" });

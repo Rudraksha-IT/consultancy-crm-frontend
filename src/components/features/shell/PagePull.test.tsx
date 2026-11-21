@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
@@ -22,11 +23,11 @@ vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => v
 // A Teacher's sidebar: Home, Classes, Tasks, Inbox.
 const CONTEXT = {
   staff: {
-    id: 7,
+    id: uid(7),
     name: "Ram Thapa",
     email: "ram@acme.test",
     role: "teacher",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: { name: "Acme Education" },
   modules: ["students", "tasks", "batches"],
@@ -46,6 +47,7 @@ const NO_NOTIFICATIONS = { count: 0, page: 1, page_size: 20, unread_count: 0, re
 const WHEEL_END_MS = 300;
 const LEAVE_MS = 200;
 const ENTER_MS = 300;
+const SETTLE_TURNS = 3;
 
 /** Where the page is scrolled: its height and how far down it is. */
 function scrollPage({ height, y }: { height: number; y: number }): void {
@@ -97,8 +99,24 @@ async function renderShellWith(
   );
   const view = render(<AppShell>{children}</AppShell>);
   await screen.findByRole("main");
-  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+  await settle();
+  // Event times come from Date.now in jsdom: freeze it, so a slow machine can't split one pull in
+  // two. performance.now stays real: a scroll seen before this line keeps a comparable time.
+  vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
   return view;
+}
+
+/**
+ * Let the shell finish starting: the gesture listeners are added in an effect, which a busy
+ * machine may run only after <main> is on screen. A few turns of the real clock let every effect
+ * and answer land before the test touches the page.
+ */
+async function settle(): Promise<void> {
+  for (let turn = 0; turn < SETTLE_TURNS; turn += 1) {
+    await new Promise((resolve) => {
+      setTimeout(resolve, 0);
+    });
+  }
 }
 
 beforeEach(() => {
@@ -396,7 +414,7 @@ describe("where swiping between pages works", () => {
   });
 
   it("is off on a detail page", async () => {
-    await renderShell({ pathname: "/batches/3" });
+    await renderShell({ pathname: `/batches/${uid(3)}` });
     finger(400, [500, 1000]);
     letGo(LEAVE_MS);
 

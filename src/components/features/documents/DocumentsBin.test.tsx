@@ -10,9 +10,10 @@ import { consultancySummary } from "@/test/consultancy";
 import { CHECKLIST, PASSPORT_DOCUMENT, apiFile, checklistRow, item } from "@/test/documents";
 
 import { DocumentsSection } from "./DocumentsSection";
+import { uid } from "@/test/ids";
 
-const CHECKLIST_PATH = "/api/students/7/documents/";
-const ME = 5;
+const CHECKLIST_PATH = `/api/students/${uid(7)}/documents/`;
+const ME = uid(5);
 const BIN_NOTE = {
   by: { id: ME, name: "Bikash Thapa" },
   at: "2026-11-02T10:00:00+05:45",
@@ -24,18 +25,18 @@ const CONTEXT: StaffContext = {
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
 
 const AS_COUNSELLOR = { ...CHECKLIST, deletes_for_good: false, viewer_id: ME };
-const AS_ADMIN_FLAGS = { deletes_for_good: true, viewer_id: 1 };
+const AS_ADMIN_FLAGS = { deletes_for_good: true, viewer_id: uid(1) };
 const AS_ADMIN = { ...CHECKLIST, ...AS_ADMIN_FLAGS };
 
 const TWO_PAGES = {
   ...PASSPORT_DOCUMENT,
-  files: [apiFile(41, "passport.pdf"), apiFile(44, "page-2.pdf")],
+  files: [apiFile(uid(41), "passport.pdf"), apiFile(uid(44), "page-2.pdf")],
 };
 
 /** The Passport put in the Bin: missing, and listed greyed with who, when and why. */
@@ -44,11 +45,11 @@ function binnedPassport(by = BIN_NOTE.by, reason = BIN_NOTE.reason) {
     ...AS_COUNSELLOR,
     items: [
       {
-        ...item({ id: 1, name: "Passport", state: "not_received" }),
+        ...item({ id: uid(1), name: "Passport", state: "not_received" }),
         in_bin: [
           {
-            id: 31,
-            files: [{ id: 41, file_name: "passport.pdf" }],
+            id: uid(31),
+            files: [{ id: uid(41), file_name: "passport.pdf" }],
             bin: { ...BIN_NOTE, by, reason },
           },
         ],
@@ -63,12 +64,12 @@ const BINNED_PAGE = {
   ...AS_COUNSELLOR,
   items: [
     item({
-      id: 1,
+      id: uid(1),
       name: "Passport",
       state: "waiting",
       document: {
         ...PASSPORT_DOCUMENT,
-        binned_files: [{ id: 44, file_name: "page-2.pdf", bin: BIN_NOTE }],
+        binned_files: [{ id: uid(44), file_name: "page-2.pdf", bin: BIN_NOTE }],
       },
     }),
   ],
@@ -78,7 +79,7 @@ function renderSection() {
   render(
     <StaffContextContext value={CONTEXT}>
       <ToastProvider>
-        <DocumentsSection studentId={7} studentName="Sita Gurung" />
+        <DocumentsSection studentId={uid(7)} studentName="Sita Gurung" />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -94,7 +95,7 @@ describe("deleting a Document as anyone but an Admin (the Bin, issue 79)", () =>
   it("asks why, then puts it in the Bin", async () => {
     const fetchFn = backend(
       on("GET", CHECKLIST_PATH, AS_COUNSELLOR),
-      on("POST", "/api/students/7/documents/31/bin/", binnedPassport()),
+      on("POST", `/api/students/${uid(7)}/documents/${uid(31)}/bin/`, binnedPassport()),
     );
     renderSection();
 
@@ -107,7 +108,7 @@ describe("deleting a Document as anyone but an Admin (the Bin, issue 79)", () =>
     await userEvent.click(within(dialog).getByRole("radio", { name: "Blurry scan" }));
     await userEvent.click(within(dialog).getByRole("button", { name: "Put in the Bin" }));
 
-    const [call] = callsTo(fetchFn, "POST", "/api/students/7/documents/31/bin/");
+    const [call] = callsTo(fetchFn, "POST", `/api/students/${uid(7)}/documents/${uid(31)}/bin/`);
     expect(call?.[1]?.body).toBe(JSON.stringify({ reason: "Blurry scan" }));
     expect(
       await screen.findByText("In the Bin. An Admin will delete it for good or restore it."),
@@ -128,17 +129,19 @@ describe("deleting a Document as anyone but an Admin (the Bin, issue 79)", () =>
     await userEvent.keyboard("{Escape}");
 
     expect(screen.queryByRole("dialog")).toBeNull();
-    expect(callsTo(fetchFn, "POST", "/api/students/7/documents/31/bin/")).toHaveLength(0);
+    expect(
+      callsTo(fetchFn, "POST", `/api/students/${uid(7)}/documents/${uid(31)}/bin/`),
+    ).toHaveLength(0);
   });
 
   it("deletes one file of several, and never offers it for the only one", async () => {
     const withPages = {
       ...AS_COUNSELLOR,
-      items: [item({ id: 1, name: "Passport", state: "waiting", document: TWO_PAGES })],
+      items: [item({ id: uid(1), name: "Passport", state: "waiting", document: TWO_PAGES })],
     };
     const fetchFn = backend(
       on("GET", CHECKLIST_PATH, withPages),
-      on("POST", "/api/students/7/documents/31/files/44/bin/", BINNED_PAGE),
+      on("POST", `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(44)}/bin/`, BINNED_PAGE),
     );
     renderSection();
 
@@ -147,7 +150,13 @@ describe("deleting a Document as anyone but an Admin (the Bin, issue 79)", () =>
     );
     await userEvent.click(screen.getByRole("button", { name: "Put in the Bin" }));
 
-    expect(callsTo(fetchFn, "POST", "/api/students/7/documents/31/files/44/bin/")).toHaveLength(1);
+    expect(
+      callsTo(
+        fetchFn,
+        "POST",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(44)}/bin/`,
+      ),
+    ).toHaveLength(1);
     const row = await rowFor("Passport");
     expect(within(row).queryByRole("button", { name: "Delete passport.pdf" })).toBeNull();
   });
@@ -164,7 +173,7 @@ describe("what is in the Bin on the checklist", () => {
   it("shows it greyed with who, when and why, unopenable, and lets me take it out", async () => {
     const fetchFn = backend(
       on("GET", CHECKLIST_PATH, binnedPassport()),
-      on("POST", "/api/students/7/documents/31/take-out/", AS_COUNSELLOR),
+      on("POST", `/api/students/${uid(7)}/documents/${uid(31)}/take-out/`, AS_COUNSELLOR),
     );
     renderSection();
 
@@ -177,12 +186,14 @@ describe("what is in the Bin on the checklist", () => {
       within(row).getByRole("button", { name: "Take Passport out of the Bin" }),
     );
 
-    expect(callsTo(fetchFn, "POST", "/api/students/7/documents/31/take-out/")).toHaveLength(1);
+    expect(
+      callsTo(fetchFn, "POST", `/api/students/${uid(7)}/documents/${uid(31)}/take-out/`),
+    ).toHaveLength(1);
     expect(await screen.findByText("Taken out of the Bin")).toBeVisible();
   });
 
   it("offers no Take it out for what someone else put there", async () => {
-    backend(on("GET", CHECKLIST_PATH, binnedPassport({ id: 99, name: "Anita Rai" })));
+    backend(on("GET", CHECKLIST_PATH, binnedPassport({ id: uid(99), name: "Anita Rai" })));
     renderSection();
 
     const row = await rowFor("Passport");
@@ -192,7 +203,7 @@ describe("what is in the Bin on the checklist", () => {
   it("offers an Admin the way to the Bin tab", async () => {
     backend(
       on("GET", CHECKLIST_PATH, {
-        ...binnedPassport({ id: 99, name: "Anita Rai" }),
+        ...binnedPassport({ id: uid(99), name: "Anita Rai" }),
         ...AS_ADMIN_FLAGS,
       }),
     );
@@ -205,7 +216,11 @@ describe("what is in the Bin on the checklist", () => {
   it("lists a file in the Bin under its Document, unopenable, with Take it out", async () => {
     const fetchFn = backend(
       on("GET", CHECKLIST_PATH, BINNED_PAGE),
-      on("POST", "/api/students/7/documents/31/files/44/take-out/", AS_COUNSELLOR),
+      on(
+        "POST",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(44)}/take-out/`,
+        AS_COUNSELLOR,
+      ),
     );
     renderSection();
 
@@ -220,7 +235,11 @@ describe("what is in the Bin on the checklist", () => {
     );
 
     expect(
-      callsTo(fetchFn, "POST", "/api/students/7/documents/31/files/44/take-out/"),
+      callsTo(
+        fetchFn,
+        "POST",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(44)}/take-out/`,
+      ),
     ).toHaveLength(1);
   });
 
@@ -238,7 +257,7 @@ describe("an Admin's own delete skips the Bin", () => {
   it("asks once, then deletes it for good", async () => {
     const fetchFn = backend(
       on("GET", CHECKLIST_PATH, AS_ADMIN),
-      on("DELETE", "/api/students/7/documents/31/", {
+      on("DELETE", `/api/students/${uid(7)}/documents/${uid(31)}/`, {
         ...AS_ADMIN,
         items: CHECKLIST.items.slice(1),
       }),
@@ -255,7 +274,9 @@ describe("an Admin's own delete skips the Bin", () => {
     expect(within(dialog).queryByRole("radiogroup")).toBeNull();
     await userEvent.click(within(dialog).getByRole("button", { name: "Delete" }));
 
-    expect(callsTo(fetchFn, "DELETE", "/api/students/7/documents/31/")).toHaveLength(1);
+    expect(
+      callsTo(fetchFn, "DELETE", `/api/students/${uid(7)}/documents/${uid(31)}/`),
+    ).toHaveLength(1);
     expect(await screen.findByText("Passport deleted")).toBeVisible();
   });
 });

@@ -1,0 +1,163 @@
+name: Deploy
+
+# Deploy a chosen commit of frontend by hand, go back to the last good version, or see what is live
+# (ticket 14, ADR 0024). Actions > Deploy > Run workflow. Merges into main deploy by themselves
+# (ci.yml); this is for everything else:
+#   deploy    any commit, branch or tag of this repository. Its image is reused when the registry
+#             has it; otherwise every check runs on it first, then the image is built. A commit
+#             that isn't on main also needs a second person's approval (`production-approval`).
+#   rollback  back to the last version that was healthy, for both apps.
+#   status    what is live, and the last deploys.
+# The reason goes into the server's deploy history with who ran it.
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: What to do
+        type: choice
+        options: [deploy, rollback, status]
+        default: deploy
+      ref:
+        description: Commit, branch or tag to deploy (deploy only)
+        type: string
+        default: main
+      reason:
+        description: Why (kept in the deploy history)
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Turn the ref into one exact commit, and find out whether it is on main and already has an image.
+  resolve:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
+    outputs:
+      sha: ${{ steps.commit.outputs.sha }}
+      on_main: ${{ steps.commit.outputs.on_main }}
+      has_image: ${{ steps.image.outputs.has_image }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - id: commit
+        name: Which commit
+        env:
+          ACTION: ${{ inputs.action }}
+          REF: ${{ inputs.ref }}
+          REASON: ${{ inputs.reason }}
+        run: |
+          if [ -z "${REASON//[[:space:]]/}" ]; then
+            echo "::error::Say why: the reason goes into the deploy history."
+            exit 1
+          fi
+          if [ "$ACTION" != deploy ]; then
+            printf '### %s\n\nReason: %s\n' "$ACTION" "$REASON" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          # A branch or tag of this repository, or a commit in it; nothing else.
+          sha=""
+          for candidate in "origin/$REF" "refs/tags/$REF" "$REF"; do
+            if sha="$(git rev-parse --verify --quiet --end-of-options "$candidate^{commit}")"; then break; fi
+          done
+          if [ -z "$sha" ]; then
+            echo "::error::No branch, tag or commit called '$REF' in this repository."
+            exit 1
+          fi
+          on_main=false
+          if git merge-base --is-ancestor "$sha" origin/main; then on_main=true; fi
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "on_main=$on_main" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Deploy frontend ${sha:0:12}"
+            echo
+            echo "- Asked for: \`$REF\`"
+            echo "- Commit: $sha"
+            echo "- On main: $on_main$([ "$on_main" = true ] || echo ' (needs approval in production-approval)')"
+            echo "- Reason: $REASON"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: docker/login-action@v3
+        if: inputs.action == 'deploy'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: image
+        name: Is the image there already
+        if: inputs.action == 'deploy'
+        env:
+          OWNER: ${{ github.repository_owner }}
+          SHA: ${{ steps.commit.outputs.sha }}
+        run: |
+          if docker manifest inspect "ghcr.io/${OWNER,,}/consultancy-crm-frontend:$SHA" >/dev/null 2>&1; then
+            echo "has_image=true" >> "$GITHUB_OUTPUT"
+            echo "- Image: already in the registry, reused" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "has_image=false" >> "$GITHUB_OUTPUT"
+            echo "- Image: not built yet; every check runs on this commit first" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # No image yet: run every check on that commit, then build and push its image (ci.yml).
+  build:
+    needs: resolve
+    if: inputs.action == 'deploy' && needs.resolve.outputs.has_image != 'true'
+    permissions:
+      contents: read
+      packages: write
+    uses: ./.github/workflows/ci.yml
+    with:
+      ref: ${{ needs.resolve.outputs.sha }}
+      build_image: true
+
+  # A commit that isn't on main waits here for a second person (the environment's reviewers).
+  approve:
+    needs: resolve
+    if: inputs.action == 'deploy' && needs.resolve.outputs.on_main != 'true'
+    runs-on: ubuntu-latest
+    environment: production-approval
+    steps:
+      - name: Approved
+        env:
+          SHA: ${{ needs.resolve.outputs.sha }}
+        run: echo "Approved deploying ${SHA:0:12}, which isn't on main."
+
+  # The same server step as ci.yml's deploy job, one at a time with it, never cancelled halfway.
+  deploy:
+    needs: [resolve, build, approve]
+    if: >-
+      !cancelled() && needs.resolve.result == 'success'
+      && (needs.build.result == 'success' || needs.build.result == 'skipped')
+      && (needs.approve.result == 'success' || needs.approve.result == 'skipped')
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install cloudflared (only when the server is reached through Cloudflare Access)
+        env:
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+        run: .github/scripts/install-cloudflared.sh
+      - name: ${{ inputs.action }}
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+          CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+          DEPLOY_REASON: ${{ inputs.reason }}
+          ACTION: ${{ inputs.action }}
+          SHA: ${{ needs.resolve.outputs.sha }}
+        run: |
+          case "$ACTION" in
+            deploy) .github/scripts/deploy-over-ssh.sh deploy frontend "$SHA" ;;
+            rollback) .github/scripts/deploy-over-ssh.sh rollback ;;
+            status) .github/scripts/deploy-over-ssh.sh status ;;
+          esac

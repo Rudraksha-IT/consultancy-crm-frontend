@@ -11,6 +11,7 @@ import {
 import { DATE_DISPLAYS } from "@/constants/dates";
 import { MODULES } from "@/constants/modules";
 import { COLOUR_MODE_CHOICES } from "@/constants/mySettings";
+import { OFFICE_DETAILS_LIMITS } from "@/constants/officeDetails";
 import { ROLES } from "@/constants/roles";
 import { Stage } from "@/constants/stages";
 import {
@@ -26,8 +27,10 @@ import {
   TARGET_LEVELS,
 } from "@/constants/students";
 import { PASSWORD_RULE_IDS, type PasswordRuleId } from "@/lib/password";
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 import { normaliseThemeConfig, type ThemeConfig } from "@/lib/theme";
 
+import { CourseFileSchema } from "../catalogue/courseFileTypes";
 import { LinkedDocumentSchema, NamedFileSchema } from "../documents/documentsTypes";
 import { TransferRequestSchema } from "../students/transferRequestTypes";
 
@@ -46,6 +49,32 @@ export type OfficeLogo = z.infer<typeof LogoSchema>;
 
 /** The logo, or null for the initials; an answer that isn't our logo also shows the initials. */
 const OptionalLogoSchema = LogoSchema.nullable().catch(null);
+
+/** The office's details as stored (spec stories 11-16), in frontend naming. */
+export const OfficeDetailsSchema = z
+  .object({
+    contact_email: z.string().max(OFFICE_DETAILS_LIMITS.contactEmail),
+    phone: z.string().max(OFFICE_DETAILS_LIMITS.phone),
+    address_line1: z.string().max(OFFICE_DETAILS_LIMITS.addressLine),
+    address_line2: z.string().max(OFFICE_DETAILS_LIMITS.addressLine),
+    website: z.string().max(OFFICE_DETAILS_LIMITS.website),
+  })
+  .transform(({ contact_email, address_line1, address_line2, ...rest }) => ({
+    contactEmail: contact_email,
+    addressLine1: address_line1,
+    addressLine2: address_line2,
+    ...rest,
+  }));
+
+export type OfficeDetails = z.infer<typeof OfficeDetailsSchema>;
+
+export const NO_OFFICE_DETAILS: OfficeDetails = {
+  contactEmail: "",
+  phone: "",
+  addressLine1: "",
+  addressLine2: "",
+  website: "",
+};
 
 /** The longest Status message shown; a longer one is not ours and is dropped. */
 const STATUS_MESSAGE_MAX_LENGTH = 300;
@@ -79,7 +108,7 @@ export type Consultancy = z.infer<typeof ConsultancySchema>;
 export const StaffContextSchema = z
   .object({
     staff: z.object({
-      id: z.number().int(),
+      id: RecordIdSchema,
       name: z.string(),
       email: z.string(),
       role: z.enum(ROLES),
@@ -92,12 +121,19 @@ export const StaffContextSchema = z
         status: ShownStatusSchema,
         status_message: StatusMessageSchema,
         evaluation_ends_at: MomentSchema.nullable().catch(null),
+        // Damaged or missing details show as none, so "add the contact email first" shows.
+        office_details: OfficeDetailsSchema.catch(NO_OFFICE_DETAILS),
+        has_contact_email: z.boolean().catch(false),
       })
-      .transform(({ status_message, evaluation_ends_at, ...consultancy }) => ({
-        ...consultancy,
-        statusMessage: status_message,
-        evaluationEndsAt: evaluation_ends_at,
-      })),
+      .transform(
+        ({ status_message, evaluation_ends_at, office_details, has_contact_email, ...rest }) => ({
+          ...rest,
+          statusMessage: status_message,
+          evaluationEndsAt: evaluation_ends_at,
+          officeDetails: office_details,
+          hasContactEmail: has_contact_email && office_details.contactEmail !== "",
+        }),
+      ),
     modules: z.array(z.enum(MODULES)),
     date_display: z.enum(DATE_DISPLAYS),
     // Swipe between pages (asked 2026-11-16): off unless the server clearly says it is on.
@@ -155,7 +191,7 @@ export type Credentials = {
 
 /** A member of the team running the product, from the Platform endpoints. */
 export const PlatformAdminSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   email: z.string(),
 });
@@ -169,7 +205,7 @@ export const PlatformAdminAnswerSchema = z
 /** One Consultancy as the Platform lists it, in frontend naming. */
 export const ConsultancyOverviewSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     subdomain: z.string(),
     host: z.string(),
@@ -199,6 +235,8 @@ export type ConsultancyOverview = z.infer<typeof ConsultancyOverviewSchema>;
 export type NewConsultancy = {
   name: string;
   subdomain: string;
+  /** Where replies to the office's emails go (spec 119); required. */
+  contactEmail: string;
   theme: ThemeConfig;
   /** Evaluation (14 days), or Active paid up to `paidUntil` ("YYYY-MM-DD"). */
   status: typeof ConsultancyStatus.Evaluation | typeof ConsultancyStatus.Active;
@@ -211,6 +249,7 @@ export type NewConsultancyField = Exclude<keyof NewConsultancy, "theme">;
 export const NEW_CONSULTANCY_API_FIELDS = {
   name: "name",
   subdomain: "subdomain",
+  contactEmail: "contact_email",
   status: "status",
   paidUntil: "paid_until",
 } as const satisfies Record<NewConsultancyField, string>;
@@ -234,7 +273,7 @@ export type StaffStatus = (typeof StaffStatus)[keyof typeof StaffStatus];
 /** One employee as the Employees page shows them, in frontend naming. */
 export const EmployeeSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     email: z.string(),
     mobile: z.string(),
@@ -280,17 +319,17 @@ export const NEW_EMPLOYEE_API_FIELDS = {
 
 /** Someone who can be picked as an Assigned Counsellor: a Counsellor or an Admin. */
 export const CounsellorChoiceSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   role: z.enum(ROLES),
 });
 
 export type CounsellorChoice = z.infer<typeof CounsellorChoiceSchema>;
 
-const AssignedCounsellorSchema = z.object({ id: z.number().int(), name: z.string() }).nullable();
+const AssignedCounsellorSchema = z.object({ id: RecordIdSchema, name: z.string() }).nullable();
 
 const StudentRowFields = {
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   phone: z.string(),
   email: z.string(),
@@ -399,7 +438,7 @@ export const NEW_STUDENT_API_FIELDS = {
 /** One qualification in a Student's academic history, in frontend naming. */
 export const AcademicRecordSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     level: z.enum(QUALIFICATIONS),
     institution: z.string(),
     finished_year: z.number().int().nullable(),
@@ -412,7 +451,7 @@ export type AcademicRecord = z.infer<typeof AcademicRecordSchema>;
 /** One English test result, in frontend naming. The overall score is text, e.g. "6.5". */
 export const TestScoreSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     test: z.enum(ENGLISH_TESTS),
     overall: z.string().regex(/^\d{1,3}\.\d$/),
     taken_on: z.iso.date().nullable(),
@@ -438,7 +477,7 @@ const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 /** One job a Student has had (spec 35e), months as "YYYY-MM"; no end month means still there. */
 export const WorkExperienceSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     employer: z.string(),
     job_title: z.string(),
     started_on: z.string().regex(MONTH),
@@ -461,22 +500,25 @@ const PERCENT_MAX = 100;
  */
 export const ApplicationSchema = z
   .object({
-    id: z.number().int(),
-    university: z.object({ id: z.number().int(), name: z.string() }),
-    course: z.object({ id: z.number().int(), name: z.string(), level: z.enum(COURSE_LEVELS) }),
+    id: RecordIdSchema,
+    university: z.object({ id: RecordIdSchema, name: z.string() }),
+    course: z.object({ id: RecordIdSchema, name: z.string(), level: z.enum(COURSE_LEVELS) }),
     intake: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
     status: z.enum(APPLICATION_STATUSES),
     offer_kind: z.enum(OFFER_KINDS).or(z.literal("")),
     offered_on: z.iso.date().nullable(),
     offer_letter: z
-      .object({ id: z.number().int(), files: z.array(NamedFileSchema).nonempty() })
+      .object({ id: RecordIdSchema, files: z.array(NamedFileSchema).nonempty() })
       .nullable(),
     documents: z.array(LinkedDocumentSchema),
+    /** The Course's PDF brochures in use (ticket 10). */
+    course_files: z.array(CourseFileSchema),
   })
-  .transform(({ offered_on, offer_letter, ...rest }) => ({
+  .transform(({ offered_on, offer_letter, course_files, ...rest }) => ({
     ...rest,
     offeredOn: offered_on,
     offerLetter: offer_letter,
+    courseFiles: course_files,
   }));
 
 export type Application = z.infer<typeof ApplicationSchema>;
@@ -489,10 +531,10 @@ export const APPOINTMENT_AT = z
 /** One Visa: its Application, Status, the day it was applied for (AD) and its appointments. */
 export const VisaSchema = z
   .object({
-    id: z.number().int(),
-    application_id: z.number().int(),
-    university: z.object({ id: z.number().int(), name: z.string() }),
-    course: z.object({ id: z.number().int(), name: z.string(), level: z.enum(COURSE_LEVELS) }),
+    id: RecordIdSchema,
+    application_id: RecordIdSchema,
+    university: z.object({ id: RecordIdSchema, name: z.string() }),
+    course: z.object({ id: RecordIdSchema, name: z.string(), level: z.enum(COURSE_LEVELS) }),
     status: z.enum(VISA_STATUSES),
     started_on: z.iso.date(),
     biometrics_at: APPOINTMENT_AT.nullable(),
@@ -514,7 +556,7 @@ export const VisaSchema = z
 export type Visa = z.infer<typeof VisaSchema>;
 
 /** What the Add Application dialog sends: a Catalogue Course and one of its Intakes. */
-export type NewApplication = { courseId: number; intake: string };
+export type NewApplication = { courseId: RecordId; intake: string };
 
 /** The Add Application fields, by their API names. */
 export const APPLICATION_API_FIELDS = { course: "course", intake: "intake" } as const;
@@ -531,7 +573,7 @@ export type DocumentProgress = z.infer<typeof DocumentProgressSchema>;
 /** One change in a Student's History, in frontend naming. */
 export const HistoryEntrySchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     kind: z.enum(HISTORY_KINDS),
     at: z.iso.datetime({ offset: true }),
     by: z.object({ name: z.string(), is_platform_admin: z.boolean() }),
@@ -584,7 +626,7 @@ export const StudentProfileSchema = z
     }),
     applications: z.array(ApplicationSchema),
     /** The Application the Student goes ahead with (GLOSSARY: Chosen Offer), if any. */
-    chosen_offer_id: z.number().int().nullable(),
+    chosen_offer_id: RecordIdSchema.nullable(),
     visas: z.array(VisaSchema),
     documents: DocumentProgressSchema,
     /** Moves on with every change to what the Edit details page shows (issue 81). */
@@ -853,7 +895,7 @@ export const COUNSELLOR_PICK_API_FIELDS = { counsellor: "counsellor" } as const;
 
 /** A Student someone still counsels, listed before they're deactivated (spec 21). */
 export const AssignedStudentSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   stage: z.enum(Stage),
 });

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -18,11 +19,11 @@ vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => v
 
 const CONTEXT = {
   staff: {
-    id: 7,
+    id: uid(7),
     name: "Ram Thapa",
     email: "ram@acme.test",
     role: "teacher",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: { name: "Acme Education" },
   modules: ["students", "tasks", "batches"],
@@ -58,9 +59,13 @@ async function renderShell({ isNarrow }: { isNarrow: boolean }): Promise<void> {
   render(<AppShell>page</AppShell>);
   await screen.findByText("page");
   Object.defineProperty(menu(), "offsetWidth", { configurable: true, value: MENU_WIDTH });
+  // A swipe is one burst of events by their times (Date.now in jsdom). Freeze the date, so a slow
+  // machine can't split one swipe into two; timers stay real.
+  vi.useFakeTimers({ toFake: ["Date"] });
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   resetTheme();
 });
 

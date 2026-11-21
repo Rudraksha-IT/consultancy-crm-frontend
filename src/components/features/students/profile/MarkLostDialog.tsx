@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, type SubmitEvent } from "react";
 
 import { TextAreaField } from "@/components/ui/TextAreaField";
@@ -15,7 +16,7 @@ import { useFormSave } from "./useFormSave";
 const REASON_ROWS = 3;
 
 type MarkLostDialogProps = {
-  studentId: number;
+  studentId: RecordId;
   onClose: () => void;
   onSaved: (profile: StudentProfile) => void;
 };

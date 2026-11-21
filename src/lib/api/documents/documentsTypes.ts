@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 
 import {
   BIN_ITEM_KINDS,
@@ -10,14 +11,16 @@ import {
 import { Stage } from "@/constants/stages";
 import { COUNTRIES } from "@/constants/students";
 
-const PersonSchema = z.object({ id: z.number().int(), name: z.string() });
+import { BinnedCourseFileSchema, type BinnedCourseFile } from "../catalogue/courseFileTypes";
+
+const PersonSchema = z.object({ id: RecordIdSchema, name: z.string() });
 
 const GroupSchema = z.enum(DOCUMENT_GROUPS);
 
 /** One Document Type, whether every Student needs it, and its usual Document Group (issue 80). */
 export const DocumentTypeSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     needed_by_everyone: z.boolean(),
     usual_group: GroupSchema,
@@ -36,10 +39,38 @@ export const DocumentTypeListSchema = z
 
 const CountSchema = z.number().int().nonnegative();
 
+/**
+ * One example file of a Document Type (Document Example, ticket 11): what it should look like.
+ * Never a Student's Document.
+ */
+export const DocumentExampleSchema = z
+  .object({
+    id: RecordIdSchema,
+    file_name: z.string(),
+    content_type: z.string(),
+    size: CountSchema,
+    uploaded_at: z.iso.datetime({ offset: true }),
+  })
+  .transform(({ id, file_name, content_type, size, uploaded_at }) => ({
+    id,
+    fileName: file_name,
+    contentType: content_type,
+    size,
+    uploadedAt: uploaded_at,
+  }));
+
+export type DocumentExample = z.infer<typeof DocumentExampleSchema>;
+
+/** A Document Type's instruction and example files in use (ticket 11); none when left out. */
+const ExampleFields = {
+  instruction: z.string().default(""),
+  examples: z.array(DocumentExampleSchema).default([]),
+};
+
 /** A Document Type in Configuration, with where it is used (issues 40, 80). */
 export const ConfiguredDocumentTypeSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     needed_by_everyone: z.boolean(),
     usual_group: GroupSchema,
@@ -49,12 +80,16 @@ export const ConfiguredDocumentTypeSchema = z
       students: CountSchema,
       documents: CountSchema,
     }),
+    ...ExampleFields,
+    /** Every example file, counting the Bin: a type with any is never removed. */
+    example_count: CountSchema.default(0),
   })
-  .transform(({ needed_by_everyone, usual_group, used_by, ...rest }) => ({
+  .transform(({ needed_by_everyone, usual_group, used_by, example_count, ...rest }) => ({
     ...rest,
     neededByEveryone: needed_by_everyone,
     usualGroup: usual_group,
     usedBy: used_by,
+    exampleCount: example_count,
   }));
 
 export type ConfiguredDocumentType = z.infer<typeof ConfiguredDocumentTypeSchema>;
@@ -64,7 +99,7 @@ export const ConfiguredDocumentTypeListSchema = z
   .transform(({ results }) => results);
 
 /** A Document Type a Course also needs, by its id and name (issue 40). */
-export const NamedDocumentTypeSchema = z.object({ id: z.number().int(), name: z.string() });
+export const NamedDocumentTypeSchema = z.object({ id: RecordIdSchema, name: z.string() });
 
 export type NamedDocumentType = z.infer<typeof NamedDocumentTypeSchema>;
 
@@ -94,19 +129,19 @@ export const NewCountryDocumentSchema = z
 export type NewCountryDocument = z.infer<typeof NewCountryDocumentSchema>;
 
 /** One row of a Country's list as it is sent. */
-export type CountryListRow = { typeId: number; group: (typeof DOCUMENT_GROUPS)[number] };
+export type CountryListRow = { typeId: RecordId; group: (typeof DOCUMENT_GROUPS)[number] };
 
 /** The Application or Visa a Document is for, with the University it is about (spec 66). */
 const DocumentLinkedToSchema = z.object({
   kind: z.enum(DOCUMENT_LINK_KINDS),
-  id: z.number().int(),
+  id: RecordIdSchema,
   university: z.string(),
 });
 
 export type DocumentLinkedTo = z.infer<typeof DocumentLinkedToSchema>;
 
 /** A Staff member, or a Platform Admin with no Staff id (issue 27). */
-const ActorSchema = z.object({ id: z.number().int().nullable(), name: z.string() });
+const ActorSchema = z.object({ id: RecordIdSchema.nullable(), name: z.string() });
 
 /** Who put something in the Bin, when and why (issue 79). */
 const BinNoteSchema = z.object({
@@ -119,19 +154,19 @@ export type BinNote = z.infer<typeof BinNoteSchema>;
 
 /** A file named only: what it is opened by and shown as. */
 const FileNameSchema = z
-  .object({ id: z.number().int(), file_name: z.string() })
+  .object({ id: RecordIdSchema, file_name: z.string() })
   .transform(({ id, file_name }) => ({ id, fileName: file_name }));
 
 /** One file of a Document waiting in the Bin: its name and why; it can't be opened here. */
 const BinnedFileSchema = z
-  .object({ id: z.number().int(), file_name: z.string(), bin: BinNoteSchema })
+  .object({ id: RecordIdSchema, file_name: z.string(), bin: BinNoteSchema })
   .transform(({ id, file_name, bin }) => ({ id, fileName: file_name, bin }));
 
 export type BinnedFile = z.infer<typeof BinnedFileSchema>;
 
 /** A whole Document waiting in the Bin, shown greyed on the checklist (issue 79). */
 const BinnedDocumentSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   files: z.array(FileNameSchema),
   bin: BinNoteSchema,
 });
@@ -141,7 +176,7 @@ export type BinnedDocument = z.infer<typeof BinnedDocumentSchema>;
 /** One file of a Document (issue 78): its shown name, type and size, and who added it when. */
 const DocumentFileSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     file_name: z.string(),
     content_type: z.string(),
     size: z.number().int().nonnegative(),
@@ -165,7 +200,7 @@ export type DocumentFile = z.infer<typeof DocumentFileSchema>;
  */
 const StoredDocumentSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     files: z.array(DocumentFileSchema).nonempty(),
     /** Its files waiting in the Bin (issue 79). */
     binned_files: z.array(BinnedFileSchema).default([]),
@@ -200,6 +235,8 @@ const ChecklistItemSchema = z
     document: StoredDocumentSchema.nullable(),
     /** The type's Documents waiting in the Bin, newest first (issue 79). */
     in_bin: z.array(BinnedDocumentSchema).default([]),
+    /** What it should look like (Document Example, ticket 11). */
+    ...ExampleFields,
   })
   .transform((item) => ({
     documentType: item.document_type,
@@ -210,6 +247,8 @@ const ChecklistItemSchema = z
     state: item.state,
     document: item.document,
     inBin: item.in_bin,
+    instruction: item.instruction,
+    examples: item.examples,
   }));
 
 export type ChecklistItem = z.infer<typeof ChecklistItemSchema>;
@@ -223,8 +262,8 @@ export const ChecklistSchema = z
     /** An Admin's deletes skip the Bin (issue 79). */
     deletes_for_good: z.boolean().default(false),
     /** Who is looking, to offer "Take it out" on what they put in the Bin; null for a Platform Admin. */
-    viewer_id: z.number().int().nullable().default(null),
-    asked: z.array(z.number().int()),
+    viewer_id: RecordIdSchema.nullable().default(null),
+    asked: z.array(RecordIdSchema),
     items: z.array(ChecklistItemSchema),
   })
   .transform(({ can_change, deletes_for_good, viewer_id, ...rest }) => ({
@@ -238,7 +277,7 @@ export type Checklist = z.infer<typeof ChecklistSchema>;
 
 /** A file as an Application or Visa lists it: what it is opened by and shown as (issue 78). */
 export const NamedFileSchema = z
-  .object({ id: z.number().int(), file_name: z.string() })
+  .object({ id: RecordIdSchema, file_name: z.string() })
   .transform(({ id, file_name }) => ({ id, fileName: file_name }));
 
 export type NamedFile = z.infer<typeof NamedFileSchema>;
@@ -246,7 +285,7 @@ export type NamedFile = z.infer<typeof NamedFileSchema>;
 /** A Document as an Application or Visa lists it (spec 66), with every file. */
 export const LinkedDocumentSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     document_type: PersonSchema,
     files: z.array(NamedFileSchema).nonempty(),
     verification: z.enum(VERIFICATIONS),
@@ -256,7 +295,7 @@ export const LinkedDocumentSchema = z
 export type LinkedDocument = z.infer<typeof LinkedDocumentSchema>;
 
 /** An Application or Visa offered as a link when uploading, with the words to show. */
-export type DocumentLinkOption = { kind: DocumentLinkedTo["kind"]; id: number; label: string };
+export type DocumentLinkOption = { kind: DocumentLinkedTo["kind"]; id: RecordId; label: string };
 
 /** Mark a Document correct, or Rejected with the reason (spec 68). */
 export type DocumentCheck =
@@ -284,7 +323,7 @@ export type PaperworkCounts = z.infer<typeof PaperworkCountsSchema>;
 const PaperworkRowSchema = z
   .object({
     student: z.object({
-      id: z.number().int(),
+      id: RecordIdSchema,
       name: z.string(),
       stage: z.enum(Stage),
       country: z.enum(COUNTRIES),
@@ -328,8 +367,8 @@ export type PaperworkPage = z.infer<typeof PaperworkPageSchema>;
 const BinItemSchema = z
   .object({
     kind: z.enum(BIN_ITEM_KINDS),
-    document: PersonSchema,
-    student: PersonSchema,
+    document: z.object({ id: RecordIdSchema, name: z.string() }),
+    student: z.object({ id: RecordIdSchema, name: z.string() }),
     files: z.array(FileNameSchema).nonempty(),
     ...BinNoteSchema.shape,
   })
@@ -343,13 +382,36 @@ const BinItemSchema = z
 
 export type BinItem = z.infer<typeof BinItemSchema>;
 
+/** An example file in the Bin (ticket 11): its name and its Document Type. */
+export const BinnedDocumentExampleSchema = z
+  .object({
+    kind: z.literal("document_example"),
+    document_example: z.object({ id: RecordIdSchema, file_name: z.string() }),
+    document_type: PersonSchema,
+    ...BinNoteSchema.shape,
+  })
+  .transform(({ kind, document_example, document_type, by, at, reason }) => ({
+    kind,
+    example: { id: document_example.id, fileName: document_example.file_name },
+    documentType: document_type,
+    bin: { by, at, reason },
+  }));
+
+export type BinnedDocumentExample = z.infer<typeof BinnedDocumentExampleSchema>;
+
+/**
+ * Anything on the Bin tab: a Document, one of its files, a Course File (ticket 10) or a Document
+ * Example (ticket 11).
+ */
+export type BinEntry = BinItem | BinnedCourseFile | BinnedDocumentExample;
+
 /** One page of the Bin tab, newest first. */
 export const BinPageSchema = z
   .object({
     count: z.number().int().nonnegative(),
     page: z.number().int().positive(),
     page_size: z.number().int().positive(),
-    results: z.array(BinItemSchema),
+    results: z.array(z.union([BinItemSchema, BinnedCourseFileSchema, BinnedDocumentExampleSchema])),
   })
   .transform(({ page_size, results, ...rest }) => ({
     ...rest,
@@ -360,4 +422,4 @@ export const BinPageSchema = z
 export type BinPage = z.infer<typeof BinPageSchema>;
 
 /** A whole Document (`fileId` null) or one of its files: what the Bin acts on. */
-export type BinTarget = { documentId: number; fileId: number | null };
+export type BinTarget = { documentId: RecordId; fileId: RecordId | null };

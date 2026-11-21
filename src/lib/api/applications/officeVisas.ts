@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { COURSE_LEVELS } from "@/constants/catalogue";
 import { COUNTRIES } from "@/constants/students";
@@ -15,21 +17,21 @@ const COUNT = z.number().int().nonnegative();
 /** One row of the office-wide Visas list (spec 62b), in frontend naming. */
 const OfficeVisaSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     student: z.object({
-      id: z.number().int(),
+      id: RecordIdSchema,
       name: z.string(),
       phone: z.string(),
       email: z.string(),
     }),
-    university: z.object({ id: z.number().int(), name: z.string(), country: z.enum(COUNTRIES) }),
-    course: z.object({ id: z.number().int(), name: z.string(), level: z.enum(COURSE_LEVELS) }),
+    university: z.object({ id: RecordIdSchema, name: z.string(), country: z.enum(COUNTRIES) }),
+    course: z.object({ id: RecordIdSchema, name: z.string(), level: z.enum(COURSE_LEVELS) }),
     intake: INTAKE,
     status: z.enum(VISA_STATUSES),
     next_appointment: z.object({ kind: z.enum(APPOINTMENTS), at: APPOINTMENT_AT }).nullable(),
     started_on: z.iso.date(),
     documents: z.object({ done: COUNT, total: COUNT, rejected: COUNT, waiting: COUNT }),
-    assigned_counsellor: z.object({ id: z.number().int(), name: z.string() }).nullable(),
+    assigned_counsellor: z.object({ id: RecordIdSchema, name: z.string() }).nullable(),
   })
   .transform(({ next_appointment, started_on, assigned_counsellor, ...rest }) => ({
     ...rest,

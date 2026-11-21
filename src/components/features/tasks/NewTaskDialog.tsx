@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -27,7 +28,7 @@ import { useTaskAssignees, type AssigneesState } from "./useTaskAssignees";
 
 type NewTaskDialogProps = {
   /** Opened from a Student's profile: the Task is about them, and goes to their counsellor. */
-  student?: { id: number; name: string; counsellorId: number | null };
+  student?: { id: RecordId; name: string; counsellorId: RecordId | null };
   onClose: () => void;
   onCreated: (task: Task) => void;
 };
@@ -125,8 +126,8 @@ export function NewTaskDialog({ student, onClose, onCreated }: NewTaskDialogProp
 type TaskChoices = ReturnType<typeof useTaskChoices>;
 
 /** Who it's for, which Student, its priority and whether it's "Only me". */
-function useTaskChoices(student: NewTaskDialogProps["student"], myId: number) {
-  const [assigneeId, setAssigneeId] = useState(String(student?.counsellorId ?? myId));
+function useTaskChoices(student: NewTaskDialogProps["student"], myId: RecordId) {
+  const [assigneeId, setAssigneeId] = useState(student?.counsellorId ?? myId);
   const [about, setAbout] = useState<StudentChoice | null>(student ?? null);
   const [priority, setPriority] = useState<TaskPriority>(TaskPriority.Normal);
   const [isOnlyMe, setIsOnlyMe] = useState(false);
@@ -141,7 +142,7 @@ function useTaskChoices(student: NewTaskDialogProps["student"], myId: number) {
     setIsOnlyMe,
     /** What to send: an "Only me" Task is for me and about no Student, whatever was picked. */
     chosen: () => ({
-      assigneeId: isOnlyMe ? myId : Number(assigneeId),
+      assigneeId: isOnlyMe ? myId : assigneeId,
       studentId: isOnlyMe ? null : (about?.id ?? null),
       priority,
       isOnlyMe,
@@ -213,7 +214,7 @@ function AssigneeField({ assignees, value, onChange, errors }: AssigneeFieldProp
       label={TASK_TEXT.assignTo}
       name="assignee"
       options={assignees.people.map((person) => ({
-        value: String(person.id),
+        value: person.id,
         label: TASK_TEXT.personWithRole(person.name, ROLE_LABELS[person.role]),
       }))}
       value={value}

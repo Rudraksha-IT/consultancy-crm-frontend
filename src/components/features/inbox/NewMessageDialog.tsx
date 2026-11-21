@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useId, useState, type SubmitEvent } from "react";
 
 import { Button } from "@/components/ui/Button";
@@ -13,7 +14,7 @@ type NewMessageDialogProps = {
   isOpen: boolean;
   onClose: () => void;
   /** Called with the person picked, to open the conversation with them. */
-  onChosen: (personId: number) => void;
+  onChosen: (personId: RecordId) => void;
 };
 
 type PeopleState =
@@ -36,7 +37,7 @@ export function NewMessageDialog({ isOpen, onClose, onChosen }: NewMessageDialog
     event.preventDefault();
     if (picked === null) return;
     setChosen(null);
-    onChosen(Number(picked));
+    onChosen(picked);
   }
 
   return (
@@ -87,7 +88,7 @@ function PeoplePicker({ state, options, picked, onPick }: PeoplePickerProps) {
 function optionsOf(state: PeopleState): SelectOption[] {
   if (state.status !== "loaded") return [];
   return state.people.map((person) => ({
-    value: String(person.id),
+    value: person.id,
     label: person.jobTitle === "" ? person.name : `${person.name}, ${person.jobTitle}`,
   }));
 }

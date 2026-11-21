@@ -38,8 +38,33 @@ export const PLATFORM_TEAM_TEXT = {
 /** The Platform's Settings tab (issue 65). */
 export const PLATFORM_SETTINGS_TEXT = {
   title: "Settings",
-  intro: "How the product itself looks before anyone logs in.",
+  intro: "How the product itself looks before anyone logs in, and whether its email is working.",
   logoTitle: "Product logo",
   logoHelp:
     "Shown on the Platform login, the Central login and at the top of the Platform. A square or wide PNG, SVG or JPG works best.",
+} as const;
+
+/** Platform → Settings: is email working? (spec 2026-11-18 stories 3-4, ADR 0023). */
+export const PLATFORM_EMAIL_TEXT = {
+  title: "Email",
+  help: "Every email from every office goes out through the product's own email account. Its details are set only in the server's deploy values, never in the app.",
+  statusLabel: "Email:",
+  state: { working: "Working", failed: "Last test failed", untested: "Not tested yet" },
+  lastSent: (at: string) => `Last test sent ${at}`,
+  tried: (at: string) => `Tried ${at}`,
+  failed: "The test email couldn't be sent. Check the email values in the deploy.",
+  quote: (reference: string) => ` If you ask for help, quote reference ${reference}.`,
+  platformEmails: "Platform emails",
+  officeEmails: "Office emails",
+  sender: (name: string, address: string) => `${name} <${address}>`,
+  officeSender: (address: string) =>
+    `The office's name <${address}>, with Reply-To the office's contact email`,
+  send: "Send a test email",
+  sending: "Sending…",
+  goesTo: (email: string) => `It goes to you, at ${email}.`,
+  sent: (email: string) => `Test email sent to ${email}`,
+  sendFailed: "The test email failed",
+  tooMany: "Too many test emails. Try again in an hour.",
+  notStarted: "The test email couldn't be sent. Try again in a few minutes.",
+  loadFailed: "The email status couldn't be loaded.",
 } as const;

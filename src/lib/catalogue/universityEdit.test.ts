@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import type { University } from "@/lib/api";
 
 import {
@@ -10,30 +11,34 @@ import {
 } from "./universityEdit";
 
 const UNIVERSITY: University = {
-  id: 1,
+  id: uid(1),
   name: "Deakin University",
   country: "australia",
   archived: false,
   courses: [
     {
-      id: 11,
-      universityId: 1,
+      id: uid(11),
+      universityId: uid(1),
       name: "Master of IT",
       level: "master",
       intakes: ["2027-03"],
       archived: false,
-      documents: [{ id: 21, name: "CV" }],
+      documents: [{ id: uid(21), name: "CV" }],
       applications: 2,
+      files: [],
+      fileCount: 0,
     },
     {
-      id: 12,
-      universityId: 1,
+      id: uid(12),
+      universityId: uid(1),
       name: "Old diploma",
       level: "diploma",
       intakes: [],
       archived: true,
       documents: [],
       applications: 0,
+      files: [],
+      fileCount: 0,
     },
   ],
 };
@@ -59,14 +64,14 @@ describe("draftOf", () => {
       savedArchived: false,
     });
     expect(started.courses[0]).toMatchObject({
-      id: 11,
+      id: uid(11),
       name: "Master of IT",
-      documents: [21],
+      documents: [uid(21)],
       applications: 2,
       savedArchived: false,
       isDeleted: false,
     });
-    expect(started.courses[1]).toMatchObject({ id: 12, savedArchived: true });
+    expect(started.courses[1]).toMatchObject({ id: uid(12), savedArchived: true });
   });
 });
 
@@ -86,12 +91,12 @@ describe("toEditInput", () => {
       archived: false,
       courses: [
         {
-          id: 11,
+          id: uid(11),
           name: "Master of IT",
           level: "master",
           intakes: ["2027-03"],
           archived: false,
-          documents: [21],
+          documents: [uid(21)],
         },
         {
           id: null,
@@ -102,7 +107,7 @@ describe("toEditInput", () => {
           documents: [],
         },
       ],
-      deletedCourses: [12],
+      deletedCourses: [uid(12)],
     });
   });
 

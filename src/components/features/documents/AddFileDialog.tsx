@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { SaveDialog } from "@/components/features/students/profile/SaveDialog";
@@ -13,7 +14,7 @@ import type { AddingTo } from "./DocumentChecklist";
 import { uploadFailure } from "./uploadFailure";
 
 type AddFileDialogProps = {
-  studentId: number;
+  studentId: RecordId;
   studentName: string;
   /** The Document the files join. */
   addingTo: AddingTo;

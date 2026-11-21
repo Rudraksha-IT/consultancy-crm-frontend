@@ -12,9 +12,10 @@ import {
   setEmployeeTwoFactor,
 } from "./staff";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const SITA = {
-  id: 7,
+  id: uid(7),
   name: "Sita Sharma",
   email: "sita@acme.test",
   mobile: "9812345670",
@@ -45,7 +46,7 @@ describe("fetchEmployees", () => {
 
     expect(employees).toEqual([
       {
-        id: 7,
+        id: uid(7),
         name: "Sita Sharma",
         email: "sita@acme.test",
         mobile: "9812345670",
@@ -125,11 +126,11 @@ describe("changing an employee", () => {
   it("patches only the Role", async () => {
     const fetchFn = answering(jsonResponse({ ...SITA, role: "admin" }));
 
-    const employee = await changeEmployeeRole(7, "admin", fetchFn);
+    const employee = await changeEmployeeRole(uid(7), "admin", fetchFn);
 
     expect(employee.role).toBe("admin");
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/staff/7/",
+      `/api/staff/${uid(7)}/`,
       expect.objectContaining({ method: "PATCH", body: JSON.stringify({ role: "admin" }) }),
     );
   });
@@ -137,11 +138,11 @@ describe("changing an employee", () => {
   it("deactivates", async () => {
     const fetchFn = answering(jsonResponse({ ...SITA, status: "deactivated" }));
 
-    const employee = await deactivateEmployee(7, fetchFn);
+    const employee = await deactivateEmployee(uid(7), fetchFn);
 
     expect(employee.status).toBe("deactivated");
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/staff/7/deactivate/",
+      `/api/staff/${uid(7)}/deactivate/`,
       expect.objectContaining({ method: "POST" }),
     );
   });
@@ -151,22 +152,22 @@ describe("invites", () => {
   it("sends the code again", async () => {
     const fetchFn = answering(jsonResponse(SITA, 202));
 
-    await resendInvite(7, fetchFn);
+    await resendInvite(uid(7), fetchFn);
 
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/staff/7/invite/",
+      `/api/staff/${uid(7)}/invite/`,
       expect.objectContaining({ method: "POST" }),
     );
   });
 
   it("rejects with TooManyCodesError at the hourly limit", async () => {
-    await expect(resendInvite(7, answering(jsonResponse({}, 429)))).rejects.toBeInstanceOf(
+    await expect(resendInvite(uid(7), answering(jsonResponse({}, 429)))).rejects.toBeInstanceOf(
       TooManyCodesError,
     );
   });
 
   it("passes other failures on", async () => {
-    await expect(resendInvite(7, answering(jsonResponse({}, 500)))).rejects.toBeInstanceOf(
+    await expect(resendInvite(uid(7), answering(jsonResponse({}, 500)))).rejects.toBeInstanceOf(
       ApiRequestError,
     );
   });
@@ -174,16 +175,16 @@ describe("invites", () => {
   it("cancels with DELETE", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await cancelInvite(7, fetchFn);
+    await cancelInvite(uid(7), fetchFn);
 
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/staff/7/invite/",
+      `/api/staff/${uid(7)}/invite/`,
       expect.objectContaining({ method: "DELETE" }),
     );
   });
 
   it("fails a refused cancel", async () => {
-    await expect(cancelInvite(7, answering(jsonResponse({}, 400)))).rejects.toBeInstanceOf(
+    await expect(cancelInvite(uid(7), answering(jsonResponse({}, 400)))).rejects.toBeInstanceOf(
       ApiRequestError,
     );
   });
@@ -192,8 +193,8 @@ describe("invites", () => {
 describe("fetchCounsellorChoices", () => {
   it("returns Counsellors and Admins", async () => {
     const choices = [
-      { id: 1, name: "Asha", role: "admin" },
-      { id: 2, name: "Ram", role: "counsellor" },
+      { id: uid(1), name: "Asha", role: "admin" },
+      { id: uid(2), name: "Ram", role: "counsellor" },
     ];
 
     expect(await fetchCounsellorChoices(answering(jsonResponse(choices)))).toEqual(choices);
@@ -202,18 +203,20 @@ describe("fetchCounsellorChoices", () => {
 
 describe("fetchAssignedStudents", () => {
   it("returns the Students someone still counsels", async () => {
-    const fetchFn = answering(jsonResponse([{ id: 3, name: "Sita Karki", stage: "applying" }]));
+    const fetchFn = answering(
+      jsonResponse([{ id: uid(3), name: "Sita Karki", stage: "applying" }]),
+    );
 
-    const students = await fetchAssignedStudents(7, fetchFn);
+    const students = await fetchAssignedStudents(uid(7), fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/staff/7/assigned-students/");
-    expect(students).toEqual([{ id: 3, name: "Sita Karki", stage: "applying" }]);
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/staff/${uid(7)}/assigned-students/`);
+    expect(students).toEqual([{ id: uid(3), name: "Sita Karki", stage: "applying" }]);
   });
 
   it("refuses a Stage it doesn't know", async () => {
-    const fetchFn = answering(jsonResponse([{ id: 3, name: "Sita Karki", stage: "gone" }]));
+    const fetchFn = answering(jsonResponse([{ id: uid(3), name: "Sita Karki", stage: "gone" }]));
 
-    await expect(fetchAssignedStudents(7, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(fetchAssignedStudents(uid(7), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
@@ -221,11 +224,11 @@ describe("two-step login on Employees (issue 62)", () => {
   it("switches someone's two-step login on with a JSON true", async () => {
     const fetchFn = answering(jsonResponse({ ...SITA, two_factor_required: true }));
 
-    const saved = await setEmployeeTwoFactor(7, true, fetchFn);
+    const saved = await setEmployeeTwoFactor(uid(7), true, fetchFn);
 
     expect(saved.twoFactorRequired).toBe(true);
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/staff/7/two-factor/",
+      `/api/staff/${uid(7)}/two-factor/`,
       expect.objectContaining({ method: "PATCH", body: JSON.stringify({ required: true }) }),
     );
   });
@@ -233,18 +236,18 @@ describe("two-step login on Employees (issue 62)", () => {
   it("resets someone's two-step login with an empty body", async () => {
     const fetchFn = answering(jsonResponse({ ...SITA, two_factor_required: true }));
 
-    const saved = await resetEmployeeTwoFactor(7, fetchFn);
+    const saved = await resetEmployeeTwoFactor(uid(7), fetchFn);
 
     expect(saved.twoFactorSetUp).toBe(false);
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/staff/7/two-factor/reset/",
+      `/api/staff/${uid(7)}/two-factor/reset/`,
       expect.objectContaining({ method: "POST", body: "{}" }),
     );
   });
 
   it("refuses an answer that isn't an employee", async () => {
     await expect(
-      setEmployeeTwoFactor(7, true, answering(jsonResponse({ ok: true }))),
+      setEmployeeTwoFactor(uid(7), true, answering(jsonResponse({ ok: true }))),
     ).rejects.toThrow();
   });
 });

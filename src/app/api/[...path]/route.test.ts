@@ -11,6 +11,7 @@ import {
 
 import { DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT } from "./route";
 import { TEST_PRODUCT_DOMAIN, testHost } from "@/test/hosts";
+import { uid } from "@/test/ids";
 
 const TOKEN = "a-test-internal-token-that-is-32-chars-or-more";
 const BROWSER_HOST = `${testHost("acme")}:8080`;
@@ -20,7 +21,7 @@ const KIB = 1024;
 const MAX_BODY_BYTES = 1024 * KIB;
 // A Document upload: the 10 MB file plus room for the form around it.
 const MAX_UPLOAD_BYTES = 20 * 1024 * KIB + 64 * KIB;
-const UPLOAD_PATH = "/api/students/7/documents/";
+const UPLOAD_PATH = `/api/students/${uid(7)}/documents/`;
 // The office logo (issue 39): the 1 MB file plus room for the form around it.
 const MAX_LOGO_UPLOAD_BYTES = 1024 * KIB + 64 * KIB;
 const LOGO_UPLOAD_PATH = "/api/configuration/logo/";
@@ -143,6 +144,26 @@ function silenceStdout() {
 }
 
 let stdout: ReturnType<typeof silenceStdout>;
+
+/**
+ * Answer a call that waits for Django to come back (ticket 14) without the real 20 seconds:
+ * fake timers, moved on by `ms`, are used for it and put back afterwards.
+ */
+async function afterWaiting(call: () => Promise<Response>, ms = 20_000): Promise<Response> {
+  vi.useFakeTimers();
+  try {
+    const pending = call();
+    await vi.advanceTimersByTimeAsync(ms);
+    return await pending;
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
+const UPDATING = {
+  detail: "The app is being updated. Please try again in a moment.",
+  code: "updating",
+};
 
 beforeEach(() => {
   stdout = silenceStdout();
@@ -566,9 +587,12 @@ describe("request bodies", () => {
   });
 
   it.each([
-    ["adding files to a Document (issue 78)", "/api/students/7/documents/31/files/"],
-    ["an Offer Letter (issue 76)", "/api/students/7/offer-letters/"],
-    ["a visa letter (issue 77)", "/api/students/7/visas/21/letter/"],
+    [
+      "adding files to a Document (issue 78)",
+      `/api/students/${uid(7)}/documents/${uid(31)}/files/`,
+    ],
+    ["an Offer Letter (issue 76)", `/api/students/${uid(7)}/offer-letters/`],
+    ["a visa letter (issue 77)", `/api/students/${uid(7)}/visas/${uid(21)}/letter/`],
   ])("may be as large as a Document upload for %s", async (_case, path) => {
     const { sent } = fakeBackend();
 
@@ -616,6 +640,43 @@ describe("request bodies", () => {
     expect((await sentBody(sent)).length).toBe(MAX_LOGO_UPLOAD_BYTES);
   });
 
+  it("may be as large as a Course File on a Course's files path only (ticket 10)", async () => {
+    const { sent } = fakeBackend();
+    const size = 5 * 1024 * KIB + 64 * KIB;
+
+    const response = await POST(
+      incoming(`/api/catalogue/courses/${uid(12)}/files/`, {
+        method: "POST",
+        body: new Uint8Array(size),
+      }),
+    );
+    const tooBig = await POST(
+      incoming(`/api/catalogue/courses/${uid(12)}/files/`, {
+        method: "POST",
+        body: new Uint8Array(size + 1),
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect((await sentBody(sent)).length).toBe(size);
+    expect(tooBig.status).toBe(413);
+  });
+
+  it.each([
+    ["adding an example", `/api/configuration/document-types/${uid(4)}/examples/`],
+    ["replacing an example", `/api/configuration/document-examples/${uid(9)}/replace/`],
+  ])("may be as large as a Document Example when %s (ticket 11)", async (_case, path) => {
+    const { sent } = fakeBackend();
+    const size = 5 * 1024 * KIB + 64 * KIB;
+
+    const response = await POST(incoming(path, { method: "POST", body: new Uint8Array(size) }));
+    const tooBig = await POST(incoming(path, { method: "POST", body: new Uint8Array(size + 1) }));
+
+    expect(response.status).toBe(200);
+    expect((await sentBody(sent)).length).toBe(size);
+    expect(tooBig.status).toBe(413);
+  });
+
   it("are refused over the logo limit on the logo path", async () => {
     const { fetchFn } = fakeBackend();
 
@@ -631,15 +692,36 @@ describe("request bodies", () => {
   });
 
   it.each([
-    ["another path", "POST", "/api/students/7/note/"],
+    ["another path", "POST", `/api/students/${uid(7)}/note/`],
     ["the logo path with another method", "PATCH", LOGO_UPLOAD_PATH],
     ["a path that starts like the logo path", "POST", "/api/configuration/logo/x/"],
     ["the product logo's file path", "POST", "/api/platform/brand/logo/1/"],
-    ["a path that only looks like it", "POST", "/api/students/7/documents/../note/"],
-    ["a longer path", "POST", "/api/students/7/documents/1/link/"],
-    ["a file's link", "POST", "/api/students/7/documents/1/files/2/link/"],
-    ["a path that only looks like adding files", "POST", "/api/students/7/documents/x/files/"],
+    ["a path that only looks like it", "POST", `/api/students/${uid(7)}/documents/../note/`],
+    ["a longer path", "POST", `/api/students/${uid(7)}/documents/${uid(1)}/link/`],
+    ["a file's link", "POST", `/api/students/${uid(7)}/documents/${uid(1)}/files/${uid(2)}/link/`],
+    [
+      "a path that only looks like adding files",
+      "POST",
+      `/api/students/${uid(7)}/documents/x/files/`,
+    ],
+    ["a Student named by number, not UUID (ADR 0027)", "POST", "/api/students/7/documents/"],
     ["another method", "PUT", UPLOAD_PATH],
+    ["a Course File's rename", "POST", `/api/catalogue/course-files/${uid(3)}/`],
+    ["a Course named by number (ADR 0027)", "POST", "/api/catalogue/courses/12/files/"],
+    ["a Document Type named by number", "POST", "/api/configuration/document-types/4/examples/"],
+    ["an example named by number", "POST", "/api/configuration/document-examples/9/replace/"],
+    ["a path that only looks like a Course's files", "POST", "/api/catalogue/courses/x/files/"],
+    [
+      "a Document Type's instruction",
+      "PUT",
+      `/api/configuration/document-types/${uid(4)}/instruction/`,
+    ],
+    ["an example's own path", "POST", `/api/configuration/document-examples/${uid(9)}/`],
+    [
+      "a path that only looks like examples",
+      "POST",
+      "/api/configuration/document-types/x/examples/",
+    ],
   ])("keep the usual limit for %s", async (_case, method, path) => {
     const { fetchFn } = fakeBackend();
 
@@ -751,17 +833,17 @@ describe("refused calls", () => {
     }
   });
 
-  it("says the server can't be reached, without revealing its address", async () => {
+  it("says the app is being updated when Django can't be reached, without its address", async () => {
     vi.stubGlobal(
       "fetch",
       vi.fn(() => Promise.reject(new TypeError(`fetch failed: connect ECONNREFUSED ${BACKEND}`))),
     );
 
-    const response = await GET(incoming("/api/context/"));
+    const response = await afterWaiting(() => GET(incoming("/api/context/")));
     const text = await response.text();
 
-    expect(response.status).toBe(502);
-    expect(JSON.parse(text)).toEqual({ detail: "The server can't be reached." });
+    expect(response.status).toBe(503);
+    expect(JSON.parse(text)).toEqual(UPDATING);
     expect(text).not.toContain("backend");
     expect(text).not.toContain(TOKEN);
   });
@@ -777,6 +859,207 @@ describe("refused calls", () => {
     expect(JSON.parse(text)).toEqual({ detail: "Something went wrong." });
     expect(text).not.toContain("INTERNAL_API_TOKEN");
     expect(fetchFn).not.toHaveBeenCalled();
+  });
+});
+
+describe("while the app is being updated (ticket 14)", () => {
+  const down = () => Promise.reject(new TypeError(`fetch failed: connect ECONNREFUSED ${BACKEND}`));
+
+  it("tries a read again while Django is down and answers once it is back", async () => {
+    let tries = 0;
+    const fetchFn = vi.fn(() => {
+      tries += 1;
+      return tries < 4 ? down() : Promise.resolve(Response.json({ ok: true }));
+    });
+    vi.stubGlobal("fetch", fetchFn);
+
+    const response = await afterWaiting(() => GET(incoming("/api/students/")), 5_000);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+    expect(fetchFn).toHaveBeenCalledTimes(4);
+  });
+
+  it("waits longer each time, up to 2 seconds between tries", async () => {
+    const times: number[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        times.push(Date.now());
+        return down();
+      }),
+    );
+
+    await afterWaiting(() => GET(incoming("/api/students/")));
+
+    const gaps = times.slice(1).map((time, index) => time - (times[index] ?? 0));
+    expect(gaps.slice(0, 4)).toEqual([250, 500, 1000, 2000]);
+    expect(Math.max(...gaps)).toBe(2000);
+  });
+
+  it("gives up after 20 seconds with the updating answer", async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchFn = vi.fn(down);
+      vi.stubGlobal("fetch", fetchFn);
+      let isAnswered = false;
+
+      const pending = GET(incoming("/api/students/")).then((response) => {
+        isAnswered = true;
+        return response;
+      });
+      await vi.advanceTimersByTimeAsync(17_000);
+      expect(isAnswered).toBe(false);
+      await vi.advanceTimersByTimeAsync(3_000);
+      const response = await pending;
+
+      expect(response.status).toBe(503);
+      expect(response.headers.get("cache-control")).toBe("no-store");
+      expect(await response.json()).toEqual(UPDATING);
+      expect(fetchFn.mock.calls.length).toBeGreaterThan(5);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it.each(["POST", "PUT", "PATCH", "DELETE"])(
+    "never tries a change (%s) again, so nothing is saved twice",
+    async (method) => {
+      const fetchFn = vi.fn(down);
+      vi.stubGlobal("fetch", fetchFn);
+
+      const response = await afterWaiting(() =>
+        POST(incoming(`/api/students/${uid(7)}/`, { method, body: "{}", tokens: newTokens() })),
+      );
+
+      expect(response.status).toBe(503);
+      expect(await response.json()).toEqual(UPDATING);
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each([
+    { status: 502, body: "<html>Bad gateway</html>" },
+    { status: 504, body: "<html>Gateway timeout</html>" },
+    { status: 503, body: "<html>Service unavailable</html>" },
+  ])("treats a $status from something other than Django like no answer", async (answer) => {
+    let tries = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        tries += 1;
+        return Promise.resolve(
+          tries === 1
+            ? new Response(answer.body, { status: answer.status })
+            : Response.json({ ok: true }),
+        );
+      }),
+    );
+
+    const response = await afterWaiting(() => GET(incoming("/api/students/")), 1_000);
+
+    expect(response.status).toBe(200);
+    expect(tries).toBe(2);
+  });
+
+  it("relays Django's own 503 refusal at once (e.g. files can't be fetched)", async () => {
+    const { fetchFn } = fakeBackend(() =>
+      Response.json({ detail: "The files can't be fetched right now." }, { status: 503 }),
+    );
+
+    const response = await GET(incoming("/api/messages/attachable/"));
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ detail: "The files can't be fetched right now." });
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it("logs the path, the status and how long it waited, never a token or a body", async () => {
+    let tries = 0;
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        tries += 1;
+        return tries < 3 ? down() : Promise.resolve(Response.json({ secret: "student-data" }));
+      }),
+    );
+    const tokens = newTokens();
+
+    await afterWaiting(() => GET(incoming("/api/students/?q=sita", { tokens })), 2_000);
+
+    expect(loggedOfType("api")).toEqual([
+      expect.objectContaining({
+        url: "/api/students/",
+        method: "GET",
+        status: 200,
+        waited: "750ms",
+      }),
+    ]);
+    const text = JSON.stringify(logged());
+    expect(text).not.toContain(tokens.access);
+    expect(text).not.toContain("student-data");
+    expect(text).not.toContain("sita");
+    expect(text).not.toContain(BACKEND);
+  });
+
+  it("adds no wait to the log of a call Django answered at once", async () => {
+    fakeBackend();
+
+    await GET(incoming("/api/students/"));
+
+    expect(loggedOfType("api")[0]).not.toHaveProperty("waited");
+  });
+});
+
+describe("Django's health check (ticket 14)", () => {
+  it.each(["/api/health/", "/api/health", "/api/health/?x=1"])(
+    "is never forwarded from the browser (%s)",
+    async (path) => {
+      const { fetchFn } = fakeBackend();
+
+      const response = await GET(incoming(path));
+
+      expect(response.status).toBe(404);
+      expect(fetchFn).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe("a login that has ended (ticket 14)", () => {
+  it("is marked when the browser sent a login cookie", async () => {
+    fakeBackend(() => Response.json({ detail: "Not logged in." }, { status: 401 }));
+
+    const response = await GET(incoming("/api/context/", { tokens: newTokens() }));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("x-session-ended")).toBe("1");
+  });
+
+  it("is marked when the cookie no longer opens (a changed key)", async () => {
+    fakeBackend(() => Response.json({ detail: "Not logged in." }, { status: 401 }));
+    const request = incoming("/api/context/");
+    request.headers.append("cookie", "crm_auth=v1.not-a-sealed-value");
+
+    const response = await GET(request);
+
+    expect(response.headers.get("x-session-ended")).toBe("1");
+  });
+
+  it("is not marked for a visitor who never logged in", async () => {
+    fakeBackend(() => Response.json({ detail: "Not logged in." }, { status: 401 }));
+
+    const response = await GET(incoming("/api/context/"));
+
+    expect(response.status).toBe(401);
+    expect(response.headers.get("x-session-ended")).toBeNull();
+  });
+
+  it("is not marked on other refusals", async () => {
+    fakeBackend(() => Response.json({ detail: "Forbidden." }, { status: 403 }));
+
+    const response = await GET(incoming("/api/context/", { tokens: newTokens() }));
+
+    expect(response.headers.get("x-session-ended")).toBeNull();
   });
 });
 
@@ -847,9 +1130,9 @@ describe("logging", () => {
       vi.fn(() => Promise.reject(new TypeError(`fetch failed: connect ECONNREFUSED ${BACKEND}`))),
     );
 
-    await GET(incoming("/api/context/"));
+    await afterWaiting(() => GET(incoming("/api/context/")));
 
-    expect(loggedOfType("api")[0]).toMatchObject({ status: 502 });
+    expect(loggedOfType("api")[0]).toMatchObject({ status: 503 });
     expect(loggedOfType("error")[0]).toMatchObject({
       level: 50,
       url: "/api/context/",
@@ -865,7 +1148,7 @@ describe("logging", () => {
       vi.fn(() => Promise.reject(new TypeError(`fetch failed: connect ECONNREFUSED ${BACKEND}`))),
     );
 
-    await GET(incoming("/api/context/"));
+    await afterWaiting(() => GET(incoming("/api/context/")));
 
     const [entry] = loggedOfType("error");
     expect(entry?.correlationId).toBe(loggedOfType("api")[0]?.correlationId);
@@ -961,7 +1244,7 @@ describe("changes from another site (Origin check)", () => {
 });
 
 describe("logging in", () => {
-  const CONTEXT = { staff: { id: 1, name: "Sita" } };
+  const CONTEXT = { staff: { id: uid(1), name: "Sita" } };
 
   it("keeps the tokens in a sealed cookie and gives the browser the rest", async () => {
     fakeBackend(() => Response.json({ access: "acc", refresh: "ref", context: CONTEXT }));
@@ -1055,7 +1338,7 @@ describe.each([
   ["joining with an Invite Code", "/api/auth/join/complete/"],
   ["a Platform Admin entering an office with its one-time code", "/api/support-access/enter/"],
 ])("%s", (_name, PATH) => {
-  const CONTEXT = { staff: { id: 1, name: "Sita" } };
+  const CONTEXT = { staff: { id: uid(1), name: "Sita" } };
 
   it("logs the person in like a login: tokens in the sealed cookie, the rest to the browser", async () => {
     fakeBackend(() => Response.json({ access: "acc", refresh: "ref", context: CONTEXT }));
@@ -1230,7 +1513,7 @@ describe("an expired access token", () => {
 
     const response = await GET(incoming("/api/context/", { tokens: newTokens() }));
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(503);
     expect(response.headers.getSetCookie()).toEqual([]);
   });
 
@@ -1336,7 +1619,7 @@ describe("logging out", () => {
       incoming("/api/auth/logout/", { method: "POST", tokens: newTokens() }),
     );
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(503);
     expect(clearsTheCookie(response)).toBe(true);
   });
 
@@ -1507,7 +1790,7 @@ describe("changing my password or signing out my other devices (issue 38)", () =
       incoming("/api/me/password/", { method: "POST", body: "{}", tokens: newTokens() }),
     );
 
-    expect(response.status).toBe(502);
+    expect(response.status).toBe(503);
     expect(cookieTokens(response)?.access).toBe("renewed-acc");
   });
 });
@@ -1520,7 +1803,7 @@ describe("the Platform Admin's Account page (issue 59)", () => {
     "%s %s keeps the new Platform tokens and hides them from the browser",
     async (path, method) => {
       const tokens = newTokens("platform");
-      const admin = { id: 1, name: "Ramesh", email: "a@platform.test" };
+      const admin = { id: uid(1), name: "Ramesh", email: "a@platform.test" };
       const { sent } = fakeBackend(() =>
         Response.json({ access: "next-acc", refresh: "next-ref", platform_admin: admin }),
       );
@@ -1544,7 +1827,7 @@ describe("the Platform Admin's Account page (issue 59)", () => {
 
   it("relays GET /api/platform/me/ as an ordinary logged-in call", async () => {
     const tokens = newTokens("platform");
-    const admin = { platform_admin: { id: 1, name: "Ramesh", email: "a@platform.test" } };
+    const admin = { platform_admin: { id: uid(1), name: "Ramesh", email: "a@platform.test" } };
     fakeBackend(() => Response.json(admin));
 
     const response = await GET(incoming("/api/platform/me/", { tokens }));
@@ -1675,7 +1958,7 @@ describe("two-step login (issue 61)", () => {
   it.each(["/api/platform/auth/two-factor/confirm/", "/api/platform/auth/two-factor/verify/"])(
     "%s sends the cookie's challenge and keeps the tokens Django gives",
     async (path) => {
-      const admin = { id: 1, name: "Ramesh", email: "a@platform.test" };
+      const admin = { id: uid(1), name: "Ramesh", email: "a@platform.test" };
       const { sent } = fakeBackend(() =>
         Response.json({ access: "acc", refresh: "ref", platform_admin: admin }),
       );
@@ -1914,7 +2197,7 @@ describe("two-step login (issue 61)", () => {
     it.each(["/api/auth/two-factor/confirm/", "/api/auth/two-factor/verify/"])(
       "%s sends the cookie's challenge and keeps Staff tokens",
       async (path) => {
-        const context = { staff: { id: 3 } };
+        const context = { staff: { id: uid(3) } };
         const { sent } = fakeBackend(() =>
           Response.json({ access: "acc", refresh: "ref", context }),
         );
@@ -1988,11 +2271,11 @@ describe("two-step login (issue 61)", () => {
     });
 
     it("an Admin's switch and reset on Employees are ordinary calls", async () => {
-      const employee = { id: 4, two_factor_required: true };
+      const employee = { id: uid(4), two_factor_required: true };
       const { sent } = fakeBackend(() => Response.json(employee));
 
       const response = await POST(
-        incoming("/api/staff/4/two-factor/reset/", {
+        incoming(`/api/staff/${uid(4)}/two-factor/reset/`, {
           method: "POST",
           body: "{}",
           tokens: newTokens("staff"),
@@ -2039,7 +2322,7 @@ describe("the Platform's forgot password (issue 63)", () => {
 });
 
 describe("the browser a login comes from (issue 71)", () => {
-  const CONTEXT = { staff: { id: 1 } };
+  const CONTEXT = { staff: { id: uid(1) } };
   const CHROME =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36";
   const KNOWN_KEY = "0123456789abcdef0123456789abcdef";

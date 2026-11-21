@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useCallback, useState } from "react";
 
 import { useLoaded } from "@/components/features/home/useLoaded";
@@ -19,12 +20,12 @@ import { useToast } from "@/components/ui/useToast";
 import { FEE_TEXT } from "@/constants/fees";
 import { MESSAGES } from "@/constants/messages";
 import { PAYMENT_TEXT } from "@/constants/payments";
-import { fetchStudentFees, type Fee, type StudentFees as Fees } from "@/lib/api";
+import { describeFeeType, fetchStudentFees, type Fee, type StudentFees as Fees } from "@/lib/api";
 import { formatNpr } from "@/lib/money";
 
 import { FeeDialog } from "./FeeDialog";
 
-type Student = { id: number; name: string };
+type Student = { id: RecordId; name: string };
 
 type StudentFeesProps = {
   student: Student;
@@ -217,7 +218,7 @@ function FeeList({ fees, canChangeFees, onEdit }: FeeListProps) {
         {fees.fees.map((fee) => (
           <RowItem
             key={fee.id}
-            title={<span className="wrap-anywhere">{fee.purpose}</span>}
+            title={<span className="wrap-anywhere">{describeFeeType(fee.feeType, fee.note)}</span>}
             meta={<span data-fee-by="">{FEE_TEXT.addedBy(fee.addedBy.name)}</span>}
             hidesMetaOnPhone
             right={
@@ -234,7 +235,9 @@ function FeeList({ fees, canChangeFees, onEdit }: FeeListProps) {
                     }}
                   >
                     <span aria-hidden="true">{FEE_TEXT.edit}</span>
-                    <span className="sr-only">{FEE_TEXT.editFor(fee.purpose)}</span>
+                    <span className="sr-only">
+                      {FEE_TEXT.editFor(describeFeeType(fee.feeType, fee.note))}
+                    </span>
                   </Button>
                 )}
               </>

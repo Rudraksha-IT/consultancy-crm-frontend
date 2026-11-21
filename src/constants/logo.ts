@@ -8,7 +8,7 @@ export const MAX_LOGO_BYTES = 1024 * 1024;
 
 export const LOGO_TEXT = {
   title: "Office logo",
-  help: "Shown at the top of the menu and on receipts. A square or wide PNG, SVG or JPG works best.",
+  help: "Shown at the top of the menu and in emails. A square or wide PNG, SVG or JPG works best.",
   upload: "Upload a logo",
   change: "Change logo",
   remove: "Remove",

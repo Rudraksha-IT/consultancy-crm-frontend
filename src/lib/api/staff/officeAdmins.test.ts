@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { addConsultancyAdmin, fetchProductDomain } from "./officeAdmins";
 import { jsonResponse } from "../core/test-helpers";
@@ -36,12 +37,12 @@ describe("addConsultancyAdmin (issue 64)", () => {
   it("posts the name and email to the office's admins and returns the invited Admin", async () => {
     const fetchFn = answering(jsonResponse({ ...ADMIN, status: "invited" }, 201));
 
-    await expect(addConsultancyAdmin(3, ADMIN, fetchFn)).resolves.toEqual({
+    await expect(addConsultancyAdmin(uid(3), ADMIN, fetchFn)).resolves.toEqual({
       ...ADMIN,
       status: "invited",
     });
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/platform/consultancies/3/admins/",
+      `/api/platform/consultancies/${uid(3)}/admins/`,
       expect.objectContaining({ method: "POST", body: JSON.stringify(ADMIN) }),
     );
   });
@@ -49,7 +50,7 @@ describe("addConsultancyAdmin (issue 64)", () => {
   it("rejects with the refused fields", async () => {
     const refused = jsonResponse({ email: ["Someone here already uses this email."] }, 400);
 
-    const error: unknown = await addConsultancyAdmin(3, ADMIN, answering(refused)).catch(
+    const error: unknown = await addConsultancyAdmin(uid(3), ADMIN, answering(refused)).catch(
       (caught: unknown) => caught,
     );
 
@@ -59,7 +60,7 @@ describe("addConsultancyAdmin (issue 64)", () => {
   it("rejects with the reason when the office can't take an Admin", async () => {
     const refused = jsonResponse({ detail: "A Terminated Consultancy can't be changed." }, 400);
 
-    const error: unknown = await addConsultancyAdmin(3, ADMIN, answering(refused)).catch(
+    const error: unknown = await addConsultancyAdmin(uid(3), ADMIN, answering(refused)).catch(
       (caught: unknown) => caught,
     );
 
@@ -70,13 +71,13 @@ describe("addConsultancyAdmin (issue 64)", () => {
 
   it("passes any other failure through", async () => {
     await expect(
-      addConsultancyAdmin(3, ADMIN, answering(jsonResponse({ detail: "no" }, 403))),
+      addConsultancyAdmin(uid(3), ADMIN, answering(jsonResponse({ detail: "no" }, 403))),
     ).rejects.toBeInstanceOf(ApiRequestError);
   });
 
   it("refuses an answer of the wrong shape", async () => {
     await expect(
-      addConsultancyAdmin(3, ADMIN, answering(jsonResponse({ access: "x" }, 201))),
+      addConsultancyAdmin(uid(3), ADMIN, answering(jsonResponse({ access: "x" }, 201))),
     ).rejects.toThrow();
   });
 });

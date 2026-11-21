@@ -10,12 +10,13 @@ import {
 } from "./batches";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const BATCH = {
-  id: 3,
+  id: uid(3),
   name: "IELTS Morning",
   test_type: "ielts",
-  teacher: { id: 9, name: "Gita Lama" },
+  teacher: { id: uid(9), name: "Gita Lama" },
   time_slot: "7:00-8:30 AM",
   starts_on: "2026-10-05",
   ends_on: "2026-12-04",
@@ -26,10 +27,10 @@ const BATCH = {
 };
 
 const BATCH_IN_FRONTEND_NAMING = {
-  id: 3,
+  id: uid(3),
   name: "IELTS Morning",
   testType: "ielts",
-  teacher: { id: 9, name: "Gita Lama" },
+  teacher: { id: uid(9), name: "Gita Lama" },
   timeSlot: "7:00-8:30 AM",
   startsOn: "2026-10-05",
   endsOn: "2026-12-04",
@@ -42,15 +43,15 @@ const BATCH_IN_FRONTEND_NAMING = {
 const WITH_STUDENTS = {
   ...BATCH,
   students: [
-    { id: 7, name: "Sita Gurung", attended_percent: null },
-    { id: 8, name: "Ram Shrestha", attended_percent: 92 },
+    { id: uid(7), name: "Sita Gurung", attended_percent: null },
+    { id: uid(8), name: "Ram Shrestha", attended_percent: 92 },
   ],
 };
 
 const NEW_BATCH = {
   name: "IELTS Morning",
   testType: "ielts",
-  teacherId: 9,
+  teacherId: uid(9),
   timeSlot: "7:00-8:30 AM",
   startsOn: "2026-10-05",
   endsOn: "2026-12-04",
@@ -59,7 +60,7 @@ const NEW_BATCH = {
 const NEW_BATCH_BODY = {
   name: "IELTS Morning",
   test_type: "ielts",
-  teacher: 9,
+  teacher: uid(9),
   time_slot: "7:00-8:30 AM",
   starts_on: "2026-10-05",
   ends_on: "2026-12-04",
@@ -110,20 +111,20 @@ describe("fetchBatch", () => {
   it("GETs one class with its Students", async () => {
     const fetchFn = answering(jsonResponse(WITH_STUDENTS));
 
-    const batch = await fetchBatch(3, fetchFn);
+    const batch = await fetchBatch(uid(3), fetchFn);
 
-    expect(sent(fetchFn).path).toBe("/api/batches/3/");
+    expect(sent(fetchFn).path).toBe(`/api/batches/${uid(3)}/`);
     expect(batch.students).toEqual([
-      { id: 7, name: "Sita Gurung", attendedPercent: null },
-      { id: 8, name: "Ram Shrestha", attendedPercent: 92 },
+      { id: uid(7), name: "Sita Gurung", attendedPercent: null },
+      { id: uid(8), name: "Ram Shrestha", attendedPercent: 92 },
     ]);
   });
 
   it("refuses an attendance over 100%", async () => {
-    const students = [{ id: 7, name: "Sita Gurung", attended_percent: 101 }];
+    const students = [{ id: uid(7), name: "Sita Gurung", attended_percent: 101 }];
     const fetchFn = answering(jsonResponse({ ...BATCH, students }));
 
-    await expect(fetchBatch(3, fetchFn)).rejects.toThrow();
+    await expect(fetchBatch(uid(3), fetchFn)).rejects.toThrow();
   });
 });
 
@@ -143,10 +144,10 @@ describe("createBatch and saveBatch", () => {
   it("PUTs the whole class to save it", async () => {
     const fetchFn = answering(jsonResponse(WITH_STUDENTS));
 
-    await saveBatch(3, NEW_BATCH, fetchFn);
+    await saveBatch(uid(3), NEW_BATCH, fetchFn);
 
     const { path, init } = sent(fetchFn);
-    expect(path).toBe("/api/batches/3/");
+    expect(path).toBe(`/api/batches/${uid(3)}/`);
     expect(init?.method).toBe("PUT");
     expect(sentBody(fetchFn)).toEqual(NEW_BATCH_BODY);
   });
@@ -174,7 +175,7 @@ describe("createBatch and saveBatch", () => {
   it("rejects with the refusal when not allowed", async () => {
     const fetchFn = answering(jsonResponse({ detail: "No." }, 403));
 
-    await expect(saveBatch(3, NEW_BATCH, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(saveBatch(uid(3), NEW_BATCH, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
@@ -182,17 +183,19 @@ describe("adding and removing Students", () => {
   it("POSTs the Student to the class", async () => {
     const fetchFn = answering(jsonResponse(WITH_STUDENTS, 201));
 
-    const batch = await addStudentToBatch(3, 7, fetchFn);
+    const batch = await addStudentToBatch(uid(3), uid(7), fetchFn);
 
-    expect(sent(fetchFn).path).toBe("/api/batches/3/students/");
-    expect(sentBody(fetchFn)).toEqual({ student: 7 });
+    expect(sent(fetchFn).path).toBe(`/api/batches/${uid(3)}/students/`);
+    expect(sentBody(fetchFn)).toEqual({ student: uid(7) });
     expect(batch.students).toHaveLength(2);
   });
 
   it("names why a Student can't be added", async () => {
     const fetchFn = answering(jsonResponse({ student: ["Already in this class."] }, 400));
 
-    const error: unknown = await addStudentToBatch(3, 7, fetchFn).catch((e: unknown) => e);
+    const error: unknown = await addStudentToBatch(uid(3), uid(7), fetchFn).catch(
+      (e: unknown) => e,
+    );
 
     expect(error instanceof InvalidFieldsError && error.fieldErrors).toEqual({
       studentId: ["Already in this class."],
@@ -202,26 +205,28 @@ describe("adding and removing Students", () => {
   it("DELETEs the Student from the class", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await removeStudentFromBatch(3, 7, fetchFn);
+    await removeStudentFromBatch(uid(3), uid(7), fetchFn);
 
     const { path, init } = sent(fetchFn);
-    expect(path).toBe("/api/batches/3/students/7/");
+    expect(path).toBe(`/api/batches/${uid(3)}/students/${uid(7)}/`);
     expect(init?.method).toBe("DELETE");
   });
 
   it("rejects when the Student can't be removed", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Not found." }, 404));
 
-    await expect(removeStudentFromBatch(3, 7, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(removeStudentFromBatch(uid(3), uid(7), fetchFn)).rejects.toBeInstanceOf(
+      ApiRequestError,
+    );
   });
 });
 
 describe("fetchEnrolledStudents", () => {
   it("GETs one page of Students with their classes", async () => {
     const student = {
-      id: 7,
+      id: uid(7),
       name: "Sita Gurung",
-      batches: [{ id: 3, name: "IELTS Morning" }],
+      batches: [{ id: uid(3), name: "IELTS Morning" }],
       attended_percent: null,
     };
     const fetchFn = answering(jsonResponse(pageOf([student])));
@@ -231,9 +236,9 @@ describe("fetchEnrolledStudents", () => {
     expect(sent(fetchFn).path).toBe("/api/batches/students/?page=1");
     expect(page.students).toEqual([
       {
-        id: 7,
+        id: uid(7),
         name: "Sita Gurung",
-        batches: [{ id: 3, name: "IELTS Morning" }],
+        batches: [{ id: uid(3), name: "IELTS Morning" }],
         attendedPercent: null,
       },
     ]);
@@ -242,9 +247,9 @@ describe("fetchEnrolledStudents", () => {
 
 describe("fetchBatchTeachers", () => {
   it("GETs who can teach", async () => {
-    const fetchFn = answering(jsonResponse([{ id: 9, name: "Gita Lama" }]));
+    const fetchFn = answering(jsonResponse([{ id: uid(9), name: "Gita Lama" }]));
 
-    expect(await fetchBatchTeachers(fetchFn)).toEqual([{ id: 9, name: "Gita Lama" }]);
+    expect(await fetchBatchTeachers(fetchFn)).toEqual([{ id: uid(9), name: "Gita Lama" }]);
     expect(sent(fetchFn).path).toBe("/api/batches/teachers/");
   });
 

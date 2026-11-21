@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 
 import { CourseSchema, UniversitySchema, type Course, type University } from "./catalogueTypes";
@@ -10,13 +12,13 @@ const INTAKE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 /** One Course on a University's edit page; `id` is null for a new one (issue 92). */
 export type CourseEditInput = {
-  id: number | null;
+  id: RecordId | null;
   name: string;
   level: string;
   intakes: readonly string[];
   archived: boolean;
   /** The Required documents ticked: Document Type ids. */
-  documents: readonly number[];
+  documents: readonly RecordId[];
 };
 
 /** Everything a University's edit page saves at once. */
@@ -26,7 +28,7 @@ export type UniversityEditInput = {
   archived: boolean;
   courses: readonly CourseEditInput[];
   /** Archived Courses to delete on this save. */
-  deletedCourses: readonly number[];
+  deletedCourses: readonly RecordId[];
 };
 
 export type UniversityEditField = "name" | "country";
@@ -80,7 +82,7 @@ const EditRefusalSchema = z
 const DetailSchema = z.object({ detail: z.string() });
 
 /** One University with every Course, archived ones too (the edit page). */
-export function fetchUniversity(id: number, fetchFn: typeof fetch = fetch): Promise<University> {
+export function fetchUniversity(id: RecordId, fetchFn: typeof fetch = fetch): Promise<University> {
   return getJson(API_PATHS.catalogueUniversity(id), UniversitySchema, fetchFn);
 }
 
@@ -89,7 +91,7 @@ export function fetchUniversity(id: number, fetchFn: typeof fetch = fetch): Prom
  * `UniversityEditRefusedError` when the server names what to fix.
  */
 export async function saveUniversityEdit(
-  id: number,
+  id: RecordId,
   input: UniversityEditInput,
   fetchFn: typeof fetch = fetch,
 ): Promise<University> {
@@ -113,7 +115,7 @@ export async function saveUniversityEdit(
  * Delete an archived University and its Courses. Rejects with `CatalogueRefusedError` when the
  * server says why not (not archived, or something uses it).
  */
-export async function deleteUniversity(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export async function deleteUniversity(id: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   try {
     await sendWithoutBody("DELETE", API_PATHS.catalogueUniversity(id), fetchFn);
   } catch (error) {
@@ -123,7 +125,7 @@ export async function deleteUniversity(id: number, fetchFn: typeof fetch = fetch
 
 /** Make a Course's Intakes exactly these (the list page's add and remove). */
 export function setCourseIntakes(
-  id: number,
+  id: RecordId,
   intakes: readonly string[],
   fetchFn: typeof fetch = fetch,
 ): Promise<Course> {

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -18,11 +19,11 @@ const LOGO_ANSWER = { logo: { url: "/api/consultancy/logo/1/", show_name: true }
 const MB = 1024 * 1024;
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["configuration"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -67,7 +68,7 @@ describe("OfficeLogoSettings", () => {
 
     expect(
       within(section).getByText(
-        "Shown at the top of the menu and on receipts. A square or wide PNG, SVG or JPG works best.",
+        "Shown at the top of the menu and in emails. A square or wide PNG, SVG or JPG works best.",
       ),
     ).toBeInTheDocument();
     const preview = within(section).getByTestId("logo-preview");

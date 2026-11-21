@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,7 +12,7 @@ vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(q
 const navigate = vi.hoisted(() => vi.fn<(path: string) => void>());
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 
-const ADMIN = { id: 1, name: "Platform Ops", email: "ops@platform.test" };
+const ADMIN = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 
 async function continueWith(email: string): Promise<void> {
   const user = userEvent.setup();
@@ -167,5 +168,48 @@ describe.each(THEME_CASES)("PlatformLoginForm in the $name Theme", ({ config, mo
     await continueWith("ops@platform.test");
     expect(await screen.findByLabelText("Password")).toBeVisible();
     expect(screen.getByRole("link", { name: "Forgot your password?" })).toBeVisible();
+  });
+
+  describe("after the login ended (ticket 14)", () => {
+    it("says the Platform Admin was logged out", () => {
+      query.current = "session=ended&next=%2Fplatform%2Fadmins";
+      backend();
+
+      render(<PlatformLoginForm />);
+
+      expect(screen.getByRole("status")).toHaveTextContent(
+        "You've been logged out. Please log in again.",
+      );
+    });
+
+    it("brings them back to the page they were on", async () => {
+      query.current = "session=ended&next=%2Fplatform%2Fadmins";
+      backend(
+        on("POST", "/api/platform/auth/login/next/", { next: "password" }),
+        on("POST", "/api/platform/auth/login/", { platform_admin: ADMIN }),
+      );
+      render(<PlatformLoginForm />);
+
+      await logInWith("ops@platform.test", "Kathmandu!2026");
+
+      await waitFor(() => {
+        expect(navigate).toHaveBeenCalledWith("/platform/admins");
+      });
+    });
+
+    it("opens the Platform's list for a page that isn't on this site", async () => {
+      query.current = "session=ended&next=%2F%2Fevil.example";
+      backend(
+        on("POST", "/api/platform/auth/login/next/", { next: "password" }),
+        on("POST", "/api/platform/auth/login/", { platform_admin: ADMIN }),
+      );
+      render(<PlatformLoginForm />);
+
+      await logInWith("ops@platform.test", "Kathmandu!2026");
+
+      await waitFor(() => {
+        expect(navigate).toHaveBeenCalledWith("/platform");
+      });
+    });
   });
 });

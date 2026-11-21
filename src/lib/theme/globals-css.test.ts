@@ -31,10 +31,9 @@ describe("globals.css", () => {
     expect(themedValues(declarations(':root[data-theme="dark"]'))).toEqual(defaults.dark);
   });
 
-  it("uses the same dark values when following a dark device", () => {
-    expect(declarations(':root:not([data-theme="light"])')).toEqual(
-      declarations(':root[data-theme="dark"]'),
-    );
+  it("never follows a dark device: dark only by choice", () => {
+    expect(css).not.toContain("prefers-color-scheme");
+    expect(css).not.toContain(':root:not([data-theme="light"])');
   });
 
   it("defines every token Tailwind maps to a class", () => {

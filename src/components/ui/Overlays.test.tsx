@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -164,7 +165,7 @@ describe("Menu", () => {
       <Menu
         label="More"
         items={[
-          { label: "Edit details", href: "/students/7/edit", icon: "edit" },
+          { label: "Edit details", href: `/students/${uid(7)}/edit`, icon: "edit" },
           { label: "Mark as Lost", onSelect: vi.fn(), isDestructive: true },
         ]}
       />,
@@ -172,7 +173,7 @@ describe("Menu", () => {
     await userEvent.click(screen.getByRole("button", { name: "More" }));
 
     const link = screen.getByRole("menuitem", { name: "Edit details" });
-    expect(link).toHaveAttribute("href", "/students/7/edit");
+    expect(link).toHaveAttribute("href", `/students/${uid(7)}/edit`);
     expect(link).toHaveFocus();
     await userEvent.keyboard("{ArrowDown}");
     expect(screen.getByRole("menuitem", { name: "Mark as Lost" })).toHaveFocus();

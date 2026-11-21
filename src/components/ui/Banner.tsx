@@ -1,5 +1,10 @@
+"use client";
+
 import clsx from "clsx";
 import type { ReactNode } from "react";
+
+import { SESSION_TEXT } from "@/constants/session";
+import { useAppUpdating } from "@/hooks/useAppUpdating";
 
 import { Icon, type IconName } from "./Icon";
 
@@ -20,8 +25,24 @@ type BannerProps = {
   icon?: IconName;
 };
 
-/** A message across the page. Problems are announced as alerts, everything else as a status. */
-export function Banner({ children, tone = "neutral", action, icon = "alert" }: BannerProps) {
+/**
+ * A message across the page. Problems are announced as alerts, everything else as a status.
+ * While the app is being updated (ticket 14), a problem says so as a warning instead of the
+ * screen's generic "couldn't load" or "couldn't save": the call failed only because of it.
+ */
+export function Banner(props: BannerProps) {
+  const isUpdating = useAppUpdating();
+  if (isUpdating && props.tone === "problem") {
+    return (
+      <BannerBox tone="warning" icon="clock" action={props.action}>
+        {SESSION_TEXT.updating}
+      </BannerBox>
+    );
+  }
+  return <BannerBox {...props} />;
+}
+
+function BannerBox({ children, tone = "neutral", action, icon = "alert" }: BannerProps) {
   return (
     <div
       role={tone === "problem" ? "alert" : "status"}

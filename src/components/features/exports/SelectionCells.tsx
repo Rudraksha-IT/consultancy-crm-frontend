@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useRef } from "react";
 
 import { SELECTION_TEXT } from "@/constants/exports";
@@ -89,7 +90,7 @@ export function SelectAllStrip({ selection }: { selection: RowSelection }) {
   );
 }
 
-type SelectRowCellProps = { selection: RowSelection; id: number; name: string };
+type SelectRowCellProps = { selection: RowSelection; id: RecordId; name: string };
 
 /** The first cell of a row: its checkbox, named after the row (e.g. "Select Sita Karki"). */
 export function SelectRowCell({ selection, id, name }: SelectRowCellProps) {

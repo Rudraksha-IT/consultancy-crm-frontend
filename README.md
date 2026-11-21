@@ -1,5 +1,7 @@
 # Consultancy CRM — frontend
 
+The rules and decisions this repository follows (ADRs, logging, design system, glossary) are in [`docs/`](docs/README.md).
+
 Next.js (App Router) + TypeScript (strict). The browser calls the API on the **same origin**
 (`/api/...`); this app's server forwards those calls to Django, which is never reachable from the
 browser (ADR 0002; see "Run the whole app" below for how a request flows).
@@ -82,7 +84,18 @@ No commit may credit an AI tool as co-author (`Co-authored-by: Claude ...`, `...
 `scripts/check-commit-message.mjs` enforces both rules as the `commit-msg` hook, which
 `pnpm install` sets up (husky). The `commit-messages` job in
 `.github/workflows/ci.yml` checks every pushed commit again, so skipping the hook doesn't help;
-make it a required check on `main` (Settings → Branches) so nothing merges without it.
+`main` and `dev` take changes only through pull requests, with `commit-messages`, `checks`
+and `pr-title` required (the branch ruleset). Branch from `dev`; merge into `dev` with **Squash
+and merge**, so the pull request title becomes the commit (`.github/workflows/pr-title.yml` checks
+it by the same rules). Release with a pull request from `dev` into `main`, merged with **Create a
+merge commit**.
+
+**Checks on your machine.** Every commit runs prettier and eslint on the changed files and the
+type check (incremental, so it is quick after the first run). Pushing runs nothing more, so it is
+fast; `pnpm check` runs format, lint and types over the whole repo when you want it. Tests and
+the build run on CI for every pull request. Tests always run in the office's time zone
+(`Asia/Kathmandu`, set in `vitest.config.mts`), so a local `pnpm test` gives the same result as
+CI. Never skip the hooks with `--no-verify`.
 
 ## Run the whole app
 
