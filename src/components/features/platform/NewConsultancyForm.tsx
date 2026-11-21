@@ -16,8 +16,10 @@ import { TextField } from "@/components/ui/TextField";
 import { ConsultancyStatus, SETUP_TEXT, STATUS_TEXT } from "@/constants/consultancyStatus";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
+import { OFFICE_DETAILS_TEXT } from "@/constants/officeDetails";
 import type { NewConsultancy } from "@/lib/api";
 import { tomorrowIso } from "@/lib/dates";
+import { contactEmailRefusal } from "@/lib/officeDetails/officeDetails";
 import { DEFAULT_THEME, type ThemeConfig } from "@/lib/theme";
 
 import { useCreateConsultancy } from "./useCreateConsultancy";
@@ -25,8 +27,8 @@ import { useProductDomain } from "./useProductDomain";
 
 /**
  * Create a Consultancy: its name, the front part of its address (the rest is the backend's
- * product domain), starting Status and colours. No Admin: they are added from its row once it is
- * set up (issue 64).
+ * product domain), its contact email (where replies to its emails go, spec 119), starting Status
+ * and colours. No Admin: they are added from its row once it is set up (issue 64).
  */
 export function NewConsultancyForm() {
   const { isSubmitting, fieldErrors, error, submit } = useCreateConsultancy();
@@ -35,10 +37,20 @@ export function NewConsultancyForm() {
   const [theme, setTheme] = useState<ThemeConfig>(DEFAULT_THEME);
   const [status, setStatus] = useState<StartingStatus>(ConsultancyStatus.Evaluation);
   const [tomorrow] = useState(() => tomorrowIso());
+  const [emailRefusal, setEmailRefusal] = useState<string | null>(null);
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
-    void submit(readConsultancy(new FormData(event.currentTarget), theme, status));
+    const form = event.currentTarget;
+    const consultancy = readConsultancy(new FormData(form), theme, status);
+    const refusal = contactEmailRefusal(consultancy.contactEmail);
+    setEmailRefusal(refusal);
+    if (refusal === null) {
+      void submit(consultancy);
+      return;
+    }
+    const input = form.elements.namedItem(CONTACT_EMAIL);
+    if (input instanceof HTMLInputElement) input.focus();
   }
 
   return (
@@ -55,7 +67,7 @@ export function NewConsultancyForm() {
           </Link>
         }
       />
-      <form onSubmit={handleSubmit} className="grid gap-8">
+      <form noValidate onSubmit={handleSubmit} className="grid gap-8">
         <Panel isPadded>
           <div className="tablet:grid-cols-2 grid gap-5">
             <TextField label={LABELS.consultancyName} name="name" errors={fieldErrors.name} />
@@ -71,6 +83,15 @@ export function NewConsultancyForm() {
               suffix={productDomain === null ? "" : `.${productDomain}`}
               hint={addressHint(subdomain, productDomain)}
               errors={fieldErrors.subdomain}
+            />
+            <TextField
+              label={OFFICE_DETAILS_TEXT.contactEmail}
+              name={CONTACT_EMAIL}
+              type="email"
+              autoComplete="off"
+              placeholder={OFFICE_DETAILS_TEXT.contactEmailPlaceholder}
+              hint={OFFICE_DETAILS_TEXT.contactEmailHint}
+              errors={emailErrors(emailRefusal, fieldErrors.contactEmail)}
             />
             <p className="text-secondary text-ink-2 tablet:col-span-2 flex items-start gap-2">
               <Icon name="users" />
@@ -131,6 +152,8 @@ export function NewConsultancyForm() {
 
 type StartingStatus = NewConsultancy["status"];
 
+const CONTACT_EMAIL = "contactEmail";
+
 const STARTING_STATUSES = [
   { value: ConsultancyStatus.Evaluation, label: STATUS_TEXT.evaluationForDays },
   { value: ConsultancyStatus.Active, label: STATUS_TEXT.startActive },
@@ -144,10 +167,19 @@ function readConsultancy(
   return {
     name: readField(form, "name"),
     subdomain: readField(form, "subdomain"),
+    contactEmail: readField(form, CONTACT_EMAIL).trim(),
     theme,
     status,
     paidUntil: readField(form, "paidUntil"),
   };
+}
+
+/** The contact email's refusal found before sending, else the server's words for it. */
+function emailErrors(
+  refusal: string | null,
+  fromServer: string[] | undefined,
+): string[] | undefined {
+  return refusal === null ? fromServer : [refusal];
 }
 
 /** How to type the address, and the full address it makes once something is typed. */

@@ -62,6 +62,7 @@ const ACME_OVERVIEW = {
 const NEW_CONSULTANCY = {
   name: "Acme Education",
   subdomain: "acme",
+  contactEmail: "info@acme.com",
   theme: THEME,
   status: "evaluation",
   paidUntil: "",
@@ -178,6 +179,7 @@ describe("createConsultancy", () => {
         body: JSON.stringify({
           name: "Acme Education",
           subdomain: "acme",
+          contact_email: "info@acme.com",
           status: "evaluation",
           theme: THEME,
         }),
@@ -203,6 +205,7 @@ describe("createConsultancy", () => {
       jsonResponse(
         {
           subdomain: ["This subdomain is already taken."],
+          contact_email: ["Enter a real email address."],
           admin_email: ["Not a field any more."],
         },
         400,
@@ -216,6 +219,7 @@ describe("createConsultancy", () => {
     expect(error).toBeInstanceOf(InvalidFieldsError);
     expect(error).toHaveProperty("fieldErrors", {
       subdomain: ["This subdomain is already taken."],
+      contactEmail: ["Enter a real email address."],
     });
   });
 

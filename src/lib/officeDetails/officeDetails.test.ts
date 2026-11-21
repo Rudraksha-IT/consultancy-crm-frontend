@@ -1,6 +1,11 @@
 import { NO_OFFICE_DETAILS } from "@/lib/api";
 
-import { footerLines, refusedOfficeDetails, tidyOfficeDetails } from "./officeDetails";
+import {
+  contactEmailRefusal,
+  footerLines,
+  refusedOfficeDetails,
+  tidyOfficeDetails,
+} from "./officeDetails";
 
 const FULL = {
   contactEmail: "info@himal.com",
@@ -24,10 +29,37 @@ describe("tidyOfficeDetails", () => {
   });
 });
 
+describe("contactEmailRefusal", () => {
+  it("accepts one real address", () => {
+    expect(contactEmailRefusal("info@himal.com")).toBeNull();
+  });
+
+  it("asks for an empty one", () => {
+    expect(contactEmailRefusal("")).toBe("Enter the office's contact email.");
+  });
+
+  it.each(["info", "a@b.com, c@d.com", '"Himal" <info@himal.com>', `${"a".repeat(250)}@himal.com`])(
+    "refuses %s",
+    (email) => {
+      expect(contactEmailRefusal(email)).toBe(
+        "Enter a real email address, like info@youroffice.com.",
+      );
+    },
+  );
+});
+
 describe("refusedOfficeDetails", () => {
-  it("accepts every field filled in, and every field empty", () => {
+  it("accepts every field filled in, and every field but the contact email empty", () => {
     expect(refusedOfficeDetails(FULL)).toEqual({});
-    expect(refusedOfficeDetails(NO_OFFICE_DETAILS)).toEqual({});
+    expect(refusedOfficeDetails({ ...NO_OFFICE_DETAILS, contactEmail: FULL.contactEmail })).toEqual(
+      {},
+    );
+  });
+
+  it("refuses an empty contact email: replies must always reach the office", () => {
+    expect(refusedOfficeDetails(NO_OFFICE_DETAILS)).toEqual({
+      contactEmail: ["Enter the office's contact email."],
+    });
   });
 
   it.each([

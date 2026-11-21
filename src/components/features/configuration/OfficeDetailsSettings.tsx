@@ -36,8 +36,8 @@ const ORDER: readonly (keyof OfficeDetails)[] = [
 ];
 
 /**
- * Configuration → General → Office details (spec stories 11-16): the contact email (needed before
- * anyone can email a Student; replies go there), phone, two address lines and website, with the
+ * Configuration → General → Office details (spec stories 11-16, 120): the contact email (required;
+ * replies go there), phone, two address lines and website, with the
  * email footer they make. Saving shows them across the app at once; the page stays where it was.
  */
 export function OfficeDetailsSettings() {
@@ -61,7 +61,7 @@ export function OfficeDetailsSettings() {
       const saved = await saveOfficeDetails(tidy);
       setOfficeDetails(saved);
       setDetails(saved.officeDetails);
-      showToast(saved.hasContactEmail ? TEXT.saved : TEXT.savedWithoutEmail);
+      showToast(TEXT.saved);
     } catch (error) {
       if (error instanceof InvalidFieldsError) {
         const refused = refusedByServer(error.fieldErrors);

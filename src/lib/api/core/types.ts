@@ -235,6 +235,8 @@ export type ConsultancyOverview = z.infer<typeof ConsultancyOverviewSchema>;
 export type NewConsultancy = {
   name: string;
   subdomain: string;
+  /** Where replies to the office's emails go (spec 119); required. */
+  contactEmail: string;
   theme: ThemeConfig;
   /** Evaluation (14 days), or Active paid up to `paidUntil` ("YYYY-MM-DD"). */
   status: typeof ConsultancyStatus.Evaluation | typeof ConsultancyStatus.Active;
@@ -247,6 +249,7 @@ export type NewConsultancyField = Exclude<keyof NewConsultancy, "theme">;
 export const NEW_CONSULTANCY_API_FIELDS = {
   name: "name",
   subdomain: "subdomain",
+  contactEmail: "contact_email",
   status: "status",
   paidUntil: "paid_until",
 } as const satisfies Record<NewConsultancyField, string>;

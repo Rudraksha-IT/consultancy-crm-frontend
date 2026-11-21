@@ -52,14 +52,31 @@ const FIELDS: readonly (keyof OfficeDetails)[] = [
   "website",
 ];
 
-/** Why each tidied field can't be saved; empty fields are always fine. */
+/**
+ * Why each tidied field can't be saved. The contact email is required (spec 120: replies must
+ * always reach the office); the other fields may be empty.
+ */
 export function refusedOfficeDetails(details: OfficeDetails): OfficeDetailsErrors {
   const errors: OfficeDetailsErrors = {};
   for (const field of FIELDS) {
-    const value = details[field];
-    if (value !== "" && !CHECKS[field].isFine(value)) errors[field] = [CHECKS[field].refusal];
+    const found =
+      field === "contactEmail"
+        ? contactEmailRefusal(details[field])
+        : optionalRefusal(field, details[field]);
+    if (found !== null) errors[field] = [found];
   }
   return errors;
+}
+
+/** Why a tidied contact email can't be used (empty, or not one real address); null when fine. */
+export function contactEmailRefusal(email: string): string | null {
+  if (email === "") return TEXT.contactEmailMissing;
+  return CHECKS.contactEmail.isFine(email) ? null : CHECKS.contactEmail.refusal;
+}
+
+/** Why an optional field can't be saved; empty is always fine. */
+function optionalRefusal(field: keyof OfficeDetails, value: string): string | null {
+  return value === "" || CHECKS[field].isFine(value) ? null : CHECKS[field].refusal;
 }
 
 function fitsAddressLine(line: string): boolean {

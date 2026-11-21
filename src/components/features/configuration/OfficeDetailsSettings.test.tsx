@@ -96,7 +96,7 @@ describe("OfficeDetailsSettings", () => {
       ),
     ).toBeInTheDocument();
     expect(form.getByLabelText("Contact email")).toHaveAccessibleDescription(
-      "Needed before anyone can email a Student. Replies go here.",
+      "Where replies from Students and staff go.",
     );
     expect(form.getByLabelText("Phone (optional)")).toHaveAttribute("type", "tel");
     expect(form.getByLabelText("Website (optional)")).toHaveAccessibleDescription(
@@ -166,21 +166,28 @@ describe("OfficeDetailsSettings", () => {
     expect(saveButton()).toHaveFocus();
   });
 
-  it("says emails to Students stay off when saved without a contact email", async () => {
-    backend(
-      on("PUT", PATH, {
-        office_details: { ...SAVED_API, contact_email: "" },
-        has_contact_email: false,
-      }),
-    );
+  it("refuses an emptied contact email before sending, and focuses it", async () => {
+    const fetchFn = backend();
     renderSection(SAVED);
 
     await fillIn({ "Contact email": "" });
     await userEvent.setup().click(saveButton());
 
-    expect(
-      await screen.findByText("Saved. Emails to Students stay off until you add a contact email."),
-    ).toBeInTheDocument();
+    const field = screen.getByLabelText("Contact email");
+    expect(field).toHaveAccessibleDescription("Enter the office's contact email.");
+    expect(field).toHaveFocus();
+    expect(callsTo(fetchFn, "PUT", PATH)).toHaveLength(0);
+  });
+
+  it("shows the server's words when it refuses an empty contact email", async () => {
+    backend(on("PUT", PATH, { contact_email: ["The office needs a contact email."] }, 400));
+    renderSection(SAVED);
+
+    await userEvent.setup().click(saveButton());
+
+    expect(await screen.findByLabelText("Contact email")).toHaveAccessibleDescription(
+      "The office needs a contact email.",
+    );
   });
 
   it("refuses wrong details before sending, naming each one, and focuses the first", async () => {
@@ -207,7 +214,7 @@ describe("OfficeDetailsSettings", () => {
     backend(
       on("PUT", PATH, { website: ["The website must start with https:// or http://."] }, 400),
     );
-    renderSection();
+    renderSection(SAVED);
 
     await fillIn({ Website: "https://acme.com" });
     await userEvent.setup().click(saveButton());
