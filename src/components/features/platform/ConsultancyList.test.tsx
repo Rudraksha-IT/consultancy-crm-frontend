@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -10,7 +11,7 @@ import { ConsultancyList } from "./ConsultancyList";
 import { testHost } from "@/test/hosts";
 
 const ACME = {
-  id: 3,
+  id: uid(3),
   name: "Acme Education",
   subdomain: "acme",
   host: testHost("acme"),
@@ -23,7 +24,7 @@ const ACME = {
 };
 
 const CEDAR = {
-  id: 5,
+  id: uid(5),
   name: "Cedar Abroad",
   subdomain: "cedar",
   host: testHost("cedar"),
@@ -36,7 +37,7 @@ const CEDAR = {
 };
 
 const BETA = {
-  id: 4,
+  id: uid(4),
   name: "Beta Overseas",
   subdomain: "beta",
   host: testHost("beta"),
@@ -62,10 +63,10 @@ type Answers = {
 function answerWith({ list, status, features, colours, retry }: Answers): typeof fetch {
   const answers: Record<string, () => Answer> = {
     "/api/platform/consultancies/": typeof list === "function" ? list : () => list,
-    "/api/platform/consultancies/3/retry-setup/": () => retry ?? jsonResponse({}, 500),
+    [`/api/platform/consultancies/${uid(3)}/retry-setup/`]: () => retry ?? jsonResponse({}, 500),
     "/api/platform/support-visits/": () => jsonResponse([]),
-    "/api/platform/consultancies/3/modules/": () => features ?? jsonResponse({}, 500),
-    "/api/platform/consultancies/3/theme/": () => colours ?? jsonResponse({}, 500),
+    [`/api/platform/consultancies/${uid(3)}/modules/`]: () => features ?? jsonResponse({}, 500),
+    [`/api/platform/consultancies/${uid(3)}/theme/`]: () => colours ?? jsonResponse({}, 500),
   };
   const fetchFn = vi.fn<typeof fetch>().mockImplementation((path) => {
     const answer = typeof path === "string" ? answers[path] : undefined;
@@ -175,7 +176,7 @@ describe("ConsultancyList", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       const call = vi
         .mocked(fetchFn)
-        .mock.calls.find(([path]) => path === "/api/platform/consultancies/3/theme/");
+        .mock.calls.find(([path]) => path === `/api/platform/consultancies/${uid(3)}/theme/`);
       expect(call?.[1]?.method).toBe("PUT");
     });
 
@@ -199,7 +200,7 @@ describe("ConsultancyList", () => {
       expect(
         vi
           .mocked(fetchFn)
-          .mock.calls.some(([path]) => path === "/api/platform/consultancies/3/theme/"),
+          .mock.calls.some(([path]) => path === `/api/platform/consultancies/${uid(3)}/theme/`),
       ).toBe(false);
     });
   });
@@ -301,7 +302,7 @@ describe("ConsultancyList", () => {
       await userEvent.click(screen.getByRole("button", { name: "Save features" }));
 
       expect(fetchFn).toHaveBeenCalledWith(
-        "/api/platform/consultancies/3/modules/",
+        `/api/platform/consultancies/${uid(3)}/modules/`,
         expect.objectContaining({
           method: "PUT",
           body: JSON.stringify({
@@ -406,7 +407,7 @@ describe("ConsultancyList", () => {
       await userEvent.click(dialog().getByRole("button", { name: "Save status" }));
 
       expect(fetchFn).toHaveBeenCalledWith(
-        "/api/platform/consultancies/3/status/",
+        `/api/platform/consultancies/${uid(3)}/status/`,
         expect.objectContaining({
           method: "POST",
           body: JSON.stringify({ status: "past_due", reason: "Invoice 12" }),
@@ -432,7 +433,7 @@ describe("ConsultancyList", () => {
       await userEvent.type(reason, "Invoice 12{Control>}{Enter}{/Control}");
 
       expect(fetchFn).toHaveBeenCalledWith(
-        "/api/platform/consultancies/3/status/",
+        `/api/platform/consultancies/${uid(3)}/status/`,
         expect.objectContaining({
           body: JSON.stringify({ status: "past_due", reason: "Invoice 12" }),
         }),
@@ -453,7 +454,7 @@ describe("ConsultancyList", () => {
       await userEvent.click(dialog().getByRole("button", { name: "Save status" }));
 
       expect(fetchFn).toHaveBeenCalledWith(
-        "/api/platform/consultancies/5/status/",
+        `/api/platform/consultancies/${uid(5)}/status/`,
         expect.objectContaining({
           body: JSON.stringify({ status: "active", reason: "", paid_until: "2099-12-31" }),
         }),
@@ -467,7 +468,7 @@ describe("ConsultancyList", () => {
       await userEvent.click(dialog().getByRole("button", { name: "Save status" }));
 
       expect(fetchFn).toHaveBeenCalledWith(
-        "/api/platform/consultancies/5/status/",
+        `/api/platform/consultancies/${uid(5)}/status/`,
         expect.objectContaining({
           body: JSON.stringify({
             status: "evaluation",
@@ -546,7 +547,7 @@ describe("ConsultancyList", () => {
       await userEvent.click(dialog().getByRole("button", { name: "Terminate" }));
 
       expect(fetchFn).toHaveBeenCalledWith(
-        "/api/platform/consultancies/3/status/",
+        `/api/platform/consultancies/${uid(3)}/status/`,
         expect.objectContaining({
           body: JSON.stringify({ status: "terminated", reason: "Left" }),
         }),
@@ -573,7 +574,7 @@ describe("ConsultancyList", () => {
       await userEvent.click(dialog().getByRole("button", { name: "Save status" }));
 
       expect(fetchFn).toHaveBeenCalledWith(
-        "/api/platform/consultancies/3/status/",
+        `/api/platform/consultancies/${uid(3)}/status/`,
         expect.objectContaining({
           body: JSON.stringify({ status: "suspended", reason: "<img src=x onerror=alert(1)>" }),
         }),
@@ -590,7 +591,7 @@ describe("Add admin (issue 64)", () => {
       on("GET", "/api/platform/support-visits/", []),
       on(
         "POST",
-        "/api/platform/consultancies/3/admins/",
+        `/api/platform/consultancies/${uid(3)}/admins/`,
         { name: "Sita Sharma", email: "sita@acme.test", status: "invited" },
         201,
       ),
@@ -720,7 +721,7 @@ describe("Offices being set up (issue 60)", () => {
     await userEvent.click(row.getByRole("button", { name: "Try again" }));
 
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/platform/consultancies/3/retry-setup/",
+      `/api/platform/consultancies/${uid(3)}/retry-setup/`,
       expect.objectContaining({ method: "POST" }),
     );
     expect(await screen.findByText("Setting up Acme Education again")).toBeInTheDocument();
@@ -770,7 +771,7 @@ describe.each(THEME_CASES)("ConsultancyList in the $name Theme", ({ config, mode
         ACME,
         CEDAR,
         BETA,
-        { ...ACME, id: 9, name: "Delta", status: "suspended" },
+        { ...ACME, id: uid(9), name: "Delta", status: "suspended" },
       ]),
     });
     renderList();

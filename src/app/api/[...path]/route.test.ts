@@ -1803,7 +1803,7 @@ describe("the Platform Admin's Account page (issue 59)", () => {
     "%s %s keeps the new Platform tokens and hides them from the browser",
     async (path, method) => {
       const tokens = newTokens("platform");
-      const admin = { id: 1, name: "Ramesh", email: "a@platform.test" };
+      const admin = { id: uid(1), name: "Ramesh", email: "a@platform.test" };
       const { sent } = fakeBackend(() =>
         Response.json({ access: "next-acc", refresh: "next-ref", platform_admin: admin }),
       );
@@ -1827,7 +1827,7 @@ describe("the Platform Admin's Account page (issue 59)", () => {
 
   it("relays GET /api/platform/me/ as an ordinary logged-in call", async () => {
     const tokens = newTokens("platform");
-    const admin = { platform_admin: { id: 1, name: "Ramesh", email: "a@platform.test" } };
+    const admin = { platform_admin: { id: uid(1), name: "Ramesh", email: "a@platform.test" } };
     fakeBackend(() => Response.json(admin));
 
     const response = await GET(incoming("/api/platform/me/", { tokens }));
@@ -1958,7 +1958,7 @@ describe("two-step login (issue 61)", () => {
   it.each(["/api/platform/auth/two-factor/confirm/", "/api/platform/auth/two-factor/verify/"])(
     "%s sends the cookie's challenge and keeps the tokens Django gives",
     async (path) => {
-      const admin = { id: 1, name: "Ramesh", email: "a@platform.test" };
+      const admin = { id: uid(1), name: "Ramesh", email: "a@platform.test" };
       const { sent } = fakeBackend(() =>
         Response.json({ access: "acc", refresh: "ref", platform_admin: admin }),
       );

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,7 +12,7 @@ vi.mock("next/navigation", () => ({ useSearchParams: () => new URLSearchParams(q
 const navigate = vi.hoisted(() => vi.fn<(path: string) => void>());
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 
-const ADMIN = { id: 1, name: "Platform Ops", email: "ops@platform.test" };
+const ADMIN = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 
 async function continueWith(email: string): Promise<void> {
   const user = userEvent.setup();

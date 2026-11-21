@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -9,7 +10,7 @@ import { PlatformAdminsPage } from "./PlatformAdminsPage";
 
 const PATH = "/api/platform/admins/";
 const ME = {
-  id: 1,
+  id: uid(1),
   name: "Platform Ops",
   email: "ops@platform.test",
   status: "active",
@@ -19,7 +20,7 @@ const ME = {
 };
 const SAM = {
   ...ME,
-  id: 2,
+  id: uid(2),
   name: "Sam Rai",
   email: "sam@platform.test",
   two_factor_required: false,
@@ -28,7 +29,7 @@ const SAM = {
 };
 const RITA = {
   ...SAM,
-  id: 3,
+  id: uid(3),
   name: "Rita Shrestha",
   email: "rita@platform.test",
   status: "invited",
@@ -120,7 +121,7 @@ describe("PlatformAdminsPage (issue 65)", () => {
   it("sends the code again to someone invited", async () => {
     const fetchFn = backend(
       on("GET", PATH, [ME, RITA]),
-      on("POST", `${PATH}3/resend/`, { detail: "A new code is on its way." }),
+      on("POST", `${PATH}${uid(3)}/resend/`, { detail: "A new code is on its way." }),
     );
     renderPage();
 
@@ -131,13 +132,13 @@ describe("PlatformAdminsPage (issue 65)", () => {
     );
 
     expect(await screen.findByText("A new code is on its way to Rita Shrestha")).toBeVisible();
-    expect(callsTo(fetchFn, "POST", `${PATH}3/resend/`)).toHaveLength(1);
+    expect(callsTo(fetchFn, "POST", `${PATH}${uid(3)}/resend/`)).toHaveLength(1);
   });
 
   it("deactivates someone after a warning, and shows it", async () => {
     const fetchFn = backend(
       on("GET", PATH, [ME, SAM]),
-      on("POST", `${PATH}2/deactivate/`, { ...SAM, status: "deactivated" }),
+      on("POST", `${PATH}${uid(2)}/deactivate/`, { ...SAM, status: "deactivated" }),
     );
     renderPage();
     const user = userEvent.setup();
@@ -152,7 +153,7 @@ describe("PlatformAdminsPage (issue 65)", () => {
     expect(await screen.findByText("Sam Rai deactivated")).toBeVisible();
     expect(within(rowOf("Sam Rai")).getByText("Deactivated")).toBeVisible();
     expect(within(rowOf("Sam Rai")).getByRole("button", { name: "Reactivate" })).toBeVisible();
-    expect(callsTo(fetchFn, "POST", `${PATH}2/deactivate/`)).toHaveLength(1);
+    expect(callsTo(fetchFn, "POST", `${PATH}${uid(2)}/deactivate/`)).toHaveLength(1);
   });
 
   it("shows why a deactivation was refused, and closes the warning with Escape", async () => {
@@ -160,7 +161,7 @@ describe("PlatformAdminsPage (issue 65)", () => {
       on("GET", PATH, [ME, SAM]),
       on(
         "POST",
-        `${PATH}2/deactivate/`,
+        `${PATH}${uid(2)}/deactivate/`,
         { detail: "At least one active Platform Admin must stay." },
         400,
       ),
@@ -201,7 +202,7 @@ describe("PlatformAdminsPage (issue 65)", () => {
     const OLD = { ...SAM, status: "deactivated" };
     const fetchFn = backend(
       on("GET", PATH, [ME, OLD]),
-      on("POST", `${PATH}2/reactivate/`, { ...SAM, status: "active" }),
+      on("POST", `${PATH}${uid(2)}/reactivate/`, { ...SAM, status: "active" }),
     );
     renderPage();
 
@@ -212,13 +213,13 @@ describe("PlatformAdminsPage (issue 65)", () => {
     expect(await screen.findByText("Sam Rai reactivated")).toBeVisible();
     expect(within(rowOf("Sam Rai")).getByText("Active")).toBeVisible();
     expect(within(rowOf("Sam Rai")).getByRole("button", { name: "Deactivate" })).toBeVisible();
-    expect(callsTo(fetchFn, "POST", `${PATH}2/reactivate/`)).toHaveLength(1);
+    expect(callsTo(fetchFn, "POST", `${PATH}${uid(2)}/reactivate/`)).toHaveLength(1);
   });
 
   it("says a reactivated invite gets a new code", async () => {
     backend(
       on("GET", PATH, [ME, { ...RITA, status: "deactivated" }]),
-      on("POST", `${PATH}3/reactivate/`, RITA),
+      on("POST", `${PATH}${uid(3)}/reactivate/`, RITA),
     );
     renderPage();
 
@@ -237,7 +238,7 @@ describe("PlatformAdminsPage (issue 65)", () => {
   it("says when reactivating fails", async () => {
     backend(
       on("GET", PATH, [ME, { ...SAM, status: "deactivated" }]),
-      on("POST", `${PATH}2/reactivate/`, {}, 500),
+      on("POST", `${PATH}${uid(2)}/reactivate/`, {}, 500),
     );
     renderPage();
 
@@ -274,7 +275,12 @@ describe.each(THEME_CASES)("PlatformAdminsPage in the $name Theme", ({ config, m
 
   it("shows each status as a chip with its word", async () => {
     backend(
-      on("GET", PATH, [ME, SAM, RITA, { ...SAM, id: 4, name: "Old Hand", status: "deactivated" }]),
+      on("GET", PATH, [
+        ME,
+        SAM,
+        RITA,
+        { ...SAM, id: uid(4), name: "Old Hand", status: "deactivated" },
+      ]),
     );
     renderPage();
 

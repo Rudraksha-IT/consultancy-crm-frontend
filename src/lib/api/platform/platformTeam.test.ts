@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import {
   ApiRequestError,
   InvalidCodeError,
@@ -20,7 +21,7 @@ import {
 import { jsonResponse } from "../core/test-helpers";
 
 const ROW = {
-  id: 2,
+  id: uid(2),
   name: "Rita Shrestha",
   email: "rita@platform.test",
   status: "invited",
@@ -29,7 +30,7 @@ const ROW = {
   is_me: false,
 };
 const ADMIN = {
-  id: 2,
+  id: uid(2),
   name: "Rita Shrestha",
   email: "rita@platform.test",
   status: "invited",
@@ -94,18 +95,21 @@ describe("the Platform Admins tab (issue 65)", () => {
 
   it("sends the code again and deactivates, with the reason when refused", async () => {
     const resend = answering(jsonResponse({ detail: "A new code is on its way." }));
-    await resendPlatformAdminCode(2, resend);
-    expect(call(resend)).toMatchObject({ path: "/api/platform/admins/2/resend/", method: "POST" });
+    await resendPlatformAdminCode(uid(2), resend);
+    expect(call(resend)).toMatchObject({
+      path: `/api/platform/admins/${uid(2)}/resend/`,
+      method: "POST",
+    });
 
     const deactivate = answering(jsonResponse({ ...ROW, status: "deactivated" }));
-    await expect(deactivatePlatformAdmin(2, deactivate)).resolves.toMatchObject({
+    await expect(deactivatePlatformAdmin(uid(2), deactivate)).resolves.toMatchObject({
       status: "deactivated",
     });
-    expect(call(deactivate).path).toBe("/api/platform/admins/2/deactivate/");
+    expect(call(deactivate).path).toBe(`/api/platform/admins/${uid(2)}/deactivate/`);
 
     const refused = await caught(
       deactivatePlatformAdmin(
-        1,
+        uid(1),
         answering(jsonResponse({ detail: "You can't deactivate yourself." }, 400)),
       ),
     );
@@ -118,9 +122,11 @@ describe("reactivatePlatformAdmin (issue 65)", () => {
   it("posts to reactivate and returns their row", async () => {
     const fetchFn = answering(jsonResponse({ ...ROW, status: "active" }));
 
-    await expect(reactivatePlatformAdmin(2, fetchFn)).resolves.toMatchObject({ status: "active" });
+    await expect(reactivatePlatformAdmin(uid(2), fetchFn)).resolves.toMatchObject({
+      status: "active",
+    });
     expect(call(fetchFn)).toMatchObject({
-      path: "/api/platform/admins/2/reactivate/",
+      path: `/api/platform/admins/${uid(2)}/reactivate/`,
       method: "POST",
     });
   });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import type { RecordId } from "@/lib/recordId";
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import { CONSULTANCY_STATUSES } from "@/constants/consultancyStatus";
@@ -24,9 +24,9 @@ export const SUPPORT_REASON_MAX_LENGTH = 500;
 /** One Support Access visit, as the Platform lists it (never shown to the office). */
 export const SupportVisitSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     platform_admin: z.object({ name: z.string().min(1) }),
-    consultancy: z.object({ id: z.number().int(), name: z.string().min(1) }),
+    consultancy: z.object({ id: RecordIdSchema, name: z.string().min(1) }),
     reason: z.string(),
     consultancy_status: z.enum(CONSULTANCY_STATUSES),
     started_at: MomentSchema,
@@ -67,7 +67,7 @@ export type SupportField = "reason" | "detail";
  * Platform, and its one-time entry code is used on the office's own address.
  */
 export async function startSupportVisit(
-  consultancyId: number,
+  consultancyId: RecordId,
   reason: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<StartedVisit> {

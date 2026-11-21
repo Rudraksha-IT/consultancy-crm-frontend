@@ -20,7 +20,7 @@ import {
 const SECRET = "JBSWY3DPEHPK3PXPJBSWY3DPEHPK3PXP";
 const URI = `otpauth://totp/Consultancy%20CRM:ops%40platform.test?secret=${SECRET}&issuer=Consultancy%20CRM`;
 const CODES = Array.from({ length: 10 }, (_, n) => `abcd-efgh-jk${"mnpqrstuvw"[n] ?? "x"}m`);
-const ADMIN = { id: 1, name: "Platform Ops", email: "ops@platform.test" };
+const ADMIN = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 
 function answering(response: Response) {
   return vi.fn<typeof fetch>().mockResolvedValue(response);

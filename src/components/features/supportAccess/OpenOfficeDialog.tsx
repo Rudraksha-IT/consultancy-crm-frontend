@@ -16,11 +16,12 @@ import {
 } from "@/lib/api";
 
 import { entryUrl } from "./officeAddress";
+import type { RecordId } from "@/lib/recordId";
 
 const FORM_ID = "open-office";
 
 type OpenOfficeDialogProps = {
-  office: { id: number; name: string };
+  office: { id: RecordId; name: string };
   onClose: () => void;
   /** Where the browser goes with the visit; the office's own address by default. */
   onOpened?: (started: StartedVisit) => void;

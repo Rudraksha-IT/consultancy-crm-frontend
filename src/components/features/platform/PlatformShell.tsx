@@ -55,7 +55,7 @@ type PlatformFrameProps = {
 function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
   const [admin, setAdmin] = useState(loaded);
   const current = useMemo(() => ({ admin, setAdmin }), [admin]);
-  const colourMode = useColourMode(`platform-${String(admin.id)}`);
+  const colourMode = useColourMode(`platform-${admin.id}`);
   const productLogo = useProductLogo();
   useAppliedTheme(DEFAULT_THEME, colourMode.mode);
 

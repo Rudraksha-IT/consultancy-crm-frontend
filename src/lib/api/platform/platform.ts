@@ -25,6 +25,7 @@ import {
   type PlatformAdmin,
 } from "../core/types";
 import { TwoFactorStepAnswerSchema, type TwoFactorStep } from "../auth/twoFactor";
+import type { RecordId } from "@/lib/recordId";
 
 /** A Platform Admin's change of a Consultancy's Status (issue 42); dates are "YYYY-MM-DD". */
 export type StatusChange = {
@@ -124,7 +125,7 @@ export async function createConsultancy(
 
 /** Try again: set up an office whose setup failed; it comes back `setting_up` (issue 60). */
 export function retryConsultancySetup(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<ConsultancyOverview> {
   return postJson(
@@ -140,7 +141,7 @@ export function retryConsultancySetup(
  * refused fields, or `detail` when the change itself is refused (e.g. "Terminated is final").
  */
 export async function changeConsultancyStatus(
-  id: number,
+  id: RecordId,
   change: StatusChange,
   fetchFn: typeof fetch = fetch,
 ): Promise<ConsultancyOverview> {
@@ -158,7 +159,7 @@ export async function changeConsultancyStatus(
 
 /** Switch each of a Consultancy's switchable Modules on (true) or off (false). */
 export function updateModules(
-  id: number,
+  id: RecordId,
   switches: Record<SwitchableModule, boolean>,
   fetchFn: typeof fetch = fetch,
 ): Promise<ConsultancyOverview> {
@@ -172,7 +173,7 @@ export function updateModules(
 
 /** Choose an office's colours (its Theme); only a Platform Admin can. */
 export function updateConsultancyTheme(
-  id: number,
+  id: RecordId,
   theme: ThemeConfig,
   fetchFn: typeof fetch = fetch,
 ): Promise<ConsultancyOverview> {

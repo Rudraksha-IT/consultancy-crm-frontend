@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 
 import type { SupportVisit } from "@/lib/api";
@@ -6,9 +7,9 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { SupportVisitList } from "./SupportVisitList";
 
 const OPEN: SupportVisit = {
-  id: 8,
+  id: uid(8),
   platformAdminName: "Ramesh",
-  consultancy: { id: 3, name: "Acme Education" },
+  consultancy: { id: uid(3), name: "Acme Education" },
   reason: "Bikash couldn't see a Student's documents",
   consultancyStatus: "active",
   startedAt: "2026-11-04T07:55:00+00:00",
@@ -16,8 +17,8 @@ const OPEN: SupportVisit = {
 };
 const ENDED: SupportVisit = {
   ...OPEN,
-  id: 7,
-  consultancy: { id: 4, name: "Beta Overseas" },
+  id: uid(7),
+  consultancy: { id: uid(4), name: "Beta Overseas" },
   reason: "Admin locked out",
   consultancyStatus: "past_due",
   endedAt: "2026-11-04T08:25:00+00:00",

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -28,7 +29,7 @@ function createCalls(fetchFn: ReturnType<typeof backendAnswering>) {
 }
 
 const CREATED = {
-  id: 3,
+  id: uid(3),
   name: "Acme Education",
   subdomain: "acme",
   host: testHost("acme"),

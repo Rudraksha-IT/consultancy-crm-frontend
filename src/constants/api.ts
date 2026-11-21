@@ -220,9 +220,9 @@ export const API_PATHS = {
   platformMyTwoFactor: "/api/platform/me/two-factor/",
   platformProductDomain: "/api/platform/product-domain/",
   platformAdmins: "/api/platform/admins/",
-  platformAdminResend: (id: number) => `/api/platform/admins/${String(id)}/resend/`,
-  platformAdminDeactivate: (id: number) => `/api/platform/admins/${String(id)}/deactivate/`,
-  platformAdminReactivate: (id: number) => `/api/platform/admins/${String(id)}/reactivate/`,
+  platformAdminResend: (id: RecordId) => `/api/platform/admins/${id}/resend/`,
+  platformAdminDeactivate: (id: RecordId) => `/api/platform/admins/${id}/deactivate/`,
+  platformAdminReactivate: (id: RecordId) => `/api/platform/admins/${id}/reactivate/`,
   platformJoin: "/api/platform/auth/join/",
   platformJoinVerify: "/api/platform/auth/join/verify/",
   platformJoinComplete: "/api/platform/auth/join/complete/",
@@ -231,17 +231,15 @@ export const API_PATHS = {
   platformEmail: "/api/platform/email/",
   platformTestEmail: "/api/platform/email/test/",
   platformConsultancies: "/api/platform/consultancies/",
-  platformConsultancyAdmins: (id: number) => `/api/platform/consultancies/${String(id)}/admins/`,
-  platformConsultancyStatus: (id: number) => `/api/platform/consultancies/${String(id)}/status/`,
-  platformConsultancyModules: (id: number) => `/api/platform/consultancies/${String(id)}/modules/`,
+  platformConsultancyAdmins: (id: RecordId) => `/api/platform/consultancies/${id}/admins/`,
+  platformConsultancyStatus: (id: RecordId) => `/api/platform/consultancies/${id}/status/`,
+  platformConsultancyModules: (id: RecordId) => `/api/platform/consultancies/${id}/modules/`,
   /** Try again: set up an office whose setup failed (issue 60). */
-  platformConsultancyRetrySetup: (id: number) =>
-    `/api/platform/consultancies/${String(id)}/retry-setup/`,
+  platformConsultancyRetrySetup: (id: RecordId) => `/api/platform/consultancies/${id}/retry-setup/`,
   /** An office's colours: only a Platform Admin chooses them, only here. */
-  platformConsultancyTheme: (id: number) => `/api/platform/consultancies/${String(id)}/theme/`,
+  platformConsultancyTheme: (id: RecordId) => `/api/platform/consultancies/${id}/theme/`,
   /** Open a Consultancy as Platform Admin (issue 27), and the Platform record of every visit. */
-  platformSupportVisitStart: (id: number) =>
-    `/api/platform/consultancies/${String(id)}/support-visits/`,
+  platformSupportVisitStart: (id: RecordId) => `/api/platform/consultancies/${id}/support-visits/`,
   platformSupportVisits: "/api/platform/support-visits/",
   /** On the office address: enter a visit, and the Platform-only actions inside it. */
   supportEnter: "/api/support-access/enter/",

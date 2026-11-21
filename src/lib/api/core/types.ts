@@ -191,7 +191,7 @@ export type Credentials = {
 
 /** A member of the team running the product, from the Platform endpoints. */
 export const PlatformAdminSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   email: z.string(),
 });
@@ -205,7 +205,7 @@ export const PlatformAdminAnswerSchema = z
 /** One Consultancy as the Platform lists it, in frontend naming. */
 export const ConsultancyOverviewSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     subdomain: z.string(),
     host: z.string(),

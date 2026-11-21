@@ -16,9 +16,9 @@ import { jsonResponse } from "../core/test-helpers";
 import { testHost } from "@/test/hosts";
 
 const VISIT = {
-  id: 7,
+  id: uid(7),
   platform_admin: { name: "Ramesh" },
-  consultancy: { id: 3, name: "Acme Education" },
+  consultancy: { id: uid(3), name: "Acme Education" },
   reason: "Admin asked for help with fees",
   consultancy_status: "past_due",
   started_at: "2026-11-04T05:00:00+00:00",
@@ -66,13 +66,13 @@ describe("startSupportVisit", () => {
       jsonResponse({ visit: VISIT, host: testHost("acme"), entry_code: CODE }, 201),
     );
 
-    const started = await startSupportVisit(3, "Admin asked for help with fees", fetchFn);
+    const started = await startSupportVisit(uid(3), "Admin asked for help with fees", fetchFn);
 
     expect(started).toEqual({
       visit: {
-        id: 7,
+        id: uid(7),
         platformAdminName: "Ramesh",
-        consultancy: { id: 3, name: "Acme Education" },
+        consultancy: { id: uid(3), name: "Acme Education" },
         reason: "Admin asked for help with fees",
         consultancyStatus: "past_due",
         startedAt: "2026-11-04T05:00:00+00:00",
@@ -82,7 +82,7 @@ describe("startSupportVisit", () => {
       entryCode: CODE,
     });
     const { path, init } = sent(fetchFn);
-    expect(path).toBe("/api/platform/consultancies/3/support-visits/");
+    expect(path).toBe(`/api/platform/consultancies/${uid(3)}/support-visits/`);
     expect(init?.method).toBe("POST");
     expect(init?.body).toBe(JSON.stringify({ reason: "Admin asked for help with fees" }));
   });
@@ -94,7 +94,7 @@ describe("startSupportVisit", () => {
   ])("refuses %s it would be sent to", async (_name, host) => {
     const fetchFn = answering(jsonResponse({ visit: VISIT, host, entry_code: CODE }, 201));
 
-    await expect(startSupportVisit(3, "Help", fetchFn)).rejects.toThrow();
+    await expect(startSupportVisit(uid(3), "Help", fetchFn)).rejects.toThrow();
   });
 
   it("refuses an entry code with characters a code never has", async () => {
@@ -102,13 +102,13 @@ describe("startSupportVisit", () => {
       jsonResponse({ visit: VISIT, host: testHost("acme"), entry_code: "a b#c" }, 201),
     );
 
-    await expect(startSupportVisit(3, "Help", fetchFn)).rejects.toThrow();
+    await expect(startSupportVisit(uid(3), "Help", fetchFn)).rejects.toThrow();
   });
 
   it("names the refused reason", async () => {
     const fetchFn = answering(jsonResponse({ reason: ["This field may not be blank."] }, 400));
 
-    const error = await startSupportVisit(3, "", fetchFn).catch((caught: unknown) => caught);
+    const error = await startSupportVisit(uid(3), "", fetchFn).catch((caught: unknown) => caught);
 
     expect(error).toBeInstanceOf(InvalidFieldsError);
     expect(fieldErrorsOf(error)).toEqual({
@@ -121,7 +121,9 @@ describe("startSupportVisit", () => {
       jsonResponse({ detail: "This office's account has been closed." }, 400),
     );
 
-    const error = await startSupportVisit(3, "Help", fetchFn).catch((caught: unknown) => caught);
+    const error = await startSupportVisit(uid(3), "Help", fetchFn).catch(
+      (caught: unknown) => caught,
+    );
 
     expect(fieldErrorsOf(error)).toEqual({
       detail: ["This office's account has been closed."],
@@ -131,7 +133,9 @@ describe("startSupportVisit", () => {
   it("keeps other failures as they are", async () => {
     const fetchFn = answering(jsonResponse({}, 500));
 
-    const error = await startSupportVisit(3, "Help", fetchFn).catch((caught: unknown) => caught);
+    const error = await startSupportVisit(uid(3), "Help", fetchFn).catch(
+      (caught: unknown) => caught,
+    );
 
     expect(error).not.toBeInstanceOf(InvalidFieldsError);
   });
@@ -139,7 +143,9 @@ describe("startSupportVisit", () => {
   it("keeps a refusal it can't read as it is", async () => {
     const fetchFn = answering(jsonResponse(["odd"], 400));
 
-    const error = await startSupportVisit(3, "Help", fetchFn).catch((caught: unknown) => caught);
+    const error = await startSupportVisit(uid(3), "Help", fetchFn).catch(
+      (caught: unknown) => caught,
+    );
 
     expect(error).not.toBeInstanceOf(InvalidFieldsError);
   });
@@ -148,7 +154,7 @@ describe("startSupportVisit", () => {
 describe("fetchSupportVisits", () => {
   it("returns every visit, ended or not", async () => {
     const fetchFn = answering(
-      jsonResponse([VISIT, { ...VISIT, id: 6, ended_at: "2026-11-04T06:00:00+00:00" }]),
+      jsonResponse([VISIT, { ...VISIT, id: uid(6), ended_at: "2026-11-04T06:00:00+00:00" }]),
     );
 
     const visits = await fetchSupportVisits(fetchFn);

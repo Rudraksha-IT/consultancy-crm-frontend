@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -6,8 +7,8 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { AddAdminDialog } from "./AddAdminDialog";
 
-const OFFICE = { id: 3, name: "Acme Education" };
-const PATH = "/api/platform/consultancies/3/admins/";
+const OFFICE = { id: uid(3), name: "Acme Education" };
+const PATH = `/api/platform/consultancies/${uid(3)}/admins/`;
 const INVITED = { name: "Sita Sharma", email: "sita@acme.test", status: "invited" };
 
 function renderDialog() {

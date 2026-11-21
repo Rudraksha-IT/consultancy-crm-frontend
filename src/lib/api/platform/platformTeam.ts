@@ -12,6 +12,7 @@ import {
   type PasswordReset,
   type ResetCode,
 } from "../core/types";
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 
 /**
  * The Platform's own team and brand (issue 65): the Platform Admins tab (list, invite by Code,
@@ -23,7 +24,7 @@ export type PlatformAdminStatus = (typeof PLATFORM_ADMIN_STATUSES)[number];
 
 const PlatformAdminRowSchema = z
   .object({
-    id: z.number().int().positive(),
+    id: RecordIdSchema,
     name: z.string(),
     email: z.string(),
     status: z.enum(PLATFORM_ADMIN_STATUSES),
@@ -67,7 +68,7 @@ export async function invitePlatformAdmin(
 
 /** Email a new join Code to someone still invited. Rejects with InvalidFieldsError (`detail`). */
 export async function resendPlatformAdminCode(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<void> {
   try {
@@ -79,7 +80,7 @@ export async function resendPlatformAdminCode(
 
 /** Deactivate a Platform Admin (or cancel an invite). Rejects with InvalidFieldsError (`detail`). */
 export async function deactivatePlatformAdmin(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<PlatformAdminRow> {
   try {
@@ -96,7 +97,7 @@ export async function deactivatePlatformAdmin(
 
 /** Bring a deactivated Platform Admin back; a cancelled invite is invited again with a new Code. */
 export async function reactivatePlatformAdmin(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<PlatformAdminRow> {
   try {
