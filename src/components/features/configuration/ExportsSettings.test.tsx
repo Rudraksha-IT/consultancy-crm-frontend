@@ -1,3 +1,5 @@
+import type { RecordId } from "@/lib/recordId";
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,18 +13,18 @@ import { consultancySummary } from "@/test/consultancy";
 import { ExportsSettings } from "./ExportsSettings";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["configuration"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
 
 const AT = "2026-10-24T10:55:00+00:00";
 
-function record(id: number, overrides: Record<string, unknown> = {}) {
+function record(id: RecordId, overrides: Record<string, unknown> = {}) {
   return {
     id,
     list: "students",
@@ -57,13 +59,13 @@ describe("ExportsSettings", () => {
         "GET",
         "/api/exports/",
         pageOf([
-          record(2, {
+          record(uid(2), {
             list: "visas",
             row_count: 1,
             filters: "No filters, everyone",
             by: "Ramesh (Platform Admin)",
           }),
-          record(1),
+          record(uid(1)),
         ]),
       ),
     );
@@ -87,7 +89,7 @@ describe("ExportsSettings", () => {
   });
 
   it("says when the exports can't be loaded, or don't look right", async () => {
-    backend(on("GET", "/api/exports/", pageOf([record(1, { row_count: "two" })])));
+    backend(on("GET", "/api/exports/", pageOf([record(uid(1), { row_count: "two" })])));
     renderSection();
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -96,7 +98,9 @@ describe("ExportsSettings", () => {
   });
 
   it("shows filters as text, never as markup", async () => {
-    backend(on("GET", "/api/exports/", pageOf([record(1, { filters: "Search: <b>bold</b>" })])));
+    backend(
+      on("GET", "/api/exports/", pageOf([record(uid(1), { filters: "Search: <b>bold</b>" })])),
+    );
     renderSection();
 
     expect(await screen.findByText("Search: <b>bold</b>")).toBeInTheDocument();
@@ -105,8 +109,8 @@ describe("ExportsSettings", () => {
   it("pages through many exports", async () => {
     const user = userEvent.setup();
     const fetchFn = backend(
-      on("GET", "/api/exports/", pageOf([record(1)], 30)),
-      on("GET", "/api/exports/?page=2", pageOf([record(9, { list: "applications" })], 30, 2)),
+      on("GET", "/api/exports/", pageOf([record(uid(1))], 30)),
+      on("GET", "/api/exports/?page=2", pageOf([record(uid(9), { list: "applications" })], 30, 2)),
     );
     renderSection();
 

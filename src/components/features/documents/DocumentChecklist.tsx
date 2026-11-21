@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import clsx from "clsx";
 
 import { Button } from "@/components/ui/Button";
@@ -13,6 +14,7 @@ import {
 import type { BinTarget, ChecklistItem, DocumentLinkedTo, StoredDocument } from "@/lib/api";
 
 import { BinnedDocuments, BinnedFileItems, type BinViewer } from "./ChecklistBin";
+import { DocumentExampleLine } from "./DocumentExampleLine";
 import { OpenFileButton } from "./OpenFileButton";
 import type { LinkAction } from "./useDocumentLink";
 
@@ -39,9 +41,9 @@ type DocumentChecklistProps = {
   canChange: boolean;
   /** A check is being saved: its buttons wait. */
   isChecking?: boolean;
-  onUpload: (documentTypeId: number) => void;
+  onUpload: (documentTypeId: RecordId) => void;
   /** Open or save one file of a Document. */
-  onShow: (documentId: number, fileId: number, action: LinkAction) => void;
+  onShow: (documentId: RecordId, fileId: RecordId, action: LinkAction) => void;
   /** Add more files to the item's Document (issue 78). */
   onAddFile: (item: AddingTo) => void;
   /** Mark the item's Document correct. */
@@ -54,13 +56,15 @@ type DocumentChecklistProps = {
   onDelete: (deleting: Deleting) => void;
   /** Who is looking, for what is in the Bin (issue 79). */
   bin: BinViewer;
+  /** Email a type's examples to the Student (ticket 12); absent when they can't be emailed. */
+  emailExamples?: { firstName: string; onEmail: (item: ChecklistItem) => void } | undefined;
 };
 
 /** A Document, or one of its files, being deleted, with the name the dialog shows. */
 export type Deleting = { target: BinTarget; name: string };
 
 /** An item with a Document, to check. */
-export type CheckedItem = { documentId: number; typeName: string };
+export type CheckedItem = { documentId: RecordId; typeName: string };
 
 /** An item whose Document gets more files; a Verified one will need checking again. */
 export type AddingTo = CheckedItem & { isVerified: boolean };
@@ -78,6 +82,31 @@ export function DocumentChecklist(props: DocumentChecklistProps) {
         <ChecklistRow key={item.documentType.id} item={item} {...props} />
       ))}
     </ul>
+  );
+}
+
+/** States still waiting for the Student's paper: they show the type's Document Example (ticket 11). */
+const STILL_TO_COME: readonly DocumentState[] = [DocumentState.NotReceived, DocumentState.Rejected];
+
+/** The type's Document Example, while the Student's paper is still to come. */
+function ItemExample({ item, emailExamples }: Pick<ItemActionsProps, "item" | "emailExamples">) {
+  if (!STILL_TO_COME.includes(item.state)) return null;
+  return (
+    <DocumentExampleLine
+      typeName={item.documentType.name}
+      instruction={item.instruction}
+      examples={item.examples}
+      email={
+        emailExamples === undefined
+          ? undefined
+          : {
+              firstName: emailExamples.firstName,
+              onEmail: () => {
+                emailExamples.onEmail(item);
+              },
+            }
+      }
+    />
   );
 }
 
@@ -103,6 +132,7 @@ function ChecklistRow(props: ItemActionsProps) {
         )}
         {item.state === DocumentState.Rejected && <RejectionReason document={document} />}
         <BinnedDocuments {...bin} typeName={typeName} documents={item.inBin} />
+        <ItemExample item={item} emailExamples={props.emailExamples} />
       </div>
       {canChange && (
         <div className="tablet:col-start-auto tablet:justify-end col-start-2 flex flex-wrap gap-3">
@@ -271,7 +301,7 @@ function StateActions(props: ItemActionsProps) {
 }
 
 /** "Delete" the whole Document: to the Bin, or for good by an Admin (issue 79). */
-function DeleteButton({ item, onDelete, documentId }: ItemActionsProps & { documentId: number }) {
+function DeleteButton({ item, onDelete, documentId }: ItemActionsProps & { documentId: RecordId }) {
   const name = item.documentType.name;
   return (
     <Button

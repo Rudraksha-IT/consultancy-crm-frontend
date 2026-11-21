@@ -1,0 +1,25 @@
+name: Clean old images
+
+# Keeps the registry small (ticket 14, ADR 0024): every Sunday, delete all but the newest 20
+# images of consultancy-crm-frontend in GitHub's registry. 20 is far more than a rollback or a
+# manual deploy of an older commit needs; an older commit's image is rebuilt by deploy.yml if
+# it's ever wanted again. Only this repository's own package, with this run's own token.
+on:
+  schedule:
+    - cron: "30 20 * * 6" # 02:15 Sunday in Nepal
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - uses: actions/delete-package-versions@v5
+        with:
+          package-name: consultancy-crm-frontend
+          package-type: container
+          min-versions-to-keep: 20

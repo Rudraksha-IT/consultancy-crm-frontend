@@ -89,7 +89,7 @@ export function UniversityEditForm({ university }: { university: University }) {
         subtitle={CATALOGUE_TEXT.editIntro}
         crumbs={
           <Link
-            href={ROUTES.catalogue}
+            href={ROUTES.universities}
             className="text-secondary text-ink-2 min-h-control inline-flex items-center gap-1.5 self-start"
           >
             <Icon name="left" />
@@ -104,7 +104,7 @@ export function UniversityEditForm({ university }: { university: University }) {
           errors={saving.problems.fields}
           change={change}
           onDeleted={() => {
-            guard.leaveFor(ROUTES.catalogue);
+            guard.leaveFor(ROUTES.universities);
           }}
         />
         <CoursesSection draft={draft} rows={saving.problems.rows} change={change} />
@@ -113,7 +113,7 @@ export function UniversityEditForm({ university }: { university: University }) {
           <div className="flex flex-wrap items-center gap-3">
             <Button
               onClick={() => {
-                guard.goTo(ROUTES.catalogue);
+                guard.goTo(ROUTES.universities);
               }}
             >
               {LABELS.cancel}
@@ -165,7 +165,7 @@ function useSaving(
     try {
       const saved = await saveUniversityEdit(university.id, toEditInput(draft));
       showToast(CATALOGUE_TEXT.editSaved(saved.name));
-      leaveFor(ROUTES.catalogue);
+      leaveFor(ROUTES.universities);
     } catch (error) {
       setIsSaving(false);
       const refused = error instanceof UniversityEditRefusedError ? error : null;
@@ -215,6 +215,7 @@ function UniversitySection({
   const { showToast } = useToast();
   const [isDeleting, setIsDeleting] = useState(false);
   const uses = draft.courses.reduce((sum, course) => sum + course.applications, 0);
+  const files = draft.courses.reduce((sum, course) => sum + course.fileCount, 0);
   return (
     <Section
       title={CATALOGUE_TEXT.university}
@@ -236,6 +237,7 @@ function UniversitySection({
           {draft.savedArchived && (
             <DeleteUniversity
               uses={uses}
+              files={files}
               onAsk={() => {
                 setIsDeleting(true);
               }}
@@ -290,15 +292,22 @@ function UniversitySection({
   );
 }
 
-/** Delete university (asking first), or disabled with why when an Application uses a Course. */
-function DeleteUniversity({ uses, onAsk }: { uses: number; onAsk: () => void }) {
-  if (uses > 0) {
+type DeleteUniversityProps = { uses: number; files: number; onAsk: () => void };
+
+/**
+ * Delete university (asking first), or disabled with why: its Courses keep Course Files (ticket
+ * 10), or an Application uses one of them.
+ */
+function DeleteUniversity({ uses, files, onAsk }: DeleteUniversityProps) {
+  if (uses > 0 || files > 0) {
     return (
       <>
         <Button variant="ghost" size="sm" icon="trash" isDisabled>
           {CATALOGUE_TEXT.deleteUniversity}
         </Button>
-        <span>{CATALOGUE_TEXT.usedBy(uses)}</span>
+        <span>
+          {files > 0 ? CATALOGUE_TEXT.coursesKeepFiles(files) : CATALOGUE_TEXT.usedBy(uses)}
+        </span>
       </>
     );
   }

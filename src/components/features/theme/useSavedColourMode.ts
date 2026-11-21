@@ -1,34 +1,28 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
 
 import type { ColourModeChoice } from "@/constants/mySettings";
 import { ColourMode } from "@/lib/theme";
 
-import { isDeviceDark, subscribeToDevice } from "./deviceColourMode";
 import type { ColourModeState } from "./useColourMode";
-
-const onServer = (): boolean => false;
 
 /**
  * A logged-in Staff member's light or dark mode, saved for them (issue 38) so it follows them to
- * every device. Until they choose, it is the device's. The switch shows at once; `save` stores
+ * every device. Light until they pick dark (2026-11-20). The switch shows at once; `save` stores
  * it, and a failed save leaves this page as switched.
  */
 export function useSavedColourMode(
   saved: ColourModeChoice,
   save: (choice: ColourModeChoice) => Promise<unknown>,
 ): ColourModeState {
-  const [choice, setChoice] = useState<ColourModeChoice>(saved);
-  const isDark = useSyncExternalStore(subscribeToDevice, isDeviceDark, onServer);
-  const deviceMode = isDark ? ColourMode.Dark : ColourMode.Light;
-  const mode = choice === "device" ? deviceMode : choice;
+  const [mode, setMode] = useState<ColourMode>(saved);
 
   return {
     mode,
     toggleMode: () => {
       const next = mode === ColourMode.Dark ? ColourMode.Light : ColourMode.Dark;
-      setChoice(next);
+      setMode(next);
       save(next).catch(() => undefined);
     },
   };

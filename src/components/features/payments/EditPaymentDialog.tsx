@@ -2,6 +2,7 @@
 
 import { useId, useState, type SubmitEvent } from "react";
 
+import { useFeeTypeChoices } from "@/components/features/feeTypes/FeeTypeFields";
 import { SaveDialog } from "@/components/features/students/profile/SaveDialog";
 import { useFormSave } from "@/components/features/students/profile/useFormSave";
 import { Button } from "@/components/ui/Button";
@@ -9,19 +10,28 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { HTTP_STATUS } from "@/constants/api";
 import { MESSAGES } from "@/constants/messages";
 import { PAYMENT_TEXT } from "@/constants/payments";
-import { ApiRequestError, changePayment, deletePayment, type Receipt } from "@/lib/api";
+import {
+  ApiRequestError,
+  changePayment,
+  deletePayment,
+  describeFeeType,
+  type Payment,
+} from "@/lib/api";
 import { formatNpr } from "@/lib/money";
 
 import { PaymentFields, readPayment } from "./PaymentFields";
 
 type EditPaymentDialogProps = {
-  payment: Receipt;
+  payment: Payment;
   onClose: () => void;
-  onSaved: (payment: Receipt) => void;
+  onSaved: (payment: Payment) => void;
   onDeleted: () => void;
 };
 
-/** An Admin changes a Payment, or deletes it after confirming (spec 75-76). */
+/**
+ * An Admin changes one Payment, or deletes it after confirming (spec 75-76). No receipt number is
+ * shown for now (2026-11-20).
+ */
 export function EditPaymentDialog({
   payment,
   onClose,
@@ -50,18 +60,19 @@ function EditForm({ payment, onClose, onSaved, onDelete }: EditFormProps) {
   const formId = useId();
   const [paidOn, setPaidOn] = useState(payment.paidOn);
   const { isSaving, fieldErrors, failure, save } = useFormSave(changeFailure);
+  const choices = useFeeTypeChoices();
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     void save(async () => {
-      onSaved(await changePayment(payment.id, readPayment(form, paidOn)));
+      onSaved(await changePayment(payment.id, readPayment(form, paidOn, choices)));
     });
   }
 
   return (
     <SaveDialog
-      title={PAYMENT_TEXT.editTitle(payment.receiptNumber)}
+      title={PAYMENT_TEXT.editTitle}
       formId={formId}
       saveLabel={PAYMENT_TEXT.saveChanges}
       isSaving={isSaving}
@@ -78,9 +89,10 @@ function EditForm({ payment, onClose, onSaved, onDelete }: EditFormProps) {
           paidOn={paidOn}
           onPaidOn={setPaidOn}
           fieldErrors={fieldErrors}
+          choices={choices}
           initial={payment}
         />
-        <p className="text-small text-ink-2">{PAYMENT_TEXT.changeIsRecorded}</p>
+        <p className="text-small text-ink-2">{PAYMENT_TEXT.recordedInHistory}</p>
       </form>
     </SaveDialog>
   );
@@ -91,7 +103,7 @@ type DeletePaymentDialogProps = Pick<EditPaymentDialogProps, "payment" | "onClos
 function DeletePaymentDialog({ payment, onClose, onDeleted }: DeletePaymentDialogProps) {
   return (
     <ConfirmDialog
-      title={PAYMENT_TEXT.confirmDeleteTitle(payment.receiptNumber)}
+      title={PAYMENT_TEXT.confirmDeleteTitle}
       actionLabel={PAYMENT_TEXT.confirmDeleteButton}
       onClose={onClose}
       onConfirm={async () => {
@@ -103,10 +115,9 @@ function DeletePaymentDialog({ payment, onClose, onDeleted }: DeletePaymentDialo
       <div className="grid gap-3">
         <p className="text-ink wrap-anywhere">
           {PAYMENT_TEXT.confirmDelete(
-            payment.receiptNumber,
             formatNpr(payment.amount),
             payment.student.name,
-            payment.purpose,
+            describeFeeType(payment.feeType, payment.note),
           )}
         </p>
         <p className="text-small">{PAYMENT_TEXT.deletionIsRecorded}</p>

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -81,7 +82,7 @@ describe("TabBar", () => {
   });
 
   it("marks the current page, also on a page under it", () => {
-    pathname.current = "/students/12";
+    pathname.current = `/students/${uid(12)}`;
     showBar();
 
     expect(within(bar()).getByRole("link", { name: "Students" })).toHaveAttribute(
@@ -105,7 +106,7 @@ describe("TabBar", () => {
   it("shows the same counts as the sidebar, with their meaning for screen readers", () => {
     render(
       <TaskCountContext value={{ count: 3, refresh: doNothing }}>
-        <InboxCheckContext value={{ unread: 2, latest: 9, refresh: doNothing }}>
+        <InboxCheckContext value={{ unread: 2, latest: uid(9), refresh: doNothing }}>
           <TabBar role={Role.Admin} modules={MODULES} isMenuOpen={false} onOpenMenu={doNothing} />
         </InboxCheckContext>
       </TaskCountContext>,

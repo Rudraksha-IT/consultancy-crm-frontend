@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import type { RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import type { Role } from "@/constants/roles";
 
@@ -39,7 +41,7 @@ export async function inviteEmployee(
 
 /** Give an employee a new Role. */
 export function changeEmployeeRole(
-  id: number,
+  id: RecordId,
   role: Role,
   fetchFn: typeof fetch = fetch,
 ): Promise<Employee> {
@@ -47,7 +49,7 @@ export function changeEmployeeRole(
 }
 
 /** Deactivate someone who has left: they can't log in and their logins end at once. */
-export function deactivateEmployee(id: number, fetchFn: typeof fetch = fetch): Promise<Employee> {
+export function deactivateEmployee(id: RecordId, fetchFn: typeof fetch = fetch): Promise<Employee> {
   return postJson(API_PATHS.employeeDeactivate(id), {}, EmployeeSchema, fetchFn);
 }
 
@@ -55,7 +57,7 @@ export function deactivateEmployee(id: number, fetchFn: typeof fetch = fetch): P
  * Email someone who hasn't joined yet a new Code. Rejects with `TooManyCodesError` when too many
  * were sent in the last hour.
  */
-export async function resendInvite(id: number, fetchFn: typeof fetch = fetch): Promise<Employee> {
+export async function resendInvite(id: RecordId, fetchFn: typeof fetch = fetch): Promise<Employee> {
   try {
     return await postJson(API_PATHS.employeeInvite(id), {}, EmployeeSchema, fetchFn);
   } catch (error) {
@@ -66,7 +68,7 @@ export async function resendInvite(id: number, fetchFn: typeof fetch = fetch): P
 }
 
 /** Cancel the invite of someone who hasn't joined yet; their Code stops working. */
-export function cancelInvite(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function cancelInvite(id: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.employeeInvite(id), fetchFn);
 }
 
@@ -75,7 +77,7 @@ export function cancelInvite(id: number, fetchFn: typeof fetch = fetch): Promise
  * and Platform Admins only, and never their own (that is in My settings).
  */
 export function setEmployeeTwoFactor(
-  id: number,
+  id: RecordId,
   required: boolean,
   fetchFn: typeof fetch = fetch,
 ): Promise<Employee> {
@@ -87,7 +89,7 @@ export function setEmployeeTwoFactor(
  * codes are removed and they are signed out everywhere.
  */
 export function resetEmployeeTwoFactor(
-  id: number,
+  id: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<Employee> {
   return postJson(API_PATHS.employeeTwoFactorReset(id), {}, EmployeeSchema, fetchFn);
@@ -111,7 +113,7 @@ function toApiFields(employee: NewEmployee): Record<string, string> {
 
 /** The Students someone still counsels (not Lost, no granted Visa), to Transfer before they leave. */
 export function fetchAssignedStudents(
-  staffId: number,
+  staffId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<AssignedStudent[]> {
   return getJson(

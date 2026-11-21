@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useRef } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -16,9 +17,9 @@ import { ComposeForm } from "./ComposeForm";
 import { useThread } from "./useInboxData";
 
 type ConversationPaneProps = {
-  personId: number;
+  personId: RecordId;
   /** The newest message the check knows of: when it changes, the conversation loads again. */
-  latest: number | null;
+  latest: RecordId | null;
   onBack: () => void;
   /** Called after the conversation was read (opening marks it read) or written in. */
   onChanged: () => void;

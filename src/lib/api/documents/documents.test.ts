@@ -26,24 +26,25 @@ import {
 } from "./documents";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const FILE = {
-  id: 41,
+  id: uid(41),
   file_name: "passport.pdf",
   content_type: "application/pdf",
   size: 2048,
   uploaded_at: "2026-11-01T10:00:00+05:45",
-  uploaded_by: { id: 5, name: "Bikash Thapa" },
+  uploaded_by: { id: uid(5), name: "Bikash Thapa" },
 };
 
 const DOCUMENT = {
-  id: 31,
+  id: uid(31),
   files: [FILE],
   verification: "pending",
   rejection_reason: "",
   link: null,
   uploaded_at: "2026-11-01T10:00:00+05:45",
-  uploaded_by: { id: 5, name: "Bikash Thapa" },
+  uploaded_by: { id: uid(5), name: "Bikash Thapa" },
 };
 
 const CHECKLIST = {
@@ -53,7 +54,7 @@ const CHECKLIST = {
   asked: [],
   items: [
     {
-      document_type: { id: 1, name: "Passport" },
+      document_type: { id: uid(1), name: "Passport" },
       reason: "",
       is_required: true,
       added_for_student: false,
@@ -62,7 +63,7 @@ const CHECKLIST = {
       document: DOCUMENT,
     },
     {
-      document_type: { id: 2, name: "Citizenship" },
+      document_type: { id: uid(2), name: "Citizenship" },
       reason: "",
       is_required: true,
       added_for_student: false,
@@ -81,11 +82,11 @@ const PAPERWORK = {
   results: [
     {
       student: {
-        id: 7,
+        id: uid(7),
         name: "Sita Gurung",
         stage: "applying",
         country: "australia",
-        assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+        assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
       },
       done: 5,
       total: 8,
@@ -114,28 +115,28 @@ describe("fetchChecklist", () => {
   it("returns the checklist in frontend naming", async () => {
     const fetchFn = answering(jsonResponse(CHECKLIST));
 
-    const checklist = await fetchChecklist(7, fetchFn);
+    const checklist = await fetchChecklist(uid(7), fetchFn);
 
-    expect(sentInit(fetchFn).path).toBe("/api/students/7/documents/");
+    expect(sentInit(fetchFn).path).toBe(`/api/students/${uid(7)}/documents/`);
     expect(checklist.canChange).toBe(true);
     expect(checklist.asked).toEqual([]);
     expect(checklist.items[0]).toEqual({
-      documentType: { id: 1, name: "Passport" },
+      documentType: { id: uid(1), name: "Passport" },
       reason: "",
       isRequired: true,
       addedForStudent: false,
       group: "applying",
       state: "waiting",
       document: {
-        id: 31,
+        id: uid(31),
         files: [
           {
-            id: 41,
+            id: uid(41),
             fileName: "passport.pdf",
             contentType: "application/pdf",
             size: 2048,
             uploadedAt: "2026-11-01T10:00:00+05:45",
-            uploadedBy: { id: 5, name: "Bikash Thapa" },
+            uploadedBy: { id: uid(5), name: "Bikash Thapa" },
           },
         ],
         binnedFiles: [],
@@ -143,9 +144,11 @@ describe("fetchChecklist", () => {
         rejectionReason: "",
         link: null,
         uploadedAt: "2026-11-01T10:00:00+05:45",
-        uploadedBy: { id: 5, name: "Bikash Thapa" },
+        uploadedBy: { id: uid(5), name: "Bikash Thapa" },
       },
       inBin: [],
+      instruction: "",
+      examples: [],
     });
   });
 
@@ -154,33 +157,33 @@ describe("fetchChecklist", () => {
       ...DOCUMENT,
       verification: "rejected",
       rejection_reason: "Blurred.",
-      link: { kind: "visa", id: 3, university: "Deakin University" },
+      link: { kind: "visa", id: uid(3), university: "Deakin University" },
     };
     const items = [{ ...CHECKLIST.items[0], state: "rejected", document: rejected }];
     const fetchFn = answering(jsonResponse({ ...CHECKLIST, items }));
 
-    const checklist = await fetchChecklist(7, fetchFn);
+    const checklist = await fetchChecklist(uid(7), fetchFn);
 
     expect(checklist.items[0]?.document).toMatchObject({
       rejectionReason: "Blurred.",
-      link: { kind: "visa", id: 3, university: "Deakin University" },
+      link: { kind: "visa", id: uid(3), university: "Deakin University" },
     });
   });
 
   it("refuses an answer with an unknown kind of link", async () => {
-    const linked = { ...DOCUMENT, link: { kind: "payment", id: 3, university: "X" } };
+    const linked = { ...DOCUMENT, link: { kind: "payment", id: uid(3), university: "X" } };
     const items = [{ ...CHECKLIST.items[0], document: linked }];
     const fetchFn = answering(jsonResponse({ ...CHECKLIST, items }));
 
-    await expect(fetchChecklist(7, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(fetchChecklist(uid(7), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 
   it("reads every file of a Document, in order (issue 78)", async () => {
-    const back = { ...FILE, id: 42, file_name: "back.jpg", content_type: "image/jpeg" };
+    const back = { ...FILE, id: uid(42), file_name: "back.jpg", content_type: "image/jpeg" };
     const items = [{ ...CHECKLIST.items[0], document: { ...DOCUMENT, files: [FILE, back] } }];
     const fetchFn = answering(jsonResponse({ ...CHECKLIST, items }));
 
-    const checklist = await fetchChecklist(7, fetchFn);
+    const checklist = await fetchChecklist(uid(7), fetchFn);
 
     expect(checklist.items[0]?.document?.files.map((file) => file.fileName)).toEqual([
       "passport.pdf",
@@ -195,14 +198,14 @@ describe("fetchChecklist", () => {
     const items = [{ ...CHECKLIST.items[0], document: withoutFiles }];
     const fetchFn = answering(jsonResponse({ ...CHECKLIST, items }));
 
-    await expect(fetchChecklist(7, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(fetchChecklist(uid(7), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 
   it("refuses an answer with an unknown state", async () => {
     const items = [{ ...CHECKLIST.items[1], state: "lost" }];
     const fetchFn = answering(jsonResponse({ ...CHECKLIST, items }));
 
-    await expect(fetchChecklist(7, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(fetchChecklist(uid(7), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
@@ -211,26 +214,26 @@ describe("uploadDocument", () => {
     const fetchFn = answering(jsonResponse(CHECKLIST, 201));
     const file = new File(["%PDF-1.7"], "passport.pdf", { type: "application/pdf" });
 
-    const checklist = await uploadDocument(7, 1, [file], fetchFn);
+    const checklist = await uploadDocument(uid(7), uid(1), [file], fetchFn);
 
     const { path, init } = sentInit(fetchFn);
-    expect(path).toBe("/api/students/7/documents/");
+    expect(path).toBe(`/api/students/${uid(7)}/documents/`);
     expect(init?.method).toBe("POST");
     const body = init?.body;
     if (!(body instanceof FormData)) throw new Error("expected a form");
-    expect(body.get("document_type")).toBe("1");
+    expect(body.get("document_type")).toBe(uid(1));
     expect(body.get("file")).toBe(file);
     expect(new Headers(init?.headers).has("content-type")).toBe(false);
     expect(checklist.done).toBe(1);
   });
 
   it.each([
-    [{ kind: "application", id: 11 } as const, "application", "11"],
-    [{ kind: "visa", id: 3 } as const, "visa", "3"],
+    [{ kind: "application", id: uid(11) } as const, "application", uid(11)],
+    [{ kind: "visa", id: uid(3) } as const, "visa", uid(3)],
   ])("sends the link as its own field: %o", async (link, field, value) => {
     const fetchFn = answering(jsonResponse(CHECKLIST, 201));
 
-    await uploadDocument(7, 1, [new File(["%PDF"], "a.pdf")], fetchFn, link);
+    await uploadDocument(uid(7), uid(1), [new File(["%PDF"], "a.pdf")], fetchFn, link);
 
     const body = sentInit(fetchFn).init?.body;
     if (!(body instanceof FormData)) throw new Error("expected a form");
@@ -243,7 +246,7 @@ describe("uploadDocument", () => {
     const front = new File(["%PDF"], "front.pdf");
     const back = new File(["%PDF"], "back.pdf");
 
-    await uploadDocument(7, 1, [front, back], fetchFn);
+    await uploadDocument(uid(7), uid(1), [front, back], fetchFn);
 
     const body = sentInit(fetchFn).init?.body;
     if (!(body instanceof FormData)) throw new Error("expected a form");
@@ -253,7 +256,7 @@ describe("uploadDocument", () => {
   it("sends no link field for a Document of the Student only", async () => {
     const fetchFn = answering(jsonResponse(CHECKLIST, 201));
 
-    await uploadDocument(7, 1, [new File(["%PDF"], "a.pdf")], fetchFn);
+    await uploadDocument(uid(7), uid(1), [new File(["%PDF"], "a.pdf")], fetchFn);
 
     const body = sentInit(fetchFn).init?.body;
     if (!(body instanceof FormData)) throw new Error("expected a form");
@@ -265,10 +268,16 @@ describe("uploadDocument", () => {
       jsonResponse({ application: ["Choose one of this Student's applications."] }, 400),
     );
 
-    const failure: unknown = await uploadDocument(7, 1, [new File(["x"], "a.pdf")], fetchFn, {
-      kind: "application",
-      id: 9,
-    }).catch((error: unknown) => error);
+    const failure: unknown = await uploadDocument(
+      uid(7),
+      uid(1),
+      [new File(["x"], "a.pdf")],
+      fetchFn,
+      {
+        kind: "application",
+        id: uid(9),
+      },
+    ).catch((error: unknown) => error);
 
     if (!(failure instanceof InvalidFieldsError)) throw new Error("expected field errors");
     expect(failure.fieldErrors).toEqual({
@@ -281,9 +290,12 @@ describe("uploadDocument", () => {
       jsonResponse({ file: ["Upload a PDF, JPG or PNG file."], document_type: ["Choose."] }, 400),
     );
 
-    const failure: unknown = await uploadDocument(7, 1, [new File(["x"], "a.pdf")], fetchFn).catch(
-      (error: unknown) => error,
-    );
+    const failure: unknown = await uploadDocument(
+      uid(7),
+      uid(1),
+      [new File(["x"], "a.pdf")],
+      fetchFn,
+    ).catch((error: unknown) => error);
 
     if (!(failure instanceof InvalidFieldsError)) throw new Error("expected field errors");
     expect(failure.fieldErrors).toEqual({
@@ -295,7 +307,9 @@ describe("uploadDocument", () => {
   it("passes other failures on", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Not your Student." }, 403));
 
-    await expect(uploadDocument(7, 1, [new File(["x"], "a.pdf")], fetchFn)).rejects.toMatchObject({
+    await expect(
+      uploadDocument(uid(7), uid(1), [new File(["x"], "a.pdf")], fetchFn),
+    ).rejects.toMatchObject({
       status: 403,
     });
   });
@@ -306,10 +320,10 @@ describe("addDocumentFiles", () => {
     const fetchFn = answering(jsonResponse(CHECKLIST, 201));
     const pages = [new File(["%PDF"], "page-2.pdf"), new File(["%PDF"], "page-3.pdf")];
 
-    const checklist = await addDocumentFiles(7, 31, pages, fetchFn);
+    const checklist = await addDocumentFiles(uid(7), uid(31), pages, fetchFn);
 
     const { path, init } = sentInit(fetchFn);
-    expect(path).toBe("/api/students/7/documents/31/files/");
+    expect(path).toBe(`/api/students/${uid(7)}/documents/${uid(31)}/files/`);
     expect(init?.method).toBe("POST");
     const body = init?.body;
     if (!(body instanceof FormData)) throw new Error("expected a form");
@@ -323,8 +337,8 @@ describe("addDocumentFiles", () => {
     const fetchFn = answering(jsonResponse({ file: ["Upload at most 10 files at once."] }, 400));
 
     const failure: unknown = await addDocumentFiles(
-      7,
-      31,
+      uid(7),
+      uid(31),
       [new File(["x"], "a.pdf")],
       fetchFn,
     ).catch((error: unknown) => error);
@@ -337,7 +351,7 @@ describe("addDocumentFiles", () => {
     const detail = "This document was rejected. Upload a new copy instead of adding a file.";
     const fetchFn = answering(jsonResponse({ detail }, 400));
 
-    const failure = addDocumentFiles(7, 31, [new File(["x"], "a.pdf")], fetchFn);
+    const failure = addDocumentFiles(uid(7), uid(31), [new File(["x"], "a.pdf")], fetchFn);
 
     await expect(failure).rejects.toBeInstanceOf(ApiRequestError);
     await expect(failure).rejects.toMatchObject({ body: { detail } });
@@ -348,10 +362,10 @@ describe("checkDocument", () => {
   it("POSTs that a Document is correct and returns the checklist", async () => {
     const fetchFn = answering(jsonResponse(CHECKLIST));
 
-    const checklist = await checkDocument(7, 31, { verification: "verified" }, fetchFn);
+    const checklist = await checkDocument(uid(7), uid(31), { verification: "verified" }, fetchFn);
 
     const { path, init } = sentInit(fetchFn);
-    expect(path).toBe("/api/students/7/documents/31/verification/");
+    expect(path).toBe(`/api/students/${uid(7)}/documents/${uid(31)}/verification/`);
     expect(init?.method).toBe("POST");
     expect(jsonBody(init)).toEqual({ verification: "verified" });
     expect(checklist.done).toBe(1);
@@ -360,7 +374,7 @@ describe("checkDocument", () => {
   it("POSTs a rejection with its reason", async () => {
     const fetchFn = answering(jsonResponse(CHECKLIST));
 
-    await checkDocument(7, 31, { verification: "rejected", reason: "Blurred." }, fetchFn);
+    await checkDocument(uid(7), uid(31), { verification: "rejected", reason: "Blurred." }, fetchFn);
 
     expect(jsonBody(sentInit(fetchFn).init)).toEqual({
       verification: "rejected",
@@ -372,8 +386,8 @@ describe("checkDocument", () => {
     const fetchFn = answering(jsonResponse({ reason: ["Say why the document is rejected."] }, 400));
 
     const failure: unknown = await checkDocument(
-      7,
-      31,
+      uid(7),
+      uid(31),
       { verification: "rejected", reason: "" },
       fetchFn,
     ).catch((error: unknown) => error);
@@ -387,24 +401,27 @@ describe("checkDocument", () => {
       jsonResponse({ detail: "This document has already been checked." }, 400),
     );
 
-    await expect(checkDocument(7, 31, { verification: "verified" }, fetchFn)).rejects.toMatchObject(
-      { status: 400 },
-    );
+    await expect(
+      checkDocument(uid(7), uid(31), { verification: "verified" }, fetchFn),
+    ).rejects.toMatchObject({ status: 400 });
   });
 });
 
 describe("fetchDocumentLink", () => {
   it("asks for an open or download link and returns it", async () => {
     const fetchFn = answering(
-      jsonResponse({ url: "https://files.test/abc/documents/7/x.pdf?sig=1", expires_in: 300 }),
+      jsonResponse({
+        url: `https://files.test/abc/documents/${uid(7)}/x.pdf?sig=1`,
+        expires_in: 300,
+      }),
     );
 
-    const url = await fetchDocumentLink(7, 31, 41, "download", fetchFn);
+    const url = await fetchDocumentLink(uid(7), uid(31), uid(41), "download", fetchFn);
 
     expect(sentInit(fetchFn).path).toBe(
-      "/api/students/7/documents/31/files/41/link/?action=download",
+      `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=download`,
     );
-    expect(url).toBe("https://files.test/abc/documents/7/x.pdf?sig=1");
+    expect(url).toBe(`https://files.test/abc/documents/${uid(7)}/x.pdf?sig=1`);
   });
 
   it.each(["javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "not a link"])(
@@ -412,9 +429,9 @@ describe("fetchDocumentLink", () => {
     async (url) => {
       const fetchFn = answering(jsonResponse({ url, expires_in: 300 }));
 
-      await expect(fetchDocumentLink(7, 31, 41, "open", fetchFn)).rejects.toBeInstanceOf(
-        ApiRequestError,
-      );
+      await expect(
+        fetchDocumentLink(uid(7), uid(31), uid(41), "open", fetchFn),
+      ).rejects.toBeInstanceOf(ApiRequestError);
     },
   );
 });
@@ -428,7 +445,7 @@ describe("fetchPaperwork", () => {
     expect(sentInit(fetchFn).path).toBe("/api/documents/students/?scope=mine&page=2");
     expect(page.pageSize).toBe(25);
     expect(page.totals).toEqual({ rejected: 1, waiting: 0, missing: 2, verified: 5 });
-    expect(page.rows[0]?.student.assignedCounsellor).toEqual({ id: 5, name: "Bikash Thapa" });
+    expect(page.rows[0]?.student.assignedCounsellor).toEqual({ id: uid(5), name: "Bikash Thapa" });
   });
 
   it("asks only for Students with documents waiting to be checked", async () => {
@@ -448,7 +465,7 @@ describe("Document Types", () => {
       jsonResponse({
         results: [
           {
-            id: 1,
+            id: uid(1),
             name: "Passport",
             needed_by_everyone: true,
             usual_group: "applying",
@@ -460,11 +477,14 @@ describe("Document Types", () => {
 
     expect(await fetchDocumentTypes(fetchFn)).toEqual([
       {
-        id: 1,
+        id: uid(1),
         name: "Passport",
         neededByEveryone: true,
         usualGroup: "applying",
         usedBy: { countries: 2, courses: 6, students: 1, documents: 4 },
+        instruction: "",
+        examples: [],
+        exampleCount: 0,
       },
     ]);
   });
@@ -473,7 +493,7 @@ describe("Document Types", () => {
     const fetchFn = answering(
       jsonResponse(
         {
-          id: 9,
+          id: uid(9),
           name: "Police report",
           needed_by_everyone: false,
           usual_group: "visa",
@@ -489,7 +509,7 @@ describe("Document Types", () => {
     expect(path).toBe("/api/configuration/document-types/");
     // No usual group is sent: the server makes it Applying (issue 97).
     expect(jsonBody(init)).toEqual({ name: "Police report", needed_by_everyone: false });
-    expect(added).toMatchObject({ id: 9, usualGroup: "visa" });
+    expect(added).toMatchObject({ id: uid(9), usualGroup: "visa" });
   });
 
   it("names a refused name", async () => {
@@ -510,7 +530,7 @@ describe("Document Types", () => {
   it("moves one onto or off every checklist", async () => {
     const fetchFn = answering(
       jsonResponse({
-        id: 8,
+        id: uid(8),
         name: "Sponsor Letter",
         needed_by_everyone: false,
         usual_group: "visa",
@@ -518,10 +538,10 @@ describe("Document Types", () => {
       }),
     );
 
-    const moved = await setNeededByEveryone(8, false, fetchFn);
+    const moved = await setNeededByEveryone(uid(8), false, fetchFn);
 
     const { path, init } = sentInit(fetchFn);
-    expect(path).toBe("/api/configuration/document-types/8/");
+    expect(path).toBe(`/api/configuration/document-types/${uid(8)}/`);
     expect(init?.method).toBe("PATCH");
     expect(init?.body).toBe(JSON.stringify({ needed_by_everyone: false }));
     expect(moved.neededByEveryone).toBe(false);
@@ -532,8 +552,8 @@ describe("Country document lists (issue 80)", () => {
   const AUSTRALIA = {
     country: "australia",
     documents: [
-      { document_type: { id: 26, name: "Genuine Student statement" }, group: "statements" },
-      { document_type: { id: 24, name: "Police report" }, group: "visa" },
+      { document_type: { id: uid(26), name: "Genuine Student statement" }, group: "statements" },
+      { document_type: { id: uid(24), name: "Police report" }, group: "visa" },
     ],
   };
 
@@ -549,8 +569,8 @@ describe("Country document lists (issue 80)", () => {
       {
         country: "australia",
         documents: [
-          { documentType: { id: 26, name: "Genuine Student statement" }, group: "statements" },
-          { documentType: { id: 24, name: "Police report" }, group: "visa" },
+          { documentType: { id: uid(26), name: "Genuine Student statement" }, group: "statements" },
+          { documentType: { id: uid(24), name: "Police report" }, group: "visa" },
         ],
       },
       { country: "uk", documents: [] },
@@ -563,8 +583,8 @@ describe("Country document lists (issue 80)", () => {
     const saved = await setCountryList(
       "australia",
       [
-        { typeId: 26, group: "statements" },
-        { typeId: 24, group: "visa" },
+        { typeId: uid(26), group: "statements" },
+        { typeId: uid(24), group: "visa" },
       ],
       fetchFn,
     );
@@ -574,8 +594,8 @@ describe("Country document lists (issue 80)", () => {
     expect(init?.method).toBe("PUT");
     expect(jsonBody(init)).toEqual({
       documents: [
-        { document_type: 26, group: "statements" },
-        { document_type: 24, group: "visa" },
+        { document_type: uid(26), group: "statements" },
+        { document_type: uid(24), group: "visa" },
       ],
     });
     expect(saved.documents).toHaveLength(2);
@@ -586,7 +606,7 @@ describe("Country document lists (issue 80)", () => {
       jsonResponse(
         {
           document_type: {
-            id: 30,
+            id: uid(30),
             name: "Police clearance",
             needed_by_everyone: false,
             usual_group: "statements",
@@ -595,7 +615,7 @@ describe("Country document lists (issue 80)", () => {
           list: {
             country: "uk",
             documents: [
-              { document_type: { id: 30, name: "Police clearance" }, group: "statements" },
+              { document_type: { id: uid(30), name: "Police clearance" }, group: "statements" },
             ],
           },
         },
@@ -609,10 +629,10 @@ describe("Country document lists (issue 80)", () => {
     expect(path).toBe("/api/configuration/document-lists/uk/new-document/");
     expect(init?.method).toBe("POST");
     expect(jsonBody(init)).toEqual({ name: "Police clearance", group: "statements" });
-    expect(made.documentType).toMatchObject({ id: 30, usualGroup: "statements" });
+    expect(made.documentType).toMatchObject({ id: uid(30), usualGroup: "statements" });
     expect(made.list).toEqual({
       country: "uk",
-      documents: [{ documentType: { id: 30, name: "Police clearance" }, group: "statements" }],
+      documents: [{ documentType: { id: uid(30), name: "Police clearance" }, group: "statements" }],
     });
   });
 
@@ -626,7 +646,7 @@ describe("Country document lists (issue 80)", () => {
   });
 
   it("refuses a new document's answer of the wrong shape", async () => {
-    const fetchFn = answering(jsonResponse({ document_type: { id: 1 } }, 201));
+    const fetchFn = answering(jsonResponse({ document_type: { id: uid(1) } }, 201));
 
     await expect(addCountryDocument("uk", "CV", "visa", fetchFn)).rejects.toBeInstanceOf(
       ApiRequestError,
@@ -637,7 +657,7 @@ describe("Country document lists (issue 80)", () => {
     { results: [{ country: "nepal", documents: [] }] },
     {
       results: [
-        { country: "uk", documents: [{ document_type: { id: 1, name: "x" }, group: "uni" }] },
+        { country: "uk", documents: [{ document_type: { id: uid(1), name: "x" }, group: "uni" }] },
       ],
     },
     { results: [{ country: "uk" }] },
@@ -663,11 +683,14 @@ describe("a checklist item's group", () => {
       is_required: false,
       group: null,
     };
-    const ok = await fetchChecklist(7, answering(jsonResponse({ ...CHECKLIST, items: [other] })));
+    const ok = await fetchChecklist(
+      uid(7),
+      answering(jsonResponse({ ...CHECKLIST, items: [other] })),
+    );
     const bad = { ...CHECKLIST, items: [{ ...other, group: "university" }] };
 
     expect(ok.items[0]?.group).toBeNull();
-    await expect(fetchChecklist(7, answering(jsonResponse(bad)))).rejects.toBeInstanceOf(
+    await expect(fetchChecklist(uid(7), answering(jsonResponse(bad)))).rejects.toBeInstanceOf(
       ApiRequestError,
     );
   });
@@ -677,10 +700,10 @@ describe("Removing a Document Type", () => {
   it("DELETEs it", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await removeDocumentType(9, fetchFn);
+    await removeDocumentType(uid(9), fetchFn);
 
     const { path, init } = sentInit(fetchFn);
-    expect(path).toBe("/api/configuration/document-types/9/");
+    expect(path).toBe(`/api/configuration/document-types/${uid(9)}/`);
     expect(init?.method).toBe("DELETE");
   });
 
@@ -688,7 +711,9 @@ describe("Removing a Document Type", () => {
     const detail = "This document is asked for or has files, so it can't be removed.";
     const fetchFn = answering(jsonResponse({ detail }, 400));
 
-    const error: unknown = await removeDocumentType(9, fetchFn).catch((caught: unknown) => caught);
+    const error: unknown = await removeDocumentType(uid(9), fetchFn).catch(
+      (caught: unknown) => caught,
+    );
 
     expect(error).toBeInstanceOf(ApiRequestError);
     expect(requirementRefusal(error)).toBe(detail);
@@ -699,12 +724,12 @@ describe("Document pickers", () => {
   it("list every type in frontend naming", async () => {
     const fetchFn = answering(
       jsonResponse({
-        results: [{ id: 20, name: "CV", needed_by_everyone: false, usual_group: "applying" }],
+        results: [{ id: uid(20), name: "CV", needed_by_everyone: false, usual_group: "applying" }],
       }),
     );
 
     expect(await fetchPickableDocumentTypes(fetchFn)).toEqual([
-      { id: 20, name: "CV", neededByEveryone: false, usualGroup: "applying" },
+      { id: uid(20), name: "CV", neededByEveryone: false, usualGroup: "applying" },
     ]);
     expect(sentInit(fetchFn).path).toBe("/api/documents/types/");
   });
@@ -712,7 +737,7 @@ describe("Document pickers", () => {
   it("add a name not on the list", async () => {
     const fetchFn = answering(
       jsonResponse(
-        { id: 21, name: "Portfolio", needed_by_everyone: false, usual_group: "applying" },
+        { id: uid(21), name: "Portfolio", needed_by_everyone: false, usual_group: "applying" },
         201,
       ),
     );
@@ -724,7 +749,7 @@ describe("Document pickers", () => {
     expect(init?.method).toBe("POST");
     expect(jsonBody(init)).toEqual({ name: "Portfolio" });
     expect(added).toEqual({
-      id: 21,
+      id: uid(21),
       name: "Portfolio",
       neededByEveryone: false,
       usualGroup: "applying",
@@ -743,24 +768,24 @@ describe("Document pickers", () => {
 
 describe("Documents asked for one Student", () => {
   it("PUTs the whole list and returns the checklist", async () => {
-    const fetchFn = answering(jsonResponse({ ...CHECKLIST, asked: [20] }));
+    const fetchFn = answering(jsonResponse({ ...CHECKLIST, asked: [uid(20)] }));
 
-    const checklist = await setStudentDocuments(7, [20], fetchFn);
+    const checklist = await setStudentDocuments(uid(7), [uid(20)], fetchFn);
 
     const { path, init } = sentInit(fetchFn);
-    expect(path).toBe("/api/students/7/documents/asked/");
+    expect(path).toBe(`/api/students/${uid(7)}/documents/asked/`);
     expect(init?.method).toBe("PUT");
-    expect(jsonBody(init)).toEqual({ document_types: [20] });
-    expect(checklist.asked).toEqual([20]);
+    expect(jsonBody(init)).toEqual({ document_types: [uid(20)] });
+    expect(checklist.asked).toEqual([uid(20)]);
   });
 
   it("DELETEs one that is not needed and returns the checklist", async () => {
     const fetchFn = answering(jsonResponse(CHECKLIST));
 
-    const checklist = await dropStudentDocument(7, 20, fetchFn);
+    const checklist = await dropStudentDocument(uid(7), uid(20), fetchFn);
 
     const { path, init } = sentInit(fetchFn);
-    expect(path).toBe("/api/students/7/documents/asked/20/");
+    expect(path).toBe(`/api/students/${uid(7)}/documents/asked/${uid(20)}/`);
     expect(init?.method).toBe("DELETE");
     expect(checklist.total).toBe(2);
   });
@@ -779,7 +804,7 @@ describe("Documents asked for one Student", () => {
 });
 
 const BIN_NOTE = {
-  by: { id: 5, name: "Bikash Thapa" },
+  by: { id: uid(5), name: "Bikash Thapa" },
   at: "2026-11-02T10:00:00+05:45",
   reason: "Blurry scan",
 };
@@ -791,9 +816,9 @@ const BINNED_CHECKLIST = {
       ...CHECKLIST.items[0],
       document: {
         ...DOCUMENT,
-        binned_files: [{ id: 42, file_name: "page-2.pdf", bin: BIN_NOTE }],
+        binned_files: [{ id: uid(42), file_name: "page-2.pdf", bin: BIN_NOTE }],
       },
-      in_bin: [{ id: 30, files: [{ id: 40, file_name: "old.pdf" }], bin: BIN_NOTE }],
+      in_bin: [{ id: uid(30), files: [{ id: uid(40), file_name: "old.pdf" }], bin: BIN_NOTE }],
     },
   ],
 };
@@ -805,9 +830,9 @@ const BIN_PAGE = {
   results: [
     {
       kind: "file",
-      document: { id: 31, name: "Passport" },
-      student: { id: 7, name: "Sita Gurung" },
-      files: [{ id: 42, file_name: "page-2.pdf" }],
+      document: { id: uid(31), name: "Passport" },
+      student: { id: uid(7), name: "Sita Gurung" },
+      files: [{ id: uid(42), file_name: "page-2.pdf" }],
       ...BIN_NOTE,
     },
   ],
@@ -815,28 +840,28 @@ const BIN_PAGE = {
 
 describe("the Bin", () => {
   it("reads what is in the Bin on the checklist", async () => {
-    const checklist = await fetchChecklist(7, answering(jsonResponse(BINNED_CHECKLIST)));
+    const checklist = await fetchChecklist(uid(7), answering(jsonResponse(BINNED_CHECKLIST)));
 
     const [passport] = checklist.items;
     expect(passport?.inBin).toEqual([
       {
-        id: 30,
-        files: [{ id: 40, fileName: "old.pdf" }],
-        bin: { by: { id: 5, name: "Bikash Thapa" }, at: BIN_NOTE.at, reason: "Blurry scan" },
+        id: uid(30),
+        files: [{ id: uid(40), fileName: "old.pdf" }],
+        bin: { by: { id: uid(5), name: "Bikash Thapa" }, at: BIN_NOTE.at, reason: "Blurry scan" },
       },
     ]);
     expect(passport?.document?.binnedFiles).toEqual([
-      { id: 42, fileName: "page-2.pdf", bin: { ...BIN_NOTE } },
+      { id: uid(42), fileName: "page-2.pdf", bin: { ...BIN_NOTE } },
     ]);
   });
 
   it("puts a whole Document in the Bin with the reason", async () => {
     const fetchFn = answering(jsonResponse(CHECKLIST));
 
-    await putInBin(7, { documentId: 31, fileId: null }, "Blurry scan", fetchFn);
+    await putInBin(uid(7), { documentId: uid(31), fileId: null }, "Blurry scan", fetchFn);
 
     const { path, init } = sentInit(fetchFn);
-    expect(path).toBe("/api/students/7/documents/31/bin/");
+    expect(path).toBe(`/api/students/${uid(7)}/documents/${uid(31)}/bin/`);
     expect(init?.method).toBe("POST");
     expect(jsonBody(init)).toEqual({ reason: "Blurry scan" });
   });
@@ -844,10 +869,12 @@ describe("the Bin", () => {
   it("puts one file in the Bin, and names a refused reason", async () => {
     const fetchFn = answering(jsonResponse({ reason: ["Say why it should be deleted."] }, 400));
 
-    const refused = putInBin(7, { documentId: 31, fileId: 42 }, "", fetchFn);
+    const refused = putInBin(uid(7), { documentId: uid(31), fileId: uid(42) }, "", fetchFn);
 
     await expect(refused).rejects.toBeInstanceOf(InvalidFieldsError);
-    expect(sentInit(fetchFn).path).toBe("/api/students/7/documents/31/files/42/bin/");
+    expect(sentInit(fetchFn).path).toBe(
+      `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(42)}/bin/`,
+    );
   });
 
   it.each([
@@ -858,10 +885,10 @@ describe("the Bin", () => {
     const actions = { takeOutOfBin, restoreFromBin, deleteForGood };
     const fetchFn = answering(jsonResponse(CHECKLIST));
 
-    await actions[name](7, { documentId: 31, fileId: 42 }, fetchFn);
+    await actions[name](uid(7), { documentId: uid(31), fileId: uid(42) }, fetchFn);
 
     const { path, init } = sentInit(fetchFn);
-    expect(path).toBe(`/api/students/7/documents/31/files/42/${end}`);
+    expect(path).toBe(`/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(42)}/${end}`);
     expect(init?.method).toBe(method);
   });
 
@@ -874,10 +901,10 @@ describe("the Bin", () => {
     expect(page.count).toBe(1);
     expect(page.items[0]).toEqual({
       kind: "file",
-      document: { id: 31, name: "Passport" },
-      student: { id: 7, name: "Sita Gurung" },
-      files: [{ id: 42, fileName: "page-2.pdf" }],
-      bin: { by: { id: 5, name: "Bikash Thapa" }, at: BIN_NOTE.at, reason: "Blurry scan" },
+      document: { id: uid(31), name: "Passport" },
+      student: { id: uid(7), name: "Sita Gurung" },
+      files: [{ id: uid(42), fileName: "page-2.pdf" }],
+      bin: { by: { id: uid(5), name: "Bikash Thapa" }, at: BIN_NOTE.at, reason: "Blurry scan" },
     });
   });
 
@@ -892,12 +919,16 @@ describe("the Bin", () => {
   it("asks for a link to a file in the Bin, and returns only web links", async () => {
     const fetchFn = answering(jsonResponse({ url: "https://files.test/k?sig=1", expires_in: 300 }));
 
-    const url = await fetchBinFileLink(42, "open", fetchFn);
+    const url = await fetchBinFileLink(uid(42), "open", fetchFn);
 
-    expect(sentInit(fetchFn).path).toBe("/api/documents/bin/files/42/link/?action=open");
+    expect(sentInit(fetchFn).path).toBe(`/api/documents/bin/files/${uid(42)}/link/?action=open`);
     expect(url).toBe("https://files.test/k?sig=1");
     await expect(
-      fetchBinFileLink(42, "open", answering(jsonResponse({ url: "javascript:x", expires_in: 1 }))),
+      fetchBinFileLink(
+        uid(42),
+        "open",
+        answering(jsonResponse({ url: "javascript:x", expires_in: 1 })),
+      ),
     ).rejects.toBeInstanceOf(ApiRequestError);
   });
 });

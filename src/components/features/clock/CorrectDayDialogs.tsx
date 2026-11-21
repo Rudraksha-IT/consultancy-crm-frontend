@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -20,6 +21,7 @@ import {
   setMissingClockOut,
   type ClockDay,
   type ClockSession,
+  updatingOr,
 } from "@/lib/api";
 import { durationText, hoursText, officeHhMm, officeTime } from "@/lib/clock";
 import { formatMonth } from "@/lib/dates";
@@ -33,7 +35,7 @@ type Open =
   | { kind: "fix"; date: string; session: ClockSession | null };
 
 type StaffMonthDialogProps = {
-  staffId: number;
+  staffId: RecordId;
   name: string;
   month: string;
   /** Called after a correction is saved, so the lists behind can be read again. */
@@ -234,7 +236,7 @@ function SessionRow({
 }
 
 type CorrectionDialogProps = {
-  staffId: number;
+  staffId: RecordId;
   name: string;
   day: ClockDay;
   /** The session missing its clock-out, or null to add missed time. */
@@ -385,7 +387,7 @@ function refusedFields(error: unknown): Errors {
 /** A rule the day breaks, in the server's words; nothing when a field was refused instead. */
 function failureOf(error: unknown): string | null {
   if (error instanceof InvalidFieldsError) return null;
-  return error instanceof ClockRefusedError ? error.message : TEXT.failed;
+  return error instanceof ClockRefusedError ? error.message : updatingOr(error, TEXT.failed);
 }
 
 function missingOf(isAdding: boolean, values: Values): Errors {

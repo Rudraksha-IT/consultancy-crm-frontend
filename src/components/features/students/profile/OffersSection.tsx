@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { OpenFileButton } from "@/components/features/documents/OpenFileButton";
@@ -213,7 +214,7 @@ function LetterLink({
   studentId,
   letter,
 }: {
-  studentId: number;
+  studentId: RecordId;
   letter: NonNullable<Application["offerLetter"]>;
 }) {
   const { show, failure } = useDocumentLink(studentId);

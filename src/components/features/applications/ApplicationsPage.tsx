@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { counsellorWords } from "@/components/features/exports/counsellorWords";
@@ -158,7 +159,7 @@ function ListContent({ list, isFiltered, onPage, selection }: ListContentProps) 
   );
 }
 
-function applicationIds(list: ApplicationListState): number[] {
+function applicationIds(list: ApplicationListState): RecordId[] {
   return list.status === "loaded"
     ? list.page.applications.map((application) => application.id)
     : [];

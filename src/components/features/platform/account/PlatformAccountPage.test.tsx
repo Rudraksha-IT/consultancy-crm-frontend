@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,7 +12,7 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { PlatformAdminContext } from "../platformAdminContext";
 import { PlatformAccountPage } from "./PlatformAccountPage";
 
-const ADMIN: PlatformAdmin = { id: 1, name: "Platform Ops", email: "ops@platform.test" };
+const ADMIN: PlatformAdmin = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 const ME_PATH = "/api/platform/me/";
 const PASSWORD_PATH = "/api/platform/me/password/";
 const CURRENT = "Now-Pass-2026!";

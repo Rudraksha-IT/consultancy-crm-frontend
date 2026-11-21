@@ -10,12 +10,13 @@ import { ADMIN_TEXT } from "@/constants/consultancyStatus";
 import { LABELS } from "@/constants/messages";
 
 import { useAddAdmin } from "./useAddAdmin";
+import type { RecordId } from "@/lib/recordId";
 
 const FORM_ID = "add-admin";
 
 type AddAdminDialogProps = {
   /** The office to add an Admin to; null shows nothing. */
-  office: { id: number; name: string } | null;
+  office: { id: RecordId; name: string } | null;
   /** The Admin was invited; gets their name for the toast. */
   onAdded: (name: string) => void;
   onClose: () => void;
@@ -30,7 +31,7 @@ export function AddAdminDialog({ office, onAdded, onClose }: AddAdminDialogProps
   return <OpenAddAdminDialog office={office} onAdded={onAdded} onClose={onClose} />;
 }
 
-type OpenProps = AddAdminDialogProps & { office: { id: number; name: string } };
+type OpenProps = AddAdminDialogProps & { office: { id: RecordId; name: string } };
 
 function OpenAddAdminDialog({ office, onAdded, onClose }: OpenProps) {
   const { isSending, fieldErrors, error, send } = useAddAdmin(office.id, onAdded);

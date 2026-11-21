@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { uid } from "@/test/ids";
 import { PHASE_PRODUCTION_BUILD } from "next/constants";
 
 import { z } from "zod";
@@ -71,7 +72,7 @@ describe("onRequestError (a server render or route failed)", () => {
     await onRequestError(
       renderError(),
       {
-        path: "/students/7?q=sita@acme.test",
+        path: `/students/${uid(7)}?q=sita@acme.test`,
         method: "GET",
         headers: { cookie: "crm_auth=sealed", "x-correlation-id": CORRELATION_ID },
       },
@@ -84,7 +85,7 @@ describe("onRequestError (a server render or route failed)", () => {
         level: 50,
         type: "error",
         msg: "Server error",
-        url: "/students/7",
+        url: `/students/${uid(7)}`,
         route: "/students/[id]",
         method: "GET",
         digest: "2417294843",

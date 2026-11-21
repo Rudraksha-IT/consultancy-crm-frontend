@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -14,28 +15,30 @@ const router = { push: vi.fn(), replace: vi.fn(), back: vi.fn() };
 vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/" }));
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Asha Admin", email: "asha@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["catalogue"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
 
 const NURSING = {
-  id: 11,
-  university_id: 1,
+  id: uid(11),
+  university_id: uid(1),
   name: "Bachelor of Nursing",
   level: "bachelor",
   intakes: ["2027-02"],
   archived: false,
-  documents: [{ id: 21, name: "Work Reference" }],
+  documents: [{ id: uid(21), name: "Work Reference" }],
   applications: 3,
+  files: [],
+  file_count: 0,
 };
 const OLD = {
   ...NURSING,
-  id: 12,
+  id: uid(12),
   name: "Diploma of Old Things",
   level: "diploma",
   intakes: [],
@@ -43,20 +46,25 @@ const OLD = {
   documents: [],
   applications: 0,
 };
-const USED_OLD = { ...OLD, id: 13, name: "Master of Used Things", applications: 2 };
+const USED_OLD = { ...OLD, id: uid(13), name: "Master of Used Things", applications: 2 };
 const DEAKIN = {
-  id: 1,
+  id: uid(1),
   name: "Deakin University",
   country: "australia",
   archived: false,
   courses: [NURSING, OLD],
 };
 const TYPES = [
-  { id: 21, name: "Work Reference", needed_by_everyone: false, usual_group: "applying" },
-  { id: 22, name: "Passport", needed_by_everyone: true, usual_group: "applying" },
-  { id: 23, name: "Statement of Purpose", needed_by_everyone: false, usual_group: "statements" },
+  { id: uid(21), name: "Work Reference", needed_by_everyone: false, usual_group: "applying" },
+  { id: uid(22), name: "Passport", needed_by_everyone: true, usual_group: "applying" },
+  {
+    id: uid(23),
+    name: "Statement of Purpose",
+    needed_by_everyone: false,
+    usual_group: "statements",
+  },
 ];
-const ONE = "/api/catalogue/universities/1/";
+const ONE = `/api/catalogue/universities/${uid(1)}/`;
 
 type Answer = (path: string, init?: RequestInit) => Response | undefined;
 const method = (init?: RequestInit): string => init?.method ?? "GET";
@@ -100,7 +108,7 @@ function calls(fetchFn: ReturnType<typeof backend>, verb: string): number {
   return fetchFn.mock.calls.filter(([, given]) => method(given) === verb).length;
 }
 
-function renderPage(context: StaffContext = ADMIN, idText = "1") {
+function renderPage(context: StaffContext = ADMIN, idText: string = uid(1)) {
   render(
     <StaffContextContext value={context}>
       <ToastProvider>
@@ -160,7 +168,7 @@ describe("a university's edit page", () => {
     expect(within(course("Diploma of Old Things")).getByText("Archived")).toBeInTheDocument();
   });
 
-  it("saves the university and every course in one go, then goes back to the Catalogue", async () => {
+  it("saves the university and every course in one go, then goes back to Configuration: Universities", async () => {
     const fetchFn = backend(stored(), types, saving());
     renderPage();
     await opened();
@@ -182,7 +190,7 @@ describe("a university's edit page", () => {
     await save();
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith("/catalogue");
+      expect(router.push).toHaveBeenCalledWith("/configuration?section=universities");
     });
     expect(sent(fetchFn, "PUT")).toEqual({
       name: "Deakin University Melbourne",
@@ -190,15 +198,15 @@ describe("a university's edit page", () => {
       archived: false,
       courses: [
         {
-          id: 11,
+          id: uid(11),
           name: "Bachelor of Nursing",
           level: "bachelor",
           intakes: ["2027-02", "2027-07"],
           archived: false,
-          documents: [21, 23],
+          documents: [uid(21), uid(23)],
         },
         {
-          id: 12,
+          id: uid(12),
           name: "Diploma of Old Things",
           level: "diploma",
           intakes: [],
@@ -246,8 +254,8 @@ describe("a university's edit page", () => {
       expect(sent(fetchFn, "PUT")).toMatchObject({
         archived: true,
         courses: [
-          { id: 11, archived: true },
-          { id: 12, archived: false },
+          { id: uid(11), archived: true },
+          { id: uid(12), archived: false },
         ],
       });
     });
@@ -360,7 +368,10 @@ describe("deleting courses", () => {
     await save();
 
     await waitFor(() => {
-      expect(sent(fetchFn, "PUT")).toMatchObject({ courses: [{ id: 11 }], deleted_courses: [12] });
+      expect(sent(fetchFn, "PUT")).toMatchObject({
+        courses: [{ id: uid(11) }],
+        deleted_courses: [uid(12)],
+      });
     });
   });
 
@@ -384,6 +395,19 @@ describe("deleting courses", () => {
     expect(within(used).getByRole("button", { name: "Delete course" })).toBeDisabled();
     expect(
       within(used).getByText("Used by 2 applications, so it stays archived."),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps a course with Course Files, counting the Bin, and says why (ticket 10)", async () => {
+    const withFiles = { ...OLD, id: uid(14), name: "Master of Brochures", file_count: 1 };
+    backend(stored({ ...DEAKIN, courses: [NURSING, withFiles] }), types);
+    renderPage();
+    await opened();
+    const kept = course("Master of Brochures");
+
+    expect(within(kept).getByRole("button", { name: "Delete course" })).toBeDisabled();
+    expect(
+      within(kept).getByText("It has 1 Course File (counting the Bin), so it stays archived."),
     ).toBeInTheDocument();
   });
 
@@ -412,7 +436,7 @@ describe("deleting the university", () => {
     expect(screen.queryByRole("button", { name: "Delete university" })).toBeNull();
   });
 
-  it("deletes it and its courses after asking, then goes back to the Catalogue", async () => {
+  it("deletes it and its courses after asking, then goes back to Configuration: Universities", async () => {
     const fetchFn = backend(stored(ARCHIVED), types, deleting());
     renderPage();
     await opened();
@@ -427,7 +451,7 @@ describe("deleting the university", () => {
     await userEvent.click(within(confirm).getByRole("button", { name: "Delete university" }));
 
     await waitFor(() => {
-      expect(router.push).toHaveBeenCalledWith("/catalogue");
+      expect(router.push).toHaveBeenCalledWith("/configuration?section=universities");
     });
     expect(calls(fetchFn, "DELETE")).toBe(1);
     expect(await screen.findByText("Deakin University deleted")).toBeInTheDocument();
@@ -464,6 +488,20 @@ describe("deleting the university", () => {
       within(university).getByText("Used by 2 applications, so it stays archived."),
     ).toBeInTheDocument();
   });
+
+  it("can't be deleted while its courses keep Course Files (ticket 10)", async () => {
+    backend(stored({ ...ARCHIVED, courses: [{ ...OLD, file_count: 2 }] }), types);
+    renderPage();
+    await opened();
+
+    const university = screen.getByRole("region", { name: "University" });
+    expect(within(university).getByRole("button", { name: "Delete university" })).toBeDisabled();
+    expect(
+      within(university).getByText(
+        "Its courses have 2 Course Files (counting the Bin), so it stays archived.",
+      ),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("leaving and access", () => {
@@ -474,7 +512,7 @@ describe("leaving and access", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
 
-    expect(router.push).toHaveBeenCalledWith("/catalogue");
+    expect(router.push).toHaveBeenCalledWith("/configuration?section=universities");
   });
 
   it("asks before leaving with unsaved changes", async () => {
@@ -490,7 +528,7 @@ describe("leaving and access", () => {
     await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
     await userEvent.click(screen.getByRole("button", { name: "Leave without saving" }));
 
-    expect(router.push).toHaveBeenCalledWith("/catalogue");
+    expect(router.push).toHaveBeenCalledWith("/configuration?section=universities");
   });
 
   it.each(["counsellor", "front_desk", "teacher"] as const)(
@@ -506,13 +544,18 @@ describe("leaving and access", () => {
     },
   );
 
-  it("finds nothing for an address that isn't an id, without asking the server", async () => {
-    const fetchFn = backend();
-    renderPage(ADMIN, "1;drop");
+  it.each(["1;drop", "1", "not-a-uuid", "00000000000040008000000000000001"])(
+    "finds nothing for %j, which isn't a UUID, without asking the server (ADR 0027)",
+    async (idText) => {
+      const fetchFn = backend();
+      renderPage(ADMIN, idText);
 
-    expect(await screen.findByText("This university isn't in the Catalogue.")).toBeInTheDocument();
-    expect(fetchFn).not.toHaveBeenCalled();
-  });
+      expect(
+        await screen.findByText("This university isn't in the Catalogue."),
+      ).toBeInTheDocument();
+      expect(fetchFn).not.toHaveBeenCalled();
+    },
+  );
 
   it("says when the university is not found", async () => {
     backend(stored({ detail: "Not found." }, 404));

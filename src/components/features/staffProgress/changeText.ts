@@ -30,7 +30,7 @@ export function changeTitle(change: ProgressChange, dates: Dates): string {
   const { kind } = change;
   if (isOwnKind(kind)) return OWN_TITLES[kind](change);
   return describeHistoryEntry(
-    { ...change, kind, id: 0, by: { name: "", isPlatformAdmin: false } },
+    { ...change, kind, id: "", by: { name: "", isPlatformAdmin: false } },
     dates,
   ).title;
 }

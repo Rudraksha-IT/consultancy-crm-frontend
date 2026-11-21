@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import type { ThemeConfig } from "@/lib/theme";
 import { TEST_COLOURS } from "@/lib/theme/testColours";
 import {
@@ -28,10 +29,10 @@ const THEME: ThemeConfig = {
   dark: { base: "teal", sidebar: "brand", accent: "auto" },
 };
 
-const ADMIN = { id: 1, name: "Platform Ops", email: "ops@platform.test" };
+const ADMIN = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 
 const ACME = {
-  id: 3,
+  id: uid(3),
   name: "Acme Education",
   subdomain: "acme",
   host: testHost("acme"),
@@ -45,7 +46,7 @@ const ACME = {
 };
 
 const ACME_OVERVIEW = {
-  id: 3,
+  id: uid(3),
   name: "Acme Education",
   subdomain: "acme",
   host: testHost("acme"),
@@ -61,6 +62,7 @@ const ACME_OVERVIEW = {
 const NEW_CONSULTANCY = {
   name: "Acme Education",
   subdomain: "acme",
+  contactEmail: "info@acme.com",
   theme: THEME,
   status: "evaluation",
   paidUntil: "",
@@ -177,6 +179,7 @@ describe("createConsultancy", () => {
         body: JSON.stringify({
           name: "Acme Education",
           subdomain: "acme",
+          contact_email: "info@acme.com",
           status: "evaluation",
           theme: THEME,
         }),
@@ -202,6 +205,7 @@ describe("createConsultancy", () => {
       jsonResponse(
         {
           subdomain: ["This subdomain is already taken."],
+          contact_email: ["Enter a real email address."],
           admin_email: ["Not a field any more."],
         },
         400,
@@ -215,6 +219,7 @@ describe("createConsultancy", () => {
     expect(error).toBeInstanceOf(InvalidFieldsError);
     expect(error).toHaveProperty("fieldErrors", {
       subdomain: ["This subdomain is already taken."],
+      contactEmail: ["Enter a real email address."],
     });
   });
 
@@ -250,12 +255,12 @@ describe("retryConsultancySetup", () => {
       .fn<typeof fetch>()
       .mockResolvedValue(jsonResponse({ ...ACME, setup_state: "setting_up" }, 202));
 
-    await expect(retryConsultancySetup(3, fetchFn)).resolves.toMatchObject({
-      id: 3,
+    await expect(retryConsultancySetup(uid(3), fetchFn)).resolves.toMatchObject({
+      id: uid(3),
       setupState: "setting_up",
     });
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/platform/consultancies/3/retry-setup/",
+      `/api/platform/consultancies/${uid(3)}/retry-setup/`,
       expect.objectContaining({ method: "POST" }),
     );
   });
@@ -265,7 +270,7 @@ describe("retryConsultancySetup", () => {
       .fn<typeof fetch>()
       .mockResolvedValue(jsonResponse({ detail: "Only an office whose setup failed…" }, 400));
 
-    await expect(retryConsultancySetup(3, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(retryConsultancySetup(uid(3), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
@@ -282,7 +287,7 @@ describe("changeConsultancyStatus", () => {
 
     await expect(
       changeConsultancyStatus(
-        3,
+        uid(3),
         { status: "active", reason: "Paid", paidUntil: "2026-12-31", evaluationEndsAt: "x" },
         fetchFn,
       ),
@@ -293,7 +298,7 @@ describe("changeConsultancyStatus", () => {
       paidUntil: "2026-12-31",
     });
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/platform/consultancies/3/status/",
+      `/api/platform/consultancies/${uid(3)}/status/`,
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ status: "active", reason: "Paid", paid_until: "2026-12-31" }),
@@ -307,11 +312,11 @@ describe("changeConsultancyStatus", () => {
       .mockImplementation(() => Promise.resolve(jsonResponse(ACME)));
 
     await changeConsultancyStatus(
-      3,
+      uid(3),
       { status: "evaluation", reason: "", evaluationEndsAt: "2026-11-30", paidUntil: "" },
       fetchFn,
     );
-    await changeConsultancyStatus(3, { status: "active", reason: "", paidUntil: "" }, fetchFn);
+    await changeConsultancyStatus(uid(3), { status: "active", reason: "", paidUntil: "" }, fetchFn);
 
     expect(fetchFn.mock.calls.map((call) => call[1]?.body)).toEqual([
       JSON.stringify({ status: "evaluation", reason: "", evaluation_ends_at: "2026-11-30" }),
@@ -325,7 +330,7 @@ describe("changeConsultancyStatus", () => {
       .mockResolvedValue(jsonResponse({ paid_until: ["Choose a date after today."] }, 400));
 
     const error: unknown = await changeConsultancyStatus(
-      3,
+      uid(3),
       { status: "active", reason: "", paidUntil: "2020-01-01" },
       fetchFn,
     ).catch((caught: unknown) => caught);
@@ -342,7 +347,7 @@ describe("changeConsultancyStatus", () => {
       );
 
     const error: unknown = await changeConsultancyStatus(
-      3,
+      uid(3),
       { status: "active", reason: "", paidUntil: "2026-12-31" },
       fetchFn,
     ).catch((caught: unknown) => caught);
@@ -361,7 +366,7 @@ describe("changeConsultancyStatus", () => {
     const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(answer));
 
     await expect(
-      changeConsultancyStatus(3, { status: "past_due", reason: "Unpaid" }, fetchFn),
+      changeConsultancyStatus(uid(3), { status: "past_due", reason: "Unpaid" }, fetchFn),
     ).rejects.toBeInstanceOf(ApiRequestError);
   });
 
@@ -369,7 +374,7 @@ describe("changeConsultancyStatus", () => {
     const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({}, 500));
 
     await expect(
-      changeConsultancyStatus(3, { status: "past_due", reason: "Unpaid" }, fetchFn),
+      changeConsultancyStatus(uid(3), { status: "past_due", reason: "Unpaid" }, fetchFn),
     ).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
@@ -387,12 +392,12 @@ describe("updateModules", () => {
       clock_in: false,
     };
 
-    await expect(updateModules(3, switches, fetchFn)).resolves.toEqual({
+    await expect(updateModules(uid(3), switches, fetchFn)).resolves.toEqual({
       ...ACME_OVERVIEW,
       modules: ["students", "reports"],
     });
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/platform/consultancies/3/modules/",
+      `/api/platform/consultancies/${uid(3)}/modules/`,
       expect.objectContaining({ method: "PUT", body: JSON.stringify(switches) }),
     );
   });
@@ -409,13 +414,13 @@ describe("updateModules", () => {
       clock_in: true,
     };
 
-    await expect(updateModules(3, switches, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(updateModules(uid(3), switches, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
 describe("updateConsultancyTheme", () => {
   const OVERVIEW = {
-    id: 3,
+    id: uid(3),
     name: "Acme Education",
     subdomain: "acme",
     host: testHost("acme"),
@@ -431,11 +436,11 @@ describe("updateConsultancyTheme", () => {
   it("puts the colours to the office on the Platform and returns its summary", async () => {
     const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(OVERVIEW));
 
-    const updated = await updateConsultancyTheme(3, CONTRASTING_THEME, fetchFn);
+    const updated = await updateConsultancyTheme(uid(3), CONTRASTING_THEME, fetchFn);
 
     expect(updated.theme).toEqual(CONTRASTING_THEME);
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/platform/consultancies/3/theme/",
+      `/api/platform/consultancies/${uid(3)}/theme/`,
       expect.objectContaining({ method: "PUT", body: JSON.stringify(CONTRASTING_THEME) }),
     );
   });
@@ -443,7 +448,7 @@ describe("updateConsultancyTheme", () => {
   it("passes a refusal through", async () => {
     const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ page: ["Bad"] }, 400));
 
-    await expect(updateConsultancyTheme(3, CONTRASTING_THEME, fetchFn)).rejects.toBeInstanceOf(
+    await expect(updateConsultancyTheme(uid(3), CONTRASTING_THEME, fetchFn)).rejects.toBeInstanceOf(
       ApiRequestError,
     );
   });

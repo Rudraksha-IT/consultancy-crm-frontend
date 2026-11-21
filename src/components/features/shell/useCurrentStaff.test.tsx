@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 
@@ -9,11 +10,11 @@ import { useCurrentStaff } from "./useCurrentStaff";
 import { consultancySummary } from "@/test/consultancy";
 
 const CONTEXT: StaffContext = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };

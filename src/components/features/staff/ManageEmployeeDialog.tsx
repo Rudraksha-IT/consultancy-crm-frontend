@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
@@ -199,7 +200,7 @@ type AssignedCheck =
   { status: "loading" } | { status: "loaded"; students: AssignedStudent[] } | { status: "failed" };
 
 /** The Students someone still counsels, checked when their deactivation is being confirmed. */
-function useAssignedStudents(staffId: number): AssignedCheck {
+function useAssignedStudents(staffId: RecordId): AssignedCheck {
   const [check, setCheck] = useState<AssignedCheck>({ status: "loading" });
   useEffect(() => {
     let isCancelled = false;

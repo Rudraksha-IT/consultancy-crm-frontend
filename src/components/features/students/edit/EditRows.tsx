@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import clsx from "clsx";
 
 import { Button } from "@/components/ui/Button";
@@ -8,7 +9,7 @@ import { EDIT_DETAILS_TEXT } from "@/constants/studentProfile";
 import type { ListKind, RowValues } from "./listRows";
 
 /** One row on the page: a stored row (with its id) or a new one, and whether it is marked. */
-export type RowState = { key: string; id: number | null; values: RowValues; isRemoved: boolean };
+export type RowState = { key: string; id: RecordId | null; values: RowValues; isRemoved: boolean };
 
 type EditRowsProps = {
   list: string;

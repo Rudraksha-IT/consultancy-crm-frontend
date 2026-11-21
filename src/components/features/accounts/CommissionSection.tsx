@@ -231,7 +231,7 @@ function CommissionRow({ commission, onStatus }: CommissionRowProps) {
         <SelectField
           label={COMMISSION_TEXT.statusFor(commission.student.name)}
           isLabelHidden
-          name={`status-${String(commission.id)}`}
+          name={`status-${commission.id}`}
           options={STATUS_OPTIONS}
           value={commission.status}
           onChange={(value) => {

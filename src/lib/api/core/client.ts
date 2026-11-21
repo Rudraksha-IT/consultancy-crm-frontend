@@ -1,8 +1,13 @@
 import type { z } from "zod";
 
+import { HTTP_STATUS } from "@/constants/api";
+import { SESSION_ENDED_HEADER } from "@/constants/session";
+
 import { ApiRequestError } from "./errors";
+import { reportLoginEnded } from "./loginEnded";
 import { reportRestriction, restrictionOf } from "./restriction";
 import { reportUnexpectedError, unexpectedErrorOf } from "./unexpected";
+import { isUpdatingAnswer, reportServerAnswer } from "./updating";
 
 const JSON_HEADERS = { Accept: "application/json" } as const;
 const SENT_JSON_HEADERS = { ...JSON_HEADERS, "Content-Type": "application/json" } as const;
@@ -137,11 +142,14 @@ function sendJson(
 }
 
 async function send(path: string, init: RequestInit, fetchFn: typeof fetch): Promise<Response> {
+  let response: Response;
   try {
-    return await fetchFn(path, init);
+    response = await fetchFn(path, init);
   } catch {
     throw new ApiRequestError(path, null);
   }
+  if (response.ok) reportServerAnswer(false);
+  return response;
 }
 
 async function parseBody<T>(path: string, response: Response, schema: z.ZodType<T>): Promise<T> {
@@ -158,7 +166,9 @@ async function parseBody<T>(path: string, response: Response, schema: z.ZodType<
 /**
  * The error for a refused answer. A refusal because of the office's Status (issue 42) is also
  * reported to the app shell, which shows the server's reason instead of a generic error; so is an
- * unexpected server error's reference (issue 58), which staff can quote to us.
+ * unexpected server error's reference (issue 58), which staff can quote to us. "The app is being
+ * updated" and "not logged in" (ticket 14) are reported too: the app says the first where it would
+ * show a generic error, and the logged-in shell sends the person to log in again on the second.
  */
 async function failure(path: string, response: Response): Promise<ApiRequestError> {
   const body = await readJson(response);
@@ -166,7 +176,10 @@ async function failure(path: string, response: Response): Promise<ApiRequestErro
   if (restriction !== null) reportRestriction(restriction);
   const reference = unexpectedErrorOf(response.status, body);
   if (reference !== null) reportUnexpectedError(reference);
-  return new ApiRequestError(path, response.status, body);
+  reportServerAnswer(isUpdatingAnswer(response.status, body));
+  const hasLoginEnded = response.headers.get(SESSION_ENDED_HEADER) !== null;
+  if (response.status === HTTP_STATUS.unauthorized) reportLoginEnded(hasLoginEnded);
+  return new ApiRequestError(path, response.status, body, hasLoginEnded);
 }
 
 async function readJson(response: Response): Promise<unknown> {

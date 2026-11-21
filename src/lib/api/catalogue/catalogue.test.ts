@@ -1,20 +1,23 @@
+import { uid } from "@/test/ids";
 import { addCourse, addUniversity, fetchUniversities, importCatalogue } from "./catalogue";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 
 const COURSE = {
-  id: 11,
-  university_id: 1,
+  id: uid(11),
+  university_id: uid(1),
   name: "Master of Information Technology",
   level: "master",
   intakes: ["2027-03", "2027-07"],
   archived: false,
-  documents: [{ id: 21, name: "CV" }],
+  documents: [{ id: uid(21), name: "CV" }],
   applications: 0,
+  files: [],
+  file_count: 0,
 };
 
 const UNIVERSITY = {
-  id: 1,
+  id: uid(1),
   name: "Deakin University",
   country: "australia",
   archived: false,
@@ -52,14 +55,16 @@ describe("fetchUniversities", () => {
           ...UNIVERSITY,
           courses: [
             {
-              id: 11,
-              universityId: 1,
+              id: uid(11),
+              universityId: uid(1),
               name: "Master of Information Technology",
               level: "master",
               intakes: ["2027-03", "2027-07"],
               archived: false,
-              documents: [{ id: 21, name: "CV" }],
+              documents: [{ id: uid(21), name: "CV" }],
               applications: 0,
+              files: [],
+              fileCount: 0,
             },
           ],
         },
@@ -73,7 +78,7 @@ describe("fetchUniversities", () => {
     ["an unknown country", { ...UNIVERSITY, country: "mars" }],
     [
       "a course document without a name",
-      { ...UNIVERSITY, courses: [{ ...COURSE, documents: [{ id: 1 }] }] },
+      { ...UNIVERSITY, courses: [{ ...COURSE, documents: [{ id: uid(1) }] }] },
     ],
     ["a missing name", { ...UNIVERSITY, name: undefined }],
   ])("refuses an answer with %s", async (_, university) => {
@@ -128,25 +133,30 @@ describe("addUniversity", () => {
 });
 
 describe("courses", () => {
-  const input = { name: "Master of IT", level: "master", intakes: ["2027-03"], documents: [21] };
+  const input = {
+    name: "Master of IT",
+    level: "master",
+    intakes: ["2027-03"],
+    documents: [uid(21)],
+  };
 
   it("adds a course to its university", async () => {
     const fetchFn = answering(jsonResponse(COURSE, 201));
 
-    const course = await addCourse(1, input, fetchFn);
+    const course = await addCourse(uid(1), input, fetchFn);
 
     expect(call(fetchFn)).toEqual({
-      path: "/api/catalogue/universities/1/courses/",
+      path: `/api/catalogue/universities/${uid(1)}/courses/`,
       method: "POST",
       body: input,
     });
-    expect(course.universityId).toBe(1);
+    expect(course.universityId).toBe(uid(1));
   });
 
   it("turns refused fields into field errors", async () => {
     const fetchFn = answering(jsonResponse({ intakes: ["Add at least one intake."] }, 400));
 
-    await expect(addCourse(1, input, fetchFn)).rejects.toEqual(
+    await expect(addCourse(uid(1), input, fetchFn)).rejects.toEqual(
       new InvalidFieldsError({ intakes: ["Add at least one intake."] }),
     );
   });

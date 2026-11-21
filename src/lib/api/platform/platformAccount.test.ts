@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { API_PATHS } from "@/constants/api";
 
 import {
@@ -11,7 +12,7 @@ import { changePlatformPassword, savePlatformName } from "./platformAccount";
 import { WrongNumberError } from "../auth/twoFactor";
 import { jsonResponse } from "../core/test-helpers";
 
-const ADMIN = { id: 3, name: "Ramesh", email: "ramesh@platform.test" };
+const ADMIN = { id: uid(3), name: "Ramesh", email: "ramesh@platform.test" };
 
 function answering(response: Response) {
   return vi.fn<typeof fetch>().mockResolvedValue(response);

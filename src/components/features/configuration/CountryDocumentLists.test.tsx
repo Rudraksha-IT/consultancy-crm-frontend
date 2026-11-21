@@ -1,3 +1,5 @@
+import { uid } from "@/test/ids";
+import type { RecordId } from "@/lib/recordId";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -10,29 +12,32 @@ const LISTS_PATH = "/api/configuration/document-lists/";
 const TYPES_PATH = "/api/documents/types/";
 const TYPES = {
   results: [
-    { id: 1, name: "Passport", needed_by_everyone: true, usual_group: "applying" },
-    { id: 7, name: "Bank Statement", needed_by_everyone: false, usual_group: "visa" },
-    { id: 24, name: "Police report", needed_by_everyone: false, usual_group: "visa" },
+    { id: uid(1), name: "Passport", needed_by_everyone: true, usual_group: "applying" },
+    { id: uid(7), name: "Bank Statement", needed_by_everyone: false, usual_group: "visa" },
+    { id: uid(24), name: "Police report", needed_by_everyone: false, usual_group: "visa" },
     {
-      id: 26,
+      id: uid(26),
       name: "Genuine Student statement",
       needed_by_everyone: false,
       usual_group: "statements",
     },
   ],
 };
-const row = (id: number, name: string, group: string) => ({
+const row = (id: RecordId, name: string, group: string) => ({
   document_type: { id, name },
   group,
 });
 const AUSTRALIA = {
   country: "australia",
-  documents: [row(7, "Bank Statement", "visa"), row(26, "Genuine Student statement", "statements")],
+  documents: [
+    row(uid(7), "Bank Statement", "visa"),
+    row(uid(26), "Genuine Student statement", "statements"),
+  ],
 };
 const LISTS = {
   results: [
     AUSTRALIA,
-    { country: "uk", documents: [row(7, "Bank Statement", "visa")] },
+    { country: "uk", documents: [row(uid(7), "Bank Statement", "visa")] },
     { country: "canada", documents: [] },
     { country: "usa", documents: [] },
     { country: "new_zealand", documents: [] },
@@ -146,7 +151,7 @@ describe("CountryDocumentLists", () => {
   it("adds an existing document to the list shown, offering only those not on it", async () => {
     const saved = {
       ...AUSTRALIA,
-      documents: [...AUSTRALIA.documents, row(24, "Police report", "statements")],
+      documents: [...AUSTRALIA.documents, row(uid(24), "Police report", "statements")],
     };
     const fetchFn = backend(
       on("GET", LISTS_PATH, LISTS),
@@ -171,9 +176,9 @@ describe("CountryDocumentLists", () => {
     ).toBeVisible();
     expect(sentRows(fetchFn, "australia")).toEqual({
       documents: [
-        { document_type: 7, group: "visa" },
-        { document_type: 26, group: "statements" },
-        { document_type: 24, group: "statements" },
+        { document_type: uid(7), group: "visa" },
+        { document_type: uid(26), group: "statements" },
+        { document_type: uid(24), group: "statements" },
       ],
     });
     expect(rowsOf("Statements")).toEqual(["Genuine Student statement", "Police report"]);
@@ -182,7 +187,7 @@ describe("CountryDocumentLists", () => {
   it("says so when every existing document is already on the list", async () => {
     backend(
       on("GET", LISTS_PATH, LISTS),
-      on("GET", TYPES_PATH, { results: TYPES.results.filter((t) => t.id !== 24) }),
+      on("GET", TYPES_PATH, { results: TYPES.results.filter((t) => t.id !== uid(24)) }),
     );
     renderLists();
 
@@ -196,7 +201,7 @@ describe("CountryDocumentLists", () => {
   it("makes a new document on the list shown, in one request", async () => {
     const made = {
       document_type: {
-        id: 30,
+        id: uid(30),
         name: "Police clearance",
         needed_by_everyone: false,
         usual_group: "statements",
@@ -204,7 +209,10 @@ describe("CountryDocumentLists", () => {
       },
       list: {
         country: "uk",
-        documents: [row(7, "Bank Statement", "visa"), row(30, "Police clearance", "statements")],
+        documents: [
+          row(uid(7), "Bank Statement", "visa"),
+          row(uid(30), "Police clearance", "statements"),
+        ],
       },
     };
     const fetchFn = backend(
@@ -309,7 +317,7 @@ describe("CountryDocumentLists", () => {
       on("GET", TYPES_PATH, TYPES),
       on("PUT", `${LISTS_PATH}australia/`, {
         ...AUSTRALIA,
-        documents: [row(7, "Bank Statement", "applying"), AUSTRALIA.documents[1]],
+        documents: [row(uid(7), "Bank Statement", "applying"), AUSTRALIA.documents[1]],
       }),
     );
     renderLists();
@@ -323,8 +331,8 @@ describe("CountryDocumentLists", () => {
     expect(await screen.findByText("Moved to Applying")).toBeVisible();
     expect(sentRows(fetchFn, "australia")).toEqual({
       documents: [
-        { document_type: 7, group: "applying" },
-        { document_type: 26, group: "statements" },
+        { document_type: uid(7), group: "applying" },
+        { document_type: uid(26), group: "statements" },
       ],
     });
     await openGroup(/^Applying/);
@@ -358,7 +366,7 @@ describe("CountryDocumentLists", () => {
 
     expect(await screen.findByText("Taken off Australia's list")).toBeVisible();
     expect(sentRows(fetchFn, "australia")).toEqual({
-      documents: [{ document_type: 26, group: "statements" }],
+      documents: [{ document_type: uid(26), group: "statements" }],
     });
   });
 
@@ -366,7 +374,10 @@ describe("CountryDocumentLists", () => {
     const fetchFn = backend(
       on("GET", LISTS_PATH, {
         results: [
-          { country: "australia", documents: [row(1, "Passport", "visa"), AUSTRALIA.documents[0]] },
+          {
+            country: "australia",
+            documents: [row(uid(1), "Passport", "visa"), AUSTRALIA.documents[0]],
+          },
         ],
       }),
       on("GET", TYPES_PATH, TYPES),
@@ -378,8 +389,8 @@ describe("CountryDocumentLists", () => {
 
     expect(sentRows(fetchFn, "australia")).toEqual({
       documents: [
-        { document_type: 7, group: "visa" },
-        { document_type: 24, group: "applying" },
+        { document_type: uid(7), group: "visa" },
+        { document_type: uid(24), group: "applying" },
       ],
     });
   });
@@ -418,7 +429,7 @@ describe("CountryDocumentLists", () => {
     const name = '<img src=x onerror="alert(1)">';
     backend(
       on("GET", LISTS_PATH, {
-        results: [{ country: "australia", documents: [row(9, name, "applying")] }],
+        results: [{ country: "australia", documents: [row(uid(9), name, "applying")] }],
       }),
       on("GET", TYPES_PATH, TYPES),
     );

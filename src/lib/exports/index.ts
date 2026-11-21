@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { ContactKind, type ExportList } from "@/constants/exports";
 
 /** A list's filters as the export endpoint takes them: the list's own query, minus the page. */
@@ -35,7 +36,7 @@ export function describeFilters(filters: readonly FilterWords[], none: string): 
 }
 
 /** One selected row's Student, for copying. */
-export type Contact = { studentId: number; email: string; phone: string };
+export type Contact = { studentId: RecordId; email: string; phone: string };
 
 /** What a Copy button copies: the text, how many values, and how many Students had none. */
 export type CopiedContacts = { text: string; count: number; missing: number };

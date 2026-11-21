@@ -10,40 +10,43 @@ import { PROFILE } from "@/test/studentProfile";
 
 import { StudentProfilePage } from "./StudentProfilePage";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const { navigate } = vi.hoisted(() => ({ navigate: vi.fn<(path: string) => void>() }));
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 vi.mock("@/lib/documents/tab", () => ({ openBlankTab: () => null }));
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
 
 const DEAKIN = {
-  id: 11,
-  university: { id: 3, name: "Deakin University" },
-  course: { id: 4, name: "Master of IT", level: "master" },
+  id: uid(11),
+  university: { id: uid(3), name: "Deakin University" },
+  course: { id: uid(4), name: "Master of IT", level: "master" },
   intake: "2027-03",
   status: "applied",
   offer_kind: "",
   offered_on: null,
+  course_files: [],
   offer_letter: null,
   documents: [],
 };
 const RMIT = {
-  id: 12,
-  university: { id: 6, name: "RMIT University" },
-  course: { id: 9, name: "Master of Data Science", level: "master" },
+  id: uid(12),
+  university: { id: uid(6), name: "RMIT University" },
+  course: { id: uid(9), name: "Master of Data Science", level: "master" },
   intake: "2027-07",
   status: "rejected",
   offer_kind: "",
   offered_on: null,
+  course_files: [],
   offer_letter: null,
   documents: [],
 };
@@ -55,51 +58,64 @@ const CATALOGUE = {
   page_size: 25,
   results: [
     {
-      id: 3,
+      id: uid(3),
       name: "Deakin University",
       country: "australia",
       archived: false,
       documents: [],
       courses: [
         {
-          id: 4,
-          university_id: 3,
+          id: uid(4),
+          university_id: uid(3),
           name: "Master of IT",
           level: "master",
           intakes: ["2027-03", "2027-07"],
           archived: false,
           documents: [],
           applications: 0,
+          files: [],
+          file_count: 0,
         },
         {
-          id: 5,
-          university_id: 3,
+          id: uid(5),
+          university_id: uid(3),
           name: "Bachelor of Nursing",
           level: "bachelor",
           intakes: ["2027-02"],
           archived: false,
           documents: [],
           applications: 0,
+          files: [],
+          file_count: 0,
         },
       ],
     },
-    { id: 7, name: "Empty College", country: "uk", archived: false, documents: [], courses: [] },
     {
-      id: 6,
+      id: uid(7),
+      name: "Empty College",
+      country: "uk",
+      archived: false,
+      documents: [],
+      courses: [],
+    },
+    {
+      id: uid(6),
       name: "RMIT University",
       country: "australia",
       archived: false,
       documents: [],
       courses: [
         {
-          id: 9,
-          university_id: 6,
+          id: uid(9),
+          university_id: uid(6),
           name: "Master of Data Science",
           level: "master",
           intakes: ["2027-07"],
           archived: false,
           documents: [],
           applications: 0,
+          files: [],
+          file_count: 0,
         },
       ],
     },
@@ -127,7 +143,8 @@ function on(verb: string, path: string, body: unknown, status = 200): Answer {
     method(init) === verb && calledPath === path ? jsonResponse(body, status) : undefined;
 }
 
-const profile = (body: unknown = WITH_APPLICATIONS): Answer => on("GET", "/api/students/7/", body);
+const profile = (body: unknown = WITH_APPLICATIONS): Answer =>
+  on("GET", `/api/students/${uid(7)}/`, body);
 const catalogue = (body: unknown = CATALOGUE, status = 200): Answer =>
   on("GET", "/api/catalogue/universities/", body, status);
 
@@ -141,7 +158,7 @@ function renderPage(context: StaffContext = COUNSELLOR) {
   return render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -248,9 +265,9 @@ describe("the Applications tab", () => {
 
 describe("Documents linked to an Application", () => {
   const OFFER = {
-    id: 41,
-    document_type: { id: 9, name: "Offer letter" },
-    files: [{ id: 61, file_name: "deakin-offer.pdf" }],
+    id: uid(41),
+    document_type: { id: uid(9), name: "Offer letter" },
+    files: [{ id: uid(61), file_name: "deakin-offer.pdf" }],
     verification: "verified",
   };
 
@@ -281,8 +298,8 @@ describe("Documents linked to an Application", () => {
     const twoPages = {
       ...OFFER,
       files: [
-        { id: 61, file_name: "offer-page-1.pdf" },
-        { id: 63, file_name: "offer-page-2.pdf" },
+        { id: uid(61), file_name: "offer-page-1.pdf" },
+        { id: uid(63), file_name: "offer-page-2.pdf" },
       ],
     };
     backend(
@@ -296,10 +313,10 @@ describe("Documents linked to an Application", () => {
   });
 
   it("opens a linked file through a short-lived link", async () => {
-    const url = "https://files.test/abc/documents/7/offer.pdf?sig=1";
+    const url = `https://files.test/abc/documents/${uid(7)}/offer.pdf?sig=1`;
     backend(
       profile({ ...WITH_APPLICATIONS, applications: [{ ...DEAKIN, documents: [OFFER] }, RMIT] }),
-      on("GET", "/api/students/7/documents/41/files/61/link/?action=open", {
+      on("GET", `/api/students/${uid(7)}/documents/${uid(41)}/files/${uid(61)}/link/?action=open`, {
         url,
         expires_in: 300,
       }),
@@ -314,13 +331,114 @@ describe("Documents linked to an Application", () => {
   });
 });
 
+describe("Course brochures under an Application (ticket 10)", () => {
+  const BROCHURE = {
+    id: uid(31),
+    name: "Deakin IT brochure",
+    file_name: "deakin-it.pdf",
+    size: 2_516_582,
+    uploaded_at: "2026-11-19T10:00:00+05:45",
+  };
+  const FEES = { ...BROCHURE, id: uid(32), name: "Fees 2027", file_name: "fees.pdf" };
+  const WITH_BROCHURES = {
+    ...WITH_APPLICATIONS,
+    applications: [{ ...DEAKIN, course_files: [BROCHURE, FEES] }, RMIT],
+  };
+  const EMAILING: StaffContext = {
+    ...COUNSELLOR,
+    consultancy: { ...COUNSELLOR.consultancy, hasContactEmail: true },
+    modules: ["students", "communication"],
+  };
+  const PLAIN = {
+    subject: "",
+    body: "Dear Sita,\n\nKind regards,\nBikash Thapa\nAcme Education",
+    attachments: [],
+  };
+
+  it("lists the Course's PDFs under its Application, and nothing under a Course with none", async () => {
+    backend(profile(WITH_BROCHURES));
+    renderPage();
+
+    const line = await screen.findByRole("group", { name: "Course brochures of Master of IT" });
+    expect(line).toHaveTextContent("Course brochures:");
+    expect(within(line).getByRole("button", { name: "Open Deakin IT brochure" })).toBeVisible();
+    expect(within(line).getByRole("button", { name: "Open Fees 2027" })).toBeVisible();
+    expect(
+      screen.queryByRole("group", { name: "Course brochures of Master of Data Science" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("opens a brochure through a short-lived link", async () => {
+    const url = "https://files.test/course-files/31.pdf?sig=1";
+    backend(
+      profile(WITH_BROCHURES),
+      on("GET", `/api/catalogue/course-files/${uid(31)}/link/?action=open`, {
+        url,
+        expires_in: 300,
+      }),
+    );
+    renderPage();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Open Deakin IT brochure" }));
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(url);
+    });
+  });
+
+  it("has no Email button without the Communication Module", async () => {
+    backend(profile(WITH_BROCHURES));
+    renderPage();
+
+    await screen.findByRole("group", { name: "Course brochures of Master of IT" });
+    expect(screen.queryByRole("button", { name: /^Email them to/ })).not.toBeInTheDocument();
+  });
+
+  it("has no Email button for a Student without an email", async () => {
+    backend(profile({ ...WITH_BROCHURES, email: "" }));
+    renderPage(EMAILING);
+
+    await screen.findByRole("group", { name: "Course brochures of Master of IT" });
+    expect(screen.queryByRole("button", { name: /^Email them to/ })).not.toBeInTheDocument();
+  });
+
+  it("emails them to the Student: the Plain email with the Course in the subject and a line", async () => {
+    backend(
+      profile(WITH_BROCHURES),
+      on("GET", `/api/students/${uid(7)}/emails/ready-made/`, {
+        kinds: [{ kind: "plain", record: null, records: [], unavailable: null }],
+      }),
+      on("GET", `/api/students/${uid(7)}/emails/draft/?kind=plain`, PLAIN),
+    );
+    renderPage(EMAILING);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Email them to Sita" }));
+
+    const dialog = await screen.findByRole("dialog");
+    await waitFor(() => {
+      expect(within(dialog).getByRole("textbox", { name: "Subject" })).toHaveValue(
+        "Master of IT at Deakin University",
+      );
+    });
+    expect(within(dialog).getByRole("textbox", { name: "Message" })).toHaveValue(
+      "Dear Sita,\n\nHere are the brochures for Master of IT at Deakin University.\n\nKind regards,\nBikash Thapa\nAcme Education",
+    );
+    const attached = within(dialog).getAllByRole("list", { name: "Attached files" })[0];
+    expect(attached).toHaveTextContent(BROCHURE.file_name);
+    expect(attached).toHaveTextContent(FEES.file_name);
+  });
+});
+
 describe("changing an Application's Status", () => {
   it("saves it, and every Application rejected leaves the Student applying", async () => {
     const saved = {
       ...WITH_APPLICATIONS,
       applications: [{ ...DEAKIN, status: "rejected" }, RMIT],
     };
-    const fetchFn = backend(profile(), on("PATCH", "/api/students/7/applications/11/", saved));
+    const fetchFn = backend(
+      profile(),
+      on("PATCH", `/api/students/${uid(7)}/applications/${uid(11)}/`, saved),
+    );
     renderPage();
 
     await userEvent.selectOptions(
@@ -332,7 +450,7 @@ describe("changing an Application's Status", () => {
 
     expect(await screen.findByText("Deakin University application: Rejected")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Stage: Applying" })).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PATCH", "/api/students/7/applications/11/")).toEqual({
+    expect(sentBody(fetchFn, "PATCH", `/api/students/${uid(7)}/applications/${uid(11)}/`)).toEqual({
       status: "rejected",
     });
   });
@@ -342,7 +460,7 @@ describe("changing an Application's Status", () => {
       ...WITH_APPLICATIONS,
       applications: [DEAKIN, { ...RMIT, status: "applied" }],
     };
-    backend(profile(), on("PATCH", "/api/students/7/applications/12/", saved));
+    backend(profile(), on("PATCH", `/api/students/${uid(7)}/applications/${uid(12)}/`, saved));
     renderPage();
 
     await userEvent.selectOptions(
@@ -358,7 +476,7 @@ describe("changing an Application's Status", () => {
   it("says a Lost Student's Stage wasn't moved", async () => {
     const lost = { ...WITH_APPLICATIONS, stage: "lost", lost_reason: "Moved away." };
     const saved = { ...lost, applications: [{ ...DEAKIN, status: "rejected" }, RMIT] };
-    backend(profile(lost), on("PATCH", "/api/students/7/applications/11/", saved));
+    backend(profile(lost), on("PATCH", `/api/students/${uid(7)}/applications/${uid(11)}/`, saved));
     renderPage();
 
     await userEvent.selectOptions(
@@ -378,7 +496,12 @@ describe("changing an Application's Status", () => {
   it("says when the change is no longer allowed, and keeps the stored Status", async () => {
     backend(
       profile(),
-      on("PATCH", "/api/students/7/applications/11/", { detail: "Not your Student." }, 403),
+      on(
+        "PATCH",
+        `/api/students/${uid(7)}/applications/${uid(11)}/`,
+        { detail: "Not your Student." },
+        403,
+      ),
     );
     renderPage();
     const select = within(await applicationsList()).getByRole("combobox", {
@@ -398,7 +521,7 @@ describe("changing an Application's Status", () => {
       profile(),
       on(
         "PATCH",
-        "/api/students/7/applications/12/",
+        `/api/students/${uid(7)}/applications/${uid(12)}/`,
         { status: ["The application already has this status."] },
         400,
       ),
@@ -425,13 +548,13 @@ describe("Add application", () => {
     backend(
       profile(counselling),
       catalogue(),
-      on("POST", "/api/students/7/applications/", added, 201),
+      on("POST", `/api/students/${uid(7)}/applications/`, added, 201),
     );
     renderPage();
     const dialog = await openAddDialog();
 
-    await userEvent.selectOptions(within(dialog).getByLabelText("University"), "3");
-    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), "5");
+    await userEvent.selectOptions(within(dialog).getByLabelText("University"), uid(3));
+    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), uid(5));
     await userEvent.selectOptions(within(dialog).getByLabelText("Intake"), "2027-02");
     await userEvent.click(within(dialog).getByRole("button", { name: "Add Application" }));
 
@@ -447,30 +570,72 @@ describe("Add application", () => {
       applications: [
         DEAKIN,
         RMIT,
-        { ...DEAKIN, id: 13, course: { id: 5, name: "Bachelor of Nursing", level: "bachelor" } },
+        {
+          ...DEAKIN,
+          id: uid(13),
+          course: { id: uid(5), name: "Bachelor of Nursing", level: "bachelor" },
+        },
       ],
     };
     const fetchFn = backend(
       profile(),
       catalogue(),
-      on("POST", "/api/students/7/applications/", added, 201),
+      on("POST", `/api/students/${uid(7)}/applications/`, added, 201),
     );
     renderPage();
     const dialog = await openAddDialog();
 
-    await userEvent.selectOptions(within(dialog).getByLabelText("University"), "3");
-    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), "5");
+    await userEvent.selectOptions(within(dialog).getByLabelText("University"), uid(3));
+    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), uid(5));
     await userEvent.selectOptions(within(dialog).getByLabelText("Intake"), "2027-02");
     await userEvent.click(within(dialog).getByRole("button", { name: "Add Application" }));
 
     expect(await screen.findByText("Application added")).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(sentBody(fetchFn, "POST", "/api/students/7/applications/")).toEqual({
-      course: 5,
+    expect(sentBody(fetchFn, "POST", `/api/students/${uid(7)}/applications/`)).toEqual({
+      course: uid(5),
       intake: "2027-02",
     });
     expect(within(await applicationsList()).getAllByRole("listitem")).toHaveLength(3);
     expect(screen.getByRole("tab", { name: /Applications/ })).toHaveTextContent("Applications 3");
+  });
+
+  it("shows the picked Course's brochures, which open in a new tab", async () => {
+    const brochure = {
+      id: uid(31),
+      name: "Nursing guide",
+      file_name: "nursing.pdf",
+      size: 1_048_576,
+      uploaded_at: "2026-11-19T10:00:00+05:45",
+    };
+    const [deakin, ...others] = CATALOGUE.results;
+    const withFiles = {
+      ...CATALOGUE,
+      results: [
+        {
+          ...deakin,
+          courses: deakin?.courses.map((course) =>
+            course.id === uid(5) ? { ...course, files: [brochure], file_count: 1 } : course,
+          ),
+        },
+        ...others,
+      ],
+    };
+    backend(profile(), catalogue(withFiles));
+    renderPage();
+    const dialog = await openAddDialog();
+
+    await userEvent.selectOptions(within(dialog).getByLabelText("University"), uid(3));
+    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), uid(4));
+    expect(within(dialog).queryByRole("group", { name: /^Course brochures/ })).toBeNull();
+    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), uid(5));
+
+    const line = within(dialog).getByRole("group", {
+      name: "Course brochures of Bachelor of Nursing",
+    });
+    expect(line).toHaveTextContent("Course brochure:");
+    expect(within(line).getByRole("button", { name: "Open Nursing guide" })).toBeVisible();
+    expect(within(line).queryByRole("button", { name: /^Email/ })).toBeNull();
   });
 
   it("offers only Universities with a course, and each course's own Intakes", async () => {
@@ -484,8 +649,8 @@ describe("Add application", () => {
       "Deakin University (Australia)",
       "RMIT University (Australia)",
     ]);
-    await userEvent.selectOptions(within(dialog).getByLabelText("University"), "3");
-    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), "4");
+    await userEvent.selectOptions(within(dialog).getByLabelText("University"), uid(3));
+    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), uid(4));
     const intakes = within(within(dialog).getByLabelText("Intake")).getAllByRole("option");
     expect(intakes.map((option) => option.textContent)).toEqual([
       "Choose an intake",
@@ -499,11 +664,11 @@ describe("Add application", () => {
     backend(profile(), catalogue());
     renderPage();
     const dialog = await openAddDialog();
-    await userEvent.selectOptions(within(dialog).getByLabelText("University"), "3");
-    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), "4");
+    await userEvent.selectOptions(within(dialog).getByLabelText("University"), uid(3));
+    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), uid(4));
     await userEvent.selectOptions(within(dialog).getByLabelText("Intake"), "2027-07");
 
-    await userEvent.selectOptions(within(dialog).getByLabelText("University"), "6");
+    await userEvent.selectOptions(within(dialog).getByLabelText("University"), uid(6));
 
     expect(within(dialog).getByLabelText("Course")).toHaveValue("");
     expect(within(dialog).getByLabelText("Intake")).toHaveValue("");
@@ -528,15 +693,15 @@ describe("Add application", () => {
       catalogue(),
       on(
         "POST",
-        "/api/students/7/applications/",
+        `/api/students/${uid(7)}/applications/`,
         { intake: ["This Student already has an application for this course and intake."] },
         400,
       ),
     );
     renderPage();
     const dialog = await openAddDialog();
-    await userEvent.selectOptions(within(dialog).getByLabelText("University"), "3");
-    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), "4");
+    await userEvent.selectOptions(within(dialog).getByLabelText("University"), uid(3));
+    await userEvent.selectOptions(within(dialog).getByLabelText("Course"), uid(4));
     await userEvent.selectOptions(within(dialog).getByLabelText("Intake"), "2027-03");
 
     await userEvent.click(within(dialog).getByRole("button", { name: "Add Application" }));

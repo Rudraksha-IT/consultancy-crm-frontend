@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useEffectEvent, useState } from "react";
 
 import { HTTP_STATUS } from "@/constants/api";
@@ -71,8 +72,8 @@ export function useBatchPage(page: number, version: number): Loaded<BatchPage> {
 }
 
 /** One class with its Students. */
-export function useBatch(id: number, version: number): Loaded<BatchWithStudents> {
-  return useLoaded(() => fetchBatch(id), `${String(id)}:${String(version)}`);
+export function useBatch(id: RecordId, version: number): Loaded<BatchWithStudents> {
+  return useLoaded(() => fetchBatch(id), `${id}:${String(version)}`);
 }
 
 /** One page of the Students in classes. */
@@ -86,14 +87,18 @@ export function useBatchTeachers(): Loaded<BatchTeacher[]> {
 }
 
 /** One class day's marks; `day` is AD, "YYYY-MM-DD". */
-export function useAttendanceDay(id: number, day: string, version: number): Loaded<AttendanceDay> {
-  return useLoaded(() => fetchAttendanceDay(id, day), `${String(id)}:${day}:${String(version)}`);
+export function useAttendanceDay(
+  id: RecordId,
+  day: string,
+  version: number,
+): Loaded<AttendanceDay> {
+  return useLoaded(() => fetchAttendanceDay(id, day), `${id}:${day}:${String(version)}`);
 }
 
 /** The classes a Student is in, with their Attendance; none, without asking, when not enabled. */
-export function useStudentClasses(studentId: number, isEnabled: boolean): Loaded<StudentClass[]> {
+export function useStudentClasses(studentId: RecordId, isEnabled: boolean): Loaded<StudentClass[]> {
   return useLoaded(
     () => (isEnabled ? fetchStudentClasses(studentId) : Promise.resolve([])),
-    `${String(studentId)}:${String(isEnabled)}`,
+    `${studentId}:${String(isEnabled)}`,
   );
 }

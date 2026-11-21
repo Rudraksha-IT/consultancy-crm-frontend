@@ -1,14 +1,16 @@
 import { z } from "zod";
 
+import { RecordIdSchema } from "@/lib/recordId";
+
 import { TRANSFER_REQUEST_STATUSES } from "@/constants/transferRequests";
 
-const PersonSchema = z.object({ id: z.number().int(), name: z.string().min(1) });
+const PersonSchema = z.object({ id: RecordIdSchema, name: z.string().min(1) });
 
 /** One Transfer Request as the API answers it, with what the viewer may do (spec 44a-44e). */
 export const TransferRequestSchema = z
   .object({
-    id: z.number().int(),
-    student: PersonSchema,
+    id: RecordIdSchema,
+    student: z.object({ id: RecordIdSchema, name: z.string().min(1) }),
     asked_by: PersonSchema,
     reason: z.string().min(1),
     asked_at: z.iso.datetime({ offset: true }),

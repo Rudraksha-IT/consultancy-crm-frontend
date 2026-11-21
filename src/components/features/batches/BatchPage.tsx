@@ -1,9 +1,10 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import Link from "next/link";
 import { useState } from "react";
 
-import { BulkMessageDialog } from "@/components/features/communication/BulkMessageDialog";
+import { EmailFlow } from "@/components/features/communication/EmailFlow";
 import { canMessageStudents } from "@/components/features/communication/canMessage";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Banner } from "@/components/ui/Banner";
@@ -37,10 +38,10 @@ const BACK = (
 
 /**
  * One class's page (spec 83-85): its time and Teacher, its Students' Attendance day by day, and
- * for Admins and Counsellors Add Students, Edit class details and (with messaging on) Message
- * the class (spec 90).
+ * for Admins and Counsellors Add Students, Edit class details and (with email on) Email the
+ * class, which ticks its Students first (issue 04).
  */
-export function BatchPage({ batchId }: { batchId: number }) {
+export function BatchPage({ batchId }: { batchId: RecordId }) {
   const context = useCurrentStaff();
   if (!canSeeClasses(context)) {
     return (
@@ -56,7 +57,7 @@ export function BatchPage({ batchId }: { batchId: number }) {
 
 type Open = "add" | "edit" | "message" | null;
 
-function LoadedClass({ batchId }: { batchId: number }) {
+function LoadedClass({ batchId }: { batchId: RecordId }) {
   const [version, setVersion] = useState(0);
   const state = useBatch(batchId, version);
   const reload = () => {
@@ -97,7 +98,7 @@ function ClassView({ batch, onChanged }: { batch: BatchWithStudents; onChanged: 
                   setOpen("message");
                 }}
               >
-                {COMMUNICATION_TEXT.messageTheClass}
+                {COMMUNICATION_TEXT.emailTheClass}
               </Button>
             )}
             {batch.canChange && (
@@ -144,12 +145,7 @@ function ClassPageDialog({ batch, open, onClose, onChanged }: ClassPageDialogPro
   if (open === "add") return <ClassDialog batch={batch} onClose={onClose} onChanged={onChanged} />;
   if (open === "message") {
     return (
-      <BulkMessageDialog
-        recipients={{ kind: "batch", batchId: batch.id }}
-        title={COMMUNICATION_TEXT.messageTo(batch.name)}
-        subtitle={COMMUNICATION_TEXT.inThisClass(batch.students.length)}
-        onClose={onClose}
-      />
+      <EmailFlow mode="many" preTick={{ kind: "batch", batchId: batch.id }} onClose={onClose} />
     );
   }
   if (open === "edit") {

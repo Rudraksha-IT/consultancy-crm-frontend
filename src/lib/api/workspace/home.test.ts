@@ -1,13 +1,14 @@
 import { fetchPipeline, fetchProgress, fetchWaiting } from "./home";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const ROW = {
   student: {
-    id: 7,
+    id: uid(7),
     name: "Sita Gurung",
     stage: "applying",
     country: "australia",
-    assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+    assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
   },
   percent: 45,
   next_step: "Waiting for an offer, Deakin University",
@@ -42,11 +43,11 @@ describe("fetchProgress", () => {
     expect(found.count).toBe(12);
     expect(found.rows[0]).toEqual({
       student: {
-        id: 7,
+        id: uid(7),
         name: "Sita Gurung",
         stage: "applying",
         country: "australia",
-        assignedCounsellor: { id: 5, name: "Bikash Thapa" },
+        assignedCounsellor: { id: uid(5), name: "Bikash Thapa" },
       },
       percent: 45,
       nextStep: "Waiting for an offer, Deakin University",
@@ -102,8 +103,8 @@ const WAITING = {
     count: 6,
     results: [
       {
-        visa_id: 4,
-        student: { id: 7, name: "Sita Gurung" },
+        visa_id: uid(4),
+        student: { id: uid(7), name: "Sita Gurung" },
         kind: "medical",
         at: "2026-11-07T14:00",
       },
@@ -126,8 +127,8 @@ describe("fetchWaiting", () => {
       appointmentCount: 6,
       appointments: [
         {
-          visaId: 4,
-          student: { id: 7, name: "Sita Gurung" },
+          visaId: uid(4),
+          student: { id: uid(7), name: "Sita Gurung" },
           kind: "medical",
           at: "2026-11-07T14:00",
         },
@@ -138,19 +139,28 @@ describe("fetchWaiting", () => {
   it.each([
     { ...WAITING, documents_waiting: -1 },
     { ...WAITING, transfer_requests_waiting: "1" },
-    { ...WAITING, visa_appointments: { count: 1, results: [{ visa_id: 4 }] } },
+    { ...WAITING, visa_appointments: { count: 1, results: [{ visa_id: uid(4) }] } },
     {
       ...WAITING,
       visa_appointments: {
         count: 1,
-        results: [{ visa_id: 4, student: { id: 7, name: "S" }, kind: "medical", at: "<script>" }],
+        results: [
+          { visa_id: uid(4), student: { id: uid(7), name: "S" }, kind: "medical", at: "<script>" },
+        ],
       },
     },
     {
       ...WAITING,
       visa_appointments: {
         count: 1,
-        results: [{ visa_id: 4, student: { id: 7, name: "S" }, kind: "x", at: "2026-11-07T14:00" }],
+        results: [
+          {
+            visa_id: uid(4),
+            student: { id: uid(7), name: "S" },
+            kind: "x",
+            at: "2026-11-07T14:00",
+          },
+        ],
       },
     },
     { documents_waiting: 0 },

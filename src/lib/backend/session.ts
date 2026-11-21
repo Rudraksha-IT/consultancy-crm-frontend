@@ -9,6 +9,7 @@ import {
   MAX_TOKEN_LENGTH,
   METHOD_AUTH_ROUTES,
   PROXY_MESSAGES,
+  SESSION_ENDED_HEADER,
   START_AGAIN_MESSAGE,
 } from "@/constants/backend";
 import type { AuthScope, AuthTokens } from "@/lib/auth-cookie";
@@ -100,8 +101,16 @@ async function logOut(call: Call): Promise<Response> {
 /** How a logged-in call's answer reaches the browser; `renewed` are tokens from a refresh. */
 type Finish = (call: Call, answer: BackendAnswer, renewed: AuthTokens | null) => Response;
 
-function callLoggedIn(call: Call): Promise<Response> {
-  return callWithAccessToken(call, relayAnswer);
+async function callLoggedIn(call: Call): Promise<Response> {
+  return markEndedLogin(call, await callWithAccessToken(call, relayAnswer));
+}
+
+/** A 401 to a browser that sent a login cookie: its login has ended (ticket 14). */
+function markEndedLogin(call: Call, response: Response): Response {
+  if (response.status !== HTTP_STATUS.unauthorized || !call.cookie.wasSent) return response;
+  const headers = new Headers(response.headers);
+  headers.set(SESSION_ENDED_HEADER, "1");
+  return new Response(response.body, { status: response.status, headers });
 }
 
 /**

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import {
   deleteUniversity,
   fetchUniversity,
@@ -10,17 +11,19 @@ import { ApiRequestError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 
 const COURSE = {
-  id: 11,
-  university_id: 1,
+  id: uid(11),
+  university_id: uid(1),
   name: "Master of IT",
   level: "master",
   intakes: ["2027-03"],
   archived: false,
-  documents: [{ id: 21, name: "CV" }],
+  documents: [{ id: uid(21), name: "CV" }],
   applications: 2,
+  files: [],
+  file_count: 0,
 };
 const UNIVERSITY = {
-  id: 1,
+  id: uid(1),
   name: "Deakin University",
   country: "australia",
   archived: false,
@@ -44,12 +47,12 @@ const EDIT = {
   archived: false,
   courses: [
     {
-      id: 11,
+      id: uid(11),
       name: "Master of IT",
       level: "master",
       intakes: ["2027-03"],
       archived: false,
-      documents: [21],
+      documents: [uid(21)],
     },
     {
       id: null,
@@ -60,17 +63,21 @@ const EDIT = {
       documents: [],
     },
   ],
-  deletedCourses: [12],
+  deletedCourses: [uid(12)],
 };
 
 describe("fetchUniversity", () => {
   it("reads one university with how many applications use each course", async () => {
     const fetchFn = answering(jsonResponse(UNIVERSITY));
 
-    const university = await fetchUniversity(1, fetchFn);
+    const university = await fetchUniversity(uid(1), fetchFn);
 
-    expect(call(fetchFn).path).toBe("/api/catalogue/universities/1/");
-    expect(university.courses[0]).toMatchObject({ id: 11, universityId: 1, applications: 2 });
+    expect(call(fetchFn).path).toBe(`/api/catalogue/universities/${uid(1)}/`);
+    expect(university.courses[0]).toMatchObject({
+      id: uid(11),
+      universityId: uid(1),
+      applications: 2,
+    });
   });
 
   it("refuses an answer without the application count", async () => {
@@ -79,7 +86,7 @@ describe("fetchUniversity", () => {
     );
     const fetchFn = answering(jsonResponse({ ...UNIVERSITY, courses: [withoutCount] }));
 
-    await expect(fetchUniversity(1, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(fetchUniversity(uid(1), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
@@ -87,10 +94,10 @@ describe("saveUniversityEdit", () => {
   it("sends the whole page in API naming, a new course without an id", async () => {
     const fetchFn = answering(jsonResponse(UNIVERSITY));
 
-    await saveUniversityEdit(1, EDIT, fetchFn);
+    await saveUniversityEdit(uid(1), EDIT, fetchFn);
 
     expect(call(fetchFn)).toEqual({
-      path: "/api/catalogue/universities/1/",
+      path: `/api/catalogue/universities/${uid(1)}/`,
       method: "PUT",
       body: {
         name: "Deakin University",
@@ -98,12 +105,12 @@ describe("saveUniversityEdit", () => {
         archived: false,
         courses: [
           {
-            id: 11,
+            id: uid(11),
             name: "Master of IT",
             level: "master",
             intakes: ["2027-03"],
             archived: false,
-            documents: [21],
+            documents: [uid(21)],
           },
           {
             name: "Bachelor of IT",
@@ -113,7 +120,7 @@ describe("saveUniversityEdit", () => {
             documents: [],
           },
         ],
-        deleted_courses: [12],
+        deleted_courses: [uid(12)],
       },
     });
   });
@@ -130,7 +137,9 @@ describe("saveUniversityEdit", () => {
       ),
     );
 
-    const refusal: unknown = await saveUniversityEdit(1, EDIT, fetchFn).catch((e: unknown) => e);
+    const refusal: unknown = await saveUniversityEdit(uid(1), EDIT, fetchFn).catch(
+      (e: unknown) => e,
+    );
 
     expect(refusal).toBeInstanceOf(UniversityEditRefusedError);
     expect(refusal).toMatchObject({
@@ -148,7 +157,9 @@ describe("saveUniversityEdit", () => {
       ),
     );
 
-    const refusal: unknown = await saveUniversityEdit(1, EDIT, fetchFn).catch((e: unknown) => e);
+    const refusal: unknown = await saveUniversityEdit(uid(1), EDIT, fetchFn).catch(
+      (e: unknown) => e,
+    );
 
     expect(refusal).toMatchObject({
       general: ["A course here isn't one of this university's. Refresh the page."],
@@ -158,7 +169,7 @@ describe("saveUniversityEdit", () => {
   it("passes on any other failure", async () => {
     const fetchFn = answering(jsonResponse({}, 500));
 
-    await expect(saveUniversityEdit(1, EDIT, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(saveUniversityEdit(uid(1), EDIT, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 
@@ -166,10 +177,10 @@ describe("deleteUniversity", () => {
   it("deletes it", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await deleteUniversity(1, fetchFn);
+    await deleteUniversity(uid(1), fetchFn);
 
     expect(call(fetchFn)).toMatchObject({
-      path: "/api/catalogue/universities/1/",
+      path: `/api/catalogue/universities/${uid(1)}/`,
       method: "DELETE",
     });
   });
@@ -179,7 +190,7 @@ describe("deleteUniversity", () => {
       jsonResponse({ detail: "Used by 2 applications, so it stays archived." }, 400),
     );
 
-    await expect(deleteUniversity(1, fetchFn)).rejects.toThrow(
+    await expect(deleteUniversity(uid(1), fetchFn)).rejects.toThrow(
       "Used by 2 applications, so it stays archived.",
     );
   });
@@ -189,10 +200,10 @@ describe("setCourseIntakes", () => {
   it("sends only the intakes", async () => {
     const fetchFn = answering(jsonResponse(COURSE));
 
-    await setCourseIntakes(11, ["2027-03", "2027-07"], fetchFn);
+    await setCourseIntakes(uid(11), ["2027-03", "2027-07"], fetchFn);
 
     expect(call(fetchFn)).toEqual({
-      path: "/api/catalogue/courses/11/",
+      path: `/api/catalogue/courses/${uid(11)}/`,
       method: "PATCH",
       body: { intakes: ["2027-03", "2027-07"] },
     });

@@ -1,3 +1,5 @@
+import type { RecordId } from "@/lib/recordId";
+import { uid } from "@/test/ids";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
@@ -16,11 +18,11 @@ import { InboxPage } from "./InboxPage";
 import { openIdFrom } from "./InboxRoute";
 
 const SITA: StaffContext = {
-  staff: { id: 2, name: "Sita Karki", email: "counsellor@office.com", role: "counsellor" },
+  staff: { id: uid(2), name: "Sita Karki", email: "counsellor@office.com", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students", "tasks"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -33,12 +35,12 @@ const PLATFORM_VISIT: StaffContext = {
 
 const LIST = "/api/inbox/";
 const PEOPLE = "/api/inbox/people/";
-const WITH_NABIN = "/api/inbox/1/";
-const WITH_ROHAN = "/api/inbox/6/";
+const WITH_NABIN = `/api/inbox/${uid(1)}/`;
+const WITH_ROHAN = `/api/inbox/${uid(6)}/`;
 
-const NABIN = { id: 1, name: "Nabin Adhikari", job_title: "Director", has_left: false };
-const POOJA = { id: 4, name: "Pooja Shrestha", job_title: "Front desk", has_left: false };
-const ROHAN = { id: 6, name: "Rohan Shah", job_title: "Counsellor", has_left: true };
+const NABIN = { id: uid(1), name: "Nabin Adhikari", job_title: "Director", has_left: false };
+const POOJA = { id: uid(4), name: "Pooja Shrestha", job_title: "Front desk", has_left: false };
+const ROHAN = { id: uid(6), name: "Rohan Shah", job_title: "Counsellor", has_left: true };
 const EARLIER = "2026-10-28T09:20:00+05:45";
 const LATER = "2026-10-28T09:43:00+05:45";
 
@@ -66,24 +68,24 @@ const THREAD_WITH_NABIN = {
   person: NABIN,
   can_write: true,
   messages: [
-    { id: 901, text: "Can you call Anjali's father?", from_me: false, sent_at: EARLIER },
-    { id: 902, text: "Yes, after lunch.", from_me: true, sent_at: LATER },
+    { id: uid(901), text: "Can you call Anjali's father?", from_me: false, sent_at: EARLIER },
+    { id: uid(902), text: "Yes, after lunch.", from_me: true, sent_at: LATER },
   ],
   more: false,
 };
 
 function checkOf(overrides: Partial<InboxCheckState> = {}): InboxCheckState {
-  return { unread: 1, latest: 902, refresh: vi.fn<() => void>(), ...overrides };
+  return { unread: 1, latest: uid(902), refresh: vi.fn<() => void>(), ...overrides };
 }
 
 /** The page with its open conversation kept in state, as the route keeps it in the address. */
-function Harness({ initial }: { initial: number | null }) {
+function Harness({ initial }: { initial: RecordId | null }) {
   const [openId, setOpenId] = useState(initial);
   return <InboxPage openId={openId} onOpen={setOpenId} />;
 }
 
 function renderInbox(
-  options: { context?: StaffContext; check?: InboxCheckState; openId?: number | null } = {},
+  options: { context?: StaffContext; check?: InboxCheckState; openId?: RecordId | null } = {},
 ) {
   const check = options.check ?? checkOf();
   const view = render(
@@ -152,7 +154,7 @@ describe("The conversation list", () => {
 
     view.rerender(
       <StaffContextContext value={SITA}>
-        <InboxCheckContext value={checkOf({ latest: 950 })}>
+        <InboxCheckContext value={checkOf({ latest: uid(950) })}>
           <Harness initial={null} />
         </InboxCheckContext>
       </StaffContextContext>,
@@ -193,11 +195,11 @@ describe("A conversation", () => {
       on("GET", LIST, CONVERSATIONS),
       on("GET", WITH_NABIN, {
         ...THREAD_WITH_NABIN,
-        messages: [{ id: 1, text: html, from_me: false, sent_at: EARLIER }],
+        messages: [{ id: uid(1), text: html, from_me: false, sent_at: EARLIER }],
       }),
     );
 
-    const { view } = renderInbox({ openId: 1 });
+    const { view } = renderInbox({ openId: uid(1) });
 
     expect(await screen.findByText(html)).toBeInTheDocument();
     expect(view.container.querySelector("img")).toBeNull();
@@ -209,7 +211,7 @@ describe("A conversation", () => {
       on("GET", WITH_NABIN, { ...THREAD_WITH_NABIN, messages: [] }),
     );
 
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
 
     expect(await screen.findByText("Say hello to Nabin.")).toBeInTheDocument();
   });
@@ -220,14 +222,14 @@ describe("A conversation", () => {
       on("GET", WITH_NABIN, { ...THREAD_WITH_NABIN, more: true }),
     );
 
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
 
     expect(await screen.findByText("Only the newest 200 messages are shown.")).toBeInTheDocument();
   });
 
   it("goes back to the list", async () => {
     backend(on("GET", LIST, CONVERSATIONS), on("GET", WITH_NABIN, THREAD_WITH_NABIN));
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
     await screen.findByRole("log");
 
     await userEvent.click(screen.getByRole("button", { name: "Back to conversations" }));
@@ -245,7 +247,7 @@ describe("A conversation", () => {
       ).matchMedia,
     );
     backend(on("GET", LIST, CONVERSATIONS), on("GET", WITH_NABIN, THREAD_WITH_NABIN));
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
     await screen.findByRole("log");
 
     expect(screen.queryByRole("button", { name: "New message" })).not.toBeInTheDocument();
@@ -261,7 +263,7 @@ describe("A conversation", () => {
 
   it("keeps the title and New message beside an open conversation above 640", async () => {
     backend(on("GET", LIST, CONVERSATIONS), on("GET", WITH_NABIN, THREAD_WITH_NABIN));
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
     await screen.findByRole("log");
 
     expect(screen.getByRole("button", { name: "New message" })).toBeInTheDocument();
@@ -275,13 +277,13 @@ describe("A conversation", () => {
         person: ROHAN,
         can_write: false,
         messages: [
-          { id: 908, text: "Handing over Rohan's notes.", from_me: false, sent_at: EARLIER },
+          { id: uid(908), text: "Handing over Rohan's notes.", from_me: false, sent_at: EARLIER },
         ],
         more: false,
       }),
     );
 
-    renderInbox({ openId: 6 });
+    renderInbox({ openId: uid(6) });
 
     const thread = await screen.findByRole("log", { name: "Conversation with Rohan Shah" });
     expect(within(thread).getByText("Handing over Rohan's notes.")).toBeInTheDocument();
@@ -294,10 +296,10 @@ describe("A conversation", () => {
   it("says so when the person isn't in the office", async () => {
     backend(
       on("GET", LIST, CONVERSATIONS),
-      on("GET", "/api/inbox/77/", { detail: "Not found." }, 404),
+      on("GET", `/api/inbox/${uid(77)}/`, { detail: "Not found." }, 404),
     );
 
-    renderInbox({ openId: 77 });
+    renderInbox({ openId: uid(77) });
 
     expect(await screen.findByText("This person isn't in the office.")).toBeInTheDocument();
   });
@@ -313,11 +315,11 @@ describe("Writing", () => {
     );
   }
 
-  const SENT = { id: 903, text: "On my way", from_me: true, sent_at: LATER };
+  const SENT = { id: uid(903), text: "On my way", from_me: true, sent_at: LATER };
 
   it("sends on Enter, shows the message and empties the box", async () => {
     const fetchFn = sendingBackend({ body: SENT, status: 201 });
-    const { check } = renderInbox({ openId: 1 });
+    const { check } = renderInbox({ openId: uid(1) });
     const box = await screen.findByRole("textbox", { name: "Message to Nabin Adhikari" });
 
     await userEvent.type(box, "On my way{Enter}");
@@ -333,7 +335,7 @@ describe("Writing", () => {
 
   it("makes a new line on Shift + Enter, and sends with the button", async () => {
     const fetchFn = sendingBackend({ body: { ...SENT, text: "Line one\nLine two" }, status: 201 });
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
     const box = await screen.findByRole("textbox", { name: "Message to Nabin Adhikari" });
 
     await userEvent.type(box, "Line one{Shift>}{Enter}{/Shift}Line two");
@@ -349,7 +351,7 @@ describe("Writing", () => {
 
   it("counts characters and tells the keys", async () => {
     sendingBackend({ body: SENT, status: 201 });
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
     const box = await screen.findByRole("textbox", { name: "Message to Nabin Adhikari" });
 
     await userEvent.type(box, "Hello");
@@ -362,7 +364,7 @@ describe("Writing", () => {
 
   it("sends nothing when the box is empty or only spaces", async () => {
     const fetchFn = sendingBackend({ body: SENT, status: 201 });
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
     const box = await screen.findByRole("textbox", { name: "Message to Nabin Adhikari" });
 
     await userEvent.type(box, "   {Enter}");
@@ -372,7 +374,7 @@ describe("Writing", () => {
 
   it("shows the server's reason when the text is refused, keeping what was typed", async () => {
     sendingBackend({ body: { text: ["Write a message."] }, status: 400 });
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
     const box = await screen.findByRole("textbox", { name: "Message to Nabin Adhikari" });
 
     await userEvent.type(box, "Hi{Enter}");
@@ -386,7 +388,7 @@ describe("Writing", () => {
       body: { detail: "This office can only be viewed right now.", status: "past_due" },
       status: 403,
     });
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
     const box = await screen.findByRole("textbox", { name: "Message to Nabin Adhikari" });
 
     await userEvent.type(box, "Hi{Enter}");
@@ -398,7 +400,7 @@ describe("Writing", () => {
 
   it("says the message wasn't sent when anything else goes wrong", async () => {
     sendingBackend({ body: {}, status: 500 });
-    renderInbox({ openId: 1 });
+    renderInbox({ openId: uid(1) });
     const box = await screen.findByRole("textbox", { name: "Message to Nabin Adhikari" });
 
     await userEvent.type(box, "Hi{Enter}");
@@ -413,11 +415,16 @@ describe("New message", () => {
       on("GET", LIST, { conversations: [] }),
       on("GET", PEOPLE, {
         people: [
-          { id: 1, name: "Nabin Adhikari", job_title: "Director" },
-          { id: 4, name: "Pooja Shrestha", job_title: "" },
+          { id: uid(1), name: "Nabin Adhikari", job_title: "Director" },
+          { id: uid(4), name: "Pooja Shrestha", job_title: "" },
         ],
       }),
-      on("GET", "/api/inbox/4/", { person: POOJA, can_write: true, messages: [], more: false }),
+      on("GET", `/api/inbox/${uid(4)}/`, {
+        person: POOJA,
+        can_write: true,
+        messages: [],
+        more: false,
+      }),
     );
     renderInbox();
 
@@ -429,7 +436,7 @@ describe("New message", () => {
         .getAllByRole("option")
         .map((option) => option.textContent),
     ).toEqual(["Nabin Adhikari, Director", "Pooja Shrestha"]);
-    await userEvent.selectOptions(to, "4");
+    await userEvent.selectOptions(to, uid(4));
     await userEvent.click(within(dialog).getByRole("button", { name: "Open conversation" }));
 
     expect(await screen.findByText("Say hello to Pooja.")).toBeInTheDocument();
@@ -463,7 +470,7 @@ describe("A Platform Admin in Support Access", () => {
   it("is told the Inbox is private, and nothing is asked", async () => {
     const fetchFn = backend(on("GET", LIST, CONVERSATIONS));
 
-    renderInbox({ context: PLATFORM_VISIT, openId: 1 });
+    renderInbox({ context: PLATFORM_VISIT, openId: uid(1) });
 
     expect(
       screen.getByText(
@@ -477,7 +484,10 @@ describe("A Platform Admin in Support Access", () => {
 
 describe("The address", () => {
   it.each([
-    ["7", 7],
+    [uid(7), uid(7)],
+    [uid(7).toUpperCase(), uid(7)],
+    ["7", null],
+    [uid(7).replaceAll("-", ""), null],
     [null, null],
     ["", null],
     ["0", null],

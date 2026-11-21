@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,11 +12,11 @@ import { ReportsPage } from "./ReportsPage";
 import { consultancySummary } from "@/test/consultancy";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Maya Shrestha", email: "maya@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students", "reports"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -53,6 +54,7 @@ const MONEY = {
     { category: "office_rent", amount: 85000 },
     { category: "internet", amount: 9000 },
   ],
+  money_in_by_fee_type: [],
 };
 
 function month(key: string, counts: Record<string, number> = {}) {
@@ -99,7 +101,7 @@ const SOURCE_COUNTS = {
 const STAFF_PROGRESS_ROWS = {
   counsellors: [
     {
-      id: 3,
+      id: uid(3),
       name: "Bikash Thapa",
       is_active: true,
       students: 12,
@@ -111,7 +113,7 @@ const STAFF_PROGRESS_ROWS = {
       tasks_done: 9,
     },
     {
-      id: 5,
+      id: uid(5),
       name: "<b>Old</b> Counsellor",
       is_active: false,
       students: 2,
@@ -125,7 +127,7 @@ const STAFF_PROGRESS_ROWS = {
   ],
   front_desk: [
     {
-      id: 7,
+      id: uid(7),
       name: "Sunita Shrestha",
       is_active: true,
       visitors_registered: 1234,
@@ -160,11 +162,12 @@ const EVERYTHING = [
   on("GET", MONEY_TWELVE, {
     months: [moneyMonth("2025-12", 1000, 0, 0), ...MONEY.months],
     money_out_by_category: MONEY.money_out_by_category,
+    money_in_by_fee_type: [],
   }),
   on("GET", CLASSES, {
     batches: [
       {
-        id: 4,
+        id: uid(4),
         name: "IELTS Morning",
         test_type: "ielts",
         teacher: "Gita Lama",
@@ -172,7 +175,7 @@ const EVERYTHING = [
         attended_percent: 86,
       },
       {
-        id: 6,
+        id: uid(6),
         name: "<i>PTE</i> Day",
         test_type: "pte",
         teacher: "Gita Lama",
@@ -490,11 +493,11 @@ describe("Staff Progress", () => {
 
     expect(await screen.findByRole("link", { name: "Bikash Thapa" })).toHaveAttribute(
       "href",
-      "/staff/3",
+      `/staff/${uid(3)}`,
     );
     expect(screen.getByRole("link", { name: "Sunita Shrestha" })).toHaveAttribute(
       "href",
-      "/staff/7",
+      `/staff/${uid(7)}`,
     );
     expect(
       screen.getByText("Click a name to see that person's Progress, day by day."),
@@ -522,7 +525,13 @@ describe("Staff Progress", () => {
       on("GET", STAFF_PROGRESS, {
         ...STAFF_PROGRESS_ROWS,
         teachers: [
-          { id: 9, name: "Gita Lama", is_active: true, classes_taken: 12, attendance_marked: 140 },
+          {
+            id: uid(9),
+            name: "Gita Lama",
+            is_active: true,
+            classes_taken: 12,
+            attendance_marked: 140,
+          },
         ],
       }),
     );
@@ -770,12 +779,36 @@ describe("Money", () => {
     ]);
   });
 
+  it("splits the money from Students by Fee Type, largest first", async () => {
+    backend(
+      on("GET", SIX_MONTHS, { months: MONTHS }),
+      on("GET", MONEY_SIX, {
+        ...MONEY,
+        money_in_by_fee_type: [
+          { fee_type: { id: uid(3), name: "Visa fee" }, amount: 400000 },
+          { fee_type: { id: uid(4), name: "<b>IELTS class</b>" }, amount: 218000 },
+        ],
+      }),
+    );
+    renderReports(WITH_ACCOUNTS);
+
+    await openTab("Money");
+
+    const came = within(await screen.findByRole("list", { name: "Where the money came from" }));
+    expect(came.getAllByRole("listitem").map((row) => row.textContent)).toEqual([
+      "Visa feeNPR 4,00,000",
+      "<b>IELTS class</b>NPR 2,18,000",
+      "University commissionNPR 2,90,000",
+    ]);
+  });
+
   it("says how much it is short by, in red, when more went out than came in", async () => {
     backend(
       on("GET", SIX_MONTHS, { months: MONTHS }),
       on("GET", MONEY_SIX, {
         months: [moneyMonth("2026-11", 1000, 0, 5000)],
         money_out_by_category: [{ category: "other", amount: 5000 }],
+        money_in_by_fee_type: [],
       }),
     );
     renderReports(WITH_ACCOUNTS);
@@ -789,7 +822,11 @@ describe("Money", () => {
   it("says when nothing went out", async () => {
     backend(
       on("GET", SIX_MONTHS, { months: MONTHS }),
-      on("GET", MONEY_SIX, { months: [moneyMonth("2026-11")], money_out_by_category: [] }),
+      on("GET", MONEY_SIX, {
+        months: [moneyMonth("2026-11")],
+        money_out_by_category: [],
+        money_in_by_fee_type: [],
+      }),
     );
     renderReports(WITH_ACCOUNTS);
 

@@ -33,7 +33,7 @@ export function EnrollDialog({ classes, onClose, onEnrolled }: EnrollDialogProps
   function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
     const chosen = open.find(
-      (batch) => String(batch.id) === readField(new FormData(event.currentTarget), "class"),
+      (batch) => batch.id === readField(new FormData(event.currentTarget), "class"),
     );
     setMissingStudent(student === null);
     if (student === null || chosen === undefined) return;
@@ -70,7 +70,7 @@ export function EnrollDialog({ classes, onClose, onEnrolled }: EnrollDialogProps
             label={BATCH_TEXT.class}
             name="class"
             options={open.map((batch) => ({
-              value: String(batch.id),
+              value: batch.id,
               label: BATCH_TEXT.classWithSlot(batch.name, batch.timeSlot),
             }))}
           />

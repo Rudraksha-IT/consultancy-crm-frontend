@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,10 +12,20 @@ const CONFIG_TYPES_PATH = "/api/configuration/document-types/";
 const PICKABLE_PATH = "/api/documents/types/";
 const LISTS_PATH = "/api/configuration/document-lists/";
 const UNUSED = { countries: 0, courses: 0, students: 0, documents: 0 };
-const PASSPORT = { id: 1, name: "Passport", needed_by_everyone: true, usual_group: "applying" };
-const SPONSOR = { id: 8, name: "Sponsor Letter", needed_by_everyone: false, usual_group: "visa" };
+const PASSPORT = {
+  id: uid(1),
+  name: "Passport",
+  needed_by_everyone: true,
+  usual_group: "applying",
+};
+const SPONSOR = {
+  id: uid(8),
+  name: "Sponsor Letter",
+  needed_by_everyone: false,
+  usual_group: "visa",
+};
 const POLICE = {
-  id: 30,
+  id: uid(30),
   name: "Police clearance",
   needed_by_everyone: false,
   usual_group: "statements",
@@ -114,7 +125,9 @@ describe("DocumentsSettings", () => {
         isMade = true;
         const list = {
           country: "uk",
-          documents: [{ document_type: { id: 30, name: "Police clearance" }, group: "statements" }],
+          documents: [
+            { document_type: { id: uid(30), name: "Police clearance" }, group: "statements" },
+          ],
         };
         return jsonResponse({ document_type: made, list }, 201);
       },

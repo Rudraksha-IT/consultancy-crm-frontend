@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { NOTIFICATIONS_REFRESH_MS } from "@/constants/notifications";
@@ -21,7 +22,7 @@ export type Notifications = {
   hasMarkFailed: boolean;
   reload: () => void;
   markAllRead: () => Promise<void>;
-  markRead: (id: number) => void;
+  markRead: (id: RecordId) => void;
 };
 
 /**
@@ -68,7 +69,7 @@ export function useNotifications(): Notifications {
   }, [reload]);
 
   const markRead = useCallback(
-    (id: number) => {
+    (id: RecordId) => {
       void (async () => {
         try {
           await setNotificationRead(id, true);

@@ -1,18 +1,5 @@
 /** Fees and Balances (GLOSSARY: Fee, Balance), with the Accounts Module (issue 35). */
 
-/** The longest purpose the API accepts. */
-export const FEE_PURPOSE_MAX_LENGTH = 200;
-
-/** What Fees are usually for, offered while typing; any other text is fine too. */
-export const FEE_PURPOSE_SUGGESTIONS = [
-  "Application processing",
-  "Visa processing",
-  "IELTS class",
-  "PTE class",
-  "Japanese class",
-  "Document translation",
-] as const;
-
 /** How many Students who owe the Admin's Home shows. */
 export const OWING_ON_HOME = 5;
 
@@ -31,12 +18,10 @@ export const FEE_TEXT = {
   counsellorNote: "Payments and what is still to pay stay with the Admin.",
   edit: "Edit",
   addedBy: (name: string) => `Added by ${name}`,
-  editFor: (purpose: string) => `Edit fee: ${purpose}`,
+  editFor: (forWhat: string) => `Edit fee: ${forWhat}`,
   // Adding, changing and deleting.
   addTitle: (name: string) => `Add a fee for ${name}`,
   editTitle: "Edit fee",
-  purpose: "What it's for",
-  purposePlaceholder: "e.g. Visa processing",
   amount: "Amount (NPR)",
   addButton: "Add fee",
   added: "Fee added",
@@ -44,14 +29,13 @@ export const FEE_TEXT = {
   changesSaved: "Changes saved",
   isRecorded: "The change is recorded in History.",
   deleteFee: "Delete fee",
-  confirmDeleteTitle: (purpose: string) => `Delete the ${purpose} fee?`,
-  confirmDelete: (purpose: string, amount: string) => `${purpose}, ${amount}.`,
+  confirmDeleteTitle: (forWhat: string) => `Delete the fee for ${forWhat}?`,
+  confirmDelete: (forWhat: string, amount: string) => `${forWhat}, ${amount}.`,
   deletionIsRecorded: "The deletion is recorded in the Student's History.",
   confirmDeleteButton: "Delete fee",
   deleted: "Fee deleted",
   deleteFailed: "We couldn't delete it. Please try again.",
   notAllowed: "Only the Student's counsellor or an Admin can change fees. Refresh the page.",
-  purposeRefused: "Say what the fee is for.",
   // Accounts -> Student fees (spec 76b).
   studentFees: "Student fees",
   studentsCount: (count: number) => (count === 1 ? "1 Student" : `${String(count)} Students`),

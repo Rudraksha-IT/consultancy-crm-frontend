@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import clsx from "clsx";
 import { useCallback, useState } from "react";
 
@@ -18,8 +19,8 @@ import { useConversations } from "./useInboxData";
 
 type InboxPageProps = {
   /** The person whose conversation is open, or null for none. */
-  openId: number | null;
-  onOpen: (personId: number | null) => void;
+  openId: RecordId | null;
+  onOpen: (personId: RecordId | null) => void;
 };
 
 /**

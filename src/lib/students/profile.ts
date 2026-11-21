@@ -18,14 +18,6 @@ export function viewOnlyReason(role: Role, counsellorName: string | null): strin
   return "View only.";
 }
 
-// A positive database id, as the address writes it: no leading zero, at most ten digits.
-const STUDENT_ID = /^[1-9][0-9]{0,9}$/;
-
-/** The Student id in a page address (`/students/<id>`), or null if it isn't one. */
-export function parseStudentId(text: string): number | null {
-  return STUDENT_ID.test(text) ? Number(text) : null;
-}
-
 /** How many whole years old someone born on `born` is on `today` (both "YYYY-MM-DD"). */
 export function ageOn(born: string, today: string): number {
   const years = Number(today.slice(0, 4)) - Number(born.slice(0, 4));

@@ -1,7 +1,9 @@
 import "server-only";
 
+import { z } from "zod";
+
 import { HTTP_STATUS } from "@/constants/api";
-import { PROXY_MESSAGES } from "@/constants/backend";
+import { PROXY_MESSAGES, UPDATE_RETRY, UPDATING_CODE } from "@/constants/backend";
 import { stackFrames } from "@/lib/logger";
 
 import type { Call } from "./call";
@@ -55,8 +57,60 @@ function logServerError(call: Call, status: number): void {
   });
 }
 
-/** Call Django on its internal address; a failure is logged with a short reason only. */
+/** One try at Django: its answer, or why it gave none (and where, for the log). */
+type Try = BackendOutcome & { stack?: string | undefined };
+
+/**
+ * Call Django on its internal address; a failure is logged with a short reason only. While Django
+ * can't be reached (a new version being switched in, ticket 14), a read (GET) is tried again after
+ * short waits that grow, for up to `UPDATE_RETRY.totalMs`; a change is never tried again.
+ */
 export async function askBackend(call: Call, backend: BackendRequest): Promise<BackendOutcome> {
+  const first = await tryOnce(call, backend);
+  const outcome =
+    backend.method === "GET" && isUpdating(first)
+      ? await tryAgainWhileUpdating(call, backend)
+      : first;
+  logFailure(call, outcome);
+  return outcome.kind === "failed" ? { kind: "failed", failure: outcome.failure } : outcome;
+}
+
+/** A read Django didn't answer: try again after growing waits until it does, or time is up. */
+async function tryAgainWhileUpdating(call: Call, backend: BackendRequest): Promise<Try> {
+  const started = Date.now();
+  let wait: number = UPDATE_RETRY.firstWaitMs;
+  let outcome: Try = { kind: "failed", failure: "unreachable" };
+  while (isUpdating(outcome) && Date.now() - started + wait <= UPDATE_RETRY.totalMs) {
+    await sleep(wait);
+    wait = Math.min(wait * 2, UPDATE_RETRY.longestWaitMs);
+    outcome = await tryOnce(call, backend);
+  }
+  call.waited.ms += Date.now() - started;
+  return outcome;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Django couldn't be reached, or something between answered that it isn't there (502, 504, or a
+ * 503 that isn't Django's own JSON refusal: Django says 503 itself when, say, storage is down).
+ */
+function isUpdating(outcome: Try): boolean {
+  if (outcome.kind === "failed") return outcome.failure === "unreachable";
+  const { status } = outcome.answer;
+  if (status === HTTP_STATUS.badGateway || status === HTTP_STATUS.gatewayTimeout) return true;
+  return status === HTTP_STATUS.serviceUnavailable && !isDjangoRefusal(outcome.answer);
+}
+
+const DjangoRefusalSchema = z.looseObject({ detail: z.string() });
+
+function isDjangoRefusal(answer: BackendAnswer): boolean {
+  return DjangoRefusalSchema.safeParse(jsonBody(answer)).success;
+}
+
+async function tryOnce(call: Call, backend: BackendRequest): Promise<Try> {
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
@@ -67,29 +121,49 @@ export async function askBackend(call: Call, backend: BackendRequest): Promise<B
       signal: controller.signal,
     });
     const body = await answer.arrayBuffer();
-    if (answer.status >= HTTP_STATUS.serverError) logServerError(call, answer.status);
-    return { kind: "answer", answer: { status: answer.status, headers: answer.headers, body } };
+    const outcome: Try = {
+      kind: "answer",
+      answer: { status: answer.status, headers: answer.headers, body },
+    };
+    // Something other than Django answering that it isn't there is the same as no answer.
+    return isUpdating(outcome) ? { kind: "failed", failure: "unreachable" } : outcome;
   } catch (error) {
     // A short reason and the frames only: the error's message can name Django's address.
     const failure = controller.signal.aborted ? "timed out" : "unreachable";
-    call.logger.error("API error", {
-      url: call.url.pathname,
-      method: call.request.method,
-      error: failure,
-      stack: stackFrames(error),
-      correlationId: call.correlationId,
-    });
-    return { kind: "failed", failure };
+    return { kind: "failed", failure, stack: stackFrames(error) };
   } finally {
     clearTimeout(timer);
   }
 }
 
-/** The short answer for a call Django didn't answer. */
+function logFailure(call: Call, outcome: Try): void {
+  if (outcome.kind === "answer") {
+    if (outcome.answer.status >= HTTP_STATUS.serverError) {
+      logServerError(call, outcome.answer.status);
+    }
+    return;
+  }
+  call.logger.error("API error", {
+    url: call.url.pathname,
+    method: call.request.method,
+    error: outcome.failure,
+    stack: outcome.stack,
+    correlationId: call.correlationId,
+  });
+}
+
+/**
+ * The short answer for a call Django didn't answer. Unreachable means a new version is being
+ * switched in: the app says so (code `updating`) instead of a generic error (ticket 14).
+ */
 export function failureResponse(failure: Failure): Response {
-  return failure === "timed out"
-    ? refusal(HTTP_STATUS.gatewayTimeout, PROXY_MESSAGES.timedOut)
-    : refusal(HTTP_STATUS.badGateway, PROXY_MESSAGES.unreachable);
+  if (failure === "timed out") {
+    return refusal(HTTP_STATUS.gatewayTimeout, PROXY_MESSAGES.timedOut);
+  }
+  return Response.json(
+    { detail: PROXY_MESSAGES.updating, code: UPDATING_CODE },
+    { status: HTTP_STATUS.serviceUnavailable, headers: { "cache-control": "no-store" } },
+  );
 }
 
 /** The JSON in an answer's body, or undefined when it isn't JSON. */

@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import {
   MAX_SHIFT,
   NO_WHEEL_PULL,
@@ -47,8 +48,8 @@ describe("neighbourPages", () => {
   });
 
   it("is null on a detail page such as one Student", () => {
-    expect(neighbourPages(PAGES, "/students/4")).toBeNull();
-    expect(neighbourPages(PAGES, "/students/4/edit")).toBeNull();
+    expect(neighbourPages(PAGES, `/students/${uid(4)}`)).toBeNull();
+    expect(neighbourPages(PAGES, `/students/${uid(4)}/edit`)).toBeNull();
   });
 
   it("ignores a trailing slash", () => {

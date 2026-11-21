@@ -1,6 +1,6 @@
 import { Role } from "@/constants/roles";
 
-import { addressText, ageOn, parseStudentId, viewOnlyReason } from "./profile";
+import { addressText, ageOn, viewOnlyReason } from "./profile";
 
 describe("viewOnlyReason", () => {
   it("tells a Counsellor who the Student's counsellor is", () => {
@@ -23,19 +23,6 @@ describe("viewOnlyReason", () => {
 
   it.each([Role.Admin, Role.Teacher])("says just view only for %s", (role) => {
     expect(viewOnlyReason(role, null)).toBe("View only.");
-  });
-});
-
-describe("parseStudentId", () => {
-  it.each([
-    ["7", 7],
-    ["1234567890", 1234567890],
-  ])("reads %j as a Student id", (text, id) => {
-    expect(parseStudentId(text)).toBe(id);
-  });
-
-  it.each(["0", "-1", "07", "abc", "1.5", "", "12345678901", "1e3"])("refuses %j", (text) => {
-    expect(parseStudentId(text)).toBeNull();
   });
 });
 

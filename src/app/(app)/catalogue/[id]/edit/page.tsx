@@ -1,9 +1,15 @@
-import { UniversityEditRoute } from "@/components/features/catalogue/UniversityEditRoute";
+import { redirect } from "next/navigation";
 
-type UniversityEditPageProps = { params: Promise<{ id: string }> };
+import { ROUTES } from "@/constants/routes";
+import { parseRecordId } from "@/lib/recordId";
 
-/** One University's edit page, `/catalogue/<id>/edit` (issue 92). */
-export default async function UniversityEditPage({ params }: UniversityEditPageProps) {
+type OldUniversityEditPageProps = { params: Promise<{ id: string }> };
+
+/** The old address of a University's edit page (issue 92), now under Configuration (ticket 10). */
+export default async function OldUniversityEditPage({
+  params,
+}: OldUniversityEditPageProps): Promise<never> {
   const { id } = await params;
-  return <UniversityEditRoute idText={id} />;
+  const universityId = parseRecordId(id);
+  redirect(universityId === null ? ROUTES.universities : ROUTES.universityEdit(universityId));
 }

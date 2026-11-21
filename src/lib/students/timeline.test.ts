@@ -1,4 +1,5 @@
 import type { HistoryEntry } from "@/lib/api";
+import { uid } from "@/test/ids";
 
 import { buildTimeline, lostStory, type TimelineRow } from "./timeline";
 
@@ -10,7 +11,7 @@ let nextId = 1;
 function change(at: string, before: string, after: string, detail = ""): HistoryEntry {
   nextId += 1;
   return {
-    id: nextId,
+    id: uid(nextId),
     kind: "stage_changed",
     at,
     by: { name: "Bikash Thapa", isPlatformAdmin: false },

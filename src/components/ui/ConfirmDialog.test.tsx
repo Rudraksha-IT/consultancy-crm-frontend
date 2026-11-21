@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
@@ -133,8 +133,11 @@ describe("ConfirmDialog", () => {
     finish();
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
-    expect(await screen.findByRole("button", { name: "Remove Grade 12 Transcript" })).toBeVisible();
-    expect(screen.queryByRole("dialog")).toBeNull();
+    // Wait for the dialog itself to close: the button behind it is on screen all along.
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+    expect(screen.getByRole("button", { name: "Remove Grade 12 Transcript" })).toBeVisible();
   });
 
   it("stays open with a short message when the action fails, and can be tried again", async () => {

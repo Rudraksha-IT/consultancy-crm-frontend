@@ -1,6 +1,7 @@
 import { ContactKind } from "@/constants/exports";
 
 import { contactsToCopy, describeFilters, exportFileName, exportFilters } from ".";
+import { uid } from "@/test/ids";
 
 describe("exportFilters", () => {
   it("is empty for everyone", () => {
@@ -54,10 +55,10 @@ describe("describeFilters", () => {
 
 describe("contactsToCopy", () => {
   const rows = [
-    { studentId: 1, email: "sita@example.com", phone: "9841000001" },
-    { studentId: 2, email: "", phone: " 9841000002 " },
-    { studentId: 1, email: "sita@example.com", phone: "9841000001" },
-    { studentId: 3, email: "SITA@example.com ", phone: "9841000001" },
+    { studentId: uid(1), email: "sita@example.com", phone: "9841000001" },
+    { studentId: uid(2), email: "", phone: " 9841000002 " },
+    { studentId: uid(1), email: "sita@example.com", phone: "9841000001" },
+    { studentId: uid(3), email: "SITA@example.com ", phone: "9841000001" },
   ];
 
   it("joins emails with a comma, leaving out empty ones and counting who has none", () => {

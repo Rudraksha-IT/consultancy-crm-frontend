@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { CATALOGUE_TEXT, CourseLevel } from "@/constants/catalogue";
 import type { CourseEditInput, University, UniversityEditInput } from "@/lib/api";
 
@@ -6,16 +7,18 @@ export type CourseDraft = {
   /** Stays the same while the row is on the page, also for a new Course. */
   key: string;
   /** Null for a Course added on this page. */
-  id: number | null;
+  id: RecordId | null;
   name: string;
   level: string;
   intakes: string[];
   archived: boolean;
   /** Archived as stored: only such a Course can be deleted. */
   savedArchived: boolean;
-  documents: number[];
+  documents: RecordId[];
   /** How many Applications use it; such a Course can't be deleted. */
   applications: number;
+  /** How many Course Files it keeps, counting the Bin; such a Course can't be deleted. */
+  fileCount: number;
   /** Marked to be deleted on Save, with Undo until then. */
   isDeleted: boolean;
 };
@@ -44,7 +47,7 @@ export function draftOf(university: University): UniversityDraft {
     archived: university.archived,
     savedArchived: university.archived,
     courses: university.courses.map((course) => ({
-      key: `course-${String(course.id)}`,
+      key: `course-${course.id}`,
       id: course.id,
       name: course.name,
       level: course.level,
@@ -53,6 +56,7 @@ export function draftOf(university: University): UniversityDraft {
       savedArchived: course.archived,
       documents: course.documents.map((document) => document.id),
       applications: course.applications,
+      fileCount: course.fileCount,
       isDeleted: false,
     })),
   };
@@ -70,13 +74,22 @@ export function newCourseDraft(key: string): CourseDraft {
     savedArchived: false,
     documents: [],
     applications: 0,
+    fileCount: 0,
     isDeleted: false,
   };
 }
 
-/** Whether a Course may be deleted: saved as archived and used by no Application. */
+/**
+ * Whether a Course may be deleted: saved as archived, used by no Application, and keeping no
+ * Course Files, even in the Bin (ticket 10).
+ */
 export function canDelete(course: CourseDraft): boolean {
-  return course.id !== null && course.savedArchived && course.applications === 0;
+  return (
+    course.id !== null &&
+    course.savedArchived &&
+    course.applications === 0 &&
+    course.fileCount === 0
+  );
 }
 
 /** What Save sends: every Course still on the page, and the ids of those marked deleted. */

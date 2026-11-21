@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { TEST_TYPES } from "@/constants/batches";
 import { EXPENSE_CATEGORIES } from "@/constants/expenses";
@@ -8,6 +10,7 @@ import { COUNTRIES, SOURCES } from "@/constants/students";
 
 import { getJson } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
+import { FeeTypeRefSchema } from "../money/feeTypes";
 
 const Count = z.number().int().nonnegative();
 /** Whole NPR. */
@@ -89,13 +92,21 @@ const MoneyReportSchema = z
     money_out_by_category: z.array(
       z.object({ category: z.enum(EXPENSE_CATEGORIES), amount: Amount }),
     ),
+    money_in_by_fee_type: z.array(z.object({ fee_type: FeeTypeRefSchema, amount: Amount })),
   })
   .transform((answer) => ({
     months: answer.months,
     moneyOutByCategory: answer.money_out_by_category,
+    moneyInByFeeType: answer.money_in_by_fee_type.map((row) => ({
+      feeType: row.fee_type,
+      amount: row.amount,
+    })),
   }));
 
-/** Money in and out each month, and what the money out went on over all the months. */
+/**
+ * Money in and out each month, what the money out went on, and where the money from Students
+ * came from (by Fee Type) over all the months.
+ */
 export type MoneyReport = z.infer<typeof MoneyReportSchema>;
 
 const SourceReportSchema = z.object({
@@ -108,7 +119,7 @@ export type SourceReport = z.infer<typeof SourceReportSchema>;
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-const PersonSchema = z.object({ id: z.number().int(), name: z.string(), is_active: z.boolean() });
+const PersonSchema = z.object({ id: RecordIdSchema, name: z.string(), is_active: z.boolean() });
 const CounsellorCounts = z.object({
   students: Count,
   moved_forward: Count,
@@ -165,7 +176,7 @@ export type StaffProgressReport = z.infer<typeof StaffProgressReportSchema>;
 
 /** One person in a Staff Progress table, with that table's counts. */
 export type StaffProgressRow<Counts> = {
-  id: number;
+  id: RecordId;
   name: string;
   isActive: boolean;
   counts: Counts;
@@ -173,7 +184,7 @@ export type StaffProgressRow<Counts> = {
 
 const ClassSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     name: z.string(),
     test_type: z.enum(TEST_TYPES),
     teacher: z.string(),

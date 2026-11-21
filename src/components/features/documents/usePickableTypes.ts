@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useState } from "react";
 
 import { fetchPickableDocumentTypes, type DocumentType } from "@/lib/api";
@@ -10,21 +11,21 @@ export type PickableTypesState =
 type PickableTypes = {
   state: PickableTypesState;
   /** The ticked types' ids. */
-  ticked: ReadonlySet<number>;
+  ticked: ReadonlySet<RecordId>;
   /** Tick one more type. */
-  tick: (id: number) => void;
+  tick: (id: RecordId) => void;
   /** Make these the only ticked types. */
-  tickOnly: (ids: readonly number[]) => void;
+  tickOnly: (ids: readonly RecordId[]) => void;
   /** Keep a type just added, ticked. */
   keepTicked: (added: DocumentType) => void;
   /** The ticked ids among the types offered (those not every Student needs), in their order. */
-  tickedIds: () => number[];
+  tickedIds: () => RecordId[];
 };
 
 /** The office's Document Types for a picker, and which are ticked (starting with `initialIds`). */
-export function usePickableTypes(initialIds: readonly number[]): PickableTypes {
+export function usePickableTypes(initialIds: readonly RecordId[]): PickableTypes {
   const [state, setState] = useState<PickableTypesState>({ status: "loading" });
-  const [ticked, setTickedIds] = useState<ReadonlySet<number>>(() => new Set(initialIds));
+  const [ticked, setTickedIds] = useState<ReadonlySet<RecordId>>(() => new Set(initialIds));
 
   useEffect(() => {
     let isCancelled = false;
@@ -42,7 +43,7 @@ export function usePickableTypes(initialIds: readonly number[]): PickableTypes {
     };
   }, []);
 
-  function tick(id: number): void {
+  function tick(id: RecordId): void {
     setTickedIds((current) => new Set([...current, id]));
   }
 

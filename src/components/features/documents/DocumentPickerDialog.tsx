@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useRef, useState, type SubmitEvent } from "react";
 
 import { SaveDialog } from "@/components/features/students/profile/SaveDialog";
@@ -26,10 +27,10 @@ type DocumentPickerDialogProps = {
   /** Who will be asked for the ticked documents. */
   lead: string;
   /** The types already asked for, ticked at the start. */
-  initialIds: readonly number[];
+  initialIds: readonly RecordId[];
   onClose: () => void;
   /** Save the ticked types' ids (in the office's order); a rejection is shown in the dialog. */
-  onSave: (ids: number[]) => Promise<void>;
+  onSave: (ids: RecordId[]) => Promise<void>;
 };
 
 /**
@@ -83,8 +84,8 @@ function saveFailure(error: unknown): string {
 
 type ChoicesProps = {
   state: PickableTypesState;
-  ticked: ReadonlySet<number>;
-  onChange: (ids: number[]) => void;
+  ticked: ReadonlySet<RecordId>;
+  onChange: (ids: RecordId[]) => void;
 };
 
 /** A tick box for each document not every Student needs. */
@@ -97,10 +98,10 @@ function Choices({ state, ticked, onChange }: ChoicesProps) {
     <CheckboxGroup
       label={DOCUMENT_TEXT.pickerChoices}
       name="document_types"
-      options={offered.map((type) => ({ value: String(type.id), label: type.name }))}
-      values={offered.filter((type) => ticked.has(type.id)).map((type) => String(type.id))}
+      options={offered.map((type) => ({ value: type.id, label: type.name }))}
+      values={offered.filter((type) => ticked.has(type.id)).map((type) => type.id)}
       onChange={(values) => {
-        onChange(values.map(Number));
+        onChange(values);
       }}
     />
   );
@@ -109,7 +110,7 @@ function Choices({ state, ticked, onChange }: ChoicesProps) {
 type AddTypeFormProps = {
   /** Every type of the office, those every Student needs included. */
   types: readonly DocumentType[];
-  onTick: (id: number) => void;
+  onTick: (id: RecordId) => void;
   onAdded: (added: DocumentType) => void;
 };
 

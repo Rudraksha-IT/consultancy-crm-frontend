@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useState } from "react";
 
 import { fetchChecklist, type Checklist } from "@/lib/api";
@@ -8,7 +9,7 @@ export type ChecklistState =
   { status: "loading" } | { status: "loaded"; checklist: Checklist } | { status: "failed" };
 
 /** Load a Student's checklist; `replace` keeps the one an upload answered with. */
-export function useChecklist(studentId: number): {
+export function useChecklist(studentId: RecordId): {
   state: ChecklistState;
   replace: (checklist: Checklist) => void;
 } {

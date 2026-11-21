@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { SaveDialog } from "@/components/features/students/profile/SaveDialog";
@@ -13,12 +14,12 @@ import { documentFilesProblem } from "@/lib/documents";
 import { uploadFailure } from "./uploadFailure";
 
 type UploadDocumentDialogProps = {
-  studentId: number;
+  studentId: RecordId;
   studentName: string;
   /** The Document Types offered: the Student's checklist. */
-  types: readonly { id: number; name: string }[];
+  types: readonly { id: RecordId; name: string }[];
   /** The type whose button opened the dialog. */
-  initialTypeId: number;
+  initialTypeId: RecordId;
   /** The Student's Applications and Visas it can be linked to (spec 66). */
   links?: readonly DocumentLinkOption[];
   onClose: () => void;
@@ -26,7 +27,7 @@ type UploadDocumentDialogProps = {
   onUploaded: (checklist: Checklist, fileCount: number) => void;
 };
 
-const linkValue = (link: DocumentLinkOption): string => `${link.kind}:${String(link.id)}`;
+const linkValue = (link: DocumentLinkOption): string => `${link.kind}:${link.id}`;
 
 /**
  * Upload one or more files as one of the Student's Documents (spec 65, 117), optionally for one
@@ -37,7 +38,7 @@ export function UploadDocumentDialog(props: UploadDocumentDialogProps) {
   const { studentId, studentName, types, initialTypeId, onClose, onUploaded } = props;
   const { links = [] } = props;
   const formId = useId();
-  const [typeId, setTypeId] = useState(String(initialTypeId));
+  const [typeId, setTypeId] = useState(initialTypeId);
   const [linkChoice, setLinkChoice] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [fileProblem, setFileProblem] = useState<string | null>(null);
@@ -50,7 +51,7 @@ export function UploadDocumentDialog(props: UploadDocumentDialogProps) {
     if (problem !== null) return;
     const link = links.find((one) => linkValue(one) === linkChoice) ?? null;
     void save(async () => {
-      const saved = await uploadDocument(studentId, Number(typeId), files, undefined, link);
+      const saved = await uploadDocument(studentId, typeId, files, undefined, link);
       onUploaded(saved, files.length);
     });
   }
@@ -70,7 +71,7 @@ export function UploadDocumentDialog(props: UploadDocumentDialogProps) {
         <SelectField
           label={DOCUMENT_TEXT.documentType}
           name="document_type"
-          options={types.map((type) => ({ value: String(type.id), label: type.name }))}
+          options={types.map((type) => ({ value: type.id, label: type.name }))}
           value={typeId}
           onChange={setTypeId}
           errors={fieldErrors.documentType}

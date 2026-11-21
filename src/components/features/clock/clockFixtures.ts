@@ -1,7 +1,10 @@
+import type { RecordId } from "@/lib/recordId";
+import { uid } from "@/test/ids";
+
 /** Test-only: Clock-in answers as the server writes them (issue 56). */
 
 type SessionAnswer = {
-  id: number;
+  id: RecordId;
   clocked_in_at: string;
   clocked_out_at: string | null;
   missing_clock_out: boolean;
@@ -31,7 +34,7 @@ type DayAnswer = {
 
 /** A session from `start` to `end` ("HH:MM" in Kathmandu, UTC+5:45) on `date`. */
 export function session(
-  id: number,
+  id: RecordId,
   date: string,
   start: string,
   end: string | null,
@@ -47,9 +50,9 @@ export function session(
   };
 }
 
-const FULL = session(1, "2026-11-02", "09:02", "17:26");
-const SHORT = session(2, "2026-11-03", "09:00", "13:00");
-const FORGOTTEN = session(3, "2026-11-04", "09:00", null);
+const FULL = session(uid(1), "2026-11-02", "09:02", "17:26");
+const SHORT = session(uid(2), "2026-11-03", "09:00", "13:00");
+const FORGOTTEN = session(uid(3), "2026-11-04", "09:00", null);
 
 /** The worked days of the month, by day number. */
 const WORKED: Partial<Record<number, Partial<DayAnswer>>> = {
@@ -109,7 +112,7 @@ function dayOf(number: number, holidays: Partial<Record<number, string>>): DayAn
 
 /** November 2026 seen on Thursday the 5th: a full day, a short day, a forgotten clock-out. */
 export function novemberMonth(
-  staff = { id: 3, name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
+  staff = { id: uid(3), name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
   holidays: Partial<Record<number, string>> = {},
 ) {
   return {
@@ -121,7 +124,7 @@ export function novemberMonth(
     days: Array.from({ length: 30 }, (_, index) => dayOf(index + 1, holidays)),
     corrections: [
       {
-        id: 9,
+        id: uid(9),
         day: "2026-11-02",
         before: "In 9:02 AM, no clock-out",
         after: "Out 5:26 PM",

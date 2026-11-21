@@ -12,13 +12,14 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { VisitorDesk } from "./VisitorDesk";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const DESK: StaffContext = {
-  staff: { id: 4, name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
+  staff: { id: uid(4), name: "Ramesh KC", email: "ramesh@acme.test", role: "front_desk" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -26,39 +27,39 @@ const DESK: StaffContext = {
 const TODAY = "/api/visits/today/";
 const STUDENTS = "/api/students/";
 const SEARCH_SITA = "/api/students/?q=sita";
-const VISITS_7 = "/api/students/7/visits/";
+const VISITS_7 = `/api/students/${uid(7)}/visits/`;
 
 const NEW_VISIT = {
-  id: 11,
+  id: uid(11),
   kind: "new",
   purpose: "First visit",
   at: "2026-11-03T10:15:00+05:45",
-  recorded_by: { id: 4, name: "Ramesh KC" },
-  student: { id: 12, name: "Hari Bhandari", note_first_line: "Wants a diploma in Canada" },
+  recorded_by: { id: uid(4), name: "Ramesh KC" },
+  student: { id: uid(12), name: "Hari Bhandari", note_first_line: "Wants a diploma in Canada" },
 };
 const FOLLOW_UP = {
   ...NEW_VISIT,
-  id: 10,
+  id: uid(10),
   kind: "follow_up",
   purpose: "Bringing documents: <b>passport</b>",
   at: "2026-11-03T09:40:00+05:45",
-  student: { id: 7, name: "Sita Gurung", note_first_line: "" },
+  student: { id: uid(7), name: "Sita Gurung", note_first_line: "" },
 };
 
 const SITA_ROW = {
-  id: 7,
+  id: uid(7),
   name: "Sita Gurung",
   phone: "9841000001",
   email: "",
   country: "australia",
   source: "walk_in",
   stage: "counselling",
-  assigned_counsellor: { id: 5, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 };
 
 const ADDED = {
   ...SITA_ROW,
-  id: 12,
+  id: uid(12),
   name: "Hari Bhandari",
   highest_qualification: "plus_two",
   past_degree: "",
@@ -80,8 +81,8 @@ function today(visits: unknown[]): Answer {
 
 const PICKED: Answer[] = [
   on("GET", SEARCH_SITA, pageOf([SITA_ROW])),
-  on("GET", "/api/students/7/", PROFILE),
-  on("GET", "/api/students/7/progress/", {
+  on("GET", `/api/students/${uid(7)}/`, PROFILE),
+  on("GET", `/api/students/${uid(7)}/progress/`, {
     stage: "counselling",
     percent: 20,
     next_step: "Choose a course and apply",
@@ -90,7 +91,7 @@ const PICKED: Answer[] = [
   on("GET", `${VISITS_7}?page=1`, { ...pageOf([LAST_VISIT]), page_size: 50 }),
 ];
 
-const COUNSELLORS = on("GET", "/api/staff/counsellors/", [{ id: 5, name: "Bikash Thapa" }]);
+const COUNSELLORS = on("GET", "/api/staff/counsellors/", [{ id: uid(5), name: "Bikash Thapa" }]);
 
 function renderDesk() {
   return render(
@@ -132,7 +133,7 @@ describe("Today's visitors", () => {
     if (first === undefined || second === undefined) throw new Error("two rows expected");
     expect(within(first).getByRole("link", { name: "Hari Bhandari" })).toHaveAttribute(
       "href",
-      "/students/12",
+      `/students/${uid(12)}`,
     );
     expect(within(first).getByText("New visitor")).toBeInTheDocument();
     expect(within(first).getByText("First visit")).toBeInTheDocument();
@@ -196,7 +197,7 @@ describe("A new visitor", () => {
     expect(await screen.findByText("Hari Bhandari is saved as a new visitor.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open their page" })).toHaveAttribute(
       "href",
-      "/students/12",
+      `/students/${uid(12)}`,
     );
     expect(screen.getByText("Visitor saved")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Full name" })).toHaveValue("");
@@ -326,7 +327,7 @@ describe("A returning visitor", () => {
     expect(screen.getByText("Wants Melbourne only.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open their page" })).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
   });
 
@@ -400,7 +401,7 @@ describe("A returning visitor", () => {
 
   it("says when the Student couldn't load, and lets them choose again", async () => {
     backend(today([]), COUNSELLORS, on("GET", SEARCH_SITA, pageOf([SITA_ROW])), (path) =>
-      path.startsWith("/api/students/7/") ? jsonResponse({}, 500) : undefined,
+      path.startsWith(`/api/students/${uid(7)}/`) ? jsonResponse({}, 500) : undefined,
     );
     renderDesk();
 
@@ -432,7 +433,7 @@ describe("A returning visitor", () => {
       today([]),
       COUNSELLORS,
       ...PICKED.slice(0, 1),
-      on("GET", "/api/students/7/", { ...PROFILE, can_record_payment: false, note: "" }),
+      on("GET", `/api/students/${uid(7)}/`, { ...PROFILE, can_record_payment: false, note: "" }),
       ...PICKED.slice(2),
     );
     renderDesk();

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Dialog } from "@/components/ui/Dialog";
@@ -9,7 +10,7 @@ import { ROUTES } from "@/constants/routes";
 import { DocumentsSection } from "./DocumentsSection";
 
 type ChecklistDialogProps = {
-  student: { id: number; name: string };
+  student: { id: RecordId; name: string };
   onClose: () => void;
 };
 

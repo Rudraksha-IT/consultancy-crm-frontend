@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type ReactNode, type SubmitEvent } from "react";
 
 import { SelectField } from "@/components/ui/SelectField";
@@ -61,8 +62,8 @@ type ChoiceDialogProps = CounsellorDialogProps & {
   saveLabel: string;
   intro?: ReactNode;
   /** The current counsellor, who isn't offered again. */
-  excludeId?: number | undefined;
-  send: (counsellorId: number) => Promise<StudentProfile>;
+  excludeId?: RecordId | undefined;
+  send: (counsellorId: RecordId) => Promise<StudentProfile>;
   doneMessage: (saved: StudentProfile) => string;
 };
 
@@ -79,12 +80,12 @@ function CounsellorDialog(props: ChoiceDialogProps) {
   const { isSaving, fieldErrors, failure, save } = useFormSave();
   const options = [
     { value: NONE, label: LABELS.chooseCounsellor },
-    ...choices.map((choice) => ({ value: String(choice.id), label: choice.name })),
+    ...choices.map((choice) => ({ value: choice.id, label: choice.name })),
   ];
 
   function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
-    const counsellor = choices.find((choice) => String(choice.id) === picked);
+    const counsellor = choices.find((choice) => choice.id === picked);
     setMissing(counsellor === undefined);
     if (counsellor === undefined) return;
     void save(async () => {

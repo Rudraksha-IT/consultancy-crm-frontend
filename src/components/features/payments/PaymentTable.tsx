@@ -4,37 +4,35 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
-import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Button } from "@/components/ui/Button";
 import { DataCell, DataRow, DataTable } from "@/components/ui/DataTable";
 import { OneLine } from "@/components/ui/OneLine";
 import { useToast } from "@/components/ui/useToast";
 import { PAYMENT_METHOD_LABELS, PAYMENT_TEXT } from "@/constants/payments";
 import { ROUTES } from "@/constants/routes";
-import type { Receipt } from "@/lib/api";
+import { describeFeeType, type Payment } from "@/lib/api";
 import { formatNpr } from "@/lib/money";
 
 import { EditPaymentDialog } from "./EditPaymentDialog";
-import { ReceiptDialog } from "./ReceiptDialog";
 
 type PaymentTableProps = {
-  payments: readonly Receipt[];
+  payments: readonly Payment[];
   /** Show who paid (the Accounts list); a Student's own Fees tab doesn't need it. */
   showsStudent: boolean;
   /** A Payment was changed or deleted, so the list and its total should load again. */
   onChanged: () => void;
 };
 
-type Open = { kind: "receipt" | "edit"; payment: Receipt } | null;
+type Open = { kind: "edit"; payment: Payment } | null;
 
 const HEAD = "text-small text-ink-2 bg-fill px-6 py-3 text-left font-semibold";
 const CELL = "px-6 py-4 align-middle max-tablet:p-0";
 
 /**
- * Payments with their date and method, Student, purpose and amount, each with Receipt and Edit
- * (spec 74-75). Below tablet width each row stacks into a card, so the page never scrolls
+ * Payments with their date and method, Student, purpose and amount, each with Edit (spec 74-75;
+ * no receipt is shown or printed for now, 2026-11-20). Below tablet width each row stacks into a card, so the page never scrolls
  * sideways. On a phone a row is the date, who paid (or what it was for) and the amount, with
- * Receipt and Edit on their own line.
+ * Edit on its own line.
  */
 export function PaymentTable({ payments, showsStudent, onChanged }: PaymentTableProps) {
   const [open, setOpen] = useState<Open>(null);
@@ -58,7 +56,7 @@ export function PaymentTable({ payments, showsStudent, onChanged }: PaymentTable
               {PAYMENT_TEXT.amountHeading}
             </th>
             <th scope="col" className={HEAD}>
-              <span className="sr-only">{PAYMENT_TEXT.receipt}</span>
+              <span className="sr-only">{PAYMENT_TEXT.edit}</span>
             </th>
           </tr>
         </thead>
@@ -85,7 +83,7 @@ export function PaymentTable({ payments, showsStudent, onChanged }: PaymentTable
 }
 
 type PaymentRowProps = {
-  payment: Receipt;
+  payment: Payment;
   showsStudent: boolean;
   onOpen: (open: Open) => void;
 };
@@ -118,7 +116,7 @@ function PaymentRow({ payment, showsStudent, onOpen }: PaymentRowProps) {
         </DataCell>
       )}
       <DataCell {...(!showsStudent && { part: "line" as const })} shrinks className={CELL}>
-        <OneLine block>{payment.purpose}</OneLine>
+        <OneLine block>{describeFeeType(payment.feeType, payment.note)}</OneLine>
       </DataCell>
       <DataCell
         part="fact"
@@ -129,15 +127,6 @@ function PaymentRow({ payment, showsStudent, onOpen }: PaymentRowProps) {
       <DataCell part="actions" className={CELL}>
         <div className="tablet:justify-end wide:flex-nowrap flex flex-wrap gap-2">
           <Button
-            icon="receipt"
-            onClick={() => {
-              onOpen({ kind: "receipt", payment });
-            }}
-          >
-            <span aria-hidden="true">{PAYMENT_TEXT.receipt}</span>
-            <span className="sr-only">{PAYMENT_TEXT.receiptFor(payment.receiptNumber)}</span>
-          </Button>
-          <Button
             variant="ghost"
             icon="edit"
             onClick={() => {
@@ -145,7 +134,13 @@ function PaymentRow({ payment, showsStudent, onOpen }: PaymentRowProps) {
             }}
           >
             <span aria-hidden="true">{PAYMENT_TEXT.edit}</span>
-            <span className="sr-only">{PAYMENT_TEXT.editFor(payment.receiptNumber)}</span>
+            <span className="sr-only">
+              {PAYMENT_TEXT.editFor(
+                payment.student.name,
+                describeFeeType(payment.feeType, payment.note),
+                formatNpr(payment.amount),
+              )}
+            </span>
           </Button>
         </div>
       </DataCell>
@@ -160,19 +155,8 @@ type PaymentDialogProps = {
 };
 
 function PaymentDialog({ open, onClose, onChanged }: PaymentDialogProps) {
-  const { consultancy } = useCurrentStaff();
   const { showToast } = useToast();
   if (open === null) return null;
-  if (open.kind === "receipt") {
-    return (
-      <ReceiptDialog
-        receipt={open.payment}
-        officeName={consultancy.name}
-        officeLogo={consultancy.logo}
-        onClose={onClose}
-      />
-    );
-  }
   return (
     <EditPaymentDialog
       payment={open.payment}

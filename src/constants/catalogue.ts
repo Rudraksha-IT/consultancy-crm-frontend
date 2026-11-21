@@ -34,6 +34,11 @@ function applicationCount(count: number): string {
   return `${String(count)} ${count === 1 ? "application" : "applications"}`;
 }
 
+/** "1 Course File", "3 Course Files". */
+function courseFileCount(count: number): string {
+  return `${String(count)} ${count === 1 ? "Course File" : "Course Files"}`;
+}
+
 /** The words of the Catalogue screens (prototype `#catalogue` and `#uni-3-edit`; issue 92). */
 export const CATALOGUE_TEXT = {
   title: "Catalogue",
@@ -111,6 +116,11 @@ export const CATALOGUE_TEXT = {
   courseArchivedNote: "Archived: hidden when adding applications. Past applications keep it.",
   willBeDeleted: "Will be deleted when you save.",
   usedBy: (count: number) => `Used by ${applicationCount(count)}, so it stays archived.`,
+  /** Ticket 10: a Course or University keeping Course Files is never deleted. */
+  keepsFiles: (count: number) =>
+    `It has ${courseFileCount(count)} (counting the Bin), so it stays archived.`,
+  coursesKeepFiles: (count: number) =>
+    `Its courses have ${courseFileCount(count)} (counting the Bin), so it stays archived.`,
   coursesInUseNote:
     "Courses already used by an application can be archived, not removed, so past applications keep their course.",
   deleteCourseTitle: (name: string) => `Delete ${name}?`,
@@ -125,7 +135,7 @@ export const CATALOGUE_TEXT = {
   editSaved: (name: string) => `${name} saved`,
   needsFixing: "Some details need fixing. They are marked below.",
   universityNotFound: "This university isn't in the Catalogue.",
-  backToCatalogue: "Catalogue",
+  backToCatalogue: "Configuration: Universities",
   leaveTitle: "Leave without saving?",
   leaveBody: "Your changes on this page will be lost.",
   leave: "Leave without saving",
@@ -160,4 +170,50 @@ export const CATALOGUE_TEXT = {
   fixRows: "Fix these rows and import the file again.",
   noFailures: "No rows failed.",
   done: "Done",
+  // Configuration → Universities (ticket 10): the Catalogue and each Course's Course Files.
+  sectionIntro:
+    "Universities, their courses and intakes, which counsellors choose from, and each course's PDF brochures (at most 5 MB each). Staff see the brochures when they add an application and on the Student's Applications, and can email them.",
+  courseFiles: "Course Files",
+  noCourseFiles: "No PDFs yet",
+  uploadPdf: "Upload PDF",
+  uploadPdfFor: (course: string) => `Upload a PDF for ${course}`,
+  openFile: (name: string) => `Open ${name}`,
+  renameFile: (name: string) => `Rename ${name}`,
+  deleteFile: (name: string) => `Delete ${name}`,
+  rename: "Rename",
+  delete: "Delete",
+  nameFileTitle: "Name this Course File",
+  renameFileTitle: "Rename the Course File",
+  fileNameLabel: "Name",
+  newFileHint: (fileName: string, size: string) =>
+    `${fileName}, ${size}. Its contents are checked to be a real PDF when it uploads.`,
+  renameHint: (fileName: string) => `The file stays ${fileName}.`,
+  nameNeeded: "Give it a name.",
+  upload: "Upload",
+  uploading: "Uploading…",
+  save: "Save",
+  notPdf: "Only PDF files can be Course Files. That one isn't a PDF.",
+  fileTooBig: (size: string) => `That file is ${size}. A Course File can be at most 5 MB.`,
+  uploaded: (name: string) => `${name} uploaded`,
+  renamed: "Renamed",
+  binFileTitle: (name: string) => `Delete ${name}?`,
+  binFileBody:
+    "It goes to the Bin. An Admin can restore it from Documents, Bin, or delete it for good.",
+  binFileAction: "Put in the Bin",
+  fileInBin: (name: string) => `${name} is in the Bin`,
+  linkFailed: "We couldn't open the file. Please try again.",
+  // The small brochure line for Staff (Add application, a Student's Applications).
+  brochuresLabel: (count: number) => (count === 1 ? "Course brochure:" : "Course brochures:"),
+  brochuresOf: (course: string) => `Course brochures of ${course}`,
+  emailBrochures: (count: number, firstName: string) =>
+    `Email ${count === 1 ? "it" : "them"} to ${firstName}`,
+  brochureSubject: (course: string, university: string) => `${course} at ${university}`,
+  brochureLine: (count: number, course: string, university: string) =>
+    `Here ${count === 1 ? "is the brochure" : "are the brochures"} for ${course} at ${university}.`,
+  uploadFailed: "We couldn't upload the file. Please try again.",
 } as const;
+
+/** Course Files are PDFs of at most 5 MB (ticket 10). */
+export const COURSE_FILE_MAX_BYTES = 5 * 1024 * 1024;
+/** The longest name a Course File may have. */
+export const COURSE_FILE_NAME_MAX_LENGTH = 120;

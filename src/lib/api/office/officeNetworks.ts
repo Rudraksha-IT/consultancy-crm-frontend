@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 
 import { getJson, postJson, sendWithoutBody } from "../core/client";
@@ -10,13 +12,13 @@ import { toFieldErrors } from "../core/fieldErrors";
 const NetworkTextSchema = z.union([z.ipv4(), z.ipv6(), z.cidrv4(), z.cidrv6()]);
 
 const OfficeNetworkSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   label: z.string(),
   network: NetworkTextSchema,
 });
 
 const OfficeNetworkChangeSchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   action: z.enum(["added", "removed"]),
   label: z.string(),
   network: NetworkTextSchema,
@@ -96,7 +98,7 @@ export async function addOfficeNetwork(
 }
 
 /** Remove an Office Network; Staff on it can no longer clock in. */
-export function removeOfficeNetwork(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function removeOfficeNetwork(id: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.officeNetwork(id), fetchFn);
 }
 

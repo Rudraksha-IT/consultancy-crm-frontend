@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { z } from "zod";
 
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
@@ -57,7 +58,7 @@ const LINK_FIELDS: Record<DocumentLinkedTo["kind"], string> = {
 
 /** A Student's checklist (spec 64). */
 export function fetchChecklist(
-  studentId: number,
+  studentId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
   return getJson(API_PATHS.studentDocuments(studentId), ChecklistSchema, fetchFn);
@@ -71,14 +72,14 @@ function appendFiles(form: FormData, files: readonly File[]): FormData {
 
 /** The upload form: the type, the files and, when there is one, the link's own field. */
 function uploadForm(
-  documentTypeId: number,
+  documentTypeId: RecordId,
   files: readonly File[],
   link: Pick<DocumentLinkedTo, "kind" | "id"> | null,
 ): FormData {
   const form = new FormData();
-  form.append(UPLOAD_FIELDS.documentType, String(documentTypeId));
+  form.append(UPLOAD_FIELDS.documentType, documentTypeId);
   appendFiles(form, files);
-  if (link !== null) form.append(LINK_FIELDS[link.kind], String(link.id));
+  if (link !== null) form.append(LINK_FIELDS[link.kind], link.id);
   return form;
 }
 
@@ -89,8 +90,8 @@ function uploadForm(
  * field.
  */
 export async function uploadDocument(
-  studentId: number,
-  documentTypeId: number,
+  studentId: RecordId,
+  documentTypeId: RecordId,
   files: readonly File[],
   fetchFn: typeof fetch = fetch,
   link: Pick<DocumentLinkedTo, "kind" | "id"> | null = null,
@@ -109,8 +110,8 @@ export async function uploadDocument(
  * refused, or `ApiRequestError` with the server's reason (e.g. a Rejected Document).
  */
 export async function addDocumentFiles(
-  studentId: number,
-  documentId: number,
+  studentId: RecordId,
+  documentId: RecordId,
   files: readonly File[],
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
@@ -132,8 +133,8 @@ export async function addDocumentFiles(
  * now. Rejects with `InvalidFieldsError` on `reason` when it is refused.
  */
 export async function checkDocument(
-  studentId: number,
-  documentId: number,
+  studentId: RecordId,
+  documentId: RecordId,
   check: DocumentCheck,
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
@@ -151,9 +152,9 @@ export async function checkDocument(
 
 /** A link to open (or save) one file of a Document, which works for a few minutes (spec 70). */
 export async function fetchDocumentLink(
-  studentId: number,
-  documentId: number,
-  fileId: number,
+  studentId: RecordId,
+  documentId: RecordId,
+  fileId: RecordId,
   action: "open" | "download",
   fetchFn: typeof fetch = fetch,
 ): Promise<string> {
@@ -210,7 +211,7 @@ export async function addDocumentType(
 
 /** Move a Document Type onto, or off, every Student's checklist. */
 export function setNeededByEveryone(
-  id: number,
+  id: RecordId,
   neededByEveryone: boolean,
   fetchFn: typeof fetch = fetch,
 ): Promise<ConfiguredDocumentType> {
@@ -226,7 +227,7 @@ export function setNeededByEveryone(
  * Remove a Document Type nothing asks for and with no files (Configuration). A refusal rejects
  * with `ApiRequestError`; `requirementRefusal` reads its reason.
  */
-export function removeDocumentType(id: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function removeDocumentType(id: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return sendWithoutBody("DELETE", API_PATHS.documentType(id), fetchFn);
 }
 
@@ -294,8 +295,8 @@ export async function addPickedDocumentType(
 
 /** Ask one Student for exactly these extra Document Types (spec 63b); returns the checklist. */
 export function setStudentDocuments(
-  studentId: number,
-  typeIds: readonly number[],
+  studentId: RecordId,
+  typeIds: readonly RecordId[],
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
   return putJson(
@@ -308,8 +309,8 @@ export function setStudentDocuments(
 
 /** "Not needed": take a type asked for one Student alone off their checklist. */
 export function dropStudentDocument(
-  studentId: number,
-  typeId: number,
+  studentId: RecordId,
+  typeId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
   return deleteJson(API_PATHS.studentDocumentAsked(studentId, typeId), ChecklistSchema, fetchFn);
@@ -338,9 +339,9 @@ function listRefusal(body: unknown): string | null {
 }
 
 /** Where one Document, or one of its files, is acted on. */
-function binTargetPath(studentId: number, target: BinTarget): string {
+function binTargetPath(studentId: RecordId, target: BinTarget): string {
   const document = API_PATHS.studentDocument(studentId, target.documentId);
-  return target.fileId === null ? document : `${document}files/${String(target.fileId)}/`;
+  return target.fileId === null ? document : `${document}files/${target.fileId}/`;
 }
 
 /**
@@ -348,7 +349,7 @@ function binTargetPath(studentId: number, target: BinTarget): string {
  * Returns the checklist as it is now. Rejects with `InvalidFieldsError` on `reason` when refused.
  */
 export async function putInBin(
-  studentId: number,
+  studentId: RecordId,
   target: BinTarget,
   reason: string,
   fetchFn: typeof fetch = fetch,
@@ -367,7 +368,7 @@ export async function putInBin(
 
 /** Take something I put in the Bin back out. Returns the checklist as it is now. */
 export function takeOutOfBin(
-  studentId: number,
+  studentId: RecordId,
   target: BinTarget,
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
@@ -376,7 +377,7 @@ export function takeOutOfBin(
 
 /** Restore something from the Bin (an Admin). Returns the checklist as it is now. */
 export function restoreFromBin(
-  studentId: number,
+  studentId: RecordId,
   target: BinTarget,
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
@@ -388,7 +389,7 @@ export function restoreFromBin(
  * Bin, or an Admin's own delete, which skips it. Returns the checklist as it is now.
  */
 export function deleteForGood(
-  studentId: number,
+  studentId: RecordId,
   target: BinTarget,
   fetchFn: typeof fetch = fetch,
 ): Promise<Checklist> {
@@ -402,7 +403,7 @@ export function fetchBin(page: number, fetchFn: typeof fetch = fetch): Promise<B
 
 /** A link to open (or save) a file in the Bin, for an Admin on the Bin tab. */
 export async function fetchBinFileLink(
-  fileId: number,
+  fileId: RecordId,
   action: "open" | "download",
   fetchFn: typeof fetch = fetch,
 ): Promise<string> {

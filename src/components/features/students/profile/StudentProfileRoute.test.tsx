@@ -7,13 +7,14 @@ import { DEFAULT_THEME } from "@/lib/theme";
 
 import { StudentProfileRoute } from "./StudentProfileRoute";
 import { consultancySummary } from "@/test/consultancy";
+import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
-  staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin" },
+  staff: { id: uid(1), name: "Asha Admin", email: "asha@acme.test", role: "admin" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -23,34 +24,37 @@ afterEach(() => {
 });
 
 describe("StudentProfileRoute", () => {
-  it("finds nobody for an address that isn't a Student id, without asking the API", () => {
-    const fetchFn = vi.fn<typeof fetch>();
-    vi.stubGlobal("fetch", fetchFn);
+  it.each(["1;drop", "7", "not-a-uuid", uid(7).replaceAll("-", "")])(
+    "finds nobody for an address that isn't a Student's UUID (%s), without asking the API",
+    (idText) => {
+      const fetchFn = vi.fn<typeof fetch>();
+      vi.stubGlobal("fetch", fetchFn);
 
-    render(
-      <StaffContextContext value={ADMIN}>
-        <ToastProvider>
-          <StudentProfileRoute idText="1;drop" />
-        </ToastProvider>
-      </StaffContextContext>,
-    );
+      render(
+        <StaffContextContext value={ADMIN}>
+          <ToastProvider>
+            <StudentProfileRoute idText={idText} />
+          </ToastProvider>
+        </StaffContextContext>,
+      );
 
-    expect(screen.getByText("We couldn't find this Student.")).toBeInTheDocument();
-    expect(fetchFn).not.toHaveBeenCalled();
-  });
+      expect(screen.getByText("We couldn't find this Student.")).toBeInTheDocument();
+      expect(fetchFn).not.toHaveBeenCalled();
+    },
+  );
 
-  it("opens the Student for a real id", () => {
+  it.each([uid(7), uid(7).toUpperCase()])("opens the Student for a real id (%s)", (idText) => {
     const fetchFn = vi.fn<typeof fetch>().mockReturnValue(new Promise(() => undefined));
     vi.stubGlobal("fetch", fetchFn);
 
     render(
       <StaffContextContext value={ADMIN}>
         <ToastProvider>
-          <StudentProfileRoute idText="7" />
+          <StudentProfileRoute idText={idText} />
         </ToastProvider>
       </StaffContextContext>,
     );
 
-    expect(fetchFn).toHaveBeenCalledWith("/api/students/7/", expect.anything());
+    expect(fetchFn).toHaveBeenCalledWith(`/api/students/${uid(7)}/`, expect.anything());
   });
 });

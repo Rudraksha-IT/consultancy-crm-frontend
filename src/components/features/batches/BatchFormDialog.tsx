@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, useState, type SubmitEvent } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -31,7 +32,7 @@ const TEST_TYPE_OPTIONS = TEST_TYPES.map((type) => ({
 type Start = {
   name: string;
   testType: TestType;
-  teacherId: number | undefined;
+  teacherId: RecordId | undefined;
   timeSlot: string;
   startsOn: string;
   endsOn: string;
@@ -79,7 +80,7 @@ export function BatchFormDialog({ batch, onClose, onSaved }: BatchFormDialogProp
     const details = {
       name: readField(form, "name"),
       testType: toTestType(readField(form, "testType")),
-      teacherId: Number(readField(form, "teacher")),
+      teacherId: readField(form, "teacher"),
       timeSlot: readField(form, "timeSlot"),
       startsOn,
       endsOn,
@@ -158,7 +159,7 @@ export function BatchFormDialog({ batch, onClose, onSaved }: BatchFormDialogProp
 
 type TeacherFieldProps = {
   teachers: Loaded<BatchTeacher[]>;
-  current: number | undefined;
+  current: RecordId | undefined;
   errors?: readonly string[] | undefined;
 };
 
@@ -173,7 +174,7 @@ function TeacherField({ teachers, current, errors }: TeacherFieldProps) {
     <SelectField
       label={BATCH_TEXT.teacher}
       name="teacher"
-      options={teachers.data.map((teacher) => ({ value: String(teacher.id), label: teacher.name }))}
+      options={teachers.data.map((teacher) => ({ value: teacher.id, label: teacher.name }))}
       defaultValue={String(startingTeacher(teachers.data, current, first))}
       errors={errors}
     />
@@ -183,7 +184,7 @@ function TeacherField({ teachers, current, errors }: TeacherFieldProps) {
 /** The class's own Teacher while they're still active; otherwise the first on the list. */
 function startingTeacher(
   teachers: BatchTeacher[],
-  current: number | undefined,
+  current: RecordId | undefined,
   first: BatchTeacher,
 ) {
   return teachers.some((teacher) => teacher.id === current) ? current : first.id;

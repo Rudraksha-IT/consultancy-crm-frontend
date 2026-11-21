@@ -70,6 +70,6 @@ export const STAGE_OPTIONS: SelectOption[] = Object.values(Stage).map((value) =>
 export function handOverOptions(counsellors: readonly CounsellorChoice[]): SelectOption[] {
   return [
     { value: "", label: LABELS.decideLater },
-    ...counsellors.map(({ id, name }) => ({ value: String(id), label: name })),
+    ...counsellors.map(({ id, name }) => ({ value: id, label: name })),
   ];
 }

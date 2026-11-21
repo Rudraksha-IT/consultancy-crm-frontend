@@ -1,5 +1,7 @@
 /** How the Next.js server forwards the browser's `/api/...` calls to Django (ADR 0002). */
 
+export { SESSION_ENDED_HEADER } from "./session";
+
 /** The only methods the API answers; anything else is 405. */
 export const FORWARDED_METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"] as const;
 export type ForwardedMethod = (typeof FORWARDED_METHODS)[number];
@@ -126,14 +128,52 @@ export const LOGO_UPLOAD_PATH = /^\/api\/(?:configuration\/logo|platform\/brand\
  * room for the form around them. It is held in memory, so it stays small for the 1 GiB server.
  */
 export const MAX_UPLOAD_BODY_BYTES = 20 * 1024 * 1024 + 64 * 1024;
+
+/** A Course File (ticket 10): one PDF of at most 5 MB, plus room for the form around it. */
+export const MAX_COURSE_FILE_BODY_BYTES = 5 * 1024 * 1024 + 64 * 1024;
+
+// A record's UUID as the server writes it, in lower case (ADR 0027).
+const UUID_PART = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+/** Where a Course File is uploaded: one Course's files, the Course named by UUID. */
+export const COURSE_FILE_UPLOAD_PATH = new RegExp(`^/api/catalogue/courses/${UUID_PART}/files/$`);
+/**
+ * Where a Document Example (ticket 11) is uploaded: added to a Document Type, or in place of one,
+ * each named by UUID. One file of at most 5 MB, like a Course File.
+ */
+export const DOCUMENT_EXAMPLE_UPLOAD_PATH = new RegExp(
+  `^/api/configuration/(?:document-types/${UUID_PART}/examples|document-examples/${UUID_PART}/replace)/$`,
+);
 /**
  * The only calls that may carry an upload: a Student's Document (issue 16), files added to one
- * (issue 78), an Offer Letter (issue 76) and a visa letter (issue 77).
+ * (issue 78), an Offer Letter (issue 76) and a visa letter (issue 77). Students, Documents and
+ * Visas are named by UUID (ADR 0027).
  */
-export const UPLOAD_PATH =
-  /^\/api\/students\/[0-9]{1,10}\/(?:documents\/(?:[0-9]{1,18}\/files\/)?|offer-letters\/|visas\/[0-9]{1,18}\/letter\/)$/;
+export const UPLOAD_PATH = new RegExp(
+  `^/api/students/${UUID_PART}/(?:documents/(?:${UUID_PART}/files/)?|offer-letters/|visas/${UUID_PART}/letter/)$`,
+);
 /** How long to wait for Django before answering 504. */
 export const BACKEND_TIMEOUT_MS = 15_000;
+
+/**
+ * While a new version is switched in (ticket 14), Django can't be reached for a few seconds. A
+ * read (GET) is tried again after short waits that grow, for up to 20 seconds in all; a change is
+ * never tried again, so nothing is saved twice.
+ */
+export const UPDATE_RETRY = { totalMs: 20_000, firstWaitMs: 250, longestWaitMs: 2_000 } as const;
+
+/**
+ * Health checks (ticket 14): Django's, called only by this server's `/healthz` and Docker, and
+ * never forwarded from a browser.
+ */
+export const HEALTH = {
+  backendPath: "/api/health/",
+  /** Browser paths refused before forwarding: Django's health check, with or without the slash. */
+  refusedPath: /^\/api\/health\/?$/,
+  timeoutMs: 3_000,
+} as const;
+
+/** The answer's `code` when Django can't be reached because the app is being updated. */
+export const UPDATING_CODE = "updating";
 /**
  * A message to many Students (issue 26) is sent one by one while the call waits: Django stops
  * after 60 seconds (BULK_SEND_SECONDS), so it gets longer, still under Cloudflare's 100 seconds.
@@ -175,7 +215,7 @@ export const PROXY_MESSAGES = {
   badRequest: "Bad request.",
   methodNotAllowed: "Method not allowed.",
   tooLarge: "The request is too large.",
-  unreachable: "The server can't be reached.",
+  updating: "The app is being updated. Please try again in a moment.",
   timedOut: "The server took too long to answer.",
   misconfigured: "Something went wrong.",
   unexpectedAnswer: "Something went wrong.",

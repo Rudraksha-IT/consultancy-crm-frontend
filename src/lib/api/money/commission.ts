@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { COMMISSION_STATUSES, type CommissionStatus } from "@/constants/commission";
 
@@ -12,9 +14,9 @@ const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 /** One Commission as the API answers it (spec 76d). The Intake is "YYYY-MM", days are AD. */
 const CommissionSchema = z
   .object({
-    id: z.number().int(),
-    student: z.object({ id: z.number().int(), name: z.string() }),
-    university: z.object({ id: z.number().int(), name: z.string() }),
+    id: RecordIdSchema,
+    student: z.object({ id: RecordIdSchema, name: z.string() }),
+    university: z.object({ id: RecordIdSchema, name: z.string() }),
     intake: z.string().regex(MONTH),
     amount: z.number().int().positive(),
     status: z.enum(COMMISSION_STATUSES),
@@ -59,8 +61,8 @@ export type ReceivedCommission = z.infer<typeof ReceivedSchema>;
 
 /** Commission as the form sends it. */
 export type NewCommission = {
-  studentId: number;
-  universityId: number;
+  studentId: RecordId;
+  universityId: RecordId;
   intake: string;
   amount: number;
 };
@@ -100,7 +102,7 @@ export async function addCommission(
 
 /** Move Commission to `status`; Received records the day (spec 76d). */
 export function changeCommissionStatus(
-  commissionId: number,
+  commissionId: RecordId,
   status: CommissionStatus,
   fetchFn: typeof fetch = fetch,
 ): Promise<Commission> {

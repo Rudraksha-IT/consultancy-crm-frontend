@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -28,7 +29,7 @@ function createCalls(fetchFn: ReturnType<typeof backendAnswering>) {
 }
 
 const CREATED = {
-  id: 3,
+  id: uid(3),
   name: "Acme Education",
   subdomain: "acme",
   host: testHost("acme"),
@@ -44,6 +45,7 @@ async function fillAndSubmit(): Promise<void> {
   const user = userEvent.setup();
   await user.type(screen.getByLabelText("Consultancy name"), "Acme Education");
   await user.type(screen.getByLabelText("Subdomain"), "acme");
+  await user.type(screen.getByLabelText("Contact email"), "info@acme.com");
   await user.click(screen.getByRole("button", { name: "Create Consultancy" }));
 }
 
@@ -65,6 +67,7 @@ describe("NewConsultancyForm", () => {
         body: JSON.stringify({
           name: "Acme Education",
           subdomain: "acme",
+          contact_email: "info@acme.com",
           status: "evaluation",
           theme: DEFAULT_THEME,
         }),
@@ -166,6 +169,67 @@ describe("NewConsultancyForm", () => {
       "This subdomain is already taken.",
     );
     expect(screen.getByLabelText("Consultancy name")).not.toHaveAccessibleDescription();
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("asks for the office's contact email and says where replies go", () => {
+    backendAnswering(() => Promise.resolve(jsonResponse(CREATED, 202)));
+    render(<NewConsultancyForm />);
+
+    const field = screen.getByLabelText("Contact email");
+    expect(field).toHaveAttribute("type", "email");
+    expect(field).toHaveAccessibleDescription("Where replies from Students and staff go.");
+  });
+
+  it.each([
+    ["", "Enter the office's contact email."],
+    ["   ", "Enter the office's contact email."],
+    ["not an email", "Enter a real email address, like info@youroffice.com."],
+    ["a@b.com, c@d.com", "Enter a real email address, like info@youroffice.com."],
+    ["Acme <info@acme.com>", "Enter a real email address, like info@youroffice.com."],
+  ])("refuses the contact email %j before sending", async (typed, message) => {
+    const fetchFn = backendAnswering(() => Promise.resolve(jsonResponse(CREATED, 202)));
+    const user = userEvent.setup();
+    render(<NewConsultancyForm />);
+
+    await user.type(screen.getByLabelText("Consultancy name"), "Acme Education");
+    await user.type(screen.getByLabelText("Subdomain"), "acme");
+    if (typed !== "") await user.type(screen.getByLabelText("Contact email"), typed);
+    await user.click(screen.getByRole("button", { name: "Create Consultancy" }));
+
+    const field = screen.getByLabelText("Contact email");
+    expect(field).toHaveAccessibleDescription(message);
+    expect(field).toHaveFocus();
+    expect(createCalls(fetchFn)).toHaveLength(0);
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
+  it("sends the contact email trimmed", async () => {
+    const fetchFn = backendAnswering(() => Promise.resolve(jsonResponse(CREATED, 202)));
+    const user = userEvent.setup();
+    render(<NewConsultancyForm />);
+
+    await user.type(screen.getByLabelText("Consultancy name"), "Acme Education");
+    await user.type(screen.getByLabelText("Subdomain"), "acme");
+    await user.type(screen.getByLabelText("Contact email"), "  info@acme.com  ");
+    await user.click(screen.getByRole("button", { name: "Create Consultancy" }));
+
+    const body = createCalls(fetchFn).at(-1)?.[1]?.body;
+    const sent: unknown = typeof body === "string" ? JSON.parse(body) : null;
+    expect(sent).toMatchObject({ contact_email: "info@acme.com" });
+  });
+
+  it("shows a refused contact email under its field", async () => {
+    backendAnswering(() =>
+      Promise.resolve(jsonResponse({ contact_email: ["Enter a real email address."] }, 400)),
+    );
+    render(<NewConsultancyForm />);
+
+    await fillAndSubmit();
+
+    expect(await screen.findByLabelText("Contact email")).toHaveAccessibleDescription(
+      "Enter a real email address.",
+    );
     expect(router.push).not.toHaveBeenCalled();
   });
 

@@ -11,17 +11,18 @@ import { DEFAULT_THEME } from "@/lib/theme";
 
 import { EmployeeProgressPage } from "./EmployeeProgressPage";
 import { MyProgressPage } from "./MyProgressPage";
+import { uid } from "@/test/ids";
 
 function context(
   overrides: Partial<StaffContext["staff"]> = {},
   extra: Partial<StaffContext> = {},
 ) {
   return {
-    staff: { id: 1, name: "Asha Admin", email: "asha@acme.test", role: "admin", ...overrides },
+    staff: { id: uid(1), name: "Asha Admin", email: "asha@acme.test", role: "admin", ...overrides },
     consultancy: consultancySummary(),
     modules: ["staff"],
     dateDisplay: "AD",
-    colourMode: "device",
+    colourMode: "light",
     supportAccess: null,
     theme: DEFAULT_THEME,
     ...extra,
@@ -31,7 +32,7 @@ function context(
 const ADMIN = context();
 
 const BIKASH = {
-  id: 3,
+  id: uid(3),
   name: "Bikash Thapa",
   job_title: "Senior counsellor",
   mobile: "9841000001",
@@ -60,7 +61,7 @@ function answer(overrides: Record<string, unknown> = {}) {
             before: "",
             after: "Deakin University",
             detail: "Master of IT",
-            student: { id: 7, name: "Sita Gurung" },
+            student: { id: uid(7), name: "Sita Gurung" },
           },
           {
             kind: "stage_changed",
@@ -68,7 +69,7 @@ function answer(overrides: Record<string, unknown> = {}) {
             before: "counselling",
             after: "applying",
             detail: "",
-            student: { id: 7, name: "Sita Gurung" },
+            student: { id: uid(7), name: "Sita Gurung" },
           },
         ],
       },
@@ -120,10 +121,12 @@ describe("An employee's Progress tab", () => {
   it("shows who they are, this month's cards and what they did day by day", async () => {
     const fetchFn = stubFetch(() => jsonResponse(answer()));
 
-    renderAs(<EmployeeProgressPage idText="3" />);
+    renderAs(<EmployeeProgressPage idText={uid(3)} />);
 
     expect(await screen.findByRole("heading", { level: 1, name: "Bikash Thapa" })).toBeVisible();
-    expect(paths(fetchFn)).toEqual(["/api/staff/3/progress/?from=2026-11-01&to=2026-11-15"]);
+    expect(paths(fetchFn)).toEqual([
+      `/api/staff/${uid(3)}/progress/?from=2026-11-01&to=2026-11-15`,
+    ]);
     expect(screen.getByRole("link", { name: "All employees" })).toHaveAttribute("href", "/staff");
     expect(screen.getByText("Senior counsellor")).toBeVisible();
     expect(screen.getByText("Counsellor")).toBeVisible();
@@ -150,7 +153,7 @@ describe("An employee's Progress tab", () => {
     expect(within(list).getByText("Stage: Counselling → Applying")).toBeVisible();
     expect(within(list).getAllByRole("link", { name: "Sita Gurung" })[0]).toHaveAttribute(
       "href",
-      "/students/7",
+      `/students/${uid(7)}`,
     );
     expect(within(list).getByText("Marked attendance: <b>PTE Day</b> (1 Student)")).toBeVisible();
     expect(within(list).getByRole("heading", { name: /Mon, 2 Nov 2026/ })).toHaveTextContent(
@@ -163,13 +166,13 @@ describe("An employee's Progress tab", () => {
     ["Last month", "2026-10-01", "2026-10-31"],
   ])("loads %s when it is chosen", async (label, from, to) => {
     const fetchFn = stubFetch(() => jsonResponse(answer()));
-    renderAs(<EmployeeProgressPage idText="3" />);
+    renderAs(<EmployeeProgressPage idText={uid(3)} />);
     await screen.findByRole("heading", { level: 1, name: "Bikash Thapa" });
 
     await userEvent.click(screen.getByRole("button", { name: label }));
 
     await screen.findByRole("heading", { level: 1, name: "Bikash Thapa" });
-    expect(paths(fetchFn).at(-1)).toBe(`/api/staff/3/progress/?from=${from}&to=${to}`);
+    expect(paths(fetchFn).at(-1)).toBe(`/api/staff/${uid(3)}/progress/?from=${from}&to=${to}`);
     expect(screen.getByRole("button", { name: label })).toHaveAttribute("aria-pressed", "true");
   });
 
@@ -179,7 +182,7 @@ describe("An employee's Progress tab", () => {
         ? jsonResponse({ to: ["Choose a period of one year or less."] }, 400)
         : jsonResponse(answer()),
     );
-    renderAs(<EmployeeProgressPage idText="3" />);
+    renderAs(<EmployeeProgressPage idText={uid(3)} />);
     await screen.findByRole("heading", { level: 1, name: "Bikash Thapa" });
 
     await userEvent.click(screen.getByRole("button", { name: "Pick dates" }));
@@ -188,7 +191,9 @@ describe("An employee's Progress tab", () => {
     await userEvent.click(screen.getByRole("button", { name: "Show" }));
 
     await screen.findByText(/Only changes are counted/);
-    expect(paths(fetchFn).at(-1)).toBe("/api/staff/3/progress/?from=2026-09-01&to=2026-09-30");
+    expect(paths(fetchFn).at(-1)).toBe(
+      `/api/staff/${uid(3)}/progress/?from=2026-09-01&to=2026-09-30`,
+    );
 
     fireEvent.change(screen.getByLabelText("From"), { target: { value: "2025-01-01" } });
     await userEvent.click(screen.getByRole("button", { name: "Show" }));
@@ -200,7 +205,7 @@ describe("An employee's Progress tab", () => {
   it("says when nothing was recorded, and when only the latest changes are shown", async () => {
     stubFetch(() => jsonResponse(answer({ days: [], more: true })));
 
-    renderAs(<EmployeeProgressPage idText="3" />);
+    renderAs(<EmployeeProgressPage idText={uid(3)} />);
 
     expect(await screen.findByText("Nothing recorded in this period.")).toBeVisible();
     expect(
@@ -211,25 +216,28 @@ describe("An employee's Progress tab", () => {
   it("says when the employee doesn't exist", async () => {
     stubFetch(() => jsonResponse({ detail: "Not found." }, 404));
 
-    renderAs(<EmployeeProgressPage idText="99" />);
+    renderAs(<EmployeeProgressPage idText={uid(99)} />);
 
     expect(await screen.findByText("We couldn't find this employee.")).toBeVisible();
     expect(screen.getByRole("link", { name: "All employees" })).toHaveAttribute("href", "/staff");
   });
 
-  it("finds nobody for an address that isn't an id, without asking the server", () => {
-    const fetchFn = stubFetch(() => jsonResponse(answer()));
+  it.each(["abc", "3", "1;drop", uid(3).replaceAll("-", "")])(
+    "finds nobody for %j, which isn't a UUID, without asking the server (ADR 0027)",
+    (idText) => {
+      const fetchFn = stubFetch(() => jsonResponse(answer()));
 
-    renderAs(<EmployeeProgressPage idText="abc" />);
+      renderAs(<EmployeeProgressPage idText={idText} />);
 
-    expect(screen.getByText("We couldn't find this employee.")).toBeVisible();
-    expect(fetchFn).not.toHaveBeenCalled();
-  });
+      expect(screen.getByText("We couldn't find this employee.")).toBeVisible();
+      expect(fetchFn).not.toHaveBeenCalled();
+    },
+  );
 
   it("isn't available to someone who isn't an Admin", () => {
     const fetchFn = stubFetch(() => jsonResponse(answer()));
 
-    renderAs(<EmployeeProgressPage idText="3" />, context({ id: 3, role: "counsellor" }));
+    renderAs(<EmployeeProgressPage idText={uid(3)} />, context({ id: uid(3), role: "counsellor" }));
 
     expect(screen.getByText("This page isn't available to you.")).toBeVisible();
     expect(fetchFn).not.toHaveBeenCalled();
@@ -238,7 +246,7 @@ describe("An employee's Progress tab", () => {
   it("refuses an answer that doesn't match what we expect", async () => {
     stubFetch(() => jsonResponse(answer({ cards: [{ count: "page_views", value: 1 }] })));
 
-    renderAs(<EmployeeProgressPage idText="3" />);
+    renderAs(<EmployeeProgressPage idText={uid(3)} />);
 
     expect(await screen.findByText("We couldn't load this progress. Try again.")).toBeVisible();
   });
@@ -246,7 +254,7 @@ describe("An employee's Progress tab", () => {
 
 describe("An employee's Work from home tab", () => {
   const WITH_CLOCK = context({}, { modules: ["staff", "clock_in"] });
-  const PERSON = "/api/clock/staff/3/work-from-home/";
+  const PERSON = `/api/clock/staff/${uid(3)}/work-from-home/`;
 
   function renderWithToasts(ui: React.ReactNode, staff: StaffContext = WITH_CLOCK) {
     return renderAs(<ToastProvider>{ui}</ToastProvider>, staff);
@@ -255,7 +263,7 @@ describe("An employee's Work from home tab", () => {
   function responder(path: string): Response {
     if (path === PERSON) {
       return jsonResponse({
-        staff: { id: 3, name: "Bikash Thapa", job_title: "", has_left: false },
+        staff: { id: uid(3), name: "Bikash Thapa", job_title: "", has_left: false },
         needs_dates: true,
         results: [],
       });
@@ -266,7 +274,7 @@ describe("An employee's Work from home tab", () => {
   it("is next to Progress while Clock-in is on, and opens from the address", async () => {
     const fetchFn = stubFetch(responder);
 
-    renderWithToasts(<EmployeeProgressPage idText="3" initialTab="wfh" />);
+    renderWithToasts(<EmployeeProgressPage idText={uid(3)} initialTab="wfh" />);
 
     const tab = await screen.findByRole("tab", { name: "Work from home" });
     expect(tab).toHaveAttribute("aria-selected", "true");
@@ -277,7 +285,7 @@ describe("An employee's Work from home tab", () => {
   it("switches between the tabs", async () => {
     stubFetch(responder);
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime.bind(vi) });
-    renderWithToasts(<EmployeeProgressPage idText="3" />);
+    renderWithToasts(<EmployeeProgressPage idText={uid(3)} />);
 
     await user.click(await screen.findByRole("tab", { name: "Work from home" }));
 
@@ -287,7 +295,7 @@ describe("An employee's Work from home tab", () => {
   it("isn't there with Clock-in off", async () => {
     stubFetch(responder);
 
-    renderWithToasts(<EmployeeProgressPage idText="3" initialTab="wfh" />, ADMIN);
+    renderWithToasts(<EmployeeProgressPage idText={uid(3)} initialTab="wfh" />, ADMIN);
 
     expect(await screen.findByRole("tab", { name: "Progress" })).toHaveAttribute(
       "aria-selected",
@@ -299,20 +307,22 @@ describe("An employee's Work from home tab", () => {
 
 describe("My progress", () => {
   it("shows my own progress from My account", async () => {
-    const me = context({ id: 3, role: "counsellor", name: "Bikash Thapa" });
+    const me = context({ id: uid(3), role: "counsellor", name: "Bikash Thapa" });
     const fetchFn = stubFetch(() => jsonResponse(answer()));
 
     renderAs(<MyProgressPage />, me);
 
     expect(await screen.findByRole("heading", { level: 1, name: "My progress" })).toBeVisible();
     expect(await screen.findByRole("region", { name: "What you did" })).toBeVisible();
-    expect(paths(fetchFn)).toEqual(["/api/staff/3/progress/?from=2026-11-01&to=2026-11-15"]);
+    expect(paths(fetchFn)).toEqual([
+      `/api/staff/${uid(3)}/progress/?from=2026-11-01&to=2026-11-15`,
+    ]);
     expect(screen.getByRole("link", { name: "My account" })).toHaveAttribute("href", "/settings");
     expect(tile("Students moved forward")).toHaveTextContent("4");
   });
 
   it("names no Student as a link for a Teacher, who can't open Students", async () => {
-    const teacher = context({ id: 3, role: "teacher", name: "Gita Lama" });
+    const teacher = context({ id: uid(3), role: "teacher", name: "Gita Lama" });
     stubFetch(() => jsonResponse(answer()));
 
     renderAs(<MyProgressPage />, teacher);
@@ -323,7 +333,7 @@ describe("My progress", () => {
   });
 
   it("says when a Teacher has no cards because classes are off", async () => {
-    const teacher = context({ id: 3, role: "teacher", name: "Gita Lama" });
+    const teacher = context({ id: uid(3), role: "teacher", name: "Gita Lama" });
     stubFetch(() => jsonResponse(answer({ cards: [], days: [] })));
 
     renderAs(<MyProgressPage />, teacher);

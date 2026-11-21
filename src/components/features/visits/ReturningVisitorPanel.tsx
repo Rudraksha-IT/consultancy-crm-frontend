@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useCallback, useState } from "react";
 
 import { useLoaded, type Loaded } from "@/components/features/home/useLoaded";
@@ -28,7 +29,7 @@ const SEARCH_DELAY_MS = 300;
  */
 export function ReturningVisitorPanel({ onLogged }: { onLogged: () => void }) {
   const [search, setSearch] = useState("");
-  const [pickedId, setPickedId] = useState<number | null>(null);
+  const [pickedId, setPickedId] = useState<RecordId | null>(null);
 
   function startOver(): void {
     setPickedId(null);
@@ -65,7 +66,7 @@ export function ReturningVisitorPanel({ onLogged }: { onLogged: () => void }) {
   );
 }
 
-function Matches({ search, onPick }: { search: string; onPick: (id: number) => void }) {
+function Matches({ search, onPick }: { search: string; onPick: (id: RecordId) => void }) {
   const settled = useDebouncedValue(search.trim(), SEARCH_DELAY_MS);
   if (settled.length < RETURNING_SEARCH_MIN_LENGTH) {
     return <p className="text-ink-2">{VISIT_TEXT.startTyping}</p>;
@@ -73,7 +74,7 @@ function Matches({ search, onPick }: { search: string; onPick: (id: number) => v
   return <FoundStudents key={settled} search={settled} onPick={onPick} />;
 }
 
-function FoundStudents({ search, onPick }: { search: string; onPick: (id: number) => void }) {
+function FoundStudents({ search, onPick }: { search: string; onPick: (id: RecordId) => void }) {
   const load = useCallback(() => fetchStudents({ ...NO_STUDENT_FILTERS, search }, 1), [search]);
   const state = useLoaded(load, 0);
   return <MatchList state={state} onPick={onPick} />;
@@ -84,7 +85,7 @@ function MatchList({
   onPick,
 }: {
   state: Loaded<StudentPage>;
-  onPick: (id: number) => void;
+  onPick: (id: RecordId) => void;
 }) {
   if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
   if (state.status === "failed") return <Banner tone="problem">{VISIT_TEXT.searchFailed}</Banner>;
@@ -101,7 +102,7 @@ function MatchList({
   );
 }
 
-function MatchButton({ student, onPick }: { student: StudentRow; onPick: (id: number) => void }) {
+function MatchButton({ student, onPick }: { student: StudentRow; onPick: (id: RecordId) => void }) {
   return (
     <button
       type="button"

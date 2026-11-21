@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS } from "@/constants/api";
 import { ROLES } from "@/constants/roles";
 import { PROGRESS_CHANGE_KINDS, PROGRESS_COUNTS } from "@/constants/staffProgress";
@@ -32,7 +34,7 @@ const ChangeSchema = z.object({
   before: z.string(),
   after: z.string(),
   detail: z.string(),
-  student: z.object({ id: z.number().int().positive(), name: z.string() }).nullable(),
+  student: z.object({ id: RecordIdSchema, name: z.string() }).nullable(),
 });
 
 /** One change they made: a History kind, or a Visit, Application, Visa or class day. */
@@ -41,7 +43,7 @@ export type ProgressChange = z.infer<typeof ChangeSchema>;
 const StaffProgressSchema = z
   .object({
     staff: z.object({
-      id: z.number().int().positive(),
+      id: RecordIdSchema,
       name: z.string(),
       job_title: z.string(),
       mobile: z.string(),
@@ -66,7 +68,7 @@ const RANGE_FIELDS: Record<keyof DateRange, string> = { from: "from", to: "to" }
 
 /** One Staff member's Progress between the dates (both included, at most one year). */
 export async function fetchStaffProgress(
-  staffId: number,
+  staffId: RecordId,
   range: DateRange,
   fetchFn: typeof fetch = fetch,
 ): Promise<StaffProgress> {

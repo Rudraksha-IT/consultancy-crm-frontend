@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { LABELS } from "@/constants/messages";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -31,7 +32,7 @@ vi.mock("next/navigation", () => ({
 const navigate = vi.hoisted(() => vi.fn<(path: string) => void>());
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 
-const ADMIN = { id: 1, name: "Platform Ops", email: "ops@platform.test" };
+const ADMIN = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 
 function answerMeWith(response: Response | Promise<Response>): typeof fetch {
   const fetchFn = vi

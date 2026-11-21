@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import Link from "next/link";
 import { useState, type SubmitEvent } from "react";
 
@@ -226,7 +227,7 @@ type DayRowsProps = {
   batch: BatchWithStudents;
   marks: DayMarks;
   canMark: boolean;
-  onMark: (studentId: number, mark: AttendanceMark) => void;
+  onMark: (studentId: RecordId, mark: AttendanceMark) => void;
 };
 
 function DayRows({ batch, marks, canMark, onMark }: DayRowsProps) {
@@ -260,7 +261,7 @@ function DayRows({ batch, marks, canMark, onMark }: DayRowsProps) {
               canMark ? (
                 <SegmentedChoice
                   label={BATCH_TEXT.marksFor(member.name)}
-                  name={`attendance-${String(member.id)}`}
+                  name={`attendance-${member.id}`}
                   options={MARK_OPTIONS}
                   value={mark}
                   onChange={(chosen) => {

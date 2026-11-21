@@ -16,9 +16,10 @@ import { PLATFORM_SETTINGS_TEXT as TEXT } from "@/constants/platformTeam";
 import { RemoveLogoButton } from "@/components/features/configuration/RemoveLogoButton";
 
 import { useProductLogo } from "../productLogo";
+import { PlatformEmailSettings } from "./PlatformEmailSettings";
 import { useProductLogoChanges } from "./useProductLogoChanges";
 
-/** The Platform's Settings tab (issue 65): the product's own logo. */
+/** The Platform's Settings tab: whether email works (ADR 0023) and the product's logo (issue 65). */
 export function PlatformSettingsPage() {
   const logo = useProductLogo();
   const changes = useProductLogoChanges();
@@ -26,55 +27,58 @@ export function PlatformSettingsPage() {
   return (
     <>
       <PageHeader title={TEXT.title} subtitle={TEXT.intro} />
-      <Section title={TEXT.logoTitle}>
-        <div className="wide:grid-cols-[minmax(0,var(--spacing-settings-label))_minmax(0,1fr)] grid gap-x-12 gap-y-6">
-          <p className="text-ink-2">{TEXT.logoHelp}</p>
-          <Panel isPadded>
-            <div className="grid gap-5">
-              <div
-                data-testid="logo-preview"
-                className="bg-fill rounded-panel flex min-h-18 min-w-0 items-center gap-3 p-4"
-              >
-                <BrandMark name={LABELS.productName} logo={logo} />
-                <b className="text-body truncate font-bold">{LABELS.productName}</b>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <label
-                  className={clsx(
-                    buttonClasses("secondary", "md"),
-                    "has-focus-visible:outline-accent has-focus-visible:outline-3 has-focus-visible:outline-offset-2",
-                    changes.isBusy && "pointer-events-none opacity-50",
-                  )}
+      <div className="grid min-w-0 gap-8">
+        <PlatformEmailSettings />
+        <Section title={TEXT.logoTitle}>
+          <div className="wide:grid-cols-[minmax(0,var(--spacing-settings-label))_minmax(0,1fr)] grid gap-x-12 gap-y-6">
+            <p className="text-ink-2">{TEXT.logoHelp}</p>
+            <Panel isPadded>
+              <div className="grid gap-5">
+                <div
+                  data-testid="logo-preview"
+                  className="bg-fill rounded-panel flex min-h-18 min-w-0 items-center gap-3 p-4"
                 >
-                  <Icon name="upload" />
-                  {logo === null ? LOGO_TEXT.upload : LOGO_TEXT.change}
-                  <input
-                    type="file"
-                    accept={LOGO_ACCEPT}
-                    disabled={changes.isBusy}
-                    className="sr-only"
-                    onChange={(event) => {
-                      const file = event.target.files?.item(0);
-                      // The same file can be chosen again after a refusal.
-                      event.target.value = "";
-                      if (file) void changes.upload(file);
-                    }}
-                  />
-                </label>
-                {logo !== null && (
-                  <RemoveLogoButton
-                    title={LOGO_TEXT.removeProductTitle}
-                    body={LOGO_TEXT.removeProductBody}
-                    isDisabled={changes.isBusy}
-                    onRemove={changes.remove}
-                  />
-                )}
+                  <BrandMark name={LABELS.productName} logo={logo} />
+                  <b className="text-body truncate font-bold">{LABELS.productName}</b>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <label
+                    className={clsx(
+                      buttonClasses("secondary", "md"),
+                      "has-focus-visible:outline-accent has-focus-visible:outline-3 has-focus-visible:outline-offset-2",
+                      changes.isBusy && "pointer-events-none opacity-50",
+                    )}
+                  >
+                    <Icon name="upload" />
+                    {logo === null ? LOGO_TEXT.upload : LOGO_TEXT.change}
+                    <input
+                      type="file"
+                      accept={LOGO_ACCEPT}
+                      disabled={changes.isBusy}
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.target.files?.item(0);
+                        // The same file can be chosen again after a refusal.
+                        event.target.value = "";
+                        if (file) void changes.upload(file);
+                      }}
+                    />
+                  </label>
+                  {logo !== null && (
+                    <RemoveLogoButton
+                      title={LOGO_TEXT.removeProductTitle}
+                      body={LOGO_TEXT.removeProductBody}
+                      isDisabled={changes.isBusy}
+                      onRemove={changes.remove}
+                    />
+                  )}
+                </div>
+                {changes.problem !== null && <Banner tone="problem">{changes.problem}</Banner>}
               </div>
-              {changes.problem !== null && <Banner tone="problem">{changes.problem}</Banner>}
-            </div>
-          </Panel>
-        </div>
-      </Section>
+            </Panel>
+          </div>
+        </Section>
+      </div>
     </>
   );
 }

@@ -100,6 +100,18 @@ export type {
   UniversityPage,
 } from "./catalogue/catalogueTypes";
 export {
+  binCourseFile,
+  COURSE_FILE_API_FIELDS,
+  deleteCourseFileForGood,
+  fetchBinCourseFileLink,
+  fetchCourseFileLink,
+  renameCourseFile,
+  restoreCourseFile,
+  uploadCourseFile,
+} from "./catalogue/courseFiles";
+export type { CourseFileField } from "./catalogue/courseFiles";
+export type { BinnedCourseFile, CourseFile } from "./catalogue/courseFileTypes";
+export {
   CatalogueRefusedError,
   deleteUniversity,
   fetchUniversity,
@@ -124,35 +136,36 @@ export {
   sendWithoutBody,
 } from "./core/client";
 export {
-  fetchBulkCount,
+  FilesNotFetchedError,
+  NoContactEmailError,
+  fetchChoosable,
   fetchMessages,
-  fetchProviderSettings,
   fetchStudentMessages,
-  saveProviderSettings,
-  sendBulkMessage,
-  sendMessage,
-  sendTestSms,
+  sendBulkEmail,
+  sendEmail,
 } from "./office/communication";
 export type {
-  BulkCount,
-  BulkMessageField,
-  BulkRecipients,
+  BulkEmailField,
   BulkResult,
+  Choosable,
   Message,
   MessagePage,
-  NewMessage,
-  NewMessageField,
-  ProviderSettings,
-  ProviderSettingsField,
-  ProviderSettingsInput,
-  TestSmsResult,
+  NewEmail,
+  NewEmailField,
+  PreTickSource,
 } from "./office/communication";
+export { fetchAttachable, refsOf } from "./office/attachments";
+export type { Attachable, AttachableFiles, AttachmentRef } from "./office/attachments";
+export { fetchReadyMade, fetchReadyMadeDraft } from "./office/readyMade";
+export type { ReadyMadeDraft, ReadyMadeEntry, ReadyMadeTarget } from "./office/readyMade";
 export {
   removeLogo,
+  saveOfficeDetails,
   setShowNameBesideLogo,
   updateDateDisplay,
   uploadLogo,
 } from "./office/configuration";
+export type { SavedOfficeDetails } from "./office/configuration";
 export {
   addCountryDocument,
   addDocumentType,
@@ -180,12 +193,26 @@ export {
   uploadDocument,
 } from "./documents/documents";
 export type { UploadField } from "./documents/documents";
+export {
+  addDocumentExample,
+  deleteDocumentExampleForGood,
+  ExampleRefusedError,
+  fetchBinDocumentExampleLink,
+  fetchDocumentExampleLink,
+  removeDocumentExample,
+  replaceDocumentExample,
+  restoreDocumentExample,
+  setDocumentInstruction,
+} from "./documents/documentExamples";
+export type { ExampleField } from "./documents/documentExamples";
 export type {
+  BinEntry,
   BinItem,
   BinNote,
   BinPage,
   BinTarget,
   BinnedDocument,
+  BinnedDocumentExample,
   BinnedFile,
   Checklist,
   ChecklistItem,
@@ -194,6 +221,7 @@ export type {
   CountryList,
   CountryListRow,
   DocumentCheck,
+  DocumentExample,
   DocumentLinkedTo,
   DocumentLinkOption,
   DocumentType,
@@ -333,8 +361,40 @@ export { assignCounsellor, setStage, transferStudent } from "./students/studentJ
 export { addVisaLetter, changeVisaStatus, setVisaDates, startVisa } from "./applications/visas";
 export type { NewVisaLetter } from "./applications/visas";
 export type { VisaDatesChange } from "./applications/visas";
-export { changePayment, deletePayment, fetchPayments, recordPayment } from "./money/payments";
-export { addFee, changeFee, deleteFee, fetchOwingStudents, fetchStudentFees } from "./money/fees";
+export {
+  changePayment,
+  deletePayment,
+  fetchPayments,
+  paymentFilterQuery,
+  fetchReceipt,
+  recordPayments,
+} from "./money/payments";
+export {
+  addFee,
+  changeFee,
+  deleteFee,
+  fetchCountedOwingStudents,
+  fetchOwingStudents,
+  fetchStudentFees,
+} from "./money/fees";
+export { fetchFeesByType, fetchFeeTypeStudents } from "./money/feesByType";
+export type {
+  FeesByType,
+  FeeTypeMoney,
+  FeeTypePart,
+  FeeTypeStudent,
+  FeeTypeStudents,
+} from "./money/feesByType";
+export {
+  addFeeType,
+  changeFeeType,
+  deleteFeeType,
+  describeFeeType,
+  feeTypeRefusal,
+  fetchFeeTypes,
+  reorderFeeTypes,
+} from "./money/feeTypes";
+export type { FeeType, FeeTypeChange, FeeTypeRef } from "./money/feeTypes";
 export type { Fee, NewFee, OwingPage, OwingStudent, StudentFees } from "./money/fees";
 export { addExpense, changeExpense, deleteExpense, fetchExpenses } from "./money/expenses";
 export type { Expense, ExpensePage, NewExpense } from "./money/expenses";
@@ -350,7 +410,16 @@ export type {
   NewCommission,
   ReceivedCommission,
 } from "./money/commission";
-export type { NewPayment, PaymentFilters, PaymentPage, Receipt } from "./money/payments";
+export type {
+  NewPayment,
+  NewPaymentLine,
+  NewPayments,
+  Payment,
+  PaymentFilters,
+  PaymentPage,
+  Receipt,
+  ReceiptLine,
+} from "./money/payments";
 export { addStudent, fetchStudents } from "./students/students";
 export { fetchAttendanceDay, fetchStudentClasses, saveAttendanceDay } from "./classes/attendance";
 export type { AttendanceDay, DayMarks, StudentClass } from "./classes/attendance";
@@ -389,7 +458,7 @@ export {
   setNotificationRead,
 } from "./workspace/notifications";
 export type { AppNotification, NotificationPage } from "./workspace/notifications";
-export { DetailAnswerSchema, StaffStatus } from "./core/types";
+export { DetailAnswerSchema, NO_OFFICE_DETAILS, StaffStatus } from "./core/types";
 export type {
   Application,
   DocumentProgress,
@@ -398,6 +467,7 @@ export type {
   AssignedStudent,
   StageChange,
   Consultancy,
+  OfficeDetails,
   OfficeLogo,
   CounsellorChoice,
   Employee,
@@ -480,6 +550,14 @@ export {
 export type { TransferRequestPage } from "./students/transferRequests";
 export type { TransferRequest } from "./students/transferRequestTypes";
 export { onUnexpectedError, reportUnexpectedError, unexpectedErrorOf } from "./core/unexpected";
+export { onLoginEnded, reportLoginEnded } from "./core/loginEnded";
+export {
+  isAppUpdating,
+  isUpdatingError,
+  onUpdatingChange,
+  reportServerAnswer,
+  updatingOr,
+} from "./core/updating";
 export {
   PLATFORM_ADMIN_STATUSES,
   checkPlatformJoinCode,
@@ -500,6 +578,12 @@ export type {
   PlatformAdminStatus,
   PlatformTeamField,
 } from "./platform/platformTeam";
+export {
+  fetchPlatformEmail,
+  sendTestEmail,
+  TooManyTestEmailsError,
+} from "./platform/platformEmail";
+export type { EmailState, PlatformEmail } from "./platform/platformEmail";
 export { nextLoginStep } from "./auth/loginStep";
 export type { LoginNext } from "./auth/loginStep";
 export {

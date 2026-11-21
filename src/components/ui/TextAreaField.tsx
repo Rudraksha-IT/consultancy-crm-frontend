@@ -8,6 +8,8 @@ type TextAreaFieldProps = FieldProps & {
   name: string;
   placeholder?: string;
   defaultValue?: string;
+  /** Set together with `onChange` to control the text, e.g. when it can be replaced. */
+  value?: string;
   /** How many lines show before it scrolls. */
   rows?: number;
   /** Told the text after each change, e.g. to count characters. */
@@ -25,6 +27,7 @@ export function TextAreaField({
   name,
   placeholder,
   defaultValue,
+  value,
   rows = 4,
   onChange,
   onEscape,
@@ -43,6 +46,7 @@ export function TextAreaField({
           rows={rows}
           placeholder={placeholder}
           defaultValue={defaultValue}
+          value={value}
           onChange={
             onChange === undefined
               ? undefined

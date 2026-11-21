@@ -97,7 +97,7 @@ export const NAV_ENTRIES: readonly NavEntry[] = [
     roles: ALL_BUT_TEACHER,
   },
   {
-    label: "Email & SMS",
+    label: "Email",
     href: ROUTES.messages,
     icon: "send",
     group: "work",
@@ -126,14 +126,6 @@ export const NAV_ENTRIES: readonly NavEntry[] = [
     icon: "chart",
     group: "business",
     module: Module.Reports,
-    roles: ADMIN_ONLY,
-  },
-  {
-    label: "Catalogue",
-    href: ROUTES.catalogue,
-    icon: "school",
-    group: "business",
-    module: Module.Catalogue,
     roles: ADMIN_ONLY,
   },
   {

@@ -1,16 +1,17 @@
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { addStudent, fetchStudents } from "./students";
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 const ROW = {
-  id: 9,
+  id: uid(9),
   name: "Anish Neupane",
   phone: "9819988776",
   email: "anish@gmail.test",
   country: "canada",
   source: "walk_in",
   stage: "lead",
-  assigned_counsellor: { id: 2, name: "Bikash Thapa" },
+  assigned_counsellor: { id: uid(2), name: "Bikash Thapa" },
 };
 
 const STORED = {
@@ -34,7 +35,7 @@ const NEW_ANISH = {
   pastDegree: "BBS, TU",
   previousJob: "",
   note: "Wants a diploma.",
-  assignedCounsellor: "2",
+  assignedCounsellor: uid(2),
 } as const;
 
 function sentBody(fetchFn: ReturnType<typeof answering>): unknown {
@@ -74,14 +75,14 @@ describe("fetchStudents", () => {
     expect(page.pageSize).toBe(25);
     expect(page.students).toEqual([
       {
-        id: 9,
+        id: uid(9),
         name: "Anish Neupane",
         phone: "9819988776",
         email: "anish@gmail.test",
         country: "canada",
         source: "walk_in",
         stage: "lead",
-        assignedCounsellor: { id: 2, name: "Bikash Thapa" },
+        assignedCounsellor: { id: uid(2), name: "Bikash Thapa" },
       },
     ]);
   });
@@ -136,10 +137,10 @@ describe("addStudent", () => {
       past_degree: "BBS, TU",
       previous_job: "",
       note: "Wants a diploma.",
-      assigned_counsellor: 2,
+      assigned_counsellor: uid(2),
     });
     expect(added).toMatchObject({
-      id: 9,
+      id: uid(9),
       name: "Anish Neupane",
       stage: "lead",
       note: "Wants a diploma.",

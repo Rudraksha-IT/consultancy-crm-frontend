@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -11,11 +12,11 @@ vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => n
 
 const CONTEXT = {
   staff: {
-    id: 1,
+    id: uid(1),
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "counsellor",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: { name: "Acme Education" },
   modules: ["students"],
@@ -180,6 +181,24 @@ describe("LoginForm: the password", () => {
     await logInWith("sita@acme.test", "wrong");
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Invalid email or password.");
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
+  it("says the app is being updated, keeping the password typed (ticket 14)", async () => {
+    backend(
+      answer(
+        { detail: "The app is being updated. Please try again in a moment.", code: "updating" },
+        503,
+      ),
+    );
+    render(<LoginForm />);
+
+    await logInWith("sita@acme.test", "Kathmandu!2026");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "The app is being updated. Please try again in a moment.",
+    );
+    expect(screen.getByLabelText("Password")).toHaveValue("Kathmandu!2026");
     expect(navigate).not.toHaveBeenCalled();
   });
 

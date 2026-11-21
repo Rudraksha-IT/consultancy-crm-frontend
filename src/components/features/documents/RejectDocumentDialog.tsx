@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useId, type SubmitEvent } from "react";
 
 import { readField } from "@/components/features/students/profile/formData";
@@ -14,8 +15,8 @@ import { checkFailure } from "./checkFailure";
 const REASON_ROWS = 3;
 
 type RejectDocumentDialogProps = {
-  studentId: number;
-  documentId: number;
+  studentId: RecordId;
+  documentId: RecordId;
   onClose: () => void;
   onRejected: (checklist: Checklist) => void;
 };

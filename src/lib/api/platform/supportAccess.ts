@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import { CONSULTANCY_STATUSES } from "@/constants/consultancyStatus";
 import { MODULES, type SwitchableModule } from "@/constants/modules";
@@ -22,9 +24,9 @@ export const SUPPORT_REASON_MAX_LENGTH = 500;
 /** One Support Access visit, as the Platform lists it (never shown to the office). */
 export const SupportVisitSchema = z
   .object({
-    id: z.number().int(),
+    id: RecordIdSchema,
     platform_admin: z.object({ name: z.string().min(1) }),
-    consultancy: z.object({ id: z.number().int(), name: z.string().min(1) }),
+    consultancy: z.object({ id: RecordIdSchema, name: z.string().min(1) }),
     reason: z.string(),
     consultancy_status: z.enum(CONSULTANCY_STATUSES),
     started_at: MomentSchema,
@@ -65,7 +67,7 @@ export type SupportField = "reason" | "detail";
  * Platform, and its one-time entry code is used on the office's own address.
  */
 export async function startSupportVisit(
-  consultancyId: number,
+  consultancyId: RecordId,
   reason: string,
   fetchFn: typeof fetch = fetch,
 ): Promise<StartedVisit> {
@@ -118,7 +120,7 @@ export async function switchOfficeModules(
 
 /** Email a Staff member (Admins included) a password reset Code. */
 export async function sendResetCodeTo(
-  staffId: number,
+  staffId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<void> {
   try {
@@ -129,7 +131,7 @@ export async function sendResetCodeTo(
 }
 
 /** Sign a Staff member (Admins included) out of every device at once. */
-export function signOutStaff(staffId: number, fetchFn: typeof fetch = fetch): Promise<void> {
+export function signOutStaff(staffId: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
   return postWithoutBody(API_PATHS.supportSignOut(staffId), fetchFn);
 }
 

@@ -12,13 +12,14 @@ import { consultancySummary } from "@/test/consultancy";
 import { PROFILE } from "@/test/studentProfile";
 
 import { StudentProfilePage } from "./StudentProfilePage";
+import { uid } from "@/test/ids";
 
 const COUNSELLOR: StaffContext = {
-  staff: { id: 5, name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
+  staff: { id: uid(5), name: "Bikash Thapa", email: "bikash@acme.test", role: "counsellor" },
   consultancy: consultancySummary(),
   modules: ["students"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   supportAccess: null,
   theme: DEFAULT_THEME,
 };
@@ -43,14 +44,14 @@ function backend(...answers: Answer[]) {
 
 function profile(body: object = PROFILE): Answer {
   return (path, init) =>
-    method(init) === "GET" && path === "/api/students/7/" ? jsonResponse(body) : undefined;
+    method(init) === "GET" && path === `/api/students/${uid(7)}/` ? jsonResponse(body) : undefined;
 }
 
 async function renderOnProfileTab(context: StaffContext = COUNSELLOR): Promise<void> {
   render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <StudentProfilePage studentId={7} />
+        <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -130,7 +131,7 @@ describe("Profile tab sections", () => {
     expect(screen.queryByRole("button", { name: /^(Change|Remove) / })).toBeNull();
     expect(screen.getByRole("link", { name: "Edit details" })).toHaveAttribute(
       "href",
-      "/students/7/edit",
+      `/students/${uid(7)}/edit`,
     );
   });
 

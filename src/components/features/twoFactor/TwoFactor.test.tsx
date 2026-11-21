@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -19,7 +20,7 @@ const CODES = [
   "abcd-efgh-jkmn",
   ...Array.from({ length: 9 }, (_, n) => `wxyz-wxyz-wx${"23456789a"[n] ?? "b"}m`),
 ];
-const ADMIN = { id: 1, name: "Platform Ops", email: "ops@platform.test" };
+const ADMIN = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 
 function sentBody(fetchFn: ReturnType<typeof backend>, path: string): unknown {
   const body = callsTo(fetchFn, "POST", path)[0]?.[1]?.body;

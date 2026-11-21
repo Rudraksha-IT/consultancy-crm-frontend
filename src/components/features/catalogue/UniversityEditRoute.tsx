@@ -15,11 +15,9 @@ import { MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { ApiRequestError, fetchUniversity, type University } from "@/lib/api";
+import { parseRecordId, type RecordId } from "@/lib/recordId";
 
 import { UniversityEditForm } from "./UniversityEditForm";
-
-/** A whole number id from the address; anything else finds nothing. */
-const ID = /^[1-9]\d{0,9}$/;
 
 type Loaded =
   | { status: "loading" }
@@ -38,15 +36,15 @@ export function UniversityEditRoute({ idText }: { idText: string }) {
       </div>
     );
   }
-  if (!ID.test(idText)) return <NotFound />;
-  const id = Number(idText);
+  const id = parseRecordId(idText);
+  if (id === null) return <NotFound />;
   return <UniversityEditLoader key={id} id={id} />;
 }
 
 function BackToCatalogue() {
   return (
     <Link
-      href={ROUTES.catalogue}
+      href={ROUTES.universities}
       className="text-secondary text-ink-2 min-h-control inline-flex items-center gap-1.5 self-start"
     >
       <Icon name="left" />
@@ -59,7 +57,9 @@ function NotFound() {
   return (
     <Panel>
       <EmptyState
-        action={<ButtonLink href={ROUTES.catalogue}>{CATALOGUE_TEXT.backToCatalogue}</ButtonLink>}
+        action={
+          <ButtonLink href={ROUTES.universities}>{CATALOGUE_TEXT.backToCatalogue}</ButtonLink>
+        }
       >
         {CATALOGUE_TEXT.universityNotFound}
       </EmptyState>
@@ -71,7 +71,7 @@ function NotFound() {
  * Load the University fresh each time the page is shown and start the form again from what is
  * stored: Next keeps a visited page alive while hidden, so `visit` remounts the form.
  */
-function useFreshUniversity(id: number): Loaded {
+function useFreshUniversity(id: RecordId): Loaded {
   const [loaded, setLoaded] = useState<Loaded>({ status: "loading" });
   useEffect(() => {
     let isCancelled = false;
@@ -97,7 +97,7 @@ function useFreshUniversity(id: number): Loaded {
   return loaded;
 }
 
-function UniversityEditLoader({ id }: { id: number }) {
+function UniversityEditLoader({ id }: { id: RecordId }) {
   const loaded = useFreshUniversity(id);
   if (loaded.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
   if (loaded.status === "failed")

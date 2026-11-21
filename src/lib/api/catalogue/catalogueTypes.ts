@@ -1,17 +1,21 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { COURSE_LEVELS } from "@/constants/catalogue";
 import { COUNTRIES } from "@/constants/students";
 
 import { NamedDocumentTypeSchema } from "../documents/documentsTypes";
+
+import { CourseFileSchema } from "./courseFileTypes";
 
 const INTAKE = /^\d{4}-(0[1-9]|1[0-2])$/;
 
 /** One Course of a University, with its Intakes ("YYYY-MM", always AD), oldest first. */
 export const CourseSchema = z
   .object({
-    id: z.number().int(),
-    university_id: z.number().int(),
+    id: RecordIdSchema,
+    university_id: RecordIdSchema,
     name: z.string(),
     level: z.enum(COURSE_LEVELS),
     intakes: z.array(z.string().regex(INTAKE)),
@@ -20,14 +24,22 @@ export const CourseSchema = z
     documents: z.array(NamedDocumentTypeSchema),
     /** How many Applications use it; such a Course can't be deleted (issue 92). */
     applications: z.number().int().nonnegative(),
+    /** Its Course Files in use, oldest first (ticket 10). */
+    files: z.array(CourseFileSchema),
+    /** How many Course Files it keeps, counting the Bin: such a Course is never deleted. */
+    file_count: z.number().int().nonnegative(),
   })
-  .transform(({ university_id, ...rest }) => ({ ...rest, universityId: university_id }));
+  .transform(({ university_id, file_count, ...rest }) => ({
+    ...rest,
+    universityId: university_id,
+    fileCount: file_count,
+  }));
 
 export type Course = z.infer<typeof CourseSchema>;
 
 /** One University with its Courses. */
 export const UniversitySchema = z.object({
-  id: z.number().int(),
+  id: RecordIdSchema,
   name: z.string(),
   country: z.enum(COUNTRIES),
   archived: z.boolean(),
@@ -66,7 +78,7 @@ export type CourseInput = {
   name: string;
   level: string;
   intakes: readonly string[];
-  documents: readonly number[];
+  documents: readonly RecordId[];
 };
 
 /** The Course dialog's fields, by their API names. */

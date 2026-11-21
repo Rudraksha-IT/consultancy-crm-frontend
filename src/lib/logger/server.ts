@@ -23,6 +23,8 @@ export type ApiLogData = {
   /** e.g. `12ms`. */
   timeTaken: string;
   correlationId: string;
+  /** How long this server waited for Django to come back while it was updated, e.g. `4250ms`. */
+  waited?: string;
 };
 
 export type ErrorLogData = {

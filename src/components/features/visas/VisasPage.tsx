@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { counsellorWords } from "@/components/features/exports/counsellorWords";
@@ -173,7 +174,7 @@ function ListContent({ list, isFiltered, onPage, onOpenDocuments, selection }: L
   );
 }
 
-function visaIds(list: VisaListState): number[] {
+function visaIds(list: VisaListState): RecordId[] {
   return list.status === "loaded" ? list.page.visas.map((visa) => visa.id) : [];
 }
 

@@ -3,6 +3,7 @@ import { assignCounsellor, setStage, transferStudent } from "./studentJourney";
 import { PROFILE } from "@/test/studentProfile";
 
 import { jsonResponse } from "../core/test-helpers";
+import { uid } from "@/test/ids";
 
 function answering(response: Response) {
   return vi.fn<typeof fetch>().mockResolvedValue(response);
@@ -31,10 +32,10 @@ describe("setStage", () => {
   it("POSTs the Stage and returns the profile", async () => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, stage: "lead" }));
 
-    const profile = await setStage(7, { stage: "lead" }, fetchFn);
+    const profile = await setStage(uid(7), { stage: "lead" }, fetchFn);
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/students/7/stage/",
+      path: `/api/students/${uid(7)}/stage/`,
       method: "POST",
       body: { stage: "lead" },
     });
@@ -46,7 +47,7 @@ describe("setStage", () => {
       jsonResponse({ ...PROFILE, stage: "lost", lost_reason: "Moved away." }),
     );
 
-    const profile = await setStage(7, { stage: "lost", lostReason: "Moved away." }, fetchFn);
+    const profile = await setStage(uid(7), { stage: "lost", lostReason: "Moved away." }, fetchFn);
 
     expect(sent(fetchFn).body).toEqual({ stage: "lost", lost_reason: "Moved away." });
     expect(profile.lostReason).toBe("Moved away.");
@@ -57,7 +58,7 @@ describe("setStage", () => {
       jsonResponse({ lost_reason: ["Say why we lost this Student."] }, 400),
     );
 
-    const error: unknown = await setStage(7, { stage: "lost", lostReason: "" }, fetchFn).catch(
+    const error: unknown = await setStage(uid(7), { stage: "lost", lostReason: "" }, fetchFn).catch(
       (caught: unknown) => caught,
     );
 
@@ -67,7 +68,9 @@ describe("setStage", () => {
   it("passes on a refusal that isn't about fields", async () => {
     const fetchFn = answering(jsonResponse({ detail: "Not your Student." }, 403));
 
-    await expect(setStage(7, { stage: "lead" }, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(setStage(uid(7), { stage: "lead" }, fetchFn)).rejects.toBeInstanceOf(
+      ApiRequestError,
+    );
   });
 });
 
@@ -75,20 +78,22 @@ describe("assignCounsellor", () => {
   it("POSTs the counsellor's id and returns the profile", async () => {
     const fetchFn = answering(jsonResponse(PROFILE));
 
-    const profile = await assignCounsellor(7, 5, fetchFn);
+    const profile = await assignCounsellor(uid(7), uid(5), fetchFn);
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/students/7/assign/",
+      path: `/api/students/${uid(7)}/assign/`,
       method: "POST",
-      body: { counsellor: 5 },
+      body: { counsellor: uid(5) },
     });
-    expect(profile.assignedCounsellor).toEqual({ id: 5, name: "Bikash Thapa" });
+    expect(profile.assignedCounsellor).toEqual({ id: uid(5), name: "Bikash Thapa" });
   });
 
   it("names a refused counsellor", async () => {
     const fetchFn = answering(jsonResponse({ counsellor: ["Choose a counsellor."] }, 400));
 
-    const error: unknown = await assignCounsellor(7, 9, fetchFn).catch((caught: unknown) => caught);
+    const error: unknown = await assignCounsellor(uid(7), uid(9), fetchFn).catch(
+      (caught: unknown) => caught,
+    );
 
     expect(fieldErrorsOf(error)).toEqual({ counsellor: ["Choose a counsellor."] });
   });
@@ -98,18 +103,18 @@ describe("transferStudent", () => {
   it("POSTs the new counsellor's id and returns the profile", async () => {
     const fetchFn = answering(jsonResponse(PROFILE));
 
-    await transferStudent(7, 5, fetchFn);
+    await transferStudent(uid(7), uid(5), fetchFn);
 
     expect(sent(fetchFn)).toEqual({
-      path: "/api/students/7/transfer/",
+      path: `/api/students/${uid(7)}/transfer/`,
       method: "POST",
-      body: { counsellor: 5 },
+      body: { counsellor: uid(5) },
     });
   });
 
   it("refuses an answer of the wrong shape", async () => {
     const fetchFn = answering(jsonResponse({ ...PROFILE, can_transfer: "yes" }));
 
-    await expect(transferStudent(7, 5, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(transferStudent(uid(7), uid(5), fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { useToast } from "@/components/ui/useToast";
@@ -27,7 +28,7 @@ type BinActions = {
 
 /** Deleting a Student's Documents and files, and taking them back out of the Bin (issue 79). */
 export function useBinActions(
-  studentId: number,
+  studentId: RecordId,
   onChanged: (checklist: Checklist) => void,
 ): BinActions {
   const { showToast } = useToast();

@@ -122,7 +122,7 @@ function UniversityFields(props: UniversityFieldsProps) {
     return <Banner tone="problem">{COMMISSION_TEXT.universitiesFailed}</Banner>;
   }
   const chosen = universities.universities.find(
-    (university) => String(university.id) === props.universityId,
+    (university) => university.id === props.universityId,
   );
   return (
     <div className="tablet:grid-cols-2 grid gap-5">
@@ -132,7 +132,7 @@ function UniversityFields(props: UniversityFieldsProps) {
         options={[
           { value: NONE, label: COMMISSION_TEXT.chooseUniversity },
           ...universities.universities.map((university) => ({
-            value: String(university.id),
+            value: university.id,
             label: university.name,
           })),
         ]}
@@ -179,7 +179,7 @@ export function readCommission(typed: Typed): NewCommission {
   if (student === null || Object.keys(errors).length > 0) throw new InvalidFieldsError(errors);
   return {
     studentId: student.id,
-    universityId: Number(universityId),
+    universityId,
     intake,
     amount: Number(amount),
   };

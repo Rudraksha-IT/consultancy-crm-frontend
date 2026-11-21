@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useEffectEvent, useState } from "react";
 
 import { HTTP_STATUS } from "@/constants/api";
@@ -48,7 +49,7 @@ export function useConversations(version: string): ConversationsState {
   return state;
 }
 
-type Loaded = { personId: number; value: ThreadState };
+type Loaded = { personId: RecordId; value: ThreadState };
 
 /**
  * The open conversation, loaded when it opens and again whenever `version` changes. Opening it
@@ -56,7 +57,7 @@ type Loaded = { personId: number; value: ThreadState };
  * reload keeps the conversation already shown. The second value replaces it, e.g. after sending.
  */
 export function useThread(
-  personId: number,
+  personId: RecordId,
   version: string,
   onLoaded: () => void,
 ): [ThreadState, (thread: InboxThread) => void] {
@@ -88,7 +89,7 @@ export function useThread(
   return [shown, replace];
 }
 
-function afterFailure(current: Loaded, personId: number, error: unknown): Loaded {
+function afterFailure(current: Loaded, personId: RecordId, error: unknown): Loaded {
   if (error instanceof ApiRequestError && error.status === HTTP_STATUS.notFound) {
     return { personId, value: { status: "notFound" } };
   }

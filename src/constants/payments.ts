@@ -21,20 +21,11 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cheque: "Cheque",
 };
 
-/** What Payments are usually for, offered while typing; any other text is fine too. */
-export const PAYMENT_PURPOSE_SUGGESTIONS = [
-  "IELTS class fee",
-  "PTE class fee",
-  "Japanese class fee",
-  "Application processing fee",
-  "Visa processing fee",
-  "Document translation",
-] as const;
-
-/** The longest purpose the API accepts. */
-export const PAYMENT_PURPOSE_MAX_LENGTH = 200;
 /** The largest amount the API accepts (NPR 10 crore). */
 export const PAYMENT_MAX_AMOUNT = 100_000_000;
+
+/** The most lines (Payments) one receipt takes in one go (ticket 07). */
+export const MAX_PAYMENT_LINES = 10;
 
 export const PAYMENT_TEXT = {
   takeAPayment: "Take a payment",
@@ -42,11 +33,21 @@ export const PAYMENT_TEXT = {
   amount: "Amount (NPR)",
   date: "Date",
   method: "Method",
-  purpose: "What it's for",
-  purposePlaceholder: "e.g. Visa processing fee",
-  afterSaving: "After saving you'll see the receipt.",
   othersStayWithAdmin: "Other Payments and totals stay with the Admin.",
-  saveAndShowReceipt: "Save and show receipt",
+  // No receipt or receipt number is shown or printed for now (asked 2026-11-20).
+  savePayment: "Save payment",
+  // One visit split across Fee Types: a Payment per line, one receipt (spec 73).
+  whatItsFor: "What it's for",
+  splitHelp:
+    "Split one visit's money across Fee Types. Each line is its own Payment, saved together.",
+  line: (place: number) => `Line ${String(place)}`,
+  removeLine: (place: number) => `Remove line ${String(place)}`,
+  addLine: "Add another line",
+  linesFull: `Up to ${String(MAX_PAYMENT_LINES)} lines in one payment.`,
+  total: "Total",
+  totalOf: (amount: string) => `Total ${amount}`,
+  paidDifferently: (method: string, date: string) => `${method}, ${date}`,
+  receiptFailed: "We couldn't load the receipt. Please try again.",
   recorded: "Payment recorded",
   receipt: "Receipt",
   receiptNumber: "Receipt no.",
@@ -55,18 +56,19 @@ export const PAYMENT_TEXT = {
   paidBy: "Paid by",
   receivedBy: (name: string) => `Received by ${name}`,
   stamp: "Received",
+  emailIt: "Email it",
   printReceipt: "Print receipt",
   cannotTakePayments: "You can't take payments any more. Refresh the page to see why.",
   closeAfterPrinting: "Print it now: once closed, only an Admin can open it again.",
   // Editing and deleting (Admins; spec 75-76).
-  editTitle: (receiptNumber: string) => `Edit Payment ${receiptNumber}`,
-  changeIsRecorded: "The change is recorded in History.",
+  editTitle: "Edit payment",
+  recordedInHistory: "The change is recorded in History.",
   saveChanges: "Save changes",
   changesSaved: "Changes saved",
   deletePayment: "Delete payment",
-  confirmDeleteTitle: (receiptNumber: string) => `Delete Payment ${receiptNumber}?`,
-  confirmDelete: (receiptNumber: string, amount: string, name: string, purpose: string) =>
-    `${receiptNumber}, ${amount} from ${name} for ${purpose}.`,
+  confirmDeleteTitle: "Delete this payment?",
+  confirmDelete: (amount: string, name: string, forWhat: string) =>
+    `${amount} from ${name} for ${forWhat}.`,
   deletionIsRecorded: "The deletion is recorded in the Student's History with these details.",
   confirmDeleteButton: "Delete Payment",
   deleted: "Payment deleted",
@@ -77,7 +79,8 @@ export const PAYMENT_TEXT = {
   amountHeading: "Amount",
   edit: "Edit",
   receiptFor: (receiptNumber: string) => `Receipt ${receiptNumber}`,
-  editFor: (receiptNumber: string) => `Edit Payment ${receiptNumber}`,
+  editFor: (name: string, forWhat: string, amount: string) =>
+    `Edit payment from ${name}: ${forWhat}, ${amount}`,
   paymentsCount: (count: number) => (count === 1 ? "1 payment" : `${String(count)} payments`),
   listFailed: "We couldn't load the Payments. Please refresh the page.",
   noPaymentsMatch: "No payments match these filters.",
@@ -100,7 +103,7 @@ export const ACCOUNTS_TEXT = {
   filters: "Filter payments",
   from: "From",
   to: "To",
-  search: "Student or receipt number",
-  purpose: "What it's for",
+  search: "Student name or phone",
+  feeType: "Fee Type",
   show: "Show",
 } as const;

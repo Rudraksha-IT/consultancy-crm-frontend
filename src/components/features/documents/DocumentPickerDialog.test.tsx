@@ -1,3 +1,5 @@
+import { uid } from "@/test/ids";
+import type { RecordId } from "@/lib/recordId";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -10,21 +12,21 @@ import { DocumentPickerDialog } from "./DocumentPickerDialog";
 const TYPES_PATH = "/api/documents/types/";
 const TYPES = {
   results: [
-    { id: 1, name: "Passport", needed_by_everyone: true, usual_group: "applying" },
+    { id: uid(1), name: "Passport", needed_by_everyone: true, usual_group: "applying" },
     {
-      id: 20,
+      id: uid(20),
       name: "Genuine Student statement",
       needed_by_everyone: false,
       usual_group: "applying",
     },
-    { id: 21, name: "CV", needed_by_everyone: false, usual_group: "applying" },
+    { id: uid(21), name: "CV", needed_by_everyone: false, usual_group: "applying" },
   ],
 };
 const LEAD = "Every Student applying to Federation University will need these.";
 
 function renderPicker(
-  onSave = vi.fn<(ids: number[]) => Promise<void>>().mockResolvedValue(undefined),
-  initialIds: readonly number[] = [21],
+  onSave = vi.fn<(ids: RecordId[]) => Promise<void>>().mockResolvedValue(undefined),
+  initialIds: readonly RecordId[] = [uid(21)],
 ) {
   const onClose = vi.fn<() => void>();
   render(
@@ -75,7 +77,7 @@ describe("DocumentPickerDialog", () => {
     await userEvent.click(within(await choices()).getByLabelText("Genuine Student statement"));
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
 
-    expect(onSave).toHaveBeenCalledWith([20, 21]);
+    expect(onSave).toHaveBeenCalledWith([uid(20), uid(21)]);
   });
 
   it("adds a name not on the list, ticked, without closing", async () => {
@@ -84,7 +86,12 @@ describe("DocumentPickerDialog", () => {
       on(
         "POST",
         TYPES_PATH,
-        { id: 30, name: "Portfolio of work", needed_by_everyone: false, usual_group: "applying" },
+        {
+          id: uid(30),
+          name: "Portfolio of work",
+          needed_by_everyone: false,
+          usual_group: "applying",
+        },
         201,
       ),
     );
@@ -106,7 +113,7 @@ describe("DocumentPickerDialog", () => {
     expect(onSave).not.toHaveBeenCalled();
 
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
-    expect(onSave).toHaveBeenCalledWith([21, 30]);
+    expect(onSave).toHaveBeenCalledWith([uid(21), uid(30)]);
   });
 
   it("adds with Enter too, without saving", async () => {
@@ -115,7 +122,7 @@ describe("DocumentPickerDialog", () => {
       on(
         "POST",
         TYPES_PATH,
-        { id: 30, name: "Portfolio", needed_by_everyone: false, usual_group: "applying" },
+        { id: uid(30), name: "Portfolio", needed_by_everyone: false, usual_group: "applying" },
         201,
       ),
     );
@@ -196,7 +203,7 @@ describe("DocumentPickerDialog", () => {
     const reason = "A file is already uploaded for CV, so it stays on the checklist.";
     const refused = new ApiRequestError("/x", 400, { document_types: [reason] });
     const { onClose } = renderPicker(
-      vi.fn<(ids: number[]) => Promise<void>>().mockRejectedValue(refused),
+      vi.fn<(ids: RecordId[]) => Promise<void>>().mockRejectedValue(refused),
     );
 
     await userEvent.click(within(await choices()).getByLabelText("CV"));
@@ -237,7 +244,7 @@ describe("DocumentPickerDialog", () => {
     const name = "<img src=x onerror=alert(1)>";
     backend(
       on("GET", TYPES_PATH, {
-        results: [{ id: 40, name, needed_by_everyone: false, usual_group: "applying" }],
+        results: [{ id: uid(40), name, needed_by_everyone: false, usual_group: "applying" }],
       }),
     );
     renderPicker(undefined, []);

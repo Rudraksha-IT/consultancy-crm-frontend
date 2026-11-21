@@ -17,6 +17,8 @@ export type Call = {
   timeoutMs: number;
   correlationId: string;
   logger: ServerLogger;
+  /** How long this call has waited for Django to come back while it was updated (ticket 14). */
+  waited: { ms: number };
   body: Uint8Array<ArrayBuffer> | null;
   /** Sent to Django as `X-Client-IP` (ADR 0004); null sends none. Never logged. */
   clientAddress: string | null;

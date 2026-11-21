@@ -1,7 +1,9 @@
+import { uid } from "@/test/ids";
 import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { fetchStaffContext, logIn, logOut } from "./auth";
 import { ApiRequestError, InvalidCredentialsError, NotLoggedInError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
+import { NO_OFFICE_DETAILS } from "../core/types";
 
 const THEME = {
   page: "ice",
@@ -12,11 +14,11 @@ const THEME = {
 
 const CONTEXT = {
   staff: {
-    id: 1,
+    id: uid(1),
     name: "Sita Sharma",
     email: "sita@acme.test",
     role: "counsellor",
-    colour_mode: "device",
+    colour_mode: "light",
   },
   consultancy: {
     name: "Acme Education",
@@ -24,6 +26,14 @@ const CONTEXT = {
     status: "evaluation",
     status_message: null,
     evaluation_ends_at: "2026-11-18T03:15:00Z",
+    office_details: {
+      contact_email: "info@acme.test",
+      phone: "01-4412345",
+      address_line1: "Putalisadak",
+      address_line2: "",
+      website: "https://acme.test",
+    },
+    has_contact_email: true,
   },
   modules: ["students", "tasks"],
   date_display: "AD",
@@ -32,17 +42,25 @@ const CONTEXT = {
 };
 
 const SESSION = {
-  staff: { id: 1, name: "Sita Sharma", email: "sita@acme.test", role: "counsellor" },
+  staff: { id: uid(1), name: "Sita Sharma", email: "sita@acme.test", role: "counsellor" },
   consultancy: {
     name: "Acme Education",
     logo: null,
     status: "evaluation",
     statusMessage: null,
     evaluationEndsAt: "2026-11-18T03:15:00Z",
+    officeDetails: {
+      contactEmail: "info@acme.test",
+      phone: "01-4412345",
+      addressLine1: "Putalisadak",
+      addressLine2: "",
+      website: "https://acme.test",
+    },
+    hasContactEmail: true,
   },
   modules: ["students", "tasks"],
   dateDisplay: "AD",
-  colourMode: "device",
+  colourMode: "light",
   pageSwipe: false,
   supportAccess: null,
   theme: THEME,
@@ -129,6 +147,22 @@ describe("fetchStaffContext", () => {
 
     await expect(fetchStaffContext(fetchFn)).resolves.toEqual(SESSION);
     expect(fetchFn).toHaveBeenCalledWith("/api/context/", expect.anything());
+  });
+
+  it.each([
+    ["missing", undefined],
+    ["not an object", "info@acme.test"],
+    ["with a wrong field", { contact_email: 7 }],
+    ["over-long", { ...CONTEXT.consultancy.office_details, website: `https://${"a".repeat(300)}` }],
+  ])("reads Office details that are %s as none, so sending stays off", async (_case, details) => {
+    const consultancy = { ...CONTEXT.consultancy, office_details: details };
+    const fetchFn = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(jsonResponse({ ...CONTEXT, consultancy }));
+
+    await expect(fetchStaffContext(fetchFn)).resolves.toMatchObject({
+      consultancy: { officeDetails: NO_OFFICE_DETAILS, hasContactEmail: false },
+    });
   });
 
   it("returns the office logo in frontend naming, or null for one that isn't ours", async () => {

@@ -1,5 +1,8 @@
-import { CataloguePage } from "@/components/features/catalogue/CataloguePage";
+import { redirect } from "next/navigation";
 
-export default function CatalogueRoute() {
-  return <CataloguePage />;
+import { ROUTES } from "@/constants/routes";
+
+/** The Catalogue moved into Configuration → Universities (ticket 10); old links still work. */
+export default function CatalogueRoute(): never {
+  redirect(ROUTES.universities);
 }

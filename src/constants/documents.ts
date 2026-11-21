@@ -137,7 +137,12 @@ export const BIN_TEXT = {
   tabStudents: "Students",
   tabBin: "Bin",
   binIntro:
-    "Documents that Staff asked to delete. Nobody can use them while they wait here. Open the files to check, then delete for good or restore. Nothing is emptied automatically.",
+    "Documents, Course Files and Document Examples that were deleted. Nobody can use them while they wait here. Open the files to check, then delete for good or restore. Nothing is emptied automatically.",
+  /** The kind of each item on the Bin tab, shown as a chip (ticket 10). */
+  kindDocument: "Document",
+  kindCourseFile: "Course File",
+  kindDocumentExample: "Document Example",
+  courseOf: (university: string, course: string) => `${university}, ${course}`,
   binEmpty: "The Bin is empty.",
   itemsCount: (count: number) => `${String(count)} ${count === 1 ? "item" : "items"} in the Bin`,
   binLoading: "Loading the Bin…",
@@ -340,4 +345,77 @@ export const DOCUMENT_TEXT = {
     "It comes off the office's documents, so it can't be asked for any more. You can add it again later.",
   removed: "Removed from the office's documents",
   theVisa: (university: string) => `the ${university} visa`,
+} as const;
+
+/** The most example files one Document Type shows (ticket 11; those in the Bin don't count). */
+export const EXAMPLES_MAX = 3;
+/** The largest example file kept (5 MB). */
+export const EXAMPLE_MAX_BYTES = 5 * 1024 * 1024;
+/** The longest instruction kept. */
+export const INSTRUCTION_MAX_LENGTH = 500;
+/** What an example file may be, for the file picker; its bytes are checked by the server. */
+export const EXAMPLE_ACCEPT = ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png";
+
+const exampleFiles = (count: number): string =>
+  count === 1 ? "1 example file" : `${count === 0 ? "no" : String(count)} example files`;
+
+/**
+ * The words of Document Examples (ticket 11; prototype `#consultancy-settings` with `sec=1`, and
+ * `#student-1` with `ptab=docs`).
+ */
+export const EXAMPLE_TEXT = {
+  // Configuration → Documents
+  examples: "Examples",
+  examplesFor: (name: string) => `Instruction and examples for ${name}`,
+  summary: (hasInstruction: boolean, count: number) =>
+    !hasInstruction && count === 0
+      ? "No example yet"
+      : `${hasInstruction ? "Instruction" : "No instruction"} and ${exampleFiles(count)}`,
+  editTitle: (name: string) => `${name}: instruction and examples`,
+  editIntro:
+    'Students see these in the "Documents needed" email, and Staff see them on the checklist. Never a Student\'s own Document.',
+  instruction: "Instruction (optional)",
+  instructionPlaceholder: "For example, last 6 months, bank stamp on every page",
+  instructionCount: (length: number) => `${String(length)} of ${String(INSTRUCTION_MAX_LENGTH)}`,
+  filesLegend: "Example files",
+  filesCount: (count: number) => `(${String(count)} of ${String(EXAMPLES_MAX)})`,
+  noFiles: "No example files yet.",
+  open: "Open",
+  openFile: (name: string) => `Open ${name}`,
+  replace: "Replace",
+  replaceFile: (name: string) => `Replace ${name}`,
+  remove: "Remove",
+  removeFile: (name: string) => `Remove ${name}`,
+  addFile: "Add an example file",
+  addFileFor: (name: string) => `Add an example file to ${name}`,
+  full: "3 is the most. Remove one to add another.",
+  removeTitle: (file: string) => `Remove ${file}?`,
+  removeBody: "It goes to the Bin, where an Admin can restore it or delete it for good.",
+  added: (file: string) => `${file} added`,
+  replaced: (old: string) => `Replaced. ${old} is in the Bin.`,
+  removed: (file: string) => `${file} is in the Bin`,
+  saved: (name: string) => `Saved for ${name}`,
+  wrongKind: "Use a PDF, JPEG or PNG file.",
+  tooBig: (size: string) => `That file is ${size}. An example can be at most 5 MB.`,
+  uploadFailed: "We couldn't upload the file. Try again.",
+  saveFailed: "We couldn't save the instruction. Try again.",
+  changeFailed: "We couldn't change the examples. Try again.",
+  linkFailed: "We couldn't open the file. Try again.",
+  // A Student's checklist
+  emailExamples: (count: number, firstName: string) =>
+    `Email ${count === 1 ? "the example" : "the examples"} to ${firstName}`,
+  exampleSubject: (typeName: string) => `An example of the ${typeName} we need`,
+  exampleLine: (typeName: string, instruction: string) =>
+    instruction === ""
+      ? `Here is an example of the ${typeName} we need.`
+      : `Here is an example of the ${typeName} we need. ${instruction}`,
+  seeWhat: "See what it should look like.",
+  see: (count: number) => (count === 1 ? "See the example" : `See ${String(count)} examples`),
+  seeFor: (count: number, name: string) =>
+    count === 1 ? `See the example of ${name}` : `See ${String(count)} examples of ${name}`,
+  viewTitle: (name: string) => `${name}: what it should look like`,
+  examplesOf: (name: string) => `Examples of ${name}`,
+  download: "Download",
+  downloadFile: (name: string) => `Download ${name}`,
+  examplesOnly: "Examples only. Never put on a Student's checklist as their own Document.",
 } as const;

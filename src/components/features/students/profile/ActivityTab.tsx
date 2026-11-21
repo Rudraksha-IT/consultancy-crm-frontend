@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useMemo, useState } from "react";
 
 import { useDates, type Dates } from "@/components/features/shell/dateDisplay";
@@ -15,7 +16,7 @@ import {
   type TimelineItem,
   type TimelineStage,
 } from "@/components/ui/Timeline";
-import { CHANNEL_LABELS } from "@/constants/communication";
+import { CHANNEL_LABELS, COMMUNICATION_TEXT } from "@/constants/communication";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Module } from "@/constants/modules";
 import { HistoryKind } from "@/constants/students";
@@ -56,7 +57,7 @@ type ActivityState =
   { status: "loading" } | { status: "loaded"; sources: Source[] } | { status: "failed" };
 
 type ActivityTabProps = {
-  studentId: number;
+  studentId: RecordId;
   /** When the Student was added: when they became a Lead. */
   createdAt: string;
   /** Every Stage change, from the profile, so the time in each Stage is known from the start. */
@@ -132,14 +133,14 @@ export function ActivityTab({ studentId, createdAt, stageChanges }: ActivityTabP
   );
 }
 
-function loadersFor(studentId: number, withMessages: boolean): LoadPage[] {
+function loadersFor(studentId: RecordId, withMessages: boolean): LoadPage[] {
   const history: LoadPage = async (page) => {
     const found = await fetchStudentHistory(studentId, page);
     return {
       count: found.count,
       page: found.page,
       items: found.entries.map((entry) => ({
-        key: `history-${String(entry.id)}`,
+        key: `history-${entry.id}`,
         at: entry.at,
         source: "history",
         entry,
@@ -152,7 +153,7 @@ function loadersFor(studentId: number, withMessages: boolean): LoadPage[] {
       count: found.count,
       page: found.page,
       items: found.visits.map((visit) => ({
-        key: `visit-${String(visit.id)}`,
+        key: `visit-${visit.id}`,
         at: visit.at,
         source: "visit",
         visit,
@@ -165,7 +166,7 @@ function loadersFor(studentId: number, withMessages: boolean): LoadPage[] {
       count: found.count,
       page: found.page,
       items: found.rows.map((message) => ({
-        key: `message-${String(message.id)}`,
+        key: `message-${message.id}`,
         at: message.sentAt,
         source: "message",
         message,
@@ -319,18 +320,28 @@ function visitItem(key: string, visit: Visit, dates: Dates): TimelineItem {
   };
 }
 
+/** An email by its subject line; a past SMS (sent before there was only email) by its words. */
 function messageItem(key: string, message: Message, dates: Dates): TimelineItem {
-  const channel = CHANNEL_LABELS[message.channel];
+  const isEmail = message.channel === "email";
+  const kind = isEmail ? CHANNEL_LABELS.email : COMMUNICATION_TEXT.pastSms;
+  const words = isEmail ? message.subject : message.body;
   return {
     id: key,
     title:
       message.status === "sent"
-        ? LABELS.messageSent(channel, message.body)
-        : LABELS.messageFailed(channel, message.body),
+        ? LABELS.messageSent(kind, words)
+        : LABELS.messageFailed(kind, words),
     meta: LABELS.byWhen(message.sentBy.name, dates.dateTime(message.sentAt)),
+    ...attachedNames(message),
     ...(message.error !== "" && { problem: message.error }),
     isContact: true,
   };
+}
+
+/** "Attached: brochure.pdf, passport.pdf" under an email that carried files (ticket 12). */
+function attachedNames(message: Message): { detail?: string } {
+  if (message.attachments.length === 0) return {};
+  return { detail: COMMUNICATION_TEXT.attachmentsOf(message.attachments.join(", ")) };
 }
 
 function historyItem(key: string, entry: HistoryEntry, dates: Dates): TimelineItem {

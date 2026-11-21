@@ -1,10 +1,11 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 export type RowSelection = {
-  isSelected: (id: number) => boolean;
-  toggle: (id: number) => void;
+  isSelected: (id: RecordId) => boolean;
+  toggle: (id: RecordId) => void;
   /** Tick every row on the page, or untick them all when they already are. */
   toggleAll: () => void;
   isAllSelected: boolean;
@@ -19,8 +20,8 @@ export type RowSelection = {
  * Which rows of the page on screen are ticked (spec 31a). Only rows already loaded count: a row
  * ticked on another page, or gone after a filter change, is never copied.
  */
-export function useRowSelection(ids: readonly number[]): RowSelection {
-  const [ticked, setTicked] = useState<ReadonlySet<number>>(new Set());
+export function useRowSelection(ids: readonly RecordId[]): RowSelection {
+  const [ticked, setTicked] = useState<ReadonlySet<RecordId>>(new Set());
   const count = ids.filter((id) => ticked.has(id)).length;
   const isAllSelected = ids.length > 0 && count === ids.length;
 

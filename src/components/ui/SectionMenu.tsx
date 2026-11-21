@@ -38,11 +38,12 @@ export type SectionChoice = {
 
 /**
  * The chosen section of a settings page. It lives in the page, so arriving at the page always
- * starts at the first section, and at phone width at the list (design system: Settings pages).
+ * starts at the first section, and at phone width at the list (design system: Settings pages),
+ * unless a link names a section (`startsOpen`), which then opens on its own.
  */
-export function useSectionChoice(first: string): SectionChoice {
+export function useSectionChoice(first: string, startsOpen = false): SectionChoice {
   const [current, setCurrent] = useState(first);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(startsOpen);
   const choose = useCallback((id: string) => {
     setCurrent(id);
     setIsOpen(true);

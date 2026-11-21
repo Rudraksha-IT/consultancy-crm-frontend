@@ -1,5 +1,6 @@
 "use client";
 
+import type { RecordId } from "@/lib/recordId";
 import { useEffect, useState } from "react";
 
 import { HTTP_STATUS } from "@/constants/api";
@@ -23,7 +24,7 @@ type StudentProfileHook = {
 };
 
 /** Load one Student's profile. An answer that arrives after the page has gone is dropped. */
-export function useStudentProfile(studentId: number): StudentProfileHook {
+export function useStudentProfile(studentId: RecordId): StudentProfileHook {
   const [state, setState] = useState<StudentProfileState>({ status: "loading" });
 
   useEffect(() => {

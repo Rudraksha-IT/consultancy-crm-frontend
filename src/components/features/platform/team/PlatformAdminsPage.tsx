@@ -16,6 +16,7 @@ import {
   resendPlatformAdminCode,
   type PlatformAdminRow,
   type PlatformAdminStatus,
+  updatingOr,
 } from "@/lib/api";
 
 import { AddPlatformAdminDialog } from "./AddPlatformAdminDialog";
@@ -42,8 +43,8 @@ export function PlatformAdminsPage() {
       showToast(
         saved.status === "invited" ? TEXT.invitedAgain(saved.name) : TEXT.reactivated(saved.name),
       );
-    } catch {
-      showToast(TEXT.changeFailed);
+    } catch (error) {
+      showToast(updatingOr(error, TEXT.changeFailed));
     }
   }
 
@@ -51,8 +52,8 @@ export function PlatformAdminsPage() {
     try {
       await resendPlatformAdminCode(admin.id);
       showToast(TEXT.resent(admin.name));
-    } catch {
-      showToast(TEXT.changeFailed);
+    } catch (error) {
+      showToast(updatingOr(error, TEXT.changeFailed));
     }
   }
 

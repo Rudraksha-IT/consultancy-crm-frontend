@@ -1,3 +1,4 @@
+import type { RecordId } from "@/lib/recordId";
 import { API_PATHS } from "@/constants/api";
 
 import { postJson } from "../core/client";
@@ -16,7 +17,7 @@ import {
  * `ApiRequestError` (403) when the Staff member may not.
  */
 export async function setStage(
-  id: number,
+  id: RecordId,
   change: StageChange,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
@@ -32,8 +33,8 @@ export async function setStage(
 
 /** Give a Student with no counsellor their first one (spec 28). */
 export function assignCounsellor(
-  id: number,
-  counsellorId: number,
+  id: RecordId,
+  counsellorId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
   return pickCounsellor(API_PATHS.studentAssign(id), counsellorId, fetchFn);
@@ -41,8 +42,8 @@ export function assignCounsellor(
 
 /** Transfer a Student to another counsellor (spec 42). */
 export function transferStudent(
-  id: number,
-  counsellorId: number,
+  id: RecordId,
+  counsellorId: RecordId,
   fetchFn: typeof fetch = fetch,
 ): Promise<StudentProfile> {
   return pickCounsellor(API_PATHS.studentTransfer(id), counsellorId, fetchFn);
@@ -50,7 +51,7 @@ export function transferStudent(
 
 async function pickCounsellor(
   path: string,
-  counsellorId: number,
+  counsellorId: RecordId,
   fetchFn: typeof fetch,
 ): Promise<StudentProfile> {
   const fields = COUNSELLOR_PICK_API_FIELDS;

@@ -1,151 +1,66 @@
 import { z } from "zod";
 
+import { RecordIdSchema, type RecordId } from "@/lib/recordId";
+
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import {
+  BODY_MAX_LENGTH,
   CHANNELS,
-  EMAIL_PORTS,
   MESSAGE_STATUSES,
-  SMS_PROVIDERS,
-  type Channel,
-  type EmailPort,
-  type SmsProvider,
+  SUBJECT_MAX_LENGTH,
 } from "@/constants/communication";
-
+import { Stage } from "@/constants/stages";
 import { studentFilterValues, type StudentFilters } from "@/lib/students";
 
-import { getJson, postJson, putJson } from "../core/client";
-import { ApiRequestError, InvalidFieldsError } from "../core/errors";
+import { getJson, postJson } from "../core/client";
+import { ApiRequestError } from "../core/errors";
 import { toFieldErrors } from "../core/fieldErrors";
-import { DetailAnswerSchema } from "../core/types";
+import type { AttachmentRef } from "./attachments";
 
-/** The office's SMS and email accounts (spec 88). Secrets never come back, only whether saved. */
-export const ProviderSettingsSchema = z
-  .object({
-    sms_provider: z.enum(SMS_PROVIDERS),
-    sms_sender: z.string().max(11),
-    sms_token_saved: z.boolean(),
-    email_host: z.string().max(253),
-    email_port: z.union(EMAIL_PORTS.map((port) => z.literal(port))),
-    email_username: z.string().max(254),
-    email_password_saved: z.boolean(),
-    email_from: z.string().max(254),
-    sms_ready: z.boolean(),
-    email_ready: z.boolean(),
-  })
-  .transform((answer) => ({
-    smsProvider: answer.sms_provider,
-    smsSender: answer.sms_sender,
-    isSmsTokenSaved: answer.sms_token_saved,
-    emailHost: answer.email_host,
-    emailPort: answer.email_port,
-    emailUsername: answer.email_username,
-    isEmailPasswordSaved: answer.email_password_saved,
-    emailFrom: answer.email_from,
-    isSmsReady: answer.sms_ready,
-    isEmailReady: answer.email_ready,
-  }));
-
-export type ProviderSettings = z.infer<typeof ProviderSettingsSchema>;
-
-/** What an Admin saves. An empty secret keeps the one saved before. */
-export type ProviderSettingsInput = {
-  smsProvider: SmsProvider;
-  smsSender: string;
-  smsToken: string;
-  emailHost: string;
-  emailPort: EmailPort;
-  emailUsername: string;
-  emailPassword: string;
-  emailFrom: string;
-};
-
-export type ProviderSettingsField = keyof ProviderSettingsInput;
-
-const SETTINGS_API_FIELDS: Record<ProviderSettingsField, string> = {
-  smsProvider: "sms_provider",
-  smsSender: "sms_sender",
-  smsToken: "sms_token",
-  emailHost: "email_host",
-  emailPort: "email_port",
-  emailUsername: "email_username",
-  emailPassword: "email_password",
-  emailFrom: "email_from",
-};
-
-/** The office's SMS and email accounts (Admins, Communication on). */
-export function fetchProviderSettings(fetchFn: typeof fetch = fetch): Promise<ProviderSettings> {
-  return getJson(API_PATHS.communicationSettings, ProviderSettingsSchema, fetchFn);
-}
-
-/**
- * Save the office's accounts and return them as stored. Empty secrets are left out, so the saved
- * ones are kept. Rejects with `InvalidFieldsError` naming refused fields.
- */
-export async function saveProviderSettings(
-  input: ProviderSettingsInput,
-  fetchFn: typeof fetch = fetch,
-): Promise<ProviderSettings> {
-  try {
-    return await putJson(
-      API_PATHS.communicationSettings,
-      settingsBody(input),
-      ProviderSettingsSchema,
-      fetchFn,
-    );
-  } catch (error) {
-    throw toFieldErrors(error, SETTINGS_API_FIELDS) ?? error;
+/** The office has no contact email yet, so nothing can be sent to Students (ADR 0023). */
+export class NoContactEmailError extends Error {
+  constructor() {
+    super("No contact email");
+    this.name = "NoContactEmailError";
   }
 }
 
-/** The settings in API naming; an empty secret is left out, so the saved one is kept. */
-function settingsBody(input: ProviderSettingsInput): Record<string, string | number> {
-  const secrets = {
-    ...(input.smsToken === "" ? {} : { sms_token: input.smsToken }),
-    ...(input.emailPassword === "" ? {} : { email_password: input.emailPassword }),
-  };
-  return {
-    sms_provider: input.smsProvider,
-    sms_sender: input.smsSender,
-    email_host: input.emailHost,
-    email_port: input.emailPort,
-    email_username: input.emailUsername,
-    email_from: input.emailFrom,
-    ...secrets,
-  };
+/** Storage couldn't give back a file to attach, so nothing was sent (503). */
+export class FilesNotFetchedError extends Error {
+  constructor() {
+    super("Files not fetched");
+    this.name = "FilesNotFetchedError";
+  }
 }
 
-const TestSmsSchema = z
-  .object({ status: z.enum(MESSAGE_STATUSES), error: z.string(), sent_to: z.string() })
-  .transform((answer) => ({ status: answer.status, error: answer.error, sentTo: answer.sent_to }));
+const NO_CONTACT_EMAIL_CODE = "no_contact_email";
+const NoContactAnswerSchema = z.object({ code: z.literal(NO_CONTACT_EMAIL_CODE) });
 
-export type TestSmsResult = z.infer<typeof TestSmsSchema>;
-
-/** Send a test SMS to the Admin's own mobile, to check the SMS settings. */
-export function sendTestSms(fetchFn: typeof fetch = fetch): Promise<TestSmsResult> {
-  return postJson(API_PATHS.communicationTestSms, {}, TestSmsSchema, fetchFn);
-}
-
-/** One SMS or email to one Student, sent or failed (spec 89, 91). */
+/** One email to one Student (or a past SMS), sent or failed. */
 export const MessageSchema = z
   .object({
-    id: z.number().int(),
-    student: z.object({ id: z.number().int(), name: z.string().min(1) }),
+    id: RecordIdSchema,
+    student: z.object({ id: RecordIdSchema, name: z.string().min(1) }),
     channel: z.enum(CHANNELS),
-    body: z.string(),
+    subject: z.string().max(SUBJECT_MAX_LENGTH),
+    body: z.string().max(BODY_MAX_LENGTH),
     status: z.enum(MESSAGE_STATUSES),
     error: z.string(),
     sent_to: z.string(),
+    attachments: z.array(z.string().min(1)),
     sent_at: z.iso.datetime({ offset: true }),
-    sent_by: z.object({ id: z.number().int(), name: z.string().min(1) }),
+    sent_by: z.object({ id: RecordIdSchema.nullable(), name: z.string().min(1) }),
   })
   .transform((message) => ({
     id: message.id,
     student: message.student,
     channel: message.channel,
+    subject: message.subject,
     body: message.body,
     status: message.status,
     error: message.error,
     sentTo: message.sent_to,
+    attachments: message.attachments,
     sentAt: message.sent_at,
     sentBy: message.sent_by,
   }));
@@ -172,51 +87,87 @@ function withPage(path: string, page: number): string {
   return `${path}?${new URLSearchParams({ page: String(page) }).toString()}`;
 }
 
-/** One page of every message sent, newest first (the Messages page). */
+/** One page of every email sent, newest first (the Email page). */
 export function fetchMessages(page: number, fetchFn: typeof fetch = fetch): Promise<MessagePage> {
   return getJson(withPage(API_PATHS.messages, page), MessagePageSchema, fetchFn);
 }
 
-/** One page of a Student's messages, newest first. */
+/** One page of a Student's emails, newest first. */
 export function fetchStudentMessages(
-  studentId: number,
+  studentId: RecordId,
   page: number,
   fetchFn: typeof fetch = fetch,
 ): Promise<MessagePage> {
   return getJson(withPage(API_PATHS.studentMessages(studentId), page), MessagePageSchema, fetchFn);
 }
 
-export type NewMessage = { channel: Channel; body: string };
-export type NewMessageField = keyof NewMessage;
+/** The subject line and message Staff wrote, and the files to attach (by kind and id). */
+export type NewEmail = { subject: string; body: string; attachments: AttachmentRef[] };
+export type NewEmailField = keyof NewEmail;
+const EMAIL_FIELDS: Record<NewEmailField, string> = {
+  subject: "subject",
+  body: "body",
+  attachments: "attachments",
+};
+
+/** The API's "add the contact email first" refusal, or a file it couldn't get, as its own error. */
+function knownFailure(error: unknown): NoContactEmailError | FilesNotFetchedError | null {
+  if (!(error instanceof ApiRequestError)) return null;
+  if (error.status === HTTP_STATUS.serviceUnavailable) return new FilesNotFetchedError();
+  if (error.status !== HTTP_STATUS.badRequest) return null;
+  return NoContactAnswerSchema.safeParse(error.body).success ? new NoContactEmailError() : null;
+}
 
 /**
- * Send an SMS or email to one Student (spec 89). Resolves with the message, sent or failed;
- * rejects with `InvalidFieldsError` when the API refuses it (e.g. the channel isn't set up).
+ * Email one Student. Resolves with the email, sent or failed; rejects with
+ * `NoContactEmailError` while the office has no contact email, `FilesNotFetchedError` when a file
+ * couldn't be got, or `InvalidFieldsError` naming `subject`, `body` or `attachments`.
  */
-export async function sendMessage(
-  studentId: number,
-  message: NewMessage,
+export async function sendEmail(
+  studentId: RecordId,
+  email: NewEmail,
   fetchFn: typeof fetch = fetch,
 ): Promise<Message> {
   try {
-    return await postJson(API_PATHS.studentMessages(studentId), message, MessageSchema, fetchFn);
+    return await postJson(API_PATHS.studentMessages(studentId), email, MessageSchema, fetchFn);
   } catch (error) {
-    throw toFieldErrors(error, { channel: "channel", body: "body" }) ?? error;
+    throw knownFailure(error) ?? toFieldErrors(error, EMAIL_FIELDS) ?? error;
   }
 }
 
-/** Who one message to many Students goes to (spec 90): a class, or a Student list's filters. */
-export type BulkRecipients =
-  { kind: "batch"; batchId: number } | { kind: "students"; filters: StudentFilters };
+/** Where pre-ticked Students come from: a class, or the Student list's filters. */
+export type PreTickSource =
+  { kind: "batch"; batchId: RecordId } | { kind: "students"; filters: StudentFilters };
 
-const BulkCountSchema = z.object({
+const ChoosableSchema = z.object({
+  students: z.array(
+    z.object({
+      id: RecordIdSchema,
+      name: z.string().min(1),
+      email: z.string().min(1),
+      stage: z.enum(Stage),
+    }),
+  ),
   count: z.number().int().nonnegative(),
   max: z.number().int().positive(),
 });
 
-export type BulkCount = z.infer<typeof BulkCountSchema>;
+/** The Students a class or the Student list pre-ticks, how many in all, and the most at once. */
+export type Choosable = z.infer<typeof ChoosableSchema>;
 
-/** How one message to many Students went: how many were sent, and each failed message. */
+/** The Students who can be chosen from a class or the Student list's filters. */
+export function fetchChoosable(
+  source: PreTickSource,
+  fetchFn: typeof fetch = fetch,
+): Promise<Choosable> {
+  const values =
+    source.kind === "batch" ? { batch: source.batchId } : studentFilterValues(source.filters);
+  const query = new URLSearchParams(values).toString();
+  const path = query === "" ? API_PATHS.bulkMessages : `${API_PATHS.bulkMessages}?${query}`;
+  return getJson(path, ChoosableSchema, fetchFn);
+}
+
+/** How one email to many Students went: how many were sent, and each failed email. */
 const BulkResultSchema = z
   .object({
     sent: z.number().int().nonnegative(),
@@ -230,56 +181,26 @@ const BulkResultSchema = z
   }));
 
 export type BulkResult = z.infer<typeof BulkResultSchema>;
-export type BulkMessageField = NewMessageField | "recipients";
-
-function recipientValues(recipients: BulkRecipients): Record<string, string> {
-  return recipients.kind === "batch"
-    ? { batch: String(recipients.batchId) }
-    : studentFilterValues(recipients.filters);
-}
-
-/** How many Students a class or a Student list names, and the most one message may go to. */
-export function fetchBulkCount(
-  recipients: BulkRecipients,
-  fetchFn: typeof fetch = fetch,
-): Promise<BulkCount> {
-  const query = new URLSearchParams(recipientValues(recipients)).toString();
-  const path = query === "" ? API_PATHS.bulkMessages : `${API_PATHS.bulkMessages}?${query}`;
-  return getJson(path, BulkCountSchema, fetchFn);
-}
+export type BulkEmailField = NewEmailField | "students";
 
 /**
- * Send one SMS or email to every Student a class or a Student list names (spec 90), one by one;
- * resolves with how it went. Rejects with `InvalidFieldsError` naming `channel` or `body`, or
- * `recipients` with the API's reason (nobody to send to, too many).
+ * Email each of the Students chosen their own copy, one by one; resolves with how it went.
+ * Rejects with `NoContactEmailError`, `FilesNotFetchedError`, or `InvalidFieldsError` naming
+ * `subject`, `body`, `attachments` or `students` (nobody, too many, Lost or unknown Students).
  */
-export async function sendBulkMessage(
-  recipients: BulkRecipients,
-  message: NewMessage,
+export async function sendBulkEmail(
+  studentIds: readonly RecordId[],
+  email: NewEmail,
   fetchFn: typeof fetch = fetch,
 ): Promise<BulkResult> {
-  const body = { ...message, ...recipientBody(recipients) };
+  const body = { ...email, students: studentIds };
   try {
     return await postJson(API_PATHS.bulkMessages, body, BulkResultSchema, fetchFn);
   } catch (error) {
     throw (
-      toFieldErrors(error, { channel: "channel", body: "body" }) ??
-      recipientsRefusal(error) ??
+      knownFailure(error) ??
+      toFieldErrors<BulkEmailField>(error, { ...EMAIL_FIELDS, students: "students" }) ??
       error
     );
   }
-}
-
-/** Who it goes to, as the API takes it: a class's id, or the Student list's filters. */
-function recipientBody(recipients: BulkRecipients): Record<string, unknown> {
-  return recipients.kind === "batch"
-    ? { batch: recipients.batchId }
-    : { students: studentFilterValues(recipients.filters) };
-}
-
-/** The API's reason for refusing who a message goes to, as a `recipients` field error. */
-function recipientsRefusal(error: unknown): InvalidFieldsError<BulkMessageField> | null {
-  if (!(error instanceof ApiRequestError) || error.status !== HTTP_STATUS.badRequest) return null;
-  const parsed = DetailAnswerSchema.safeParse(error.body);
-  return parsed.success ? new InvalidFieldsError({ recipients: [parsed.data.detail] }) : null;
 }

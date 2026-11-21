@@ -1,3 +1,4 @@
+import { uid } from "@/test/ids";
 import { InvalidFieldsError } from "../core/errors";
 import {
   addOfficeNetwork,
@@ -8,9 +9,9 @@ import {
 } from "./officeNetworks";
 import { jsonResponse } from "../core/test-helpers";
 
-const NETWORK = { id: 3, label: "Main office wifi", network: "110.44.115.82" };
+const NETWORK = { id: uid(3), label: "Main office wifi", network: "110.44.115.82" };
 const CHANGE = {
-  id: 9,
+  id: uid(9),
   action: "added",
   label: "Main office wifi",
   network: "110.44.115.82",
@@ -107,10 +108,10 @@ describe("removeOfficeNetwork", () => {
   it("DELETEs the one network", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await removeOfficeNetwork(3, fetchFn);
+    await removeOfficeNetwork(uid(3), fetchFn);
 
     expect(fetchFn).toHaveBeenCalledWith(
-      "/api/office-networks/3/",
+      `/api/office-networks/${uid(3)}/`,
       expect.objectContaining({ method: "DELETE" }),
     );
   });

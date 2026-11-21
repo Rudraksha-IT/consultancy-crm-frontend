@@ -5,11 +5,12 @@ import { useMemo, useState, type ReactNode } from "react";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
-import type { StaffContext } from "@/lib/api";
+import type { SavedOfficeDetails, StaffContext } from "@/lib/api";
 
 import { SetDateDisplayContext } from "./dateDisplay";
 import { SetPageSwipeContext } from "./pageSwipe";
 import { SetMyNameContext } from "./myName";
+import { SetOfficeDetailsContext } from "./officeDetails";
 import { SetOfficeLogoContext } from "./officeLogo";
 import { ShellFrame } from "./ShellFrame";
 import { StaffContextContext } from "./staffContext";
@@ -46,8 +47,8 @@ export function AppShell({ children }: AppShellProps) {
 type LoggedInShellProps = { loaded: StaffContext; children: ReactNode };
 
 /**
- * Shares the context with every screen. The date setting, the person's own name and the office
- * logo can change while the app is open; the menu's Tasks, Transfer requests and Inbox counts
+ * Shares the context with every screen. The date setting, the person's own name, the office
+ * logo and the Office details can change while the app is open; the menu's Tasks, Transfer requests and Inbox counts
  * follow changes to them.
  */
 function LoggedInShell({ loaded, children }: LoggedInShellProps) {
@@ -55,6 +56,10 @@ function LoggedInShell({ loaded, children }: LoggedInShellProps) {
   const [pageSwipe, setPageSwipe] = useState(loaded.pageSwipe === true);
   const [name, setName] = useState(loaded.staff.name);
   const [logo, setLogo] = useState(loaded.consultancy.logo);
+  const [office, setOffice] = useState<SavedOfficeDetails>({
+    officeDetails: loaded.consultancy.officeDetails,
+    hasContactEmail: loaded.consultancy.hasContactEmail,
+  });
   const taskCount = useTaskCountLoader();
   const transferCount = useTransferCountLoader(answersTransferRequests(loaded.staff.role));
   // A Platform Admin in Support Access has no Inbox: conversations are private (spec 129).
@@ -63,11 +68,11 @@ function LoggedInShell({ loaded, children }: LoggedInShellProps) {
     () => ({
       ...loaded,
       staff: { ...loaded.staff, name },
-      consultancy: { ...loaded.consultancy, logo },
+      consultancy: { ...loaded.consultancy, logo, ...office },
       dateDisplay,
       pageSwipe,
     }),
-    [loaded, name, logo, dateDisplay, pageSwipe],
+    [loaded, name, logo, office, dateDisplay, pageSwipe],
   );
 
   return (
@@ -76,15 +81,17 @@ function LoggedInShell({ loaded, children }: LoggedInShellProps) {
         <SetPageSwipeContext value={setPageSwipe}>
           <SetMyNameContext value={setName}>
             <SetOfficeLogoContext value={setLogo}>
-              <TaskCountContext value={taskCount}>
-                <TransferCountContext value={transferCount}>
-                  <InboxCheckContext value={inboxCheck}>
-                    <ToastProvider>
-                      <ShellFrame context={context}>{children}</ShellFrame>
-                    </ToastProvider>
-                  </InboxCheckContext>
-                </TransferCountContext>
-              </TaskCountContext>
+              <SetOfficeDetailsContext value={setOffice}>
+                <TaskCountContext value={taskCount}>
+                  <TransferCountContext value={transferCount}>
+                    <InboxCheckContext value={inboxCheck}>
+                      <ToastProvider>
+                        <ShellFrame context={context}>{children}</ShellFrame>
+                      </ToastProvider>
+                    </InboxCheckContext>
+                  </TransferCountContext>
+                </TaskCountContext>
+              </SetOfficeDetailsContext>
             </SetOfficeLogoContext>
           </SetMyNameContext>
         </SetPageSwipeContext>

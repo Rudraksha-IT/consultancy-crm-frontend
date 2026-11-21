@@ -18,7 +18,7 @@ The browser only ever talks to the Next.js app, at the Consultancy's subdomain (
 
 Because Django trusts `X-Forwarded-Host`, anyone who could reach Django directly could pick any Consultancy. So:
 
-1. **Django is internal only.** Locally it publishes no port and sits on the private Compose network. On AWS it listens only inside the VPC: its security group accepts traffic from the Next.js service and nothing else.
+1. **Django is internal only.** Locally it publishes no port and sits on the private Compose network. In production (ADR 0025) it is the same: it publishes no port and sits on the private Docker network with Next.js; only `cloudflared` reaches Next.js, and the server opens no inbound port.
 2. **A shared internal secret.** Next.js sends `X-Internal-Token: <INTERNAL_API_TOKEN>` on every call. Django refuses any request without the right token (constant-time compare). This holds even if rule 1 is ever broken by mistake.
 3. **Next.js sets the forwarded host itself**, from the incoming request's host, and never passes through an `X-Forwarded-Host` the browser sent.
 4. **`ALLOWED_HOSTS` stays strict** (`.<product-domain>`), never `*`, in every environment.
