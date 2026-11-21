@@ -11,31 +11,43 @@
 # word by word. Who started it (github:<repo>:<run>:<actor>) and DEPLOY_REASON (base64url) are
 # added here. Environment, from the `production` environment's secrets:
 #   DEPLOY_SSH_KEY       the private key
-#   DEPLOY_KNOWN_HOSTS   the server's pinned host key line(s); no other server is trusted
-#   DEPLOY_HOST          e.g. deploy.<domain> (through the Cloudflare Tunnel) or the server
+#   DEPLOY_HOST_KEY      the server's host key, type and key only (ssh-ed25519 AAAA...), with no
+#                        address in it; no other server is trusted
+#   PRODUCT_DOMAIN       the organisation's secret, the one place the domain is kept; the server
+#                        is deploy.<PRODUCT_DOMAIN>
 #   DEPLOY_PORT          optional, 22 by default
-#   CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET   optional: reach DEPLOY_HOST through
+#   CF_ACCESS_CLIENT_ID, CF_ACCESS_CLIENT_SECRET   optional: reach the server through
 #                        Cloudflare Access with `cloudflared access ssh` (port 22 stays closed)
+# DEPLOY_HOST, when set, replaces deploy.<PRODUCT_DOMAIN>; only the local test uses it.
 # The server's output goes to the log and the run's summary; no secret is ever printed. The step
 # fails when the server says the deploy failed or was rolled back.
 set -euo pipefail
 
 : "${DEPLOY_SSH_KEY:?the production environment needs DEPLOY_SSH_KEY}"
-: "${DEPLOY_KNOWN_HOSTS:?the production environment needs DEPLOY_KNOWN_HOSTS}"
-: "${DEPLOY_HOST:?the production environment needs DEPLOY_HOST}"
+: "${DEPLOY_HOST_KEY:?the production environment needs DEPLOY_HOST_KEY}"
+host="${DEPLOY_HOST:-deploy.${PRODUCT_DOMAIN:?the organisation needs the secret PRODUCT_DOMAIN}}"
+host_pattern='^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?$'
+key_pattern='^[a-z0-9-]+ [A-Za-z0-9+/]+=*$'
+[[ "$host" =~ $host_pattern ]] || { echo "PRODUCT_DOMAIN must be a plain domain name." >&2; exit 2; }
+[[ "$DEPLOY_HOST_KEY" =~ $key_pattern ]] || {
+  echo "DEPLOY_HOST_KEY must be one line with the key type and the key only (ssh-ed25519 AAAA...)." >&2
+  exit 2
+}
 (($# > 0)) || { echo "Say what to do: deploy <kind> <sha>, rollback or status." >&2; exit 2; }
 
 work="$(mktemp -d)"
 trap 'rm -rf -- "$work"' EXIT
 umask 077
 printf '%s\n' "$DEPLOY_SSH_KEY" >"$work/key"
-printf '%s\n' "$DEPLOY_KNOWN_HOSTS" >"$work/known_hosts"
+# Pinned under a fixed name, not the address, so moving to a new domain leaves it as it is.
+printf 'deploy-server %s\n' "$DEPLOY_HOST_KEY" >"$work/known_hosts"
 
 ssh_options=(
   -i "$work/key"
   -p "${DEPLOY_PORT:-22}"
   -o IdentitiesOnly=yes
   -o "UserKnownHostsFile=$work/known_hosts"
+  -o HostKeyAlias=deploy-server
   -o StrictHostKeyChecking=yes
   -o BatchMode=yes
   -o ConnectTimeout=30
@@ -62,7 +74,7 @@ fi
 
 # The words become one request line, as sshd hands it to ci-entry.sh (SSH_ORIGINAL_COMMAND).
 remote_request="${request[*]}"
-ssh_options+=("deploy@$DEPLOY_HOST" "$remote_request")
+ssh_options+=("deploy@$host" "$remote_request")
 set +e
 ssh "${ssh_options[@]}" 2>&1 | tee "$work/output"
 status="${PIPESTATUS[0]}"
