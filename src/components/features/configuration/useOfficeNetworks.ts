@@ -11,6 +11,7 @@ import {
   type OfficeNetwork,
   type OfficeNetworkList,
 } from "@/lib/api";
+import { onOfficeNetworksChanged } from "@/lib/officeNetworksChanged";
 
 export type OfficeNetworksState =
   { status: "loading" } | { status: "failed" } | { status: "loaded"; list: OfficeNetworkList };
@@ -54,6 +55,9 @@ export function useOfficeNetworks(): OfficeNetworks {
   const reload = useCallback(() => {
     setVersion((known) => known + 1);
   }, []);
+
+  // Added from the Admin's dialog over this page: read the list and the address again.
+  useEffect(() => onOfficeNetworksChanged(reload), [reload]);
 
   async function add(label: string, network: string): Promise<OfficeNetwork> {
     const added = await addOfficeNetwork(label, network);

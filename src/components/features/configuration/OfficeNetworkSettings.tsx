@@ -13,15 +13,10 @@ import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
 import { useToast } from "@/components/ui/useToast";
 import { OFFICE_NETWORK_TEXT as TEXT } from "@/constants/officeNetworks";
-import {
-  InvalidFieldsError,
-  OfficeNetworkRefusedError,
-  type CurrentNetwork,
-  type OfficeNetwork,
-  type OfficeNetworkList,
-} from "@/lib/api";
+import { type CurrentNetwork, type OfficeNetwork, type OfficeNetworkList } from "@/lib/api";
 
 import { AddOfficeNetworkForm } from "./AddOfficeNetworkForm";
+import { officeNetworkRefusalOf as refusalOf } from "./officeNetworkRefusal";
 import { useOfficeNetworks, type OfficeNetworks } from "./useOfficeNetworks";
 
 /**
@@ -185,16 +180,4 @@ function AddHere({ network, onAdd }: AddHereProps) {
       {failure !== null && <Banner tone="problem">{failure}</Banner>}
     </>
   );
-}
-
-function refusalOf(error: unknown): string {
-  if (error instanceof OfficeNetworkRefusedError) return error.message;
-  return firstFieldError(error) ?? TEXT.saveFailed;
-}
-
-/** The first reason the server gave on a field, e.g. "That network is already on the list." */
-function firstFieldError(error: unknown): string | undefined {
-  if (!(error instanceof InvalidFieldsError)) return undefined;
-  const refused: Partial<Record<string, string[]>> = error.fieldErrors;
-  return Object.values(refused).flat()[0];
 }

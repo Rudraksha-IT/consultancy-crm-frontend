@@ -1,4 +1,4 @@
-import { hasUnsavedChanges, holdUnsavedChanges } from "./unsavedChanges";
+import { hasUnsavedChanges, holdUnsavedChanges, subscribeUnsavedChanges } from "./unsavedChanges";
 
 describe("unsaved changes", () => {
   it("is held while any page says it has unsaved changes", () => {
@@ -21,5 +21,20 @@ describe("unsaved changes", () => {
     expect(hasUnsavedChanges()).toBe(true);
     releaseTwo();
     expect(hasUnsavedChanges()).toBe(false);
+  });
+
+  it("tells listeners when it starts and when it clears, until they stop listening", () => {
+    const listener = vi.fn<() => void>();
+    const stop = subscribeUnsavedChanges(listener);
+
+    const releaseOne = holdUnsavedChanges();
+    const releaseTwo = holdUnsavedChanges();
+    releaseOne();
+    releaseOne();
+    releaseTwo();
+    stop();
+    holdUnsavedChanges()();
+
+    expect(listener).toHaveBeenCalledTimes(4);
   });
 });

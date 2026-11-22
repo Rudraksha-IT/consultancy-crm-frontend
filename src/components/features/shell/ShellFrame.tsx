@@ -12,6 +12,7 @@ import { saveColourMode, type StaffContext } from "@/lib/api";
 import { buildNavigation } from "@/lib/navigation";
 
 import { ConsultancyStatusBanner } from "./ConsultancyStatusBanner";
+import { OfficeNetworkCheck } from "./OfficeNetworkCheck";
 import { PullGap } from "./PullGap";
 import { ShellThemeContext } from "./shellTheme";
 import { Sidebar } from "./Sidebar";
@@ -101,6 +102,7 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
           onOpenMenu={sidebar.openDrawer}
         />
       </div>
+      <OfficeNetworkCheck context={context} />
     </ShellThemeContext>
   );
 }
