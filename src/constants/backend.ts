@@ -64,7 +64,8 @@ export const MAX_BROWSER_AGENT_LENGTH = 512;
  * from a login, sends the cookie's refresh token at logout, and never lets the browser refresh.
  * Choosing a new password with a reset Code, or joining with an Invite Code, logs the person in,
  * so both are logins too. Changing my password and signing out my other devices are made while
- * logged in and give this device new tokens (issue 38): "renew".
+ * logged in and give this device new tokens (issue 38): "renew". So does confirming a new work
+ * email (first live fixes, ticket 04).
  */
 export const AUTH_ROUTES = {
   "/api/auth/login/": { action: "login", scope: "staff" },
@@ -75,6 +76,7 @@ export const AUTH_ROUTES = {
   "/api/auth/logout/": { action: "logout", scope: "staff" },
   "/api/me/password/": { action: "renew", scope: "staff" },
   "/api/me/devices/sign-out-others/": { action: "renew", scope: "staff" },
+  "/api/me/email/confirm/": { action: "renew", scope: "staff" },
   "/api/auth/refresh/": { action: "refresh", scope: "staff" },
   // Staff two-step login (issue 62), on the office's own address, as on the Platform below.
   "/api/auth/two-factor/setup/": { action: "challenge", scope: "staff" },

@@ -17,6 +17,9 @@ export const API_PATHS = {
   /** A person's own Settings (issue 38). */
   me: "/api/me/",
   myPassword: "/api/me/password/",
+  /** Change my own work email: ask for a Code, then confirm with it (first live fixes, 04). */
+  myEmail: "/api/me/email/",
+  myEmailConfirm: "/api/me/email/confirm/",
   myDevices: "/api/me/devices/",
   signOutOtherDevices: "/api/me/devices/sign-out-others/",
   employees: "/api/staff/",

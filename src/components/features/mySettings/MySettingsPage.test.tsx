@@ -102,6 +102,7 @@ describe("MySettingsPage", () => {
     const items = within(menu).getAllByRole("button");
     expect(items.map((item) => item.textContent)).toEqual([
       "My Details",
+      "Email",
       "Password",
       "Two-step login",
       "Notifications",
@@ -151,7 +152,7 @@ describe("MySettingsPage", () => {
     const details = await screen.findByRole("region", { name: "My Details" });
     await within(details).findByText("Senior Counsellor");
 
-    for (const label of ["Mobile Number", "Work Email", "Joined On"]) {
+    for (const label of ["Mobile Number", "Email", "Joined On"]) {
       expect(within(details).getByText(label)).toBeInTheDocument();
     }
     expect(within(details).getByText("9812345670")).toBeInTheDocument();
@@ -187,7 +188,7 @@ describe("MySettingsPage", () => {
     ).toEqual(["name", "mobile"]);
     expect(
       within(details).getByText(
-        "sita@acme.test. Job title, role and work email are set by an Admin.",
+        "sita@acme.test. Job title and role are set by an Admin. Change your email under Email.",
       ),
     ).toBeInTheDocument();
 

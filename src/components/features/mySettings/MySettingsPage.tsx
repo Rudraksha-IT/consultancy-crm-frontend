@@ -28,6 +28,7 @@ import { PasswordSection } from "./PasswordSection";
 import { PreferencesSection } from "./PreferencesSection";
 import { TwoFactorSection } from "./TwoFactorSection";
 import { useMyDetails, type MyDetailsState } from "./useMyDetails";
+import { WorkEmailSection } from "./WorkEmailSection";
 
 /**
  * A person's own Settings (spec 22c-22g; issue 38): a menu on the left, one section at a time.
@@ -107,13 +108,23 @@ function body(
   if (section === "devices") return <DevicesSection />;
   if (section === "twoFactor") return <TwoFactorSection />;
   if (section === "preferences") return <PreferencesSection />;
-  return withDetails(state, (details) =>
-    section === "details" ? (
+  return withDetails(state, (details) => {
+    if (section === "workEmail") {
+      return (
+        <WorkEmailSection
+          email={details.email}
+          onChanged={(email) => {
+            show({ ...details, email });
+          }}
+        />
+      );
+    }
+    return section === "details" ? (
       <MyDetailsSection details={details} onSaved={show} />
     ) : (
       <NotificationsSection details={details} onSaved={show} />
-    ),
-  );
+    );
+  });
 }
 
 function withDetails(state: MyDetailsState, render: (details: MyDetails) => ReactNode): ReactNode {

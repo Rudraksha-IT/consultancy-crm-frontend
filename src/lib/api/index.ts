@@ -288,6 +288,8 @@ export type {
   PasswordChange,
   SignedInDevice,
 } from "./staff/mySettings";
+export { askForEmailChange, confirmEmailChange, WorkEmailRefusedError } from "./staff/workEmail";
+export type { EmailChangeRequest, WorkEmailField } from "./staff/workEmail";
 export { checkResetCode, completePasswordReset, requestResetCode } from "./auth/passwordReset";
 export {
   checkPlatformResetCode,

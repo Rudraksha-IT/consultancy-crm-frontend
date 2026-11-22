@@ -1650,6 +1650,48 @@ describe("logging out", () => {
   });
 });
 
+describe("confirming a new work email (first live fixes, ticket 04)", () => {
+  it("keeps the new tokens in the cookie and gives the browser only the email", async () => {
+    const tokens = newTokens();
+    const { sent } = fakeBackend(() =>
+      Response.json({ access: "next-acc", refresh: "next-ref", email: "sita.new@office.com" }),
+    );
+
+    const response = await POST(
+      incoming("/api/me/email/confirm/", {
+        method: "POST",
+        body: JSON.stringify({ email: "sita.new@office.com", code: "123456" }),
+        tokens,
+      }),
+    );
+    const text = await response.text();
+
+    expect(response.status).toBe(200);
+    expect(headersOf(sent[0]).get("authorization")).toBe(`Bearer ${tokens.access}`);
+    expect(JSON.parse(text)).toEqual({ email: "sita.new@office.com" });
+    expect(text).not.toContain("next-acc");
+    expect(text).not.toContain("next-ref");
+    expect(cookieTokens(response)).toEqual({
+      access: "next-acc",
+      refresh: "next-ref",
+      scope: "staff",
+    });
+  });
+
+  it("relays a refused Code as it is and keeps the cookie", async () => {
+    const tokens = newTokens();
+    fakeBackend(() => Response.json({ detail: "That code isn't right." }, { status: 400 }));
+
+    const response = await POST(
+      incoming("/api/me/email/confirm/", { method: "POST", body: "{}", tokens }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toEqual({ detail: "That code isn't right." });
+    expect(cookieTokens(response)).toBeNull();
+  });
+});
+
 describe("changing my password or signing out my other devices (issue 38)", () => {
   const RENEWING_PATHS = ["/api/me/password/", "/api/me/devices/sign-out-others/"];
 

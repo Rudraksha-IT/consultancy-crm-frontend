@@ -17,6 +17,7 @@ export const NOTIFICATION_LABELS: Record<NotificationChoice, string> = {
 /** The section menu, one section shown at a time. */
 export const MY_SETTINGS_SECTIONS = [
   "details",
+  "workEmail",
   "password",
   "twoFactor",
   "notifications",
@@ -32,6 +33,11 @@ export const MY_SETTINGS_TEXT = {
   backLabel: "All of Settings",
   sections: {
     details: { title: "My Details", help: "How you appear to the rest of the office." },
+    // First live fixes, ticket 04: each person changes their own, with a Code.
+    workEmail: {
+      title: "Email",
+      help: "The email you log in with. The app's emails to you go there too.",
+    },
     password: {
       title: "Password",
       help: "Change it any time. Other devices are signed out when you do.",
@@ -54,13 +60,14 @@ export const MY_SETTINGS_TEXT = {
   jobTitle: "Job Title",
   role: "Role",
   mobileNumber: "Mobile Number",
-  workEmail: "Work Email",
+  workEmail: "Email",
   joinedOn: "Joined On",
   none: "—",
   editDetails: "Edit details",
   saveDetails: "Save details",
   detailsSaved: "Details saved",
-  setByAdmin: (email: string) => `${email}. Job title, role and work email are set by an Admin.`,
+  setByAdmin: (email: string) =>
+    `${email}. Job title and role are set by an Admin. Change your email under Email.`,
   enterName: "Enter your name.",
   currentPassword: "Current password",
   changePassword: "Change password",
@@ -69,6 +76,22 @@ export const MY_SETTINGS_TEXT = {
   wrongCurrentPassword: "That isn't your current password.",
   forgotIt: "Forgot it? Log out and choose “Forgot your password?” to get a code by email.",
   saved: "Saved",
+  // Email (first live fixes, ticket 04).
+  change: "Change",
+  newWorkEmail: "New email",
+  sendTheCode: "Send the code",
+  workEmailIntro:
+    "We'll send a 6-digit code to the new email. Your email changes only when you enter it here.",
+  codeSentTo: (email: string) =>
+    `We sent a 6-digit code to ${email}. It works for 30 minutes. Check the spam folder if it isn't there.`,
+  changeEmail: "Change email",
+  sendNewCode: "Send a new code",
+  enterPasswordAgain: "Enter your password again to get a new code.",
+  emailChanged: "Email changed. Other devices have been signed out.",
+  enterNewEmail: "Enter your new email.",
+  wholeEmail: "Enter a whole email address, such as name@office.com.",
+  sameEmail: "That's already your email.",
+  enterCode: "Enter the 6-digit code.",
   thisBrowser: "This browser",
   youreHere: "You're here",
   signedInOn: (signedIn: string, lastUsed: string) =>
