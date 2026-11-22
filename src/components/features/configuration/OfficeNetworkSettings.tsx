@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { useDates } from "@/components/features/shell/dateDisplay";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -19,7 +18,6 @@ import {
   OfficeNetworkRefusedError,
   type CurrentNetwork,
   type OfficeNetwork,
-  type OfficeNetworkChange,
   type OfficeNetworkList,
 } from "@/lib/api";
 
@@ -28,8 +26,9 @@ import { useOfficeNetworks, type OfficeNetworks } from "./useOfficeNetworks";
 
 /**
  * Configuration → Office network, while the Clock-in Module is on: the internet addresses Staff
- * may clock in from, "Add the network I'm on now", adding one by hand, removing one, and every
- * add and remove (spec 104-105, issue 55). The limits shown come from the server.
+ * may clock in from, "Add the network I'm on now", adding one by hand and removing one (spec
+ * 104-105, issue 55). No history of adds and removes is shown or kept (first live fixes, ticket
+ * 02). The limits shown come from the server.
  */
 export function OfficeNetworkSettings() {
   const networks = useOfficeNetworks();
@@ -69,7 +68,6 @@ function Loaded({ list, networks }: { list: OfficeNetworkList; networks: OfficeN
       )}
       <AddOfficeNetworkForm ipv4WidestPrefix={list.limits.ipv4WidestPrefix} onAdd={networks.add} />
       <p className="text-small text-ink-2">{TEXT.staticHelp(list.limits.maxNetworks)}</p>
-      <ChangeLog changes={list.changes} />
       {removing !== null && (
         <ConfirmDialog
           title={TEXT.removeTitle(removing.label)}
@@ -199,18 +197,4 @@ function firstFieldError(error: unknown): string | undefined {
   if (!(error instanceof InvalidFieldsError)) return undefined;
   const refused: Partial<Record<string, string[]>> = error.fieldErrors;
   return Object.values(refused).flat()[0];
-}
-
-function ChangeLog({ changes }: { changes: readonly OfficeNetworkChange[] }) {
-  const dates = useDates();
-  if (changes.length === 0) return null;
-  return (
-    <ul aria-label={TEXT.changesLabel} className="text-small text-ink-2 grid gap-1">
-      {changes.map((change) => (
-        <li key={change.id} className="break-words">
-          {`${TEXT.change(change.action, change.label, change.network)}. ${change.by}, ${dates.dateTime(change.at)}`}
-        </li>
-      ))}
-    </ul>
-  );
 }

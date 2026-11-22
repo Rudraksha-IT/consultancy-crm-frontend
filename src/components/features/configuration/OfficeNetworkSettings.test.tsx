@@ -5,7 +5,6 @@ import userEvent from "@testing-library/user-event";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { formatAdDateTime } from "@/lib/dates";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
@@ -24,20 +23,10 @@ const ADMIN: StaffContext = {
 
 const LIST_PATH = "/api/office-networks/";
 const CURRENT_PATH = "/api/office-networks/current/";
-const AT = "2026-10-12T04:19:00+00:00";
 const LIMITS = { max_networks: 20, ipv4_widest_prefix: 24, ipv6_widest_prefix: 48 };
 const MAIN = { id: uid(901), label: "Main office wifi", network: "110.44.115.82" };
-const ADDED_MAIN = {
-  id: uid(1),
-  action: "added",
-  label: "Main office wifi",
-  network: "110.44.115.82",
-  by: "Sita Sharma",
-  at: AT,
-};
-
-function listOf(networks: unknown[] = [], changes: unknown[] = [], limits = LIMITS) {
-  return { networks, changes, limits };
+function listOf(networks: unknown[] = [], limits = LIMITS) {
+  return { networks, limits };
 }
 
 function renderSection() {
@@ -56,9 +45,9 @@ afterEach(() => {
 });
 
 describe("OfficeNetworkSettings", () => {
-  it("lists each network with its name and address, and the changes under it", async () => {
+  it("lists only each network's name, address and Remove, with no history", async () => {
     backend(
-      on("GET", LIST_PATH, listOf([MAIN], [ADDED_MAIN])),
+      on("GET", LIST_PATH, listOf([MAIN])),
       on("GET", CURRENT_PATH, {
         address: "27.34.20.9",
         suggested_network: "27.34.20.9",
@@ -71,10 +60,8 @@ describe("OfficeNetworkSettings", () => {
     expect(list.getByText("Main office wifi")).toBeVisible();
     expect(list.getByText("110.44.115.82")).toBeVisible();
     expect(list.getByRole("button", { name: "Remove Main office wifi" })).toBeVisible();
-    const changes = within(section).getByRole("list", { name: "Changes to the office network" });
-    expect(changes).toHaveTextContent(
-      `Added Main office wifi (110.44.115.82). Sita Sharma, ${formatAdDateTime(AT)}`,
-    );
+    expect(within(section).getAllByRole("list")).toHaveLength(1);
+    expect(within(section).queryByText(/^Added /)).not.toBeInTheDocument();
     expect(
       within(section).getByText(
         "Staff can clock in and out only from these internet connections. Add the office wifi while you're at the office. No location is ever recorded.",
@@ -99,14 +86,12 @@ describe("OfficeNetworkSettings", () => {
         "No office network yet. Nobody can clock in until you add one.",
       ),
     ).toBeVisible();
-    expect(
-      within(section).queryByRole("list", { name: "Changes to the office network" }),
-    ).not.toBeInTheDocument();
+    expect(within(section).queryByRole("list")).not.toBeInTheDocument();
   });
 
   it("shows the limits the server has, not fixed numbers", async () => {
     backend(
-      on("GET", LIST_PATH, listOf([], [], { ...LIMITS, max_networks: 5, ipv4_widest_prefix: 28 })),
+      on("GET", LIST_PATH, listOf([], { ...LIMITS, max_networks: 5, ipv4_widest_prefix: 28 })),
       on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
     );
     const section = renderSection();

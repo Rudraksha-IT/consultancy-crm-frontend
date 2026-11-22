@@ -10,14 +10,6 @@ import {
 import { jsonResponse } from "../core/test-helpers";
 
 const NETWORK = { id: uid(3), label: "Main office wifi", network: "110.44.115.82" };
-const CHANGE = {
-  id: uid(9),
-  action: "added",
-  label: "Main office wifi",
-  network: "110.44.115.82",
-  by: "Anita Admin",
-  at: "2026-11-05T09:12:33.123456+00:00",
-};
 const LIMITS = { max_networks: 20, ipv4_widest_prefix: 24, ipv6_widest_prefix: 48 };
 
 function answering(response: Response): ReturnType<typeof vi.fn<typeof fetch>> {
@@ -25,27 +17,23 @@ function answering(response: Response): ReturnType<typeof vi.fn<typeof fetch>> {
 }
 
 describe("fetchOfficeNetworks", () => {
-  it("reads the networks, the latest changes and the limits in frontend terms", async () => {
-    const fetchFn = answering(
-      jsonResponse({ networks: [NETWORK], changes: [CHANGE], limits: LIMITS }),
-    );
+  it("reads the networks and the limits in frontend terms, with no history", async () => {
+    const fetchFn = answering(jsonResponse({ networks: [NETWORK], limits: LIMITS }));
 
     const list = await fetchOfficeNetworks(fetchFn);
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/office-networks/");
     expect(list).toEqual({
       networks: [NETWORK],
-      changes: [{ ...CHANGE }],
       limits: { maxNetworks: 20, ipv4WidestPrefix: 24, ipv6WidestPrefix: 48 },
     });
   });
 
   it.each([
-    { networks: [{ ...NETWORK, id: "3" }], changes: [], limits: LIMITS },
-    { networks: [], changes: [{ ...CHANGE, action: "renamed" }], limits: LIMITS },
-    { networks: [], changes: [{ ...CHANGE, at: "yesterday" }], limits: LIMITS },
-    { networks: [], changes: [], limits: { ...LIMITS, max_networks: 0 } },
-    { networks: [], changes: [] },
+    { networks: [{ ...NETWORK, id: "3" }], limits: LIMITS },
+    { networks: [{ ...NETWORK, network: "not an address" }], limits: LIMITS },
+    { networks: [], limits: { ...LIMITS, max_networks: 0 } },
+    { networks: [] },
   ])("refuses an answer that doesn't match: %j", async (body) => {
     await expect(fetchOfficeNetworks(answering(jsonResponse(body)))).rejects.toThrow();
   });

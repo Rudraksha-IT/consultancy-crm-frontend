@@ -34,7 +34,4 @@ export const OFFICE_NETWORK_TEXT = {
   saveFailed: "We couldn't add the network. Please try again.",
   staticHelp: (maxNetworks: number) =>
     `Ask your internet provider for a fixed (static) address. If it changes, add the new one here. Phones on mobile data can't clock in. An office can have up to ${String(maxNetworks)} networks.`,
-  changesLabel: "Changes to the office network",
-  change: (action: "added" | "removed", label: string, network: string) =>
-    `${action === "added" ? "Added" : "Removed"} ${label} (${network})`,
 } as const;

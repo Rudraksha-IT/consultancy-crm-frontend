@@ -73,7 +73,6 @@ export {
 export type {
   CurrentNetwork,
   OfficeNetwork,
-  OfficeNetworkChange,
   OfficeNetworkLimits,
   OfficeNetworkList,
 } from "./office/officeNetworks";
