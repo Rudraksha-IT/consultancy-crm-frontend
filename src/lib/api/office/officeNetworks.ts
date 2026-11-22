@@ -47,8 +47,17 @@ const OfficeNetworkListSchema = z
   }));
 
 const CurrentNetworkSchema = z
-  .object({ address: z.union([z.ipv4(), z.ipv6()]).nullable(), covered: z.boolean() })
-  .transform(({ address, covered }) => ({ address, isCovered: covered }));
+  .object({
+    address: z.union([z.ipv4(), z.ipv6()]).nullable(),
+    /** What adding it saves: the address on IPv4, its /64 (the office's group) on IPv6. */
+    suggested_network: NetworkTextSchema.nullable(),
+    covered: z.boolean(),
+  })
+  .transform(({ address, suggested_network, covered }) => ({
+    address,
+    suggestedNetwork: suggested_network,
+    isCovered: covered,
+  }));
 
 const RefusalSchema = z.object({ detail: z.string() });
 
@@ -58,7 +67,10 @@ export type OfficeNetwork = z.infer<typeof OfficeNetworkSchema>;
 export type OfficeNetworkChange = z.infer<typeof OfficeNetworkChangeSchema>;
 export type OfficeNetworkList = z.infer<typeof OfficeNetworkListSchema>;
 export type OfficeNetworkLimits = OfficeNetworkList["limits"];
-/** The caller's own internet address (null when it isn't known) and whether it is listed. */
+/**
+ * The caller's own internet address, what "Add the network I'm on now" would add (both null when
+ * it isn't known) and whether it is listed.
+ */
 export type CurrentNetwork = z.infer<typeof CurrentNetworkSchema>;
 
 export const OFFICE_NETWORK_FIELDS = { label: "label", network: "network" } as const;

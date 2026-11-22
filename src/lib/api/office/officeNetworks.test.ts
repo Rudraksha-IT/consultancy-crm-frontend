@@ -118,26 +118,54 @@ describe("removeOfficeNetwork", () => {
 });
 
 describe("fetchCurrentNetwork", () => {
-  it("reads my address and whether it is covered", async () => {
-    const fetchFn = answering(jsonResponse({ address: "110.44.115.82", covered: true }));
+  it("reads my address, what adding it would add, and whether it is covered", async () => {
+    const fetchFn = answering(
+      jsonResponse({ address: "110.44.115.82", suggested_network: "110.44.115.82", covered: true }),
+    );
 
     expect(await fetchCurrentNetwork(fetchFn)).toEqual({
       address: "110.44.115.82",
+      suggestedNetwork: "110.44.115.82",
       isCovered: true,
     });
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/office-networks/current/");
   });
 
-  it("reads an unknown address as none", async () => {
-    const fetchFn = answering(jsonResponse({ address: null, covered: false }));
+  it("reads an IPv6 address with its office group", async () => {
+    const fetchFn = answering(
+      jsonResponse({
+        address: "2400:1a00:b030:9::1",
+        suggested_network: "2400:1a00:b030:9::/64",
+        covered: false,
+      }),
+    );
 
-    expect(await fetchCurrentNetwork(fetchFn)).toEqual({ address: null, isCovered: false });
+    expect(await fetchCurrentNetwork(fetchFn)).toEqual({
+      address: "2400:1a00:b030:9::1",
+      suggestedNetwork: "2400:1a00:b030:9::/64",
+      isCovered: false,
+    });
+  });
+
+  it("reads an unknown address as none", async () => {
+    const fetchFn = answering(
+      jsonResponse({ address: null, suggested_network: null, covered: false }),
+    );
+
+    expect(await fetchCurrentNetwork(fetchFn)).toEqual({
+      address: null,
+      suggestedNetwork: null,
+      isCovered: false,
+    });
   });
 
   it.each([
-    { address: "<script>alert(1)</script>", covered: false },
-    { address: "110.44.115.82", covered: "yes" },
-    { address: 110, covered: false },
+    { address: "<script>alert(1)</script>", suggested_network: null, covered: false },
+    { address: "110.44.115.82", suggested_network: "110.44.115.82", covered: "yes" },
+    { address: 110, suggested_network: null, covered: false },
+    { address: "110.44.115.82", suggested_network: "<b>office</b>", covered: false },
+    { address: "110.44.115.82", suggested_network: ["110.44.115.82"], covered: false },
+    { address: "110.44.115.82", covered: false },
   ])("refuses an answer that isn't an address: %j", async (body) => {
     await expect(fetchCurrentNetwork(answering(jsonResponse(body)))).rejects.toThrow();
   });

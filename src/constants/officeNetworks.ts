@@ -17,6 +17,8 @@ export const OFFICE_NETWORK_TEXT = {
   addressUnknown: "We can't see your internet address right now, so it can't be added from here.",
   alreadyListed: "Already on the list",
   addHere: "Add the network I'm on now",
+  /** On IPv4 the one address the office shares; on IPv6 its /64 group (first live fixes, 3). */
+  adds: (network: string) => `Adds ${network}: every device on this Wi-Fi.`,
   hereLabel: "Office network",
   addedHere: "Added. Staff on this connection can now clock in.",
   nameLabel: "Name",

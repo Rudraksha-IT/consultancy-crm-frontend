@@ -125,26 +125,13 @@ type CurrentNetworkPanelProps = {
   onAdd: (label: string, network: string) => Promise<OfficeNetwork>;
 };
 
-/** The Admin's own address, and one click to add it ("Add the network I'm on now"). */
+/**
+ * The Admin's own address, what adding it saves (the address on IPv4, its /64 on IPv6), and one
+ * click to add that ("Add the network I'm on now").
+ */
 function CurrentNetworkPanel({ current, onAdd }: CurrentNetworkPanelProps) {
-  const { showToast } = useToast();
-  const [isAdding, setIsAdding] = useState(false);
-  const [failure, setFailure] = useState<string | null>(null);
-  const { address } = current;
-
-  async function addHere(here: string): Promise<void> {
-    setIsAdding(true);
-    setFailure(null);
-    try {
-      await onAdd(TEXT.hereLabel, here);
-      showToast(TEXT.addedHere);
-    } catch (error: unknown) {
-      setFailure(refusalOf(error));
-    }
-    setIsAdding(false);
-  }
-
-  if (address === null) {
+  const { address, suggestedNetwork } = current;
+  if (address === null || suggestedNetwork === null) {
     return (
       <Panel isPadded>
         <p className="text-ink-2">{TEXT.addressUnknown}</p>
@@ -159,16 +146,46 @@ function CurrentNetworkPanel({ current, onAdd }: CurrentNetworkPanelProps) {
           <b className="break-all tabular-nums">{address}</b>
           {current.isCovered && <Chip tone="good">{TEXT.alreadyListed}</Chip>}
         </p>
-        {!current.isCovered && (
-          <div>
-            <Button icon="wifi" isLoading={isAdding} onClick={() => void addHere(address)}>
-              {TEXT.addHere}
-            </Button>
-          </div>
-        )}
-        {failure !== null && <Banner tone="problem">{failure}</Banner>}
+        {!current.isCovered && <AddHere network={suggestedNetwork} onAdd={onAdd} />}
       </div>
     </Panel>
+  );
+}
+
+type AddHereProps = {
+  /** What the server suggests adding for the Admin's own address. */
+  network: string;
+  onAdd: CurrentNetworkPanelProps["onAdd"];
+};
+
+/** "Adds …" and the button that adds it, with the server's reason if it is refused. */
+function AddHere({ network, onAdd }: AddHereProps) {
+  const { showToast } = useToast();
+  const [isAdding, setIsAdding] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
+
+  async function addHere(): Promise<void> {
+    setIsAdding(true);
+    setFailure(null);
+    try {
+      await onAdd(TEXT.hereLabel, network);
+      showToast(TEXT.addedHere);
+    } catch (error: unknown) {
+      setFailure(refusalOf(error));
+    }
+    setIsAdding(false);
+  }
+
+  return (
+    <>
+      <p className="text-secondary text-ink-2 break-all">{TEXT.adds(network)}</p>
+      <div>
+        <Button icon="wifi" isLoading={isAdding} onClick={() => void addHere()}>
+          {TEXT.addHere}
+        </Button>
+      </div>
+      {failure !== null && <Banner tone="problem">{failure}</Banner>}
+    </>
   );
 }
 

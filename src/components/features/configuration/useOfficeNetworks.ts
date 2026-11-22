@@ -39,7 +39,11 @@ export function useOfficeNetworks(): OfficeNetworks {
       setState(
         list.status === "fulfilled" ? { status: "loaded", list: list.value } : { status: "failed" },
       );
-      setCurrent(here.status === "fulfilled" ? here.value : { address: null, isCovered: false });
+      setCurrent(
+        here.status === "fulfilled"
+          ? here.value
+          : { address: null, suggestedNetwork: null, isCovered: false },
+      );
     }
     void load();
     return () => {
