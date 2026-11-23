@@ -1,4 +1,7 @@
 /** Configuration → Office network (spec 104-105, issue 55). Say "internet address", never "IP". */
+/** How often the Admin's dialog checks the network while the tab is shown (spec 16). */
+export const OFFICE_NETWORK_CHECK_MS = 60 * 60 * 1000;
+
 export const OFFICE_NETWORK_TEXT = {
   title: "Office network",
   help: "Staff can clock in and out only from these internet connections. Add the office wifi while you're at the office. No location is ever recorded.",
@@ -17,6 +20,8 @@ export const OFFICE_NETWORK_TEXT = {
   addressUnknown: "We can't see your internet address right now, so it can't be added from here.",
   alreadyListed: "Already on the list",
   addHere: "Add the network I'm on now",
+  /** On IPv4 the one address the office shares; on IPv6 its /64 group (first live fixes, 3). */
+  adds: (network: string) => `Adds ${network}: every device on this Wi-Fi.`,
   hereLabel: "Office network",
   addedHere: "Added. Staff on this connection can now clock in.",
   nameLabel: "Name",
@@ -30,9 +35,16 @@ export const OFFICE_NETWORK_TEXT = {
   add: "Add network",
   added: (label: string) => `${label} added`,
   saveFailed: "We couldn't add the network. Please try again.",
+  /** The Admin's dialog over any page when their network isn't saved (first live fixes, 10). */
+  askTitle: "This network isn't on your office list",
+  askOnlySaved: "Staff can clock in only from saved networks.",
+  askAnyoneBefore: "Adding it lets ",
+  askAnyone: "anyone on this network",
+  askAnyoneAfter: " clock in and out.",
+  askOnlyIf:
+    "Only add it if Staff should clock in from here. If it isn't the office network, don't add it.",
+  askAdd: "Add this network",
+  askNotNow: "Not now",
   staticHelp: (maxNetworks: number) =>
     `Ask your internet provider for a fixed (static) address. If it changes, add the new one here. Phones on mobile data can't clock in. An office can have up to ${String(maxNetworks)} networks.`,
-  changesLabel: "Changes to the office network",
-  change: (action: "added" | "removed", label: string, network: string) =>
-    `${action === "added" ? "Added" : "Removed"} ${label} (${network})`,
 } as const;

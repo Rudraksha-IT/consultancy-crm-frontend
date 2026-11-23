@@ -95,6 +95,7 @@ const RAM = progressRow(uid(8), "Ram Karki", {
     id: uid(8),
     name: "Ram Karki",
     stage: "lead",
+    priority: "normal",
     assigned_counsellor: null,
   },
   percent: 8,
@@ -119,6 +120,7 @@ const NEW_VISITOR = {
   country: "canada",
   source: "facebook",
   stage: "lead",
+  priority: "normal",
   assigned_counsellor: null,
 };
 
@@ -630,5 +632,260 @@ describe("What's waiting on you", () => {
     await screen.findByRole("heading", { level: 1 });
     expect(callsTo(fetchFn, "GET", WAITING)).toHaveLength(0);
     expect(screen.queryByRole("region", { name: "Waiting on you" })).toBeNull();
+  });
+});
+
+// A tidier Home with High priority Students (ticket 12; spec 90-94, 98-104).
+const HIGH_ALL = "/api/students/?priority=high&hide_lost=true";
+const HIGH_MINE = "/api/students/?priority=high&hide_lost=true&counsellor=me";
+const HOME_OWING = "/api/accounts/student-fees/?page=1&leave_out=lost";
+
+function highStudent(n: number, name: string, stage = "counselling") {
+  return { ...NEW_VISITOR, id: uid(40 + n), name, stage, priority: "high" };
+}
+
+const FIVE_HIGH = {
+  count: 5,
+  page: 1,
+  page_size: 25,
+  results: [
+    highStudent(1, "Asha Rai"),
+    highStudent(2, "Bina KC", "applying"),
+    highStudent(3, "Chet Lama"),
+    highStudent(4, "Dev Shah"),
+    highStudent(5, "Esha Gurung"),
+  ],
+};
+
+const owingRow = (n: number) => ({
+  student: { id: uid(60 + n), name: `Owes ${String(n)}` },
+  fees: 50000,
+  paid: 10000,
+  still_to_pay: 40000,
+});
+
+const SEVEN_OWING = {
+  count: 7,
+  page: 1,
+  page_size: 25,
+  totals: { agreed: 350000, collected: 70000, still_to_collect: 280000, students: 9, owing: 7 },
+  results: [1, 2, 3, 4, 5, 6, 7].map(owingRow),
+};
+
+const SIX_VISITORS = pageOf(
+  [1, 2, 3, 4, 5, 6].map((n) => ({
+    ...NEW_VISITOR,
+    id: uid(80 + n),
+    name: `Visitor ${String(n)}`,
+  })),
+);
+
+const TIDY = [
+  on("GET", HIGH_ALL, FIVE_HIGH),
+  on("GET", HIGH_MINE, FIVE_HIGH),
+  on("GET", HOME_OWING, SEVEN_OWING),
+  ...withWaiting(SOME_WAITING),
+];
+
+const SECTION_NAMES = [
+  "Waiting on you",
+  "High priority Students",
+  "Pipeline",
+  "This month at a glance",
+  "Who still owes fees",
+  "New visitors without a counsellor",
+  "Students' progress",
+  "Your Students' progress",
+  "Classes",
+  "Your tasks due soon",
+];
+
+/** The Home's sections, top to bottom. */
+async function sectionOrder(): Promise<string[]> {
+  await region("Your tasks due soon");
+  await region("High priority Students");
+  await region("Waiting on you");
+  return screen
+    .getAllByRole("region")
+    .map(
+      (section) =>
+        section.getAttribute("aria-label") ??
+        document.getElementById(section.getAttribute("aria-labelledby") ?? "")?.textContent ??
+        "",
+    )
+    .filter((name) => SECTION_NAMES.includes(name));
+}
+
+describe("A tidier Home (ticket 12)", () => {
+  it("puts the Admin's sections in the order they work in", async () => {
+    backend(...TIDY);
+    renderHome(ADMIN);
+
+    expect(await sectionOrder()).toEqual([
+      "Waiting on you",
+      "High priority Students",
+      "Pipeline",
+      "This month at a glance",
+      "Students' progress",
+      "Who still owes fees",
+      "New visitors without a counsellor",
+      "Your tasks due soon",
+    ]);
+  });
+
+  it("keeps the same order without the Accounts Module, the visitors on a row of their own", async () => {
+    backend(...TIDY);
+    renderHome({ ...ADMIN, modules: ["students", "batches", "reports"] });
+
+    expect(await sectionOrder()).toEqual([
+      "Waiting on you",
+      "High priority Students",
+      "Pipeline",
+      "Students' progress",
+      "New visitors without a counsellor",
+      "Your tasks due soon",
+    ]);
+    const visitors = await region("New visitors without a counsellor");
+    expect(visitors.parentElement).not.toHaveClass("wide:grid-cols-2");
+  });
+
+  it("puts who owes and the new visitors side by side, the same height", async () => {
+    backend(...TIDY);
+    renderHome(ADMIN);
+
+    const owes = await region("Who still owes fees");
+    const visitors = await region("New visitors without a counsellor");
+    expect(owes.parentElement).toBe(visitors.parentElement);
+    expect(owes.parentElement).toHaveClass("wide:grid-cols-2");
+    expect(owes).toHaveClass("h-full");
+    expect(visitors).toHaveClass("h-full");
+  });
+
+  it("puts the counsellor's sections in order, with their own High Students", async () => {
+    const fetchFn = backend(...TIDY);
+    renderHome(COUNSELLOR);
+
+    expect(await sectionOrder()).toEqual([
+      "Waiting on you",
+      "High priority Students",
+      "Your Students' progress",
+      "Classes",
+      "Your tasks due soon",
+    ]);
+    expect(callsTo(fetchFn, "GET", HIGH_MINE)).toHaveLength(1);
+    expect(callsTo(fetchFn, "GET", HIGH_ALL)).toHaveLength(0);
+  });
+
+  it("leaves out Classes for a counsellor without the test-prep Module", async () => {
+    backend(...TIDY);
+    renderHome({ ...COUNSELLOR, modules: ["students"] });
+
+    expect(await sectionOrder()).toEqual([
+      "Waiting on you",
+      "High priority Students",
+      "Your Students' progress",
+      "Your tasks due soon",
+    ]);
+  });
+
+  it("shows at most 4 High Students as slim boxes in one row, each opening the Student", async () => {
+    backend(...TIDY);
+    renderHome(ADMIN);
+    const high = within(await region("High priority Students"));
+
+    const asha = await high.findByRole("link", { name: /^Asha Rai/ });
+    const boxes = high.getByRole("list", { name: "High priority Students" });
+    expect(boxes).toHaveClass("wide:grid-cols-4");
+    expect(asha).toHaveAttribute("href", `/students/${uid(41)}`);
+    expect(asha).toHaveTextContent("Counsellor: Not assigned");
+    expect(asha).toHaveTextContent("Stage: Counselling");
+    expect(within(boxes).getAllByRole("listitem")).toHaveLength(4);
+    expect(high.getByRole("link", { name: /^Dev Shah/ })).toBeInTheDocument();
+    expect(high.queryByText("Esha Gurung")).toBeNull();
+  });
+
+  it("puts See all at the right of the title only when there are more than 4", async () => {
+    backend(...TIDY);
+    renderHome(ADMIN);
+    const section = await region("High priority Students");
+
+    const seeAll = await within(section).findByRole("link", { name: "See all (5)" });
+    expect(seeAll).toHaveAttribute("href", "/students?priority=high");
+    expect(within(section).getByRole("list")).not.toContainElement(seeAll);
+  });
+
+  it("shows no See all when there are 4 or fewer", async () => {
+    backend(
+      on("GET", HIGH_ALL, { ...FIVE_HIGH, count: 4, results: FIVE_HIGH.results.slice(0, 4) }),
+      ...TIDY,
+    );
+    renderHome(ADMIN);
+    const high = within(await region("High priority Students"));
+
+    expect(await high.findByRole("link", { name: /^Dev Shah/ })).toBeInTheDocument();
+    expect(high.queryByRole("link", { name: /See all/ })).toBeNull();
+  });
+
+  it("sends a counsellor's See all to their own High Students", async () => {
+    backend(...TIDY);
+    renderHome(COUNSELLOR);
+    const high = within(await region("High priority Students"));
+
+    expect(await high.findByRole("link", { name: "See all (5)" })).toHaveAttribute(
+      "href",
+      "/students?priority=high&counsellor=me",
+    );
+  });
+
+  it("says so plainly when no Student is High priority", async () => {
+    backend(on("GET", HIGH_ALL, pageOf([])), ...TIDY);
+    renderHome(ADMIN);
+    const high = within(await region("High priority Students"));
+
+    expect(await high.findByText("No Students are High priority right now.")).toBeInTheDocument();
+    expect(high.queryByRole("link", { name: /See all/ })).toBeNull();
+  });
+
+  it("says so when the High Students can't load, and the rest still works", async () => {
+    backend(on("GET", HIGH_ALL, {}, 500), ...TIDY);
+    renderHome(ADMIN);
+
+    expect(
+      await screen.findByText("We couldn't load the High priority Students. Please try again."),
+    ).toBeInTheDocument();
+    expect(await region("Pipeline")).toBeInTheDocument();
+  });
+
+  it("shows 3 who owe and See all opening Accounts at Student fees", async () => {
+    backend(...TIDY);
+    renderHome(ADMIN);
+    const owes = within(await region("Who still owes fees"));
+
+    expect(await owes.findByRole("link", { name: "Owes 1" })).toBeInTheDocument();
+    expect(owes.getAllByRole("listitem")).toHaveLength(3);
+    expect(owes.getByRole("link", { name: "See all (7)" })).toHaveAttribute("href", "/accounts");
+  });
+
+  it("shows 3 new visitors and See all opening the list at No counsellor yet", async () => {
+    backend(on("GET", UNASSIGNED, SIX_VISITORS), ...TIDY);
+    renderHome(ADMIN);
+    const visitors = within(await region("New visitors without a counsellor"));
+
+    expect(await visitors.findByRole("link", { name: "Visitor 1" })).toBeInTheDocument();
+    expect(visitors.getAllByRole("listitem")).toHaveLength(3);
+    expect(visitors.getByRole("link", { name: "See all (6)" })).toHaveAttribute(
+      "href",
+      "/students?stage=lead&counsellor=none",
+    );
+  });
+
+  it("leaves the Front Desk and Teacher Homes as they were", async () => {
+    const fetchFn = backend(...TIDY);
+    renderHome(TEACHER);
+
+    expect(await region("Your classes today")).toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "High priority Students" })).toBeNull();
+    expect(callsTo(fetchFn, "GET", HIGH_ALL)).toHaveLength(0);
+    expect(callsTo(fetchFn, "GET", HIGH_MINE)).toHaveLength(0);
   });
 });

@@ -27,16 +27,18 @@ export type PlatformHosts = { productDomain: string; platformSubdomain: string }
  * The Platform's address (`<platformSubdomain>.<productDomain>`) serves only its own pages under
  * `/platform`; anything else there, such as `/`, goes to the Platform (`toPlatform`), which opens
  * its login when nobody is logged in. Office pages there would ask for an office that isn't one.
+ * The Platform's pages exist on no other address (`notFound`, first live fixes ticket 14).
  */
 export function routeForPlatformHost(
   host: string | null,
   pathname: string,
   hosts: PlatformHosts,
-): "toPlatform" | "pass" {
+): "toPlatform" | "notFound" | "pass" {
   const isPlatform = hostName(host) === `${hosts.platformSubdomain}.${hosts.productDomain}`;
   const isPlatformPage =
     pathname === ROUTES.platformHome || pathname.startsWith(`${ROUTES.platformHome}/`);
-  return isPlatform && !isPlatformPage ? "toPlatform" : "pass";
+  if (isPlatform) return isPlatformPage ? "pass" : "toPlatform";
+  return isPlatformPage ? "notFound" : "pass";
 }
 
 /** The host without its port, lowercased. */

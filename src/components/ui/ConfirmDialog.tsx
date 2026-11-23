@@ -48,6 +48,11 @@ type ConfirmDialogProps = {
   failureOf?: (error: unknown) => string;
   /** The calm button, "Cancel" by default (e.g. "Keep editing" before leaving a page). */
   cancelLabel?: string;
+  /**
+   * Red for a delete or remove (the default); the accent for an action that adds something but
+   * still needs asking, such as adding the Admin's own network to the office list.
+   */
+  actionVariant?: "danger" | "primary";
 };
 
 /**
@@ -62,7 +67,8 @@ export function ConfirmDialog({
   onConfirm,
   onClose,
   failureOf = () => MESSAGES.removeFailed,
-  cancelLabel = LABELS.cancel,
+  cancelLabel,
+  actionVariant,
 }: ConfirmDialogProps) {
   const [isWorking, setIsWorking] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
@@ -93,26 +99,52 @@ export function ConfirmDialog({
       title={title}
       onClose={onClose}
       footer={
-        <>
-          <Button hasFirstFocus onClick={onClose}>
-            {cancelLabel}
-          </Button>
-          <Button
-            variant="danger"
-            isLoading={isWorking}
-            onClick={() => {
-              void confirm();
-            }}
-          >
-            {actionLabel}
-          </Button>
-        </>
+        <ConfirmActions
+          cancelLabel={cancelLabel}
+          actionLabel={actionLabel}
+          actionVariant={actionVariant}
+          isWorking={isWorking}
+          onCancel={onClose}
+          onConfirm={() => {
+            void confirm();
+          }}
+        />
       }
     >
       <div className="text-ink-2">{children}</div>
       {reason !== undefined && <ReasonFields reason={reason} choice={why} />}
       {failure !== null && <Banner tone="problem">{failure}</Banner>}
     </Dialog>
+  );
+}
+
+type ConfirmActionsProps = {
+  cancelLabel: string | undefined;
+  actionLabel: string;
+  actionVariant: "danger" | "primary" | undefined;
+  isWorking: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+};
+
+/** Cancel (focused first), then the button that names the action. */
+function ConfirmActions({
+  cancelLabel = LABELS.cancel,
+  actionLabel,
+  actionVariant = "danger",
+  isWorking,
+  onCancel,
+  onConfirm,
+}: ConfirmActionsProps) {
+  return (
+    <>
+      <Button hasFirstFocus onClick={onCancel}>
+        {cancelLabel}
+      </Button>
+      <Button variant={actionVariant} isLoading={isWorking} onClick={onConfirm}>
+        {actionLabel}
+      </Button>
+    </>
   );
 }
 

@@ -4,6 +4,7 @@ import { useEffect, useSyncExternalStore } from "react";
 
 import type { BrandLogo } from "@/components/ui/BrandMark";
 import { fetchProductLogo } from "@/lib/api";
+import { APP_LOGO_URL } from "@/lib/brand/appLogo";
 
 /**
  * The product's own logo (issue 65), shared by the Platform's header, the login screens and the
@@ -58,4 +59,15 @@ export function useProductLogo(): BrandLogo | null {
     );
   }, []);
   return loaded.logo;
+}
+
+/** The app's own logo (ticket 07), with the product's name always beside it. */
+const APP_LOGO: BrandLogo = { url: APP_LOGO_URL, showName: true };
+
+/**
+ * The product's mark for the Platform's header and the login screens: the uploaded logo in use,
+ * or the app's own logo (ticket 07), never initials.
+ */
+export function useProductMark(): BrandLogo {
+  return useProductLogo() ?? APP_LOGO;
 }

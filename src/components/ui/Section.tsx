@@ -5,20 +5,30 @@ type SectionProps = {
   title: string;
   /** Short context or actions shown to the right of the title. */
   aside?: ReactNode;
+  /** Stretch to the height of the row it sits in, the panel growing (boxes side by side). */
+  fills?: boolean;
   children: ReactNode;
 };
+
+/** A section's own layout: its content at the top, or stretched to fill its row. */
+function sectionClasses(fills: boolean | undefined): string {
+  return clsx(
+    "grid min-w-0 gap-4",
+    fills === true ? "h-full grid-rows-[auto_1fr] content-stretch" : "content-start",
+  );
+}
 
 /** Whether a Section is a part of a bigger section, so its title is one level down. */
 const IsPartContext = createContext(false);
 
 /** A titled part of a page. The title sits above the panel, never inside it. */
-export function Section({ title, aside, children }: SectionProps) {
+export function Section({ title, aside, fills, children }: SectionProps) {
   const titleId = useId();
   const isPart = use(IsPartContext);
   const Heading = isPart ? "h3" : "h2";
 
   return (
-    <section aria-labelledby={titleId} className="grid min-w-0 content-start gap-4">
+    <section aria-labelledby={titleId} className={sectionClasses(fills)}>
       <div className="min-h-control flex flex-wrap items-center justify-between gap-4">
         <Heading id={titleId} className={clsx(isPart ? "text-card-title" : "text-section-title")}>
           {title}

@@ -1,5 +1,6 @@
 import type { RecordId } from "@/lib/recordId";
 import { API_PATHS } from "@/constants/api";
+import type { Priority } from "@/constants/priority";
 
 import { getJson, putJson } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
@@ -92,6 +93,15 @@ export async function saveNote(
   } catch (error) {
     throw toFieldErrors(error, NOTE_API_FIELDS) ?? error;
   }
+}
+
+/** Set the Student's Priority (ticket 10). The API records the change in History. */
+export function saveStudentPriority(
+  id: RecordId,
+  priority: Priority,
+  fetchFn: typeof fetch = fetch,
+): Promise<StudentProfile> {
+  return putJson(API_PATHS.studentPriority(id), { priority }, StudentProfileSchema, fetchFn);
 }
 
 /** One page of the Student's History, newest first. */

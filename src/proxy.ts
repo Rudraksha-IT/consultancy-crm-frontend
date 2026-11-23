@@ -1,10 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { ROUTES } from "@/constants/routes";
-import { routeForCentralLogin, routeForPlatformHost } from "@/lib/centralLogin";
+import { routeForCentralLogin, routeForPlatformHost, type PlatformHosts } from "@/lib/centralLogin";
 import { getServerConfig } from "@/lib/config";
 
 /** `path` on the host the browser used (Next.js builds `nextUrl` from the request's Host). */
+/** A path no page has: rewriting to it shows the usual "Page not found". */
+const NOT_FOUND_PATH = "/page-not-found";
+
 function onThisHost(request: NextRequest, path: string): URL {
   const url = request.nextUrl.clone();
   url.pathname = path;
@@ -32,17 +35,28 @@ export function proxy(request: NextRequest): NextResponse {
   });
   if (routing === "show") return NextResponse.rewrite(onThisHost(request, ROUTES.centralLogin));
   if (routing === "toLogin") return NextResponse.redirect(onThisHost(request, ROUTES.login));
-  const platform = routeForPlatformHost(host, request.nextUrl.pathname, {
-    productDomain: config.productDomain,
-    platformSubdomain: config.platformSubdomain,
-  });
+  return forPlatformHost(request, host, config);
+}
+
+/** On the Platform's address only its pages; its pages on no other address (ticket 14). */
+function forPlatformHost(
+  request: NextRequest,
+  host: string | null,
+  config: PlatformHosts,
+): NextResponse {
+  const platform = routeForPlatformHost(host, request.nextUrl.pathname, config);
   if (platform === "toPlatform") {
     return NextResponse.redirect(onThisHost(request, ROUTES.platformHome));
+  }
+  if (platform === "notFound") {
+    // A path no page has, so the usual "Page not found" shows, with a 404.
+    return NextResponse.rewrite(onThisHost(request, NOT_FOUND_PATH), { status: 404 });
   }
   return NextResponse.next();
 }
 
 export const config = {
-  // `/healthz` (ticket 14) answers the same on every host, for Docker's healthcheck.
-  matcher: ["/((?!api/|_next/|favicon.ico|healthz$).*)"],
+  // `/healthz` (ticket 14) answers the same on every host, for Docker's healthcheck; so does the
+  // tab icon (first live fixes, ticket 05).
+  matcher: ["/((?!api/|_next/|favicon.ico|healthz$|tab-icon$|tab-icon/).*)"],
 };

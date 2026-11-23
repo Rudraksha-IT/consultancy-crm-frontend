@@ -63,6 +63,36 @@ describe("routeForPlatformHost", () => {
     },
   );
 
+  // Ticket 14: the Platform's pages open only on its own address.
+  it.each(["/platform", "/platform/", "/platform/login", "/platform/consultancies/x"])(
+    "has no %s on an office's address",
+    (path) => {
+      expect(routeForPlatformHost(`${testHost("northwind")}:8080`, path, PLATFORM)).toBe(
+        "notFound",
+      );
+    },
+  );
+
+  it.each([
+    testHost("ACME").toUpperCase(),
+    `${testHost("admin")}.evil.com`,
+    `evil.${testHost("admin")}`,
+    "localhost:3000",
+    null,
+  ])("has no Platform on %s", (host) => {
+    expect(routeForPlatformHost(host, "/platform", PLATFORM)).toBe("notFound");
+  });
+
+  it("serves the Platform on its own address in any letter case", () => {
+    expect(routeForPlatformHost(testHost("ADMIN").toUpperCase(), "/platform", PLATFORM)).toBe(
+      "pass",
+    );
+  });
+
+  it("leaves office pages that only start with platform alone", () => {
+    expect(routeForPlatformHost(testHost("acme"), "/platformx", PLATFORM)).toBe("pass");
+  });
+
   it("follows a configured subdomain", () => {
     const hosts = { ...PLATFORM, platformSubdomain: "console" };
 

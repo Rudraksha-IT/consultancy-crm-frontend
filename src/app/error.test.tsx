@@ -42,4 +42,10 @@ describe("the global error page (the layout itself failed)", () => {
     expect(html).toContain("Try again");
     expect(html).not.toContain("sita@acme.test");
   });
+
+  it("keeps the product's tab icon (first live fixes, ticket 05)", () => {
+    const html = renderToStaticMarkup(<GlobalError error={digestError("99")} reset={vi.fn()} />);
+
+    expect(html).toContain('<link rel="icon" href="/tab-icon"/>');
+  });
 });

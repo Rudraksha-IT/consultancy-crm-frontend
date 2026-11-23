@@ -6,6 +6,9 @@ export const ROUTES = {
   /** Where an invited employee enters their Code and chooses a password (issue 07). */
   join: "/join",
   students: "/students",
+  /** The Students list with filters set in the address, e.g. `{ priority: "high" }` (ticket 12). */
+  studentsWhere: (filters: Record<string, string>) =>
+    `/students?${new URLSearchParams(filters).toString()}`,
   /** One Student's page (issue 10). */
   student: (id: RecordId) => `/students/${id}`,
   studentEdit: (id: RecordId) => `/students/${id}/edit`,

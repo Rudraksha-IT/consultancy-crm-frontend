@@ -34,6 +34,7 @@ function student(overrides: Record<string, unknown>) {
     country: "canada",
     source: "walk_in",
     stage: "lead",
+    priority: "normal",
     assigned_counsellor: null,
     ...overrides,
   };
@@ -46,6 +47,7 @@ const SITA = student({
   phone: "9841234567",
   country: "australia",
   stage: "applying",
+  priority: "high",
   assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 });
 const COUNSELLORS = [
@@ -94,11 +96,11 @@ function lastListCall(fetchFn: ReturnType<typeof backend>): string | undefined {
   return listCalls(fetchFn).at(-1);
 }
 
-function renderPage(context: StaffContext = ADMIN, initialSearch = "") {
+function renderPage(context: StaffContext = ADMIN, initialSearch = "", initialPriority = "") {
   render(
     <StaffContextContext value={context}>
       <ToastProvider>
-        <StudentsPage initialSearch={initialSearch} />
+        <StudentsPage initialSearch={initialSearch} initialPriority={initialPriority} />
       </ToastProvider>
     </StaffContextContext>,
   );
@@ -110,6 +112,81 @@ async function rowFor(name: string): Promise<HTMLElement> {
   if (found === null) throw new Error(`No row for ${name}`);
   return found;
 }
+
+describe("Priority on the Students list (ticket 11)", () => {
+  afterEach(() => {
+    window.history.replaceState(null, "", "/");
+  });
+
+  it("has a Priority column right after the Student's name", async () => {
+    backend(listing(), counsellors);
+    renderPage();
+
+    await rowFor("Sita Karki");
+    const headers = screen.getAllByRole("columnheader").map((cell) => cell.textContent);
+    expect(headers.indexOf("Priority")).toBe(headers.indexOf("Student") + 1);
+  });
+
+  it("shows each Student's Priority in words", async () => {
+    backend(listing(), counsellors);
+    renderPage();
+
+    const sita = await rowFor("Sita Karki");
+    const anish = await rowFor("Anish Neupane");
+    expect(within(sita).getByTestId("priority")).toHaveTextContent("High");
+    expect(within(anish).getByTestId("priority")).toHaveTextContent("Normal");
+  });
+
+  it("on a phone, shows a tag beside the name only for High", async () => {
+    backend(listing(), counsellors);
+    renderPage();
+
+    const sita = await rowFor("Sita Karki");
+    const anish = await rowFor("Anish Neupane");
+    expect(within(sita).getByText("High priority").closest(".phone\\:hidden")).not.toBeNull();
+    expect(within(anish).queryByText(/priority$/)).toBeNull();
+  });
+
+  it("filters by Priority with the other filters and keeps it in the address", async () => {
+    const fetchFn = backend(listing(), counsellors);
+    renderPage();
+
+    await userEvent.selectOptions(await screen.findByRole("combobox", { name: "Stage" }), "Visa");
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Priority" }), "High");
+
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/?stage=visa&priority=high");
+    });
+    expect(window.location.search).toBe("?priority=high");
+    expect(window.scrollY).toBe(0);
+  });
+
+  it("takes the Priority out of the address when set back to All", async () => {
+    const fetchFn = backend(listing(), counsellors);
+    renderPage(ADMIN, "", "high");
+
+    const select = await screen.findByRole("combobox", { name: "Priority" });
+    expect(select).toHaveValue("high");
+    await userEvent.selectOptions(select, "All priorities");
+
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/");
+    });
+    expect(window.location.search).toBe("");
+  });
+
+  it("keeps the list's order whatever the Priority", async () => {
+    backend(listing(pageOf([ANISH, SITA])), counsellors);
+    renderPage();
+
+    await rowFor("Sita Karki");
+    const names = screen
+      .getAllByRole("link")
+      .map((link) => link.textContent)
+      .filter((text) => text === "Anish Neupane" || text === "Sita Karki");
+    expect(names).toEqual(["Anish Neupane", "Sita Karki"]);
+  });
+});
 
 describe("StudentsPage", () => {
   it("lists each Student with phone, Stage, counsellor and where they want to go", async () => {

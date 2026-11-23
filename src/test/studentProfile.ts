@@ -50,6 +50,7 @@ export const PROFILE = {
   sub_agent_name: "",
   note: "Wants Melbourne only.",
   stage: "counselling",
+  priority: "normal",
   assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
   created_at: "2026-10-01T10:00:00+05:45",
   academic_records: [
@@ -67,6 +68,7 @@ export const PROFILE = {
   documents: { done: 1, total: 8 },
   details_version: 3,
   can_change: true,
+  can_set_priority: true,
   can_edit_details: true,
   can_set_stage: true,
   can_assign: false,

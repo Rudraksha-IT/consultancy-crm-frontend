@@ -73,7 +73,6 @@ export {
 export type {
   CurrentNetwork,
   OfficeNetwork,
-  OfficeNetworkChange,
   OfficeNetworkLimits,
   OfficeNetworkList,
 } from "./office/officeNetworks";
@@ -289,6 +288,8 @@ export type {
   PasswordChange,
   SignedInDevice,
 } from "./staff/mySettings";
+export { askForEmailChange, confirmEmailChange, WorkEmailRefusedError } from "./staff/workEmail";
+export type { EmailChangeRequest, WorkEmailField } from "./staff/workEmail";
 export { checkResetCode, completePasswordReset, requestResetCode } from "./auth/passwordReset";
 export {
   checkPlatformResetCode,
@@ -350,7 +351,12 @@ export {
   resetEmployeeTwoFactor,
   setEmployeeTwoFactor,
 } from "./staff/staff";
-export { fetchStudentHistory, fetchStudentProfile, saveNote } from "./students/studentProfile";
+export {
+  fetchStudentHistory,
+  fetchStudentProfile,
+  saveNote,
+  saveStudentPriority,
+} from "./students/studentProfile";
 export {
   EDIT_LISTS,
   saveEditDetails,
@@ -420,7 +426,7 @@ export type {
   Receipt,
   ReceiptLine,
 } from "./money/payments";
-export { addStudent, fetchStudents } from "./students/students";
+export { addStudent, fetchHighPriorityStudents, fetchStudents } from "./students/students";
 export { fetchAttendanceDay, fetchStudentClasses, saveAttendanceDay } from "./classes/attendance";
 export type { AttendanceDay, DayMarks, StudentClass } from "./classes/attendance";
 export {
@@ -567,11 +573,13 @@ export {
   fetchProductLogo,
   invitePlatformAdmin,
   reactivatePlatformAdmin,
-  removeProductLogo,
   requestPlatformJoinCode,
   resendPlatformAdminCode,
   uploadProductLogo,
 } from "./platform/platformTeam";
+export { saveProductName } from "./platform/productName";
+export { fetchSavedLogos, pickSavedLogo, removeSavedLogo } from "./platform/savedLogos";
+export type { SavedLogo, SavedLogos } from "./platform/savedLogos";
 export type {
   NewPlatformAdmin,
   PlatformAdminRow,

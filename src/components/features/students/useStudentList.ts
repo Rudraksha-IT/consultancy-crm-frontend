@@ -18,14 +18,14 @@ export function useStudentList(
   version: number,
 ): StudentListState {
   const [list, setList] = useState<StudentListState>({ status: "loading" });
-  const { search, stage, counsellor, source, country, targetLevel } = filters;
+  const { search, stage, priority, counsellor, source, country, targetLevel } = filters;
 
   useEffect(() => {
     let isCancelled = false;
     async function load(): Promise<void> {
       try {
         const found = await fetchStudents(
-          { search, stage, counsellor, source, country, targetLevel },
+          { search, stage, priority, counsellor, source, country, targetLevel },
           page,
         );
         if (!isCancelled) setList({ status: "loaded", page: found });
@@ -37,7 +37,7 @@ export function useStudentList(
     return () => {
       isCancelled = true;
     };
-  }, [search, stage, counsellor, source, country, targetLevel, page, version]);
+  }, [search, stage, priority, counsellor, source, country, targetLevel, page, version]);
 
   return list;
 }

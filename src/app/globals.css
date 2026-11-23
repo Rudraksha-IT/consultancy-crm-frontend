@@ -258,6 +258,8 @@
   --spacing-menu: 17.5rem;
   --spacing-field-label: 12.5rem;
   --spacing-settings-label: 20rem;
+  /* a saved logo's tile in Platform → Settings (ticket 07) */
+  --spacing-logo-tile: 11.25rem;
   /* The left menu of a person's own Settings (issue 38). */
   --spacing-settings-menu: 13.75rem;
   /* A two-step login QR code (issue 61): large enough for any phone camera to read. */

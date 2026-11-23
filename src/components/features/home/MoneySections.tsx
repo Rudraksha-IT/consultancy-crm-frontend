@@ -31,8 +31,11 @@ import {
   type ReceivedCommission,
 } from "@/lib/api";
 import { todayIso } from "@/lib/dates";
-import { formatNpr, paidShare } from "@/lib/money";
+import { paidShare } from "@/lib/money";
 
+import { Amounts, AmountsEye } from "./Amounts";
+import { SeeAllLink } from "./SeeAllLink";
+import type { HomeAmounts } from "./useHomeAmounts";
 import { useLoaded, type Loaded } from "./useLoaded";
 
 /** The first day of this month, "YYYY-MM-01" (AD). */
@@ -72,34 +75,45 @@ const ACCOUNTS_LINK = "min-h-control inline-flex items-center";
  * in minus money out), money in from Students and Received Commission, money out (Expenses), the
  * Fees still to collect, and the Commission still to come from universities.
  */
-export function MonthAtAGlance({ owing }: { owing: Loaded<OwingPage> }) {
+export function MonthAtAGlance({
+  owing,
+  amounts,
+}: {
+  owing: Loaded<OwingPage>;
+  amounts: HomeAmounts;
+}) {
   const month = useLoaded(loadThisMonth, 0);
   return (
     <Section
       title={FEE_TEXT.atAGlance}
       aside={
-        <Link href={ROUTES.accounts} className={ACCOUNTS_LINK}>
-          {FEE_TEXT.openAccounts}
-        </Link>
+        <span className="flex items-center gap-3">
+          <AmountsEye amounts={amounts} />
+          <Link href={ROUTES.accounts} className={ACCOUNTS_LINK}>
+            {FEE_TEXT.openAccounts}
+          </Link>
+        </span>
       }
     >
-      <GlanceBody owing={owing} month={month} />
+      <GlanceBody owing={owing} month={month} isShown={amounts.isShown} />
     </Section>
   );
 }
 
-type GlanceBodyProps = { owing: Loaded<OwingPage>; month: Loaded<ThisMonth> };
+type GlanceBodyProps = { owing: Loaded<OwingPage>; month: Loaded<ThisMonth>; isShown: boolean };
 
-function GlanceBody({ owing, month }: GlanceBodyProps) {
+function GlanceBody({ owing, month, isShown }: GlanceBodyProps) {
   if (owing.status === "loaded" && month.status === "loaded") {
-    return <GlanceFigures owing={owing.data} month={month.data} />;
+    return <GlanceFigures owing={owing.data} month={month.data} isShown={isShown} />;
   }
   const hasFailed = owing.status === "failed" || month.status === "failed";
   if (hasFailed) return <Banner tone="problem">{FEE_TEXT.glanceFailed}</Banner>;
   return <p className="text-ink-2">{MESSAGES.loading}</p>;
 }
 
-function GlanceFigures({ owing, month }: { owing: OwingPage; month: ThisMonth }) {
+type GlanceFiguresProps = { owing: OwingPage; month: ThisMonth; isShown: boolean };
+
+function GlanceFigures({ owing, month, isShown }: GlanceFiguresProps) {
   const dates = useDates();
   const { totals } = owing;
   const days = `${dates.date(startOfMonth())} to ${dates.date(todayIso())}`;
@@ -111,30 +125,36 @@ function GlanceFigures({ owing, month }: { owing: OwingPage; month: ThisMonth })
     <TileGrid>
       <FigureTile
         label={profit >= 0 ? FEE_TEXT.profitThisMonth : FEE_TEXT.lossThisMonth}
-        value={formatNpr(Math.abs(profit))}
+        value={<Amounts isShown={isShown}>{(money) => money(Math.abs(profit))}</Amounts>}
         footnote={FEE_TEXT.moneyInMinusOut}
         tone={profit >= 0 ? "good" : "bad"}
       />
       <FigureTile
         label={FEE_TEXT.moneyIn}
-        value={formatNpr(moneyIn)}
-        footnote={FEE_TEXT.moneyInSplit(formatNpr(fromStudents), formatNpr(fromCommission))}
+        value={<Amounts isShown={isShown}>{(money) => money(moneyIn)}</Amounts>}
+        footnote={
+          <Amounts isShown={isShown}>
+            {(money) => FEE_TEXT.moneyInSplit(money(fromStudents), money(fromCommission))}
+          </Amounts>
+        }
       />
       <FigureTile
         label={EXPENSE_TEXT.moneyOut}
-        value={formatNpr(month.expenses.total)}
+        value={<Amounts isShown={isShown}>{(money) => money(month.expenses.total)}</Amounts>}
         footnote={EXPENSE_TEXT.moneyOutFootnote(month.expenses.count, days)}
       />
       <FigureTile
         label={FEE_TEXT.feesToCollect}
-        value={formatNpr(totals.stillToCollect)}
+        value={<Amounts isShown={isShown}>{(money) => money(totals.stillToCollect)}</Amounts>}
         footnote={FEES_BY_TYPE_TEXT.seeByType(totals.owing)}
         href={ROUTES.feesByType}
         {...(totals.stillToCollect > 0 && { tone: "warn" as const })}
       />
       <FigureTile
         label={COMMISSION_TEXT.toCome}
-        value={formatNpr(month.commission.totals.toCome)}
+        value={
+          <Amounts isShown={isShown}>{(money) => money(month.commission.totals.toCome)}</Amounts>
+        }
         footnote={COMMISSION_TEXT.fromUniversities}
       />
     </TileGrid>
@@ -142,54 +162,69 @@ function GlanceFigures({ owing, month }: { owing: OwingPage; month: ThisMonth })
 }
 
 /** The Students who owe most, each with a paid-so-far bar (spec 22a). */
-export function WhoStillOwes({ owing }: { owing: Loaded<OwingPage> }) {
+export function WhoStillOwes({ owing, isShown }: { owing: Loaded<OwingPage>; isShown: boolean }) {
   return (
-    <Section
-      title={FEE_TEXT.whoStillOwes}
-      aside={
-        <Link href={ROUTES.accounts} className={ACCOUNTS_LINK}>
-          {FEE_TEXT.allFees}
-        </Link>
-      }
-    >
-      {owing.status === "loading" && <p className="text-ink-2">{MESSAGES.loading}</p>}
-      {owing.status === "failed" && <Banner tone="problem">{FEE_TEXT.owingFailed}</Banner>}
-      {owing.status === "loaded" && (
-        <Panel>
-          {owing.data.rows.length === 0 ? (
-            <EmptyState>{FEE_TEXT.everyonePaid}</EmptyState>
-          ) : (
-            <RowList label={FEE_TEXT.whoStillOwes}>
-              {owing.data.rows.slice(0, OWING_ON_HOME).map((row) => {
-                const percent = paidShare(row.fees, row.paid);
-                return (
-                  <RowItem
-                    key={row.student.id}
-                    title={
-                      <Link
-                        href={ROUTES.student(row.student.id)}
-                        className="text-ink hover:text-accent min-h-control inline-flex items-center break-words underline-offset-4 hover:underline"
-                      >
-                        {row.student.name}
-                      </Link>
-                    }
-                    right={
-                      <span className="text-warn font-semibold whitespace-nowrap tabular-nums">
-                        {FEE_TEXT.left(formatNpr(row.stillToPay))}
-                      </span>
-                    }
-                  >
-                    <ProgressBar label={FEE_TEXT.paidShareOf(row.student.name)} value={percent} />
-                    <span className="text-small text-ink-2">
-                      {FEE_TEXT.paidOf(formatNpr(row.paid), formatNpr(row.fees), percent)}
-                    </span>
-                  </RowItem>
-                );
-              })}
-            </RowList>
-          )}
-        </Panel>
-      )}
+    <Section title={FEE_TEXT.whoStillOwes} fills>
+      <OwingBody owing={owing} isShown={isShown} />
     </Section>
+  );
+}
+
+type OwingProps = { owing: Loaded<OwingPage>; isShown: boolean };
+
+function OwingBody({ owing, isShown }: OwingProps) {
+  if (owing.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (owing.status === "failed") return <Banner tone="problem">{FEE_TEXT.owingFailed}</Banner>;
+  if (owing.data.rows.length === 0) {
+    return (
+      <Panel>
+        <EmptyState>{FEE_TEXT.everyonePaid}</EmptyState>
+      </Panel>
+    );
+  }
+  return (
+    <div className="grid grid-rows-[1fr_auto] gap-3">
+      <Panel>
+        <OwingRows owing={owing.data} isShown={isShown} />
+      </Panel>
+      <SeeAllLink href={ROUTES.accounts} count={owing.data.count} />
+    </div>
+  );
+}
+
+function OwingRows({ owing, isShown }: { owing: OwingPage; isShown: boolean }) {
+  return (
+    <RowList label={FEE_TEXT.whoStillOwes}>
+      {owing.rows.slice(0, OWING_ON_HOME).map((row) => {
+        const percent = paidShare(row.fees, row.paid);
+        return (
+          <RowItem
+            key={row.student.id}
+            title={
+              <Link
+                href={ROUTES.student(row.student.id)}
+                className="text-ink hover:text-accent min-h-control inline-flex items-center break-words underline-offset-4 hover:underline"
+              >
+                {row.student.name}
+              </Link>
+            }
+            right={
+              <span className="text-warn font-semibold whitespace-nowrap tabular-nums">
+                <Amounts isShown={isShown}>
+                  {(money) => FEE_TEXT.left(money(row.stillToPay))}
+                </Amounts>
+              </span>
+            }
+          >
+            <ProgressBar label={FEE_TEXT.paidShareOf(row.student.name)} value={percent} />
+            <span className="text-small text-ink-2">
+              <Amounts isShown={isShown}>
+                {(money) => FEE_TEXT.paidOf(money(row.paid), money(row.fees), percent)}
+              </Amounts>
+            </span>
+          </RowItem>
+        );
+      })}
+    </RowList>
   );
 }

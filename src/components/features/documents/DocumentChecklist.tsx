@@ -12,6 +12,7 @@ import {
   DocumentState,
 } from "@/constants/documents";
 import type { BinTarget, ChecklistItem, DocumentLinkedTo, StoredDocument } from "@/lib/api";
+import { isZipFileName } from "@/lib/documents";
 
 import { BinnedDocuments, BinnedFileItems, type BinViewer } from "./ChecklistBin";
 import { DocumentExampleLine } from "./DocumentExampleLine";
@@ -199,17 +200,19 @@ function FileList({ document, typeName, onShow, onDelete, bin }: FileListProps) 
         <li key={file.id} className="flex min-w-0 flex-wrap items-center gap-1">
           <OpenFileButton
             fileName={file.fileName}
-            onOpen={() => {
-              onShow(document.id, file.id, "open");
+            onOpen={(action) => {
+              onShow(document.id, file.id, action);
             }}
           />
-          <IconButton
-            icon="download"
-            label={DOCUMENT_TEXT.download(file.fileName)}
-            onClick={() => {
-              onShow(document.id, file.id, "download");
-            }}
-          />
+          {!isZipFileName(file.fileName) && (
+            <IconButton
+              icon="download"
+              label={DOCUMENT_TEXT.download(file.fileName)}
+              onClick={() => {
+                onShow(document.id, file.id, "download");
+              }}
+            />
+          )}
           {canDeleteOne && (
             <IconButton
               icon="trash"

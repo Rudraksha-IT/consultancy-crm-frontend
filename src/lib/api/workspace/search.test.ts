@@ -8,6 +8,7 @@ const STUDENT = {
   name: "Sita Karki",
   phone: "9841234567",
   stage: "counselling",
+  priority: "normal",
   assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 };
 

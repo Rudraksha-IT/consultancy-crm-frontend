@@ -21,6 +21,7 @@ const SITA = {
   name: "Sita Karki",
   phone: "9841234567",
   stage: "counselling",
+  priority: "normal",
   assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 };
 const ASHA = {
@@ -28,6 +29,7 @@ const ASHA = {
   id: uid(3),
   name: "Asha Sapkota",
   stage: "lead",
+  priority: "normal",
   assigned_counsellor: null,
 };
 const MORNING = { id: uid(7), name: "IELTS Morning", time_slot: "7:00-8:30 AM" };

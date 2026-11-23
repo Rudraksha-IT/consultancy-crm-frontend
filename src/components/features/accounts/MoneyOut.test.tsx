@@ -11,6 +11,7 @@ import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { consultancySummary } from "@/test/consultancy";
+import { HOME_AMOUNTS_KEY } from "@/constants/home";
 
 const ADMIN: StaffContext = {
   staff: { id: uid(1), name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
@@ -453,6 +454,15 @@ describe("changing and deleting an expense", () => {
 });
 
 describe("Money out on the Admin's Home", () => {
+  // These check the figures themselves, so the amounts start shown (ticket 13).
+  beforeEach(() => {
+    window.localStorage.setItem(HOME_AMOUNTS_KEY, "shown");
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
   it("shows this month's money out beside money in", async () => {
     backend(
       on("GET", HOME_OWING_URL, OWING),

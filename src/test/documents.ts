@@ -13,11 +13,17 @@ type ApiFile = {
 };
 
 /** A file as the API answers it, named `name`, for tests. */
+function contentTypeOf(name: string): string {
+  if (name.endsWith(".pdf")) return "application/pdf";
+  if (name.endsWith(".zip")) return "application/zip";
+  return "image/jpeg";
+}
+
 export function apiFile(id: RecordId, name: string): ApiFile {
   return {
     id,
     file_name: name,
-    content_type: name.endsWith(".pdf") ? "application/pdf" : "image/jpeg",
+    content_type: contentTypeOf(name),
     size: 2048,
     uploaded_at: "2026-11-01T10:00:00+05:45",
     uploaded_by: { id: uid(5), name: "Bikash Thapa" },

@@ -5,7 +5,6 @@ import userEvent from "@testing-library/user-event";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { formatAdDateTime } from "@/lib/dates";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
@@ -24,20 +23,10 @@ const ADMIN: StaffContext = {
 
 const LIST_PATH = "/api/office-networks/";
 const CURRENT_PATH = "/api/office-networks/current/";
-const AT = "2026-10-12T04:19:00+00:00";
 const LIMITS = { max_networks: 20, ipv4_widest_prefix: 24, ipv6_widest_prefix: 48 };
 const MAIN = { id: uid(901), label: "Main office wifi", network: "110.44.115.82" };
-const ADDED_MAIN = {
-  id: uid(1),
-  action: "added",
-  label: "Main office wifi",
-  network: "110.44.115.82",
-  by: "Sita Sharma",
-  at: AT,
-};
-
-function listOf(networks: unknown[] = [], changes: unknown[] = [], limits = LIMITS) {
-  return { networks, changes, limits };
+function listOf(networks: unknown[] = [], limits = LIMITS) {
+  return { networks, limits };
 }
 
 function renderSection() {
@@ -56,10 +45,14 @@ afterEach(() => {
 });
 
 describe("OfficeNetworkSettings", () => {
-  it("lists each network with its name and address, and the changes under it", async () => {
+  it("lists only each network's name, address and Remove, with no history", async () => {
     backend(
-      on("GET", LIST_PATH, listOf([MAIN], [ADDED_MAIN])),
-      on("GET", CURRENT_PATH, { address: "27.34.20.9", covered: false }),
+      on("GET", LIST_PATH, listOf([MAIN])),
+      on("GET", CURRENT_PATH, {
+        address: "27.34.20.9",
+        suggested_network: "27.34.20.9",
+        covered: false,
+      }),
     );
     const section = renderSection();
 
@@ -67,10 +60,8 @@ describe("OfficeNetworkSettings", () => {
     expect(list.getByText("Main office wifi")).toBeVisible();
     expect(list.getByText("110.44.115.82")).toBeVisible();
     expect(list.getByRole("button", { name: "Remove Main office wifi" })).toBeVisible();
-    const changes = within(section).getByRole("list", { name: "Changes to the office network" });
-    expect(changes).toHaveTextContent(
-      `Added Main office wifi (110.44.115.82). Sita Sharma, ${formatAdDateTime(AT)}`,
-    );
+    expect(within(section).getAllByRole("list")).toHaveLength(1);
+    expect(within(section).queryByText(/^Added /)).not.toBeInTheDocument();
     expect(
       within(section).getByText(
         "Staff can clock in and out only from these internet connections. Add the office wifi while you're at the office. No location is ever recorded.",
@@ -86,7 +77,7 @@ describe("OfficeNetworkSettings", () => {
   it("says nobody can clock in while the list is empty", async () => {
     backend(
       on("GET", LIST_PATH, listOf()),
-      on("GET", CURRENT_PATH, { address: null, covered: false }),
+      on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
     );
     const section = renderSection();
 
@@ -95,15 +86,13 @@ describe("OfficeNetworkSettings", () => {
         "No office network yet. Nobody can clock in until you add one.",
       ),
     ).toBeVisible();
-    expect(
-      within(section).queryByRole("list", { name: "Changes to the office network" }),
-    ).not.toBeInTheDocument();
+    expect(within(section).queryByRole("list")).not.toBeInTheDocument();
   });
 
   it("shows the limits the server has, not fixed numbers", async () => {
     backend(
-      on("GET", LIST_PATH, listOf([], [], { ...LIMITS, max_networks: 5, ipv4_widest_prefix: 28 })),
-      on("GET", CURRENT_PATH, { address: null, covered: false }),
+      on("GET", LIST_PATH, listOf([], { ...LIMITS, max_networks: 5, ipv4_widest_prefix: 28 })),
+      on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
     );
     const section = renderSection();
 
@@ -114,7 +103,7 @@ describe("OfficeNetworkSettings", () => {
   });
 
   it("shows a problem when the list can't be loaded", async () => {
-    backend(on("GET", CURRENT_PATH, { address: null, covered: false }));
+    backend(on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }));
     const section = renderSection();
 
     expect(await within(section).findByRole("alert")).toHaveTextContent(
@@ -129,6 +118,7 @@ describe("OfficeNetworkSettings", () => {
         onEach("GET", LIST_PATH, () => listOf(networks)),
         onEach("GET", CURRENT_PATH, () => ({
           address: "110.44.115.82",
+          suggested_network: "110.44.115.82",
           covered: networks.length > 0,
         })),
         (path, init) => {
@@ -140,6 +130,9 @@ describe("OfficeNetworkSettings", () => {
       const section = renderSection();
 
       expect(await within(section).findByText("110.44.115.82")).toBeVisible();
+      expect(
+        within(section).getByText("Adds 110.44.115.82: every device on this Wi-Fi."),
+      ).toBeVisible();
       await userEvent.click(
         within(section).getByRole("button", { name: "Add the network I'm on now" }),
       );
@@ -157,10 +150,66 @@ describe("OfficeNetworkSettings", () => {
       ).not.toBeInTheDocument();
     });
 
+    it("on IPv6 says it adds the office's group, and sends the group", async () => {
+      const fetchFn = backend(
+        on("GET", LIST_PATH, listOf()),
+        on("GET", CURRENT_PATH, {
+          address: "2400:1a00:b030:9:a1b2:c3d4:e5f6:1",
+          suggested_network: "2400:1a00:b030:9::/64",
+          covered: false,
+        }),
+        on(
+          "POST",
+          LIST_PATH,
+          { id: uid(8), label: "Office network", network: "2400:1a00:b030:9::/64" },
+          201,
+        ),
+      );
+      const section = renderSection();
+
+      expect(await within(section).findByText("2400:1a00:b030:9:a1b2:c3d4:e5f6:1")).toBeVisible();
+      expect(
+        within(section).getByText("Adds 2400:1a00:b030:9::/64: every device on this Wi-Fi."),
+      ).toBeVisible();
+      await userEvent.click(
+        within(section).getByRole("button", { name: "Add the network I'm on now" }),
+      );
+
+      const [post] = callsTo(fetchFn, "POST", LIST_PATH);
+      expect(post?.[1]?.body).toBe(
+        JSON.stringify({ label: "Office network", network: "2400:1a00:b030:9::/64" }),
+      );
+    });
+
+    it("keeps focus on the page after adding, with no jump", async () => {
+      backend(
+        on("GET", LIST_PATH, listOf()),
+        on("GET", CURRENT_PATH, {
+          address: "110.44.115.82",
+          suggested_network: "110.44.115.82",
+          covered: false,
+        }),
+        on("POST", LIST_PATH, { network: ["That network is already on the list."] }, 400),
+      );
+      const section = renderSection();
+      const button = await within(section).findByRole("button", {
+        name: "Add the network I'm on now",
+      });
+
+      await userEvent.click(button);
+
+      await within(section).findByRole("alert");
+      expect(button).toHaveFocus();
+    });
+
     it("says when my address is already on the list, with no button", async () => {
       backend(
         on("GET", LIST_PATH, listOf([MAIN])),
-        on("GET", CURRENT_PATH, { address: "110.44.115.82", covered: true }),
+        on("GET", CURRENT_PATH, {
+          address: "110.44.115.82",
+          suggested_network: "110.44.115.82",
+          covered: true,
+        }),
       );
       const section = renderSection();
 
@@ -168,12 +217,13 @@ describe("OfficeNetworkSettings", () => {
       expect(
         within(section).queryByRole("button", { name: "Add the network I'm on now" }),
       ).not.toBeInTheDocument();
+      expect(within(section).queryByText(/^Adds /)).not.toBeInTheDocument();
     });
 
     it("says when my address can't be seen", async () => {
       backend(
         on("GET", LIST_PATH, listOf()),
-        on("GET", CURRENT_PATH, { address: null, covered: false }),
+        on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
       );
       const section = renderSection();
 
@@ -190,7 +240,11 @@ describe("OfficeNetworkSettings", () => {
     it("shows the server's reason when it is refused", async () => {
       backend(
         on("GET", LIST_PATH, listOf()),
-        on("GET", CURRENT_PATH, { address: "110.44.115.82", covered: false }),
+        on("GET", CURRENT_PATH, {
+          address: "110.44.115.82",
+          suggested_network: "110.44.115.82",
+          covered: false,
+        }),
         on("POST", LIST_PATH, { detail: "An office can have at most 20 networks." }, 400),
       );
       const section = renderSection();
@@ -206,7 +260,11 @@ describe("OfficeNetworkSettings", () => {
     it("shows a field refusal too, e.g. when another entry already covers it", async () => {
       backend(
         on("GET", LIST_PATH, listOf()),
-        on("GET", CURRENT_PATH, { address: "110.44.115.82", covered: false }),
+        on("GET", CURRENT_PATH, {
+          address: "110.44.115.82",
+          suggested_network: "110.44.115.82",
+          covered: false,
+        }),
         on("POST", LIST_PATH, { network: ["That network is already on the list."] }, 400),
       );
       const section = renderSection();
@@ -226,7 +284,7 @@ describe("OfficeNetworkSettings", () => {
       let networks: unknown[] = [];
       const fetchFn = backend(
         onEach("GET", LIST_PATH, () => listOf(networks)),
-        on("GET", CURRENT_PATH, { address: null, covered: false }),
+        on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
         (path, init) => {
           if (path !== LIST_PATH || init?.method !== "POST") return undefined;
           networks = [{ id: uid(8), label: "Second floor wifi", network: "27.34.20.0/24" }];
@@ -253,7 +311,7 @@ describe("OfficeNetworkSettings", () => {
     it("asks for both fields before sending anything", async () => {
       const fetchFn = backend(
         on("GET", LIST_PATH, listOf()),
-        on("GET", CURRENT_PATH, { address: null, covered: false }),
+        on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
       );
       const section = renderSection();
       await within(section).findByText(/No office network yet/);
@@ -274,7 +332,7 @@ describe("OfficeNetworkSettings", () => {
         "That's a private or reserved address, which only works inside the office. Use the address the internet sees, shown above.";
       backend(
         on("GET", LIST_PATH, listOf()),
-        on("GET", CURRENT_PATH, { address: null, covered: false }),
+        on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
         on("POST", LIST_PATH, { network: [refusal] }, 400),
       );
       const section = renderSection();
@@ -302,7 +360,7 @@ describe("OfficeNetworkSettings", () => {
     ])("shows why the whole network was refused: %j", async (body, status, message) => {
       backend(
         on("GET", LIST_PATH, listOf()),
-        on("GET", CURRENT_PATH, { address: null, covered: false }),
+        on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
         on("POST", LIST_PATH, body, status),
       );
       const section = renderSection();
@@ -319,7 +377,7 @@ describe("OfficeNetworkSettings", () => {
       const label = "<img src=x onerror=alert(1)>";
       backend(
         on("GET", LIST_PATH, listOf([{ ...MAIN, label }])),
-        on("GET", CURRENT_PATH, { address: null, covered: false }),
+        on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
       );
       const section = renderSection();
 
@@ -333,7 +391,7 @@ describe("OfficeNetworkSettings", () => {
       let networks: unknown[] = [MAIN];
       const fetchFn = backend(
         onEach("GET", LIST_PATH, () => listOf(networks)),
-        on("GET", CURRENT_PATH, { address: null, covered: false }),
+        on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
         (path, init) => {
           if (path !== `/api/office-networks/${uid(901)}/` || init?.method !== "DELETE")
             return undefined;
@@ -363,7 +421,7 @@ describe("OfficeNetworkSettings", () => {
     it("closes on Escape without removing", async () => {
       const fetchFn = backend(
         on("GET", LIST_PATH, listOf([MAIN])),
-        on("GET", CURRENT_PATH, { address: null, covered: false }),
+        on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
       );
       const section = renderSection();
 
@@ -379,7 +437,7 @@ describe("OfficeNetworkSettings", () => {
     it("keeps the dialog open with a problem when removing fails", async () => {
       backend(
         on("GET", LIST_PATH, listOf([MAIN])),
-        on("GET", CURRENT_PATH, { address: null, covered: false }),
+        on("GET", CURRENT_PATH, { address: null, suggested_network: null, covered: false }),
       );
       const section = renderSection();
 

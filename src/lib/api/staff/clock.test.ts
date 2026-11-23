@@ -156,7 +156,10 @@ describe("clockIn and clockOut", () => {
   });
 
   it.each([
-    [403, "You can only clock in from the office network."],
+    [
+      403,
+      "This network isn't saved as an office network. At the office? The office's internet address may have changed. Ask an Admin to open the CRM here; it takes one tap.",
+    ],
     [403, "Ask your Admin to add the office network."],
     [400, "You're already clocked in."],
   ])("a %i refusal comes back as the server's reason", async (status, detail) => {

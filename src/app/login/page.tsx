@@ -10,7 +10,11 @@ import { LABELS, MESSAGES } from "@/constants/messages";
 export default function LoginPage() {
   return (
     <OfficeGate>
-      <AuthLayout brand={<ConsultancyBrand />} title={LABELS.logIn} intro={MESSAGES.logInIntro}>
+      <AuthLayout
+        brand={<ConsultancyBrand isWelcome />}
+        title={LABELS.logIn}
+        intro={MESSAGES.logInIntro}
+      >
         <Suspense fallback={<LoginForm />}>
           <OfficeLoginForm />
         </Suspense>

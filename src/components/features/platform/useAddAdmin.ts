@@ -38,8 +38,9 @@ export function useAddAdmin(officeId: RecordId, onAdded: (name: string) => void)
       onAdded(invited.name);
     } catch (caught) {
       explain(caught);
-      setIsSending(false);
     }
+    // Configuration stays open after an invite (ticket 16), ready for another.
+    setIsSending(false);
   }
 
   function explain(caught: unknown): void {

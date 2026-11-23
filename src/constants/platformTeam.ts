@@ -44,6 +44,26 @@ export const PLATFORM_SETTINGS_TEXT = {
     "Shown on the Platform login, the Central login and at the top of the Platform. A square or wide PNG, SVG or JPG works best.",
 } as const;
 
+/** Platform → Settings → Saved logos (first live fixes, ticket 07). */
+export const SAVED_LOGOS_TEXT = {
+  title: "Saved logos",
+  help: "Every logo you upload is kept here, up to 10. Pick one to use it in the browser tab, on the login pages and at the top of the Platform. The app's own logo is used until you pick another.",
+  appLogo: "The app's own logo",
+  uploaded: (when: string) => `Uploaded ${when}`,
+  inUse: "In use",
+  useThis: "Use this",
+  pickLabel: (name: string) => `Use this: ${name}`,
+  removeLabel: (name: string) => `Remove: ${name}`,
+  removeTitle: "Remove this logo?",
+  removeBody:
+    "It is deleted from the saved logos. If it is in use, the app's own logo is used instead.",
+  changed: "Logo changed",
+  pickFailed: "The logo couldn't be changed. Check your connection and try again.",
+  loadFailed: "We couldn't load the saved logos. Please refresh the page.",
+  full: (limit: number) =>
+    `You have ${String(limit)} saved logos. Remove one before uploading another.`,
+} as const;
+
 /** Platform → Settings: is email working? (spec 2026-11-18 stories 3-4, ADR 0023). */
 export const PLATFORM_EMAIL_TEXT = {
   title: "Email",

@@ -44,8 +44,8 @@ export function LinkedDocuments({ studentId, record, documents }: LinkedDocument
               <OpenFileButton
                 key={file.id}
                 fileName={file.fileName}
-                onOpen={() => {
-                  void show(document.id, file.id, "open");
+                onOpen={(action) => {
+                  void show(document.id, file.id, action);
                 }}
               />
             ))}

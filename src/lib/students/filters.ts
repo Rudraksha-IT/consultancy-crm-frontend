@@ -1,5 +1,7 @@
 import { Role } from "@/constants/roles";
+import { PRIORITIES, type Priority } from "@/constants/priority";
 import { isStage, type Stage } from "@/constants/stages";
+import { parseRecordId } from "@/lib/recordId";
 import {
   CounsellorFilter,
   type Country,
@@ -11,6 +13,8 @@ import {
 export type StudentFilters = {
   search: string;
   stage: Stage | "";
+  /** Only Students with this Priority (ticket 11). */
+  priority: Priority | "";
   /** "", "me", "none" or a Staff id. */
   counsellor: string;
   source: Source | "";
@@ -23,29 +27,65 @@ export type StudentFilters = {
 export const NO_STUDENT_FILTERS: StudentFilters = {
   search: "",
   stage: "",
+  priority: "",
   counsellor: "",
   source: "",
   country: "",
   targetLevel: "",
 };
 
+/** What the address may say about where the Student list starts; each is checked before use. */
+export type AddressFilters = {
+  search?: string;
+  stage?: string;
+  priority?: string;
+  /** "me", "none" or a Staff id (Home's "See all" links, ticket 12). */
+  counsellor?: string;
+};
+
 /**
  * Where the Student list starts: a Counsellor sees the Students assigned to them (spec 30),
  * unless they arrived with a search from the top bar or a Stage from the Admin's pipeline, which
- * look through everyone. A Stage from the address that isn't one is ignored.
+ * look through everyone. A counsellor in the address wins over both. Anything in the address
+ * that isn't a real value is ignored.
  */
-export function defaultStudentFilters(role: Role, search = "", stageParam = ""): StudentFilters {
-  const query = search.trim();
-  const stage = stageFrom(stageParam);
-  const isMine = role === Role.Counsellor && `${query}${stage}` === "";
+export function defaultStudentFilters(role: Role, address: AddressFilters = {}): StudentFilters {
+  const given: Required<AddressFilters> = {
+    search: "",
+    stage: "",
+    priority: "",
+    counsellor: "",
+    ...address,
+  };
+  const query = given.search.trim();
+  const stage = stageFrom(given.stage);
   return {
     search: query,
     stage,
-    counsellor: isMine ? CounsellorFilter.Me : CounsellorFilter.Any,
+    priority: priorityFrom(given.priority),
+    counsellor: counsellorFrom(given.counsellor) ?? startingCounsellor(role, `${query}${stage}`),
     source: "",
     country: "",
     targetLevel: "",
   };
+}
+
+/** A counsellor filter read from the address ("me", "none" or a Staff id), or null. */
+function counsellorFrom(param: string): string | null {
+  const named = [CounsellorFilter.Me, CounsellorFilter.None].find((value) => value === param);
+  return named ?? parseRecordId(param);
+}
+
+/** A Counsellor starts on their own Students, unless a search or Stage looks through everyone. */
+function startingCounsellor(role: Role, searchOrStage: string): string {
+  return role === Role.Counsellor && searchOrStage === ""
+    ? CounsellorFilter.Me
+    : CounsellorFilter.Any;
+}
+
+/** A Priority read from the address or a filter, or "" when it isn't one. */
+export function priorityFrom(param: string): Priority | "" {
+  return PRIORITIES.find((priority) => priority === param) ?? "";
 }
 
 /** A Stage read from the address, or "" when it isn't one. */
@@ -65,6 +105,7 @@ export function studentFilterValues(filters: StudentFilters): Record<string, str
   const sent: [string, string][] = [
     ["q", filters.search.trim()],
     ["stage", filters.stage],
+    ["priority", filters.priority],
     ["counsellor", filters.counsellor],
     ["source", filters.source],
     ["country", filters.country],

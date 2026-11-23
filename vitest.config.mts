@@ -34,6 +34,8 @@ const ISOLATED = filesThatMockModules();
 
 export default defineConfig({
   plugins: [react()],
+  // An imported image is an address, as in the Next.js build, never inlined as `data:`.
+  build: { assetsInlineLimit: 0 },
   resolve: {
     tsconfigPaths: true,
     // Server-only modules are tested here too; the real package throws outside the server build.

@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { API_PATHS } from "@/constants/api";
 
-import { getJson, postForm, postJson, sendWithoutBody } from "../core/client";
+import { getJson, postForm, postJson } from "../core/client";
 import { checkCodeAt, explainPasswordRefusal, requestCodeAt } from "../auth/codeSteps";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { toFieldErrors } from "../core/fieldErrors";
@@ -146,7 +146,7 @@ export async function completePlatformJoin(
 
 const PRODUCT_LOGO_URL = /^\/api\/platform\/brand\/logo\/[0-9]{1,10}\/$/;
 // Shown like an office logo, the product's name always beside it.
-const ProductLogoSchema = z
+export const ProductLogoSchema = z
   .object({ url: z.string().regex(PRODUCT_LOGO_URL) })
   .transform(({ url }): OfficeLogo => ({ url, showName: true }));
 const ProductBrandSchema = z
@@ -160,7 +160,10 @@ export function fetchProductLogo(fetchFn: typeof fetch = fetch): Promise<OfficeL
   return getJson(API_PATHS.productBrand, ProductBrandSchema, fetchFn);
 }
 
-/** Upload or change the product's logo. Rejects with InvalidFieldsError on `file`. */
+/**
+ * Upload a product logo: it is saved and put in use (ticket 07). Rejects with InvalidFieldsError
+ * on `file`, also when the saved logos are full.
+ */
 export async function uploadProductLogo(
   file: File,
   fetchFn: typeof fetch = fetch,
@@ -172,9 +175,4 @@ export async function uploadProductLogo(
   } catch (error) {
     throw toFieldErrors(error, LOGO_FIELDS) ?? error;
   }
-}
-
-/** Remove the product's logo; the initials show again. */
-export function removeProductLogo(fetchFn: typeof fetch = fetch): Promise<void> {
-  return sendWithoutBody("DELETE", API_PATHS.productLogo, fetchFn);
 }

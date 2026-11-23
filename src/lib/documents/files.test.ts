@@ -33,7 +33,7 @@ describe("documentFileProblem", () => {
     );
   });
 
-  it.each(["page.html", "drawing.svg", "notes.txt", "passport", "passport.pdf.exe"])(
+  it.each(["page.html", "drawing.svg", "notes.txt", "passport", "passport.pdf.exe", "letter.zip"])(
     "refuses %s before sending it",
     (name) => {
       expect(documentFileProblem(fileOf(name, 1000))).toBe(DOCUMENT_TEXT.fileKind);
@@ -42,6 +42,16 @@ describe("documentFileProblem", () => {
 });
 
 describe("documentFilesProblem (several files for one Document, issue 78)", () => {
+  it("accepts a zip on a Student's Document (ticket 09)", () => {
+    expect(documentFilesProblem([fileOf("papers.zip", 1000), fileOf("PAPERS.ZIP", 9)])).toBeNull();
+  });
+
+  it("names every allowed kind when a file is refused", () => {
+    expect(documentFilesProblem([fileOf("notes.txt", 1000)])).toBe(
+      "Upload a PDF, JPG, PNG or ZIP file.",
+    );
+  });
+
   it("accepts several good files", () => {
     expect(documentFilesProblem([fileOf("front.jpg", 1000), fileOf("back.pdf", 1000)])).toBeNull();
   });
@@ -52,7 +62,7 @@ describe("documentFilesProblem (several files for one Document, issue 78)", () =
 
   it("names the first problem of any one file", () => {
     expect(documentFilesProblem([fileOf("front.jpg", 1000), fileOf("back.html", 1000)])).toBe(
-      DOCUMENT_TEXT.fileKind,
+      DOCUMENT_TEXT.studentFileKind,
     );
   });
 
