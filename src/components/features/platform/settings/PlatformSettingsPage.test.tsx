@@ -87,7 +87,7 @@ describe("PlatformSettingsPage: the product logo (issue 65)", () => {
     expect(screen.getByText("Product logo")).toBeVisible();
     expect(screen.getByLabelText("Upload a logo")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument();
-    expect(logoSrc()).toBeNull();
+    expect(logoSrc()).toBe(APP_LOGO_URL);
   });
 
   it("uploads a logo, shows it and confirms", async () => {
@@ -206,7 +206,7 @@ describe("PlatformSettingsPage: saved logos (first live fixes, ticket 07)", () =
     expect(window.scrollY).toBe(scrolled);
   });
 
-  it("goes back to the app's own logo; the initials show on the login screens", async () => {
+  it("goes back to the app's own logo, shown on the login screens too", async () => {
     const fetchFn = backend(
       on("GET", BRAND_PATH, { logo: { url: "/api/platform/brand/logo/4/" } }),
       ...savedLogos([row(1, true)]),
@@ -221,7 +221,7 @@ describe("PlatformSettingsPage: saved logos (first live fixes, ticket 07)", () =
     const [put] = callsTo(fetchFn, "PUT", IN_USE_PATH);
     expect(pickedIn(put?.[1])).toBeNull();
     expect(tile("The app's own logo")).toHaveTextContent("In use");
-    expect(logoSrc()).toBeNull();
+    expect(logoSrc()).toBe(APP_LOGO_URL);
   });
 
   it("says so when a pick fails, changing nothing", async () => {
@@ -268,7 +268,7 @@ describe("PlatformSettingsPage: saved logos (first live fixes, ticket 07)", () =
     expect(callsTo(fetchFn, "DELETE", `${SAVED_PATH}${uid(1)}/`)).toHaveLength(1);
     expect(screen.queryByRole("listitem", { name: /^Uploaded/ })).toBeNull();
     expect(tile("The app's own logo")).toHaveTextContent("In use");
-    expect(logoSrc()).toBeNull();
+    expect(logoSrc()).toBe(APP_LOGO_URL);
     expect(screen.getByRole("list", { name: "Saved logos" })).toHaveFocus();
   });
 

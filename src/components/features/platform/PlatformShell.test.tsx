@@ -4,6 +4,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
+import { APP_LOGO_URL } from "@/lib/brand/appLogo";
 
 import { useCurrentPlatformAdmin } from "./platformAdminContext";
 import { PlatformShell } from "./PlatformShell";
@@ -79,6 +80,17 @@ describe("PlatformShell", () => {
     expect(await screen.findByText("page")).toBeInTheDocument();
     expect(screen.queryByText("Platform")).not.toBeInTheDocument();
     expect(screen.getByText("Platform Ops")).toBeInTheDocument();
+  });
+
+  it("shows the app's own logo beside the product's name while no upload is in use (ticket 07)", async () => {
+    answerMeWith(jsonResponse({ platform_admin: ADMIN }));
+
+    render(<PlatformShell>page</PlatformShell>);
+
+    await screen.findByText("page");
+    const home = screen.getByRole("link", { name: new RegExp(LABELS.productName) });
+    expect(home.querySelector("img")?.getAttribute("src")).toBe(APP_LOGO_URL);
+    expect(home).not.toHaveTextContent("RC");
   });
 
   it.each([

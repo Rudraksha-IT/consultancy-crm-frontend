@@ -47,7 +47,7 @@ export const PLATFORM_SETTINGS_TEXT = {
 /** Platform → Settings → Saved logos (first live fixes, ticket 07). */
 export const SAVED_LOGOS_TEXT = {
   title: "Saved logos",
-  help: "Every logo you upload is kept here, up to 10. Pick one to use it. The app's own logo shows in the browser tab; the login pages show the product's initials while it is in use.",
+  help: "Every logo you upload is kept here, up to 10. Pick one to use it in the browser tab, on the login pages and at the top of the Platform. The app's own logo is used until you pick another.",
   appLogo: "The app's own logo",
   uploaded: (when: string) => `Uploaded ${when}`,
   inUse: "In use",

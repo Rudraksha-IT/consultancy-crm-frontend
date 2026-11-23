@@ -1,6 +1,7 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 
 import { LABELS } from "@/constants/messages";
+import { APP_LOGO_URL } from "@/lib/brand/appLogo";
 import { backend, on } from "@/test/backend";
 
 import { PlatformBrand } from "./PlatformBrand";
@@ -29,15 +30,19 @@ describe("the product logo (issue 65)", () => {
     expect(screen.getByRole("heading", { level: 2, name: LABELS.productName })).toBeVisible();
   });
 
-  it("shows the initials while there is no logo, or when it can't be loaded", async () => {
-    backend(on("GET", BRAND_PATH, { logo: null }, 500));
+  it.each([
+    ["no uploaded logo is in use", on("GET", BRAND_PATH, { logo: null })],
+    ["it can't be loaded", on("GET", BRAND_PATH, {}, 500)],
+  ])("shows the app's own logo, never initials, when %s (ticket 07)", async (_case, answer) => {
+    backend(answer);
 
     render(<PlatformBrand />);
 
     expect(
       await screen.findByRole("heading", { level: 2, name: LABELS.productName }),
     ).toBeVisible();
-    expect(logoSrc()).toBeNull();
+    expect(logoSrc()).toBe(APP_LOGO_URL);
+    expect(screen.queryByText("RC")).toBeNull();
   });
 
   it("shows a newly uploaded logo at once, without loading again", async () => {

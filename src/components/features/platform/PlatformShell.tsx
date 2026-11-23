@@ -18,7 +18,7 @@ import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 
 import { PlatformTabs } from "./PlatformTabs";
-import { useProductLogo } from "./productLogo";
+import { useProductMark } from "./productLogo";
 import { PlatformAdminContext } from "./platformAdminContext";
 import { usePlatformSession } from "./usePlatformSession";
 
@@ -56,7 +56,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
   const [admin, setAdmin] = useState(loaded);
   const current = useMemo(() => ({ admin, setAdmin }), [admin]);
   const colourMode = useColourMode(`platform-${admin.id}`);
-  const productLogo = useProductLogo();
+  const productLogo = useProductMark();
   useAppliedTheme(DEFAULT_THEME, colourMode.mode);
 
   return (

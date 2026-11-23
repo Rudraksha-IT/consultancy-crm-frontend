@@ -13,7 +13,7 @@ import { LOGO_ACCEPT, LOGO_TEXT } from "@/constants/logo";
 import { LABELS } from "@/constants/messages";
 import { PLATFORM_SETTINGS_TEXT as TEXT } from "@/constants/platformTeam";
 
-import { useProductLogo } from "../productLogo";
+import { useProductLogo, useProductMark } from "../productLogo";
 import { PlatformEmailSettings } from "./PlatformEmailSettings";
 import { SavedLogosSection } from "./SavedLogosSection";
 import { useProductLogoChanges } from "./useProductLogoChanges";
@@ -25,6 +25,7 @@ import { useSavedLogos } from "./useSavedLogos";
  */
 export function PlatformSettingsPage() {
   const logo = useProductLogo();
+  const mark = useProductMark();
   const savedLogos = useSavedLogos();
   const changes = useProductLogoChanges(savedLogos.reload);
 
@@ -42,7 +43,7 @@ export function PlatformSettingsPage() {
                   data-testid="logo-preview"
                   className="bg-fill rounded-panel flex min-h-18 min-w-0 items-center gap-3 p-4"
                 >
-                  <BrandMark name={LABELS.productName} logo={logo} />
+                  <BrandMark name={LABELS.productName} logo={mark} />
                   <b className="text-body truncate font-bold">{LABELS.productName}</b>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">

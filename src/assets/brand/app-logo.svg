@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-175 -175 350 350" width="512" height="512">
-  <g fill="none" stroke="#8B0A1A" stroke-linecap="round">
+  <style>.mark{stroke:#8B0A1A}@media (prefers-color-scheme: dark){.mark{stroke:#F49AA3}}</style>
+  <g class="mark" fill="none" stroke="#8B0A1A" stroke-linecap="round">
     <path stroke-width="10" d="M137.51 7.61A49 49 0 0 1 102.61 91.85 M91.85 102.61A49 49 0 0 1 7.61 137.51 M-7.61 137.51A49 49 0 0 1 -91.85 102.61 M-102.61 91.85A49 49 0 0 1 -137.51 7.61 M-137.51 -7.61A49 49 0 0 1 -102.61 -91.85 M-91.85 -102.61A49 49 0 0 1 -7.61 -137.51 M7.61 -137.51A49 49 0 0 1 91.85 -102.61 M102.61 -91.85A49 49 0 0 1 137.51 -7.61"/>
     <path stroke-width="3.5" d="M18.00 0.00L108.00 0.00 M12.73 12.73L76.37 76.37 M0.00 18.00L0.00 108.00 M-12.73 12.73L-76.37 76.37 M-18.00 0.00L-108.00 0.00 M-12.73 -12.73L-76.37 -76.37 M-0.00 -18.00L-0.00 -108.00 M12.73 -12.73L76.37 -76.37"/>
   </g>
