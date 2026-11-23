@@ -1,17 +1,14 @@
 import { useState } from "react";
 
 import { Button } from "@/components/ui/Button";
-import { Chip } from "@/components/ui/Chip";
 import { RowItem } from "@/components/ui/RowItem";
 import {
-  ADMIN_TEXT,
   ConsultancyStatus,
   SETUP_TEXT,
   SetupState,
   STATUS_TEXT,
 } from "@/constants/consultancyStatus";
-import { LABELS, MESSAGES } from "@/constants/messages";
-import { FEATURES, isSwitchable } from "@/constants/modules";
+import { LABELS } from "@/constants/messages";
 import { SUPPORT_TEXT } from "@/constants/supportAccess";
 import type { ConsultancyOverview } from "@/lib/api";
 
@@ -21,20 +18,19 @@ import { SetupStateChip } from "./SetupStateChip";
 type ConsultancyRowProps = {
   consultancy: ConsultancyOverview;
   onChangeStatus: (consultancy: ConsultancyOverview) => void;
-  onOpenFeatures: (consultancy: ConsultancyOverview) => void;
+  /** Its Configuration: Features, Colours and Admins (ticket 16). */
+  onConfigure: (consultancy: ConsultancyOverview) => void;
   onOpenOffice: (consultancy: ConsultancyOverview) => void;
-  onChooseColours: (consultancy: ConsultancyOverview) => void;
-  /** Add admin: invite an Admin into this office (issue 64). */
-  onAddAdmin: (consultancy: ConsultancyOverview) => void;
   /** Try again for an office whose setup failed; settles once the API has answered. */
   onTryAgain: (consultancy: ConsultancyOverview) => Promise<void>;
 };
 
 /**
- * One Consultancy in the Platform list: its Status, extra features and actions. A Terminated
- * one is final, so it keeps only its Status. One still being set up, or whose setup failed,
- * shows that instead, with its actions switched off until it is ready (issue 60). On a phone the
- * feature chips are dropped (they are in Features) and the buttons sit in a two-column grid.
+ * One Consultancy in the Platform list: its Status and three actions, Configuration, Open office
+ * and Change status (ticket 16: its Features are seen inside Configuration). A Terminated one is
+ * final, so it keeps only its Status. One still being set up, or whose setup failed, shows that
+ * instead, with its actions switched off until it is ready (issue 60). On a phone the buttons
+ * sit in a grid.
  */
 export function ConsultancyRow(props: ConsultancyRowProps) {
   const { consultancy } = props;
@@ -59,9 +55,7 @@ export function ConsultancyRow(props: ConsultancyRowProps) {
         </span>
       }
       right={!isTerminated && <RowActions {...props} />}
-    >
-      {!isTerminated && <FeatureChips consultancy={consultancy} />}
-    </RowItem>
+    />
   );
 }
 
@@ -69,10 +63,8 @@ export function ConsultancyRow(props: ConsultancyRowProps) {
 function RowActions({
   consultancy,
   onChangeStatus,
-  onOpenFeatures,
+  onConfigure,
   onOpenOffice,
-  onChooseColours,
-  onAddAdmin,
   onTryAgain,
 }: ConsultancyRowProps) {
   const isReady = consultancy.setupState === SetupState.Ready;
@@ -82,31 +74,13 @@ function RowActions({
         <TryAgainButton onTryAgain={() => onTryAgain(consultancy)} />
       )}
       <Button
-        icon="userplus"
-        isDisabled={!isReady}
-        onClick={() => {
-          onAddAdmin(consultancy);
-        }}
-      >
-        {ADMIN_TEXT.addAdmin}
-      </Button>
-      <Button
         icon="sliders"
         isDisabled={!isReady}
         onClick={() => {
-          onOpenFeatures(consultancy);
+          onConfigure(consultancy);
         }}
       >
-        {LABELS.features}
-      </Button>
-      <Button
-        icon="palette"
-        isDisabled={!isReady}
-        onClick={() => {
-          onChooseColours(consultancy);
-        }}
-      >
-        {LABELS.colours}
+        {LABELS.configuration}
       </Button>
       <Button
         icon="shield"
@@ -146,25 +120,5 @@ function TryAgainButton({ onTryAgain }: { onTryAgain: () => Promise<void> }) {
     >
       {SETUP_TEXT.tryAgain}
     </Button>
-  );
-}
-
-function FeatureChips({ consultancy }: { consultancy: ConsultancyOverview }) {
-  const features = consultancy.modules.filter(isSwitchable);
-  if (features.length === 0) {
-    return (
-      <p className="text-small text-ink-2 max-phone:hidden mt-2">{MESSAGES.onlyStandardFeatures}</p>
-    );
-  }
-  return (
-    <ul aria-label={LABELS.featuresOn} className="max-phone:hidden mt-2 flex flex-wrap gap-2">
-      {features.map((module) => (
-        <li key={module}>
-          <Chip tone="accent" hasDot={false}>
-            {FEATURES[module].label}
-          </Chip>
-        </li>
-      ))}
-    </ul>
   );
 }

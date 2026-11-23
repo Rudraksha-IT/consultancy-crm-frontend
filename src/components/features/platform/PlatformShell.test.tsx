@@ -103,7 +103,11 @@ describe("PlatformShell", () => {
 
     render(<PlatformShell>page</PlatformShell>);
 
-    const tabs = within(await screen.findByRole("navigation", { name: "Platform" }));
+    const nav = await screen.findByRole("navigation", { name: "Platform" });
+    const tabs = within(nav);
+    // In the page, above its content, not under the header (ticket 16).
+    expect(screen.getByRole("main")).toContainElement(nav);
+    expect(screen.getByRole("banner")).not.toContainElement(nav);
     expect(
       tabs.getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([

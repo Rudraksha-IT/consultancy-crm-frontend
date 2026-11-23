@@ -238,11 +238,17 @@ export const LABELS = {
   confirm: (label: string) => `Confirm ${label.toLowerCase()}`,
   passwordRules: "Password rules",
   close: "Close",
+  /** Closes a popup whose parts each save on their own (ticket 16). */
+  finished: "Done",
   colours: "Colours",
   coloursFor: (name: string) => `Colours for ${name}`,
   saveColours: "Save colours",
   saving: "Saving…",
   configuration: "Configuration",
+  /** One Consultancy's Configuration on the Platform (ticket 16). */
+  configurationFor: (name: string) => `Configuration for ${name}`,
+  configurationParts: "Configuration parts",
+  admins: "Admins",
   goHome: "Go to Home",
   chooseOne: "Choose one",
   readyMadeColours: "Ready-made colours",

@@ -90,9 +90,12 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             </span>
           </div>
         </header>
-        <PlatformTabs />
         <main className="px-page wide:pt-10 min-w-0 pt-7 pb-30">
-          <div className="max-w-content mx-auto grid grid-cols-1 gap-8">{children}</div>
+          <div className="max-w-content mx-auto grid grid-cols-1 gap-8">
+            {/* In the page, above its content, like every other page's tabs (ticket 16). */}
+            <PlatformTabs />
+            {children}
+          </div>
         </main>
       </div>
     </PlatformAdminContext>

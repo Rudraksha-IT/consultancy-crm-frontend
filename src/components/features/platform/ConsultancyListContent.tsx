@@ -10,10 +10,9 @@ import type { ConsultancyListState } from "./useConsultancies";
 type ConsultancyListContentProps = {
   list: ConsultancyListState;
   onChangeStatus: (consultancy: ConsultancyOverview) => void;
-  onOpenFeatures: (consultancy: ConsultancyOverview) => void;
+  /** Open its Configuration: Features, Colours and Admins (ticket 16). */
+  onConfigure: (consultancy: ConsultancyOverview) => void;
   onOpenOffice: (consultancy: ConsultancyOverview) => void;
-  onChooseColours: (consultancy: ConsultancyOverview) => void;
-  onAddAdmin: (consultancy: ConsultancyOverview) => void;
   onTryAgain: (consultancy: ConsultancyOverview) => Promise<void>;
 };
 
@@ -21,10 +20,8 @@ type ConsultancyListContentProps = {
 export function ConsultancyListContent({
   list,
   onChangeStatus,
-  onOpenFeatures,
+  onConfigure,
   onOpenOffice,
-  onChooseColours,
-  onAddAdmin,
   onTryAgain,
 }: ConsultancyListContentProps) {
   if (list.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
@@ -46,10 +43,8 @@ export function ConsultancyListContent({
               key={consultancy.id}
               consultancy={consultancy}
               onChangeStatus={onChangeStatus}
-              onOpenFeatures={onOpenFeatures}
+              onConfigure={onConfigure}
               onOpenOffice={onOpenOffice}
-              onChooseColours={onChooseColours}
-              onAddAdmin={onAddAdmin}
               onTryAgain={onTryAgain}
             />
           ))}
