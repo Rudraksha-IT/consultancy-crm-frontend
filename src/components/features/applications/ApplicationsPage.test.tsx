@@ -200,6 +200,7 @@ describe("ApplicationsPage", () => {
     const fetchFn = backend(listing(), choices, counsellors);
     renderPage();
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
     await screen.findByRole("option", { name: "Feb 2028" });
     await screen.findByRole("option", { name: "Bikash Thapa" });
 
@@ -217,8 +218,11 @@ describe("ApplicationsPage", () => {
   });
 
   it("offers the office's countries by name, in order", async () => {
+    const user = userEvent.setup();
     backend(listing(), choices, counsellors);
     renderPage();
+    await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
 
     await screen.findByRole("option", { name: "Canada" });
     const country = screen.getByRole("combobox", { name: "Country" });
@@ -310,10 +314,12 @@ describe("ApplicationsPage", () => {
   });
 
   it("still filters with Any when the choices can't be loaded", async () => {
+    const user = userEvent.setup();
     backend(listing(), counsellors);
     renderPage();
 
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
     const intake = screen.getByRole("combobox", { name: "Intake" });
     expect(
       within(intake)
@@ -352,6 +358,29 @@ async function selectAllBox(): Promise<HTMLElement> {
   if (box === undefined) throw new Error("No select-all box");
   return box;
 }
+
+describe("ApplicationsPage More filters (list tidy-ups 03)", () => {
+  it("shows Status, Counsellor and Sort on one line, and the rest under More filters", async () => {
+    const user = userEvent.setup();
+    backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    for (const name of ["Status", "Counsellor", "Sort"]) {
+      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+    }
+    for (const name of ["Intake", "Intake year", "Country"]) {
+      expect(screen.queryByRole("combobox", { name })).not.toBeInTheDocument();
+    }
+
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+
+    for (const name of ["Intake", "Intake year", "Country"]) {
+      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole("button", { name: "More filters" })).not.toBeInTheDocument();
+  });
+});
 
 describe("ApplicationsPage selection and export (issue 51)", () => {
   function exportsToo(

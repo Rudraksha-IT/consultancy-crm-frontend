@@ -212,6 +212,7 @@ describe("VisasPage", () => {
     const fetchFn = backend(listing(), choices, counsellors);
     renderPage();
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
     await screen.findByRole("option", { name: "Sep 2027" });
     await screen.findByRole("option", { name: "Bikash Thapa" });
 
@@ -251,6 +252,7 @@ describe("VisasPage", () => {
     const fetchFn = backend(listing(), choices, counsellors);
     renderPage();
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
 
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Sort" }),
@@ -312,10 +314,12 @@ describe("VisasPage", () => {
   });
 
   it("still filters with Any when the choices can't be loaded", async () => {
+    const user = userEvent.setup();
     backend(listing(), counsellors);
     renderPage();
 
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
     const intake = screen.getByRole("combobox", { name: "Intake" });
     expect(
       within(intake)
@@ -347,6 +351,29 @@ describe("VisasPage", () => {
 
     expect(await screen.findByRole("link", { name: "Go to Home" })).toBeInTheDocument();
     expect(fetchFn.mock.calls.some(([path]) => isList(path))).toBe(false);
+  });
+});
+
+describe("VisasPage More filters (list tidy-ups 03)", () => {
+  it("shows Visa status, Counsellor and Appointment on one line, and the rest under More filters", async () => {
+    const user = userEvent.setup();
+    backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    for (const name of ["Visa status", "Counsellor", "Appointment"]) {
+      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+    }
+    for (const name of ["Country", "Intake", "Sort"]) {
+      expect(screen.queryByRole("combobox", { name })).not.toBeInTheDocument();
+    }
+
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+
+    for (const name of ["Country", "Intake", "Sort"]) {
+      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole("button", { name: "More filters" })).not.toBeInTheDocument();
   });
 });
 
