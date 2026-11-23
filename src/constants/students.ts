@@ -1,3 +1,5 @@
+import type { Priority } from "./priority";
+
 /** How a Student first came to the Consultancy (GLOSSARY: Source); values match the API. */
 export const Source = {
   WalkIn: "walk_in",
@@ -257,9 +259,14 @@ export const MAX_JOBS = 20;
 
 /** The words of a Student's Priority on their page (first live fixes, ticket 10). */
 export const STUDENT_PRIORITY_TEXT = {
-  chip: (priority: string) => `${priority} priority`,
+  label: "Priority",
   change: (priority: string) => `Priority: ${priority}. Change it`,
-  menu: "Priority",
+  menu: "Set priority",
+  hints: {
+    high: "Needs attention first",
+    normal: "The usual pace",
+    low: "Can wait",
+  } satisfies Record<Priority, string>,
   saved: (priority: string) => `Priority set to ${priority}`,
   failed: "We couldn't change the priority. Try again.",
 };

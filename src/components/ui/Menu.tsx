@@ -14,6 +14,10 @@ export type MenuItem = {
   isDestructive?: boolean;
   /** For a choice of one (e.g. a Priority): whether this is the one chosen now. */
   isChosen?: boolean;
+  /** A short line under the label saying what the choice means. */
+  hint?: string;
+  /** A small coloured dot before the label (a colour class, e.g. "bg-bad"). */
+  dot?: string;
 } & ({ onSelect: () => void } | { href: string });
 
 type MenuProps = {

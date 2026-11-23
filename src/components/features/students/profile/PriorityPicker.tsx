@@ -4,21 +4,18 @@ import clsx from "clsx";
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject } from "react";
 
 import { Banner } from "@/components/ui/Banner";
-import { Chip, type ChipTone } from "@/components/ui/Chip";
-import { Icon, type IconName } from "@/components/ui/Icon";
+import { Icon } from "@/components/ui/Icon";
 import { MenuList } from "@/components/ui/MenuList";
 import { useToast } from "@/components/ui/useToast";
 import { PRIORITIES, PRIORITY_LABELS, type Priority } from "@/constants/priority";
 import { STUDENT_PRIORITY_TEXT as TEXT } from "@/constants/students";
 import { saveStudentPriority, type StudentProfile } from "@/lib/api";
 
-type Look = { tone: ChipTone; icon?: IconName; text: string };
-
-/** Each Priority's chip: always its word, with a colour and an arrow for High and Low. */
-const LOOKS: Record<Priority, Look> = {
-  high: { tone: "bad", icon: "arrowUp", text: "text-bad" },
-  normal: { tone: "muted", text: "text-ink-2" },
-  low: { tone: "muted", icon: "arrowDown", text: "text-ink-3" },
+/** Each Priority's colour dot; the word is always shown beside it. */
+const DOTS: Record<Priority, string> = {
+  high: "bg-bad",
+  normal: "bg-accent",
+  low: "bg-ink-3",
 };
 
 type PriorityPickerProps = {
@@ -28,19 +25,34 @@ type PriorityPickerProps = {
 };
 
 /**
- * The Student's Priority beside their name (first live fixes, ticket 10): a small button that
- * opens High, Normal and Low for anyone who may set it, or its chip alone for anyone else.
+ * The Student's Priority with the header's actions (first live fixes, ticket 10): "Priority ● High"
+ * as a control that opens High, Normal and Low for anyone who may set it, or as plain text otherwise.
  */
 export function PriorityPicker({ profile, onSaved }: PriorityPickerProps) {
   if (!profile.canSetPriority) {
-    const look = LOOKS[profile.priority];
     return (
-      <Chip tone={look.tone} {...(look.icon !== undefined && { icon: look.icon })}>
-        {TEXT.chip(PRIORITY_LABELS[profile.priority])}
-      </Chip>
+      <span className={clsx(CONTROL, "cursor-default")}>
+        <PriorityValue priority={profile.priority} />
+      </span>
     );
   }
   return <PriorityMenu profile={profile} onSaved={onSaved} />;
+}
+
+const CONTROL =
+  "min-h-control rounded-control border-rule bg-paper text-body inline-flex items-center gap-2.5 border px-4";
+
+/** "Priority" quietly, then the dot and the word. */
+function PriorityValue({ priority }: { priority: Priority }) {
+  return (
+    <>
+      <span className="text-ink-2">{TEXT.label}</span>
+      <span className="text-ink inline-flex items-center gap-2 font-semibold">
+        <span aria-hidden="true" className={clsx("size-2.5 rounded-full", DOTS[priority])} />
+        {PRIORITY_LABELS[priority]}
+      </span>
+    </>
+  );
 }
 
 function PriorityMenu({ profile, onSaved }: PriorityPickerProps) {
@@ -53,15 +65,11 @@ function PriorityMenu({ profile, onSaved }: PriorityPickerProps) {
   });
   useClosesOnOutsideClick(isOpen, rootRef, setIsOpen);
   const current = profile.priority;
-  const look = LOOKS[current];
-
-  function close(): void {
-    setIsOpen(false);
-    buttonRef.current?.focus();
-  }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
-    if (event.key === "Escape") close();
+    if (event.key !== "Escape") return;
+    setIsOpen(false);
+    buttonRef.current?.focus();
   }
 
   return (
@@ -77,23 +85,20 @@ function PriorityMenu({ profile, onSaved }: PriorityPickerProps) {
           onClick={() => {
             setIsOpen((open) => !open);
           }}
-          className={clsx(
-            "min-h-control rounded-control border-rule bg-paper text-secondary hover:bg-fill inline-flex cursor-pointer items-center gap-1.5 border px-3 font-semibold",
-            look.text,
-          )}
+          className={clsx(CONTROL, "hover:bg-fill cursor-pointer")}
         >
-          {look.icon !== undefined && <Icon name={look.icon} size="sm" />}
-          {TEXT.chip(PRIORITY_LABELS[current])}
+          <PriorityValue priority={current} />
           <Icon name="down" size="sm" className="text-ink-3" />
         </button>
         {isOpen && (
           <MenuList
             id={menuId}
             label={TEXT.menu}
-            align="start"
+            hasTitle
             items={PRIORITIES.map((priority) => ({
               label: PRIORITY_LABELS[priority],
-              ...(LOOKS[priority].icon !== undefined && { icon: LOOKS[priority].icon }),
+              hint: TEXT.hints[priority],
+              dot: DOTS[priority],
               isChosen: priority === current,
               onSelect: () => {
                 change(priority);

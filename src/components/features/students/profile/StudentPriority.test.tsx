@@ -81,7 +81,35 @@ describe("a Student's Priority (ticket 10)", () => {
     renderPage();
 
     const button = await screen.findByRole("button", { name: "Priority: High. Change it" });
-    expect(button).toHaveTextContent("High priority");
+    expect(button).toHaveTextContent("PriorityHigh");
+  });
+
+  it("sits with the actions, not in the line with the name", async () => {
+    backend(profile());
+    renderPage();
+
+    const button = await screen.findByRole("button", { name: "Priority: Normal. Change it" });
+    const name = screen.getByRole("heading", { level: 1, name: "Sita Gurung" });
+    expect(name.parentElement).not.toContainElement(button);
+  });
+
+  it("says what each choice means in the menu", async () => {
+    backend(profile());
+    renderPage();
+
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Priority: Normal. Change it" }),
+    );
+
+    const menu = screen.getByRole("menu", { name: "Set priority" });
+    expect(menu).toHaveTextContent("Set priority");
+    expect(screen.getByRole("menuitemradio", { name: /High/ })).toHaveTextContent(
+      "Needs attention first",
+    );
+    expect(screen.getByRole("menuitemradio", { name: /Normal/ })).toHaveTextContent(
+      "The usual pace",
+    );
+    expect(screen.getByRole("menuitemradio", { name: /Low/ })).toHaveTextContent("Can wait");
   });
 
   it("changes it from the menu, records it and says so", async () => {
@@ -91,12 +119,12 @@ describe("a Student's Priority (ticket 10)", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Priority: Normal. Change it" }),
     );
-    const menu = screen.getByRole("menu", { name: "Priority" });
-    expect(screen.getByRole("menuitemradio", { name: "Normal" })).toHaveAttribute(
+    const menu = screen.getByRole("menu", { name: "Set priority" });
+    expect(screen.getByRole("menuitemradio", { name: /^Normal/ })).toHaveAttribute(
       "aria-checked",
       "true",
     );
-    await userEvent.click(screen.getByRole("menuitemradio", { name: "High" }));
+    await userEvent.click(screen.getByRole("menuitemradio", { name: /^High/ }));
 
     expect(await screen.findByText("Priority set to High")).toBeInTheDocument();
     expect(menu).not.toBeInTheDocument();
@@ -114,12 +142,12 @@ describe("a Student's Priority (ticket 10)", () => {
 
     button.focus();
     await userEvent.keyboard("{Enter}");
-    expect(screen.getByRole("menuitemradio", { name: "High" })).toHaveFocus();
+    expect(screen.getByRole("menuitemradio", { name: /^High/ })).toHaveFocus();
     await userEvent.keyboard("{ArrowDown}");
-    expect(screen.getByRole("menuitemradio", { name: "Normal" })).toHaveFocus();
+    expect(screen.getByRole("menuitemradio", { name: /^Normal/ })).toHaveFocus();
     await userEvent.keyboard("{Escape}");
 
-    expect(screen.queryByRole("menu", { name: "Priority" })).toBeNull();
+    expect(screen.queryByRole("menu", { name: "Set priority" })).toBeNull();
     expect(button).toHaveFocus();
   });
 
@@ -130,7 +158,7 @@ describe("a Student's Priority (ticket 10)", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Priority: Normal. Change it" }),
     );
-    await userEvent.click(screen.getByRole("menuitemradio", { name: "Normal" }));
+    await userEvent.click(screen.getByRole("menuitemradio", { name: /^Normal/ }));
 
     expect(fetchFn.mock.calls.filter(([, init]) => method(init) === "PUT")).toHaveLength(0);
   });
@@ -142,7 +170,7 @@ describe("a Student's Priority (ticket 10)", () => {
     await userEvent.click(
       await screen.findByRole("button", { name: "Priority: Normal. Change it" }),
     );
-    await userEvent.click(screen.getByRole("menuitemradio", { name: "Low" }));
+    await userEvent.click(screen.getByRole("menuitemradio", { name: /^Low/ }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "We couldn't change the priority. Try again.",
@@ -154,7 +182,8 @@ describe("a Student's Priority (ticket 10)", () => {
     backend(profile({ ...PROFILE, priority: "low", can_set_priority: false }));
     renderPage(FRONT_DESK);
 
-    expect(await screen.findByText("Low priority")).toBeVisible();
+    expect(await screen.findByText("Low")).toBeVisible();
+    expect(screen.getByText("Priority")).toBeVisible();
     expect(screen.queryByRole("button", { name: /^Priority:/ })).toBeNull();
   });
 
