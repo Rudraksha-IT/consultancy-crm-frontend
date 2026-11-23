@@ -9,6 +9,10 @@ export const PRODUCT_NAME = {
   expireSeconds: 3_600,
   timeoutMs: 3_000,
   backendPath: "/api/platform/brand/",
+  /** Where a Platform Admin saves a new name; once Django accepts it, the kept name is dropped. */
+  changePath: "/api/platform/brand/name/",
+  /** The tag the kept name carries, so a saved change drops it at once (list tidy-ups 05). */
+  cacheTag: "product-name",
 } as const;
 
 export const PRODUCT_NAME_TEXT = {
