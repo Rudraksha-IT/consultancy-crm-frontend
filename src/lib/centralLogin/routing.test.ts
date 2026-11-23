@@ -67,7 +67,9 @@ describe("routeForPlatformHost", () => {
   it.each(["/platform", "/platform/", "/platform/login", "/platform/consultancies/x"])(
     "has no %s on an office's address",
     (path) => {
-      expect(routeForPlatformHost(`${testHost("polar")}:8080`, path, PLATFORM)).toBe("notFound");
+      expect(routeForPlatformHost(`${testHost("northwind")}:8080`, path, PLATFORM)).toBe(
+        "notFound",
+      );
     },
   );
 

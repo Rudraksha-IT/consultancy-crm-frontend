@@ -18,6 +18,7 @@ import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 
 import { PlatformTabs } from "./PlatformTabs";
+import { useProductName } from "@/components/features/brand/ProductName";
 import { useProductMark } from "./productLogo";
 import { PlatformAdminContext } from "./platformAdminContext";
 import { usePlatformSession } from "./usePlatformSession";
@@ -58,6 +59,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
   const colourMode = useColourMode(`platform-${admin.id}`);
   const productLogo = useProductMark();
   useAppliedTheme(DEFAULT_THEME, colourMode.mode);
+  const productName = useProductName();
 
   return (
     <PlatformAdminContext value={current}>
@@ -67,8 +69,8 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             href={ROUTES.platformHome}
             className="min-h-control flex min-w-0 items-center gap-3"
           >
-            <BrandMark name={LABELS.productName} logo={productLogo} />
-            <b className="text-body font-bold">{LABELS.productName}</b>
+            <BrandMark name={productName} logo={productLogo} />
+            <b className="text-body font-bold">{productName}</b>
           </Link>
           <div className="flex items-center gap-2">
             <IconLink

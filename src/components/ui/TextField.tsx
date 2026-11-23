@@ -19,6 +19,8 @@ type TextFieldProps = FieldProps & {
   /** The earliest and latest allowed, for a date or month. */
   min?: string;
   max?: string;
+  /** The most characters that can be typed. */
+  maxLength?: number;
   defaultValue?: string;
   /** Common values offered while typing; any other text is still allowed. */
   suggestions?: readonly string[];
@@ -41,6 +43,7 @@ export function TextField({
   placeholder,
   min,
   max,
+  maxLength,
   defaultValue,
   suggestions,
   value,
@@ -68,6 +71,7 @@ export function TextField({
             placeholder={placeholder}
             min={min}
             max={max}
+            maxLength={maxLength}
             list={hasSuggestions ? listId : undefined}
             defaultValue={defaultValue}
             value={value}

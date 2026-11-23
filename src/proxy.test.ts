@@ -47,7 +47,7 @@ describe("proxy", () => {
   it.each(["/platform", "/platform/login"])(
     "answers Page not found for %s on an office's address (ticket 14)",
     (path) => {
-      const response = proxy(page(`${testHost("polar")}:8080`, path));
+      const response = proxy(page(`${testHost("northwind")}:8080`, path));
 
       expect(response.status).toBe(404);
       expect(response.headers.get("x-middleware-rewrite")).not.toContain("/platform");

@@ -577,6 +577,7 @@ export {
   resendPlatformAdminCode,
   uploadProductLogo,
 } from "./platform/platformTeam";
+export { saveProductName } from "./platform/productName";
 export { fetchSavedLogos, pickSavedLogo, removeSavedLogo } from "./platform/savedLogos";
 export type { SavedLogo, SavedLogos } from "./platform/savedLogos";
 export type {

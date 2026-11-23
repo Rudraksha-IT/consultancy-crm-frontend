@@ -1,4 +1,3 @@
-import { LABELS } from "@/constants/messages";
 import { NAV_ENTRIES } from "@/constants/navigation";
 import type { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
@@ -21,15 +20,13 @@ function startsAt(path: string, start: string): boolean {
 
 /**
  * The browser tab's title on an office's address (first live fixes, ticket 08): on Home
- * "<office> - Rudraksha CRM"; elsewhere "<page> | <office>". A record's page is named by its
+ * "<office> - <product>" (the product's saved name, ticket 15); elsewhere "<page> | <office>". A record's page is named by its
  * section ("Students"), never by the Student or person, so no name is kept in browser history.
  * Before anyone logs in (the login pages) there is no Role.
  */
-export function tabTitle(path: string, office: string, role: Role | null): string {
+export function tabTitle(path: string, office: string, role: Role | null, product: string): string {
   const found = pageNames(role)
     .filter(([start]) => startsAt(path, start))
     .sort(([a], [b]) => b.length - a.length)[0];
-  return found === undefined
-    ? TAB_TITLE.home(office, LABELS.productName)
-    : TAB_TITLE.page(found[1], office);
+  return found === undefined ? TAB_TITLE.home(office, product) : TAB_TITLE.page(found[1], office);
 }

@@ -237,6 +237,8 @@ export const API_PATHS = {
   savedLogo: (logoId: RecordId) => `/api/platform/brand/logos/${logoId}/`,
   savedLogoFile: (logoId: RecordId) => `/api/platform/brand/logos/${logoId}/file/`,
   savedLogoInUse: "/api/platform/brand/in-use/",
+  // The product's name (first live fixes, ticket 15).
+  productName: "/api/platform/brand/name/",
   platformEmail: "/api/platform/email/",
   platformTestEmail: "/api/platform/email/test/",
   platformConsultancies: "/api/platform/consultancies/",

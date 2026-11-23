@@ -4,7 +4,7 @@ import { VISITOR_KEY } from "@/components/features/auth/AuthThemeToggle";
 import { AuthBrand } from "@/components/features/consultancy/ConsultancyBrand";
 import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
 import { useColourMode } from "@/components/features/theme/useColourMode";
-import { LABELS } from "@/constants/messages";
+import { useProductName } from "@/components/features/brand/ProductName";
 import { DEFAULT_THEME } from "@/lib/theme";
 
 import { useProductMark } from "./productLogo";
@@ -19,5 +19,5 @@ export function PlatformBrand({ tagline }: PlatformBrandProps) {
   const { mode } = useColourMode(VISITOR_KEY);
   useAppliedTheme(DEFAULT_THEME, mode);
   const logo = useProductMark();
-  return <AuthBrand name={LABELS.productName} tagline={tagline} logo={logo} />;
+  return <AuthBrand name={useProductName()} tagline={tagline} logo={logo} />;
 }

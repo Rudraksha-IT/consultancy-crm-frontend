@@ -1,5 +1,6 @@
 "use client";
 
+import { useProductName } from "@/components/features/brand/ProductName";
 import { useState, type SubmitEvent } from "react";
 
 import { Banner } from "@/components/ui/Banner";
@@ -27,6 +28,7 @@ export function TwoFactorVerifyForm({
   onStartAgain,
   side = "platform",
 }: TwoFactorVerifyFormProps) {
+  const product = useProductName();
   const [isRecoveryCode, setIsRecoveryCode] = useState(false);
   const [isChecking, setIsChecking] = useState(false);
   const [mustStartAgain, setMustStartAgain] = useState(false);
@@ -57,7 +59,9 @@ export function TwoFactorVerifyForm({
     <form noValidate className="grid gap-5" onSubmit={(event) => void submit(event)}>
       <div className="grid gap-2">
         <h2 className="text-section-title">{TEXT.verifyTitle}</h2>
-        <p className="text-ink-2">{isRecoveryCode ? TEXT.recoveryIntro : TEXT.verifyIntro}</p>
+        <p className="text-ink-2">
+          {isRecoveryCode ? TEXT.recoveryIntro : TEXT.verifyIntro(product)}
+        </p>
       </div>
       <SecondStepField
         isRecoveryCode={isRecoveryCode}

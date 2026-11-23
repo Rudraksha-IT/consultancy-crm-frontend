@@ -1,10 +1,10 @@
 /** Two-step login (issue 61): its words on screen. Never "OTP"; "Code" stays the emailed one. */
 
-import { LABELS } from "./messages";
-
 export const TWO_FACTOR_TEXT = {
   verifyTitle: "Enter the number from your authenticator app",
-  verifyIntro: `Open your authenticator app and type the 6-digit number it shows for ${LABELS.productName}.`,
+  /** The product's saved name (ticket 15). */
+  verifyIntro: (product: string) =>
+    `Open your authenticator app and type the 6-digit number it shows for ${product}.`,
   recoveryIntro: "Type one of the recovery codes you saved. Each one works once.",
   numberLabel: "6-digit number",
   recoveryCodeLabel: "Recovery code",

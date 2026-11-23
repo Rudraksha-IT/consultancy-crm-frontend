@@ -10,17 +10,19 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
 import { LOGO_ACCEPT, LOGO_TEXT } from "@/constants/logo";
-import { LABELS } from "@/constants/messages";
+import { useProductName } from "@/components/features/brand/ProductName";
 import { PLATFORM_SETTINGS_TEXT as TEXT } from "@/constants/platformTeam";
 
 import { useProductLogo, useProductMark } from "../productLogo";
 import { PlatformEmailSettings } from "./PlatformEmailSettings";
+import { ProductNameSection } from "./ProductNameSection";
 import { SavedLogosSection } from "./SavedLogosSection";
 import { useProductLogoChanges } from "./useProductLogoChanges";
 import { useSavedLogos } from "./useSavedLogos";
 
 /**
- * The Platform's Settings tab: whether email works (ADR 0023), the product's logo (issue 65) and
+ * The Platform's Settings tab: the product's name (ticket 15), whether email works (ADR 0023),
+ * the product's logo (issue 65) and
  * the saved logos to pick from (first live fixes, ticket 07).
  */
 export function PlatformSettingsPage() {
@@ -28,11 +30,13 @@ export function PlatformSettingsPage() {
   const mark = useProductMark();
   const savedLogos = useSavedLogos();
   const changes = useProductLogoChanges(savedLogos.reload);
+  const productName = useProductName();
 
   return (
     <>
       <PageHeader title={TEXT.title} subtitle={TEXT.intro} />
       <div className="grid min-w-0 gap-8">
+        <ProductNameSection />
         <PlatformEmailSettings />
         <Section title={TEXT.logoTitle}>
           <div className="wide:grid-cols-[minmax(0,var(--spacing-settings-label))_minmax(0,1fr)] grid gap-x-12 gap-y-6">
@@ -43,8 +47,8 @@ export function PlatformSettingsPage() {
                   data-testid="logo-preview"
                   className="bg-fill rounded-panel flex min-h-18 min-w-0 items-center gap-3 p-4"
                 >
-                  <BrandMark name={LABELS.productName} logo={mark} />
-                  <b className="text-body truncate font-bold">{LABELS.productName}</b>
+                  <BrandMark name={productName} logo={mark} />
+                  <b className="text-body truncate font-bold">{productName}</b>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                   <label

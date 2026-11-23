@@ -2,6 +2,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { z } from "zod";
 
+import { ProductNameProvider, useProductName } from "@/components/features/brand/ProductName";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { APP_LOGO_URL } from "@/lib/brand/appLogo";
 import { backend, callsTo, on, onEach, type Answer } from "@/test/backend";
@@ -58,11 +59,19 @@ function tile(name: string | RegExp): HTMLElement {
   return screen.getByRole("listitem", { name });
 }
 
-function renderPage() {
+/** Where else on the page the product's name shows, as the Platform's header would. */
+function NameElsewhere() {
+  return <output aria-label="Name elsewhere">{useProductName()}</output>;
+}
+
+function renderPage(name = "Rudraksha CRM") {
   render(
-    <ToastProvider>
-      <PlatformSettingsPage />
-    </ToastProvider>,
+    <ProductNameProvider name={name}>
+      <ToastProvider>
+        <NameElsewhere />
+        <PlatformSettingsPage />
+      </ToastProvider>
+    </ProductNameProvider>,
   );
 }
 
@@ -305,5 +314,108 @@ describe.each(THEME_CASES)("PlatformSettingsPage in the $name Theme", ({ config,
     expect(await screen.findByLabelText("Upload a logo")).toBeInTheDocument();
     expect(screen.getByTestId("logo-preview")).toBeVisible();
     expect(await screen.findByRole("list", { name: "Saved logos" })).toBeVisible();
+  });
+});
+
+describe("the product's name (first live fixes, ticket 15)", () => {
+  const NAME_PATH = "/api/platform/brand/name/";
+
+  function field(): HTMLElement {
+    return screen.getByRole("textbox", { name: "Product name" });
+  }
+
+  function sentName(fetchFn: ReturnType<typeof backend>): unknown {
+    const [call] = callsTo(fetchFn, "PUT", NAME_PATH);
+    const body = call?.[1]?.body;
+    return typeof body === "string" ? JSON.parse(body) : undefined;
+  }
+
+  it("shows the saved name, at most 40 characters, with what it may contain", () => {
+    backend(onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })));
+    renderPage("Acme Office Suite");
+
+    expect(field()).toHaveValue("Acme Office Suite");
+    expect(field()).toHaveAttribute("maxlength", "40");
+    expect(
+      screen.getByText("At most 40 characters: letters, numbers, spaces and . - & ' ( ) +"),
+    ).toBeInTheDocument();
+  });
+
+  it("saves a new name, says so, and shows it everywhere on the page at once", async () => {
+    const fetchFn = backend(
+      onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })),
+      on("PUT", NAME_PATH, { name: "Acme Office Suite" }),
+    );
+    renderPage();
+
+    await userEvent.clear(field());
+    await userEvent.type(field(), "  Acme   Office Suite ");
+    await userEvent.click(screen.getByRole("button", { name: "Save name" }));
+
+    expect(await screen.findByText("Product name saved.")).toBeInTheDocument();
+    expect(sentName(fetchFn)).toEqual({ name: "  Acme   Office Suite " });
+    expect(field()).toHaveValue("Acme Office Suite");
+    expect(screen.getByRole("status", { name: "Name elsewhere" })).toHaveTextContent(
+      "Acme Office Suite",
+    );
+    expect(within(screen.getByTestId("logo-preview")).getByText("Acme Office Suite")).toBeVisible();
+  });
+
+  it("asks for a name before sending a blank one", async () => {
+    const fetchFn = backend(onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })));
+    renderPage();
+
+    await userEvent.clear(field());
+    await userEvent.click(screen.getByRole("button", { name: "Save name" }));
+
+    expect(screen.getByText("Enter the product's name.")).toBeInTheDocument();
+    expect(callsTo(fetchFn, "PUT", NAME_PATH)).toHaveLength(0);
+  });
+
+  it("says when nothing changed, without sending", async () => {
+    const fetchFn = backend(onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })));
+    renderPage();
+
+    await userEvent.click(screen.getByRole("button", { name: "Save name" }));
+
+    expect(screen.getByText("That is already the product's name.")).toBeInTheDocument();
+    expect(callsTo(fetchFn, "PUT", NAME_PATH)).toHaveLength(0);
+  });
+
+  it("shows the server's reason under the field and keeps the old name", async () => {
+    backend(
+      onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })),
+      on("PUT", NAME_PATH, { name: ["Use letters, numbers, spaces and . - & ' ( ) + only."] }, 400),
+    );
+    renderPage();
+
+    await userEvent.clear(field());
+    await userEvent.type(field(), "<b>Acme</b>");
+    await userEvent.click(screen.getByRole("button", { name: "Save name" }));
+
+    expect(
+      await screen.findByText("Use letters, numbers, spaces and . - & ' ( ) + only."),
+    ).toBeInTheDocument();
+    expect(field()).toHaveAttribute("aria-invalid", "true");
+    expect(screen.getByRole("status", { name: "Name elsewhere" })).toHaveTextContent(
+      "Rudraksha CRM",
+    );
+  });
+
+  it("says when it couldn't save, keeping what was typed", async () => {
+    backend(
+      onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })),
+      on("PUT", NAME_PATH, { detail: "Server error" }, 500),
+    );
+    renderPage();
+
+    await userEvent.clear(field());
+    await userEvent.type(field(), "Acme Office Suite");
+    await userEvent.click(screen.getByRole("button", { name: "Save name" }));
+
+    expect(
+      await screen.findByText("We couldn't save the product's name. Please try again."),
+    ).toBeInTheDocument();
+    expect(field()).toHaveValue("Acme Office Suite");
   });
 });

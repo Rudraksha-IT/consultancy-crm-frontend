@@ -3,11 +3,11 @@ import "server-only";
 import { z } from "zod";
 
 import { HTTP_STATUS } from "@/constants/api";
-import { BACKEND_HEADERS, RELAYED_RESPONSE_HEADERS } from "@/constants/backend";
+import { RELAYED_RESPONSE_HEADERS } from "@/constants/backend";
 import { LOGO_FILE_TYPES } from "@/constants/logo";
 import { TAB_ICON } from "@/constants/tabIcon";
 import { APP_LOGO_URL } from "@/lib/brand/appLogo";
-import { getServerConfig } from "@/lib/config";
+import { askPlatform } from "@/lib/brand/askPlatform";
 
 const ALLOWED_TYPES: readonly string[] = LOGO_FILE_TYPES;
 const BrandSchema = z.object({
@@ -20,7 +20,11 @@ const BrandSchema = z.object({
  * can't say.
  */
 export async function answerTabIcon(request: Request): Promise<Response> {
-  const answer = await askPlatform(request, TAB_ICON.brandBackendPath);
+  const answer = await askPlatform(
+    TAB_ICON.brandBackendPath,
+    protocolOf(request),
+    TAB_ICON.timeoutMs,
+  );
   const version = answer === null ? null : await logoVersion(answer);
   if (version === null) return appLogo();
   return sendTo(TAB_ICON.versionPath(version));
@@ -32,7 +36,11 @@ export async function answerTabIcon(request: Request): Promise<Response> {
  */
 export async function answerTabIconVersion(request: Request, version: string): Promise<Response> {
   if (!TAB_ICON.versionPattern.test(version)) return appLogo();
-  const answer = await askPlatform(request, TAB_ICON.logoBackendPath(version));
+  const answer = await askPlatform(
+    TAB_ICON.logoBackendPath(version),
+    protocolOf(request),
+    TAB_ICON.timeoutMs,
+  );
   const logo = answer === null ? null : await readLogo(answer);
   if (logo === null) return appLogo();
   return new Response(logo.bytes, {
@@ -42,34 +50,6 @@ export async function answerTabIconVersion(request: Request, version: string): P
       "cache-control": TAB_ICON.versionCache,
     },
   });
-}
-
-/** Django's answer on the Platform's address, or null when it fails or takes over 3 seconds. */
-async function askPlatform(request: Request, path: string): Promise<Response | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => {
-    controller.abort();
-  }, TAB_ICON.timeoutMs);
-  try {
-    const config = getServerConfig();
-    const answer = await fetch(`${config.backendOrigin}${path}`, {
-      headers: {
-        [BACKEND_HEADERS.forwardedHost]: `${config.platformSubdomain}.${config.productDomain}`,
-        [BACKEND_HEADERS.forwardedProto]: new URL(request.url).protocol.replace(":", ""),
-        [BACKEND_HEADERS.internalToken]: config.internalApiToken,
-        [BACKEND_HEADERS.correlationId]: crypto.randomUUID(),
-      },
-      cache: "no-store",
-      redirect: "manual",
-      signal: controller.signal,
-    });
-    return answer.status === HTTP_STATUS.ok ? answer : null;
-  } catch {
-    // silent: the app's own logo shows instead, and the next page asks again
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 async function logoVersion(answer: Response): Promise<string | null> {
@@ -121,4 +101,9 @@ export function onlyGet(): Response {
       headers: { "cache-control": "no-store", allow: "GET" },
     },
   );
+}
+
+/** The protocol the browser used, as Django is told it. */
+function protocolOf(request: Request): string {
+  return new URL(request.url).protocol.replace(":", "");
 }
