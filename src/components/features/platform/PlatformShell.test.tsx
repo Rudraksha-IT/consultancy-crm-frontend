@@ -122,6 +122,18 @@ describe("PlatformShell", () => {
     pathname.current = "/platform";
   });
 
+  it("names the page and the product in the browser tab (list tidy-ups 08)", async () => {
+    pathname.current = "/platform/admins";
+    answerMeWith(jsonResponse({ platform_admin: ADMIN }));
+
+    render(<PlatformShell>page</PlatformShell>);
+
+    await waitFor(() => {
+      expect(document.title).toBe("Platform Admins | Rudraksha CRM");
+    });
+    pathname.current = "/platform";
+  });
+
   it("has one Settings: a tab, and no gear in the header (list tidy-ups 04)", async () => {
     answerMeWith(jsonResponse({ platform_admin: ADMIN }));
 

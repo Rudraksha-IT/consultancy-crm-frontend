@@ -1,7 +1,7 @@
 import { Role } from "@/constants/roles";
 import { uid } from "@/test/ids";
 
-import { tabTitle } from "./tabTitle";
+import { platformTabTitle, tabTitle } from "./tabTitle";
 
 const OFFICE = "Northwind Education";
 
@@ -53,5 +53,23 @@ describe("the browser tab's title on an office's address (first live fixes, tick
 
   it("is the office alone on a page it doesn't know", () => {
     expect(tabTitle("/somewhere", OFFICE, Role.Admin)).toBe("Northwind Education");
+  });
+});
+
+describe("the browser tab's title on the Platform (list tidy-ups 08)", () => {
+  const PRODUCT = "Acme Office Suite";
+
+  it.each([
+    ["/platform", "Consultancies"],
+    ["/platform/consultancies/new", "Consultancies"],
+    ["/platform/admins", "Platform Admins"],
+    ["/platform/settings", "Settings"],
+  ])("is the page and the product's name on %s", (path, page) => {
+    expect(platformTabTitle(path, PRODUCT)).toBe(`${page} | Acme Office Suite`);
+  });
+
+  it("is the product's name alone anywhere else", () => {
+    expect(platformTabTitle("/platform/somewhere", PRODUCT)).toBe("Acme Office Suite");
+    expect(platformTabTitle("/platformx", PRODUCT)).toBe("Acme Office Suite");
   });
 });

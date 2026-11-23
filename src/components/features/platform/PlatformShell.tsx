@@ -17,6 +17,7 @@ import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 
 import { PlatformTabs } from "./PlatformTabs";
+import { usePlatformTabTitle } from "@/hooks/usePlatformTabTitle";
 import { useProductName } from "@/components/features/brand/ProductName";
 import { useProductMark } from "./productLogo";
 import { PlatformAdminContext } from "./platformAdminContext";
@@ -59,6 +60,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
   const productLogo = useProductMark();
   useAppliedTheme(DEFAULT_THEME, colourMode.mode);
   const productName = useProductName();
+  usePlatformTabTitle();
 
   return (
     <PlatformAdminContext value={current}>
