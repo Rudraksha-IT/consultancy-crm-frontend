@@ -18,27 +18,22 @@ import {
   updatingOr,
 } from "@/lib/api";
 
-import { AddAdminDialog } from "./AddAdminDialog";
 import { ChangeStatusDialog } from "./ChangeStatusDialog";
-import { ColoursDialog } from "./ColoursDialog";
+import { ConfigurationDialog } from "./ConfigurationDialog";
 import { ConsultancyListContent } from "./ConsultancyListContent";
-import { FeaturesDialog } from "./FeaturesDialog";
 import { useConsultancies } from "./useConsultancies";
 
 /**
- * The Platform's list of every Consultancy: create one, add its Admins (issue 64), change its
- * features, colours or Status,
- * open it as Platform Admin (issue 27), or set it up again if its setup failed (issue 60); then
- * every Platform Admin visit.
+ * The Platform's list of every Consultancy: create one; change its Features, Colours and Admins
+ * (issue 64) in its Configuration (ticket 16); change its Status; open it as Platform Admin
+ * (issue 27), or set it up again if its setup failed (issue 60); then every Platform Admin visit.
  */
 export function ConsultancyList() {
   const { list, replace } = useConsultancies();
   const { showToast } = useToast();
-  const [featuresFor, setFeaturesFor] = useState<ConsultancyOverview | null>(null);
+  const [configuring, setConfiguring] = useState<ConsultancyOverview | null>(null);
   const [statusFor, setStatusFor] = useState<ConsultancyOverview | null>(null);
-  const [coloursFor, setColoursFor] = useState<ConsultancyOverview | null>(null);
   const [officeToOpen, setOfficeToOpen] = useState<ConsultancyOverview | null>(null);
-  const [adminFor, setAdminFor] = useState<ConsultancyOverview | null>(null);
 
   async function tryAgain(consultancy: ConsultancyOverview): Promise<void> {
     try {
@@ -64,51 +59,32 @@ export function ConsultancyList() {
       <ConsultancyListContent
         list={list}
         onChangeStatus={setStatusFor}
-        onOpenFeatures={setFeaturesFor}
+        onConfigure={setConfiguring}
         onOpenOffice={setOfficeToOpen}
-        onChooseColours={setColoursFor}
-        onAddAdmin={setAdminFor}
         onTryAgain={tryAgain}
       />
       <SupportVisitList />
-      {featuresFor !== null && (
-        <FeaturesDialog
-          office={featuresFor}
+      {configuring !== null && (
+        <ConfigurationDialog
+          consultancy={configuring}
           onClose={() => {
-            setFeaturesFor(null);
+            setConfiguring(null);
           }}
-          onSave={async (switches) => {
-            const updated = await updateModules(featuresFor.id, switches);
+          onSaveFeatures={async (switches) => {
+            const updated = await updateModules(configuring.id, switches);
             showToast(MESSAGES.featuresSaved(updated.name));
             replace(updated);
-            setFeaturesFor(null);
           }}
-        />
-      )}
-      {coloursFor !== null && (
-        <ColoursDialog
-          consultancy={coloursFor}
-          onClose={() => {
-            setColoursFor(null);
-          }}
-          onSave={async (theme) => {
-            const updated = await updateConsultancyTheme(coloursFor.id, theme);
+          onSaveColours={async (theme) => {
+            const updated = await updateConsultancyTheme(configuring.id, theme);
             showToast(MESSAGES.coloursSaved(updated.name));
             replace(updated);
-            setColoursFor(null);
+          }}
+          onAdminAdded={(name) => {
+            showToast(ADMIN_TEXT.inviteSent(name));
           }}
         />
       )}
-      <AddAdminDialog
-        office={adminFor}
-        onClose={() => {
-          setAdminFor(null);
-        }}
-        onAdded={(name) => {
-          showToast(ADMIN_TEXT.inviteSent(name));
-          setAdminFor(null);
-        }}
-      />
       {officeToOpen !== null && (
         <OpenOfficeDialog
           office={officeToOpen}

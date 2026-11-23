@@ -12,8 +12,10 @@ import { Role } from "@/constants/roles";
 
 import { Module } from "@/constants/modules";
 
+import { HighPriorityStudents } from "./HighPriorityStudents";
 import { HomeGreeting } from "./HomeGreeting";
 import { loadOwing, MonthAtAGlance, WhoStillOwes } from "./MoneySections";
+import { useHomeAmounts } from "./useHomeAmounts";
 import { PipelineSection } from "./PipelineSection";
 import { ProgressSection } from "./ProgressSection";
 import { TasksDueSoon } from "./TasksDueSoon";
@@ -39,56 +41,65 @@ export function HomePage() {
 }
 
 /**
- * The business at a glance: with the Accounts Module, this month's money first; then the
- * pipeline, everyone's progress (the six furthest along), who still owes Fees and new visitors
- * nobody counsels yet.
+ * The Admin's Home in the order they work (ticket 12): what's waiting, High priority Students,
+ * the pipeline, this month's money (with the Accounts Module), everyone's progress, who owes
+ * beside new visitors (the visitors alone without Accounts), then tasks due soon, full width.
  */
 function AdminHome() {
   const { modules } = useCurrentStaff();
+  return modules.includes(Module.Accounts) ? <AdminHomeWithMoney /> : <AdminHomeSections />;
+}
+
+/** With the Accounts Module: one load of who owes and one eye (ticket 13) serve both money sections. */
+function AdminHomeWithMoney() {
+  const owing = useLoaded(loadOwing, 0);
+  const amounts = useHomeAmounts();
+  return (
+    <AdminHomeSections
+      glance={<MonthAtAGlance owing={owing} amounts={amounts} />}
+      owes={<WhoStillOwes owing={owing} isShown={amounts.isShown} />}
+    />
+  );
+}
+
+type AdminHomeSectionsProps = { glance?: ReactNode; owes?: ReactNode };
+
+function AdminHomeSections({ glance, owes }: AdminHomeSectionsProps) {
   return (
     <>
       <WaitingRow />
-      {modules.includes(Module.Accounts) ? <AdminHomeWithMoney /> : <AdminHomeSections />}
-    </>
-  );
-}
-
-function AdminHomeWithMoney() {
-  // One load of who owes for both money sections.
-  const owing = useLoaded(loadOwing, 0);
-  return (
-    <>
-      <MonthAtAGlance owing={owing} />
-      <AdminHomeSections owesFees={<WhoStillOwes owing={owing} />} />
-    </>
-  );
-}
-
-function AdminHomeSections({ owesFees }: { owesFees?: ReactNode }) {
-  return (
-    <>
+      <HighPriorityStudents mine={false} />
       <PipelineSection />
+      {glance}
       <ProgressSection
         title={HOME_TEXT.everyonesProgress}
         mine={false}
         limit={ADMIN_PROGRESS_LIMIT}
         showsCounsellor
       />
-      <div className="wide:grid-cols-2 grid items-start gap-8">
-        {owesFees}
+      {owes === undefined ? (
         <UnassignedVisitors />
-        <TasksDueSoon isGrouped={false} />
-      </div>
+      ) : (
+        <div className="wide:grid-cols-2 grid gap-8">
+          {owes}
+          <UnassignedVisitors />
+        </div>
+      )}
+      <TasksDueSoon isGrouped={false} />
     </>
   );
 }
 
-/** My Students' progress, my classes (with the test-prep Module) and my tasks due soon. */
+/**
+ * What's waiting, my High priority Students, my Students' progress, my classes (with the
+ * test-prep Module) and my tasks due soon (ticket 12).
+ */
 function CounsellorHome() {
   const context = useCurrentStaff();
   return (
     <>
       <WaitingRow />
+      <HighPriorityStudents mine />
       <ProgressSection
         title={HOME_TEXT.yourProgress}
         mine

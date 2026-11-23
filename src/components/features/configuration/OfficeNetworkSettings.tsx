@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 
-import { useDates } from "@/components/features/shell/dateDisplay";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
@@ -14,22 +13,17 @@ import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
 import { useToast } from "@/components/ui/useToast";
 import { OFFICE_NETWORK_TEXT as TEXT } from "@/constants/officeNetworks";
-import {
-  InvalidFieldsError,
-  OfficeNetworkRefusedError,
-  type CurrentNetwork,
-  type OfficeNetwork,
-  type OfficeNetworkChange,
-  type OfficeNetworkList,
-} from "@/lib/api";
+import { type CurrentNetwork, type OfficeNetwork, type OfficeNetworkList } from "@/lib/api";
 
 import { AddOfficeNetworkForm } from "./AddOfficeNetworkForm";
+import { officeNetworkRefusalOf as refusalOf } from "./officeNetworkRefusal";
 import { useOfficeNetworks, type OfficeNetworks } from "./useOfficeNetworks";
 
 /**
  * Configuration → Office network, while the Clock-in Module is on: the internet addresses Staff
- * may clock in from, "Add the network I'm on now", adding one by hand, removing one, and every
- * add and remove (spec 104-105, issue 55). The limits shown come from the server.
+ * may clock in from, "Add the network I'm on now", adding one by hand and removing one (spec
+ * 104-105, issue 55). No history of adds and removes is shown or kept (first live fixes, ticket
+ * 02). The limits shown come from the server.
  */
 export function OfficeNetworkSettings() {
   const networks = useOfficeNetworks();
@@ -69,7 +63,6 @@ function Loaded({ list, networks }: { list: OfficeNetworkList; networks: OfficeN
       )}
       <AddOfficeNetworkForm ipv4WidestPrefix={list.limits.ipv4WidestPrefix} onAdd={networks.add} />
       <p className="text-small text-ink-2">{TEXT.staticHelp(list.limits.maxNetworks)}</p>
-      <ChangeLog changes={list.changes} />
       {removing !== null && (
         <ConfirmDialog
           title={TEXT.removeTitle(removing.label)}
@@ -125,26 +118,13 @@ type CurrentNetworkPanelProps = {
   onAdd: (label: string, network: string) => Promise<OfficeNetwork>;
 };
 
-/** The Admin's own address, and one click to add it ("Add the network I'm on now"). */
+/**
+ * The Admin's own address, what adding it saves (the address on IPv4, its /64 on IPv6), and one
+ * click to add that ("Add the network I'm on now").
+ */
 function CurrentNetworkPanel({ current, onAdd }: CurrentNetworkPanelProps) {
-  const { showToast } = useToast();
-  const [isAdding, setIsAdding] = useState(false);
-  const [failure, setFailure] = useState<string | null>(null);
-  const { address } = current;
-
-  async function addHere(here: string): Promise<void> {
-    setIsAdding(true);
-    setFailure(null);
-    try {
-      await onAdd(TEXT.hereLabel, here);
-      showToast(TEXT.addedHere);
-    } catch (error: unknown) {
-      setFailure(refusalOf(error));
-    }
-    setIsAdding(false);
-  }
-
-  if (address === null) {
+  const { address, suggestedNetwork } = current;
+  if (address === null || suggestedNetwork === null) {
     return (
       <Panel isPadded>
         <p className="text-ink-2">{TEXT.addressUnknown}</p>
@@ -159,41 +139,45 @@ function CurrentNetworkPanel({ current, onAdd }: CurrentNetworkPanelProps) {
           <b className="break-all tabular-nums">{address}</b>
           {current.isCovered && <Chip tone="good">{TEXT.alreadyListed}</Chip>}
         </p>
-        {!current.isCovered && (
-          <div>
-            <Button icon="wifi" isLoading={isAdding} onClick={() => void addHere(address)}>
-              {TEXT.addHere}
-            </Button>
-          </div>
-        )}
-        {failure !== null && <Banner tone="problem">{failure}</Banner>}
+        {!current.isCovered && <AddHere network={suggestedNetwork} onAdd={onAdd} />}
       </div>
     </Panel>
   );
 }
 
-function refusalOf(error: unknown): string {
-  if (error instanceof OfficeNetworkRefusedError) return error.message;
-  return firstFieldError(error) ?? TEXT.saveFailed;
-}
+type AddHereProps = {
+  /** What the server suggests adding for the Admin's own address. */
+  network: string;
+  onAdd: CurrentNetworkPanelProps["onAdd"];
+};
 
-/** The first reason the server gave on a field, e.g. "That network is already on the list." */
-function firstFieldError(error: unknown): string | undefined {
-  if (!(error instanceof InvalidFieldsError)) return undefined;
-  const refused: Partial<Record<string, string[]>> = error.fieldErrors;
-  return Object.values(refused).flat()[0];
-}
+/** "Adds …" and the button that adds it, with the server's reason if it is refused. */
+function AddHere({ network, onAdd }: AddHereProps) {
+  const { showToast } = useToast();
+  const [isAdding, setIsAdding] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
 
-function ChangeLog({ changes }: { changes: readonly OfficeNetworkChange[] }) {
-  const dates = useDates();
-  if (changes.length === 0) return null;
+  async function addHere(): Promise<void> {
+    setIsAdding(true);
+    setFailure(null);
+    try {
+      await onAdd(TEXT.hereLabel, network);
+      showToast(TEXT.addedHere);
+    } catch (error: unknown) {
+      setFailure(refusalOf(error));
+    }
+    setIsAdding(false);
+  }
+
   return (
-    <ul aria-label={TEXT.changesLabel} className="text-small text-ink-2 grid gap-1">
-      {changes.map((change) => (
-        <li key={change.id} className="break-words">
-          {`${TEXT.change(change.action, change.label, change.network)}. ${change.by}, ${dates.dateTime(change.at)}`}
-        </li>
-      ))}
-    </ul>
+    <>
+      <p className="text-secondary text-ink-2 break-all">{TEXT.adds(network)}</p>
+      <div>
+        <Button icon="wifi" isLoading={isAdding} onClick={() => void addHere()}>
+          {TEXT.addHere}
+        </Button>
+      </div>
+      {failure !== null && <Banner tone="problem">{failure}</Banner>}
+    </>
   );
 }

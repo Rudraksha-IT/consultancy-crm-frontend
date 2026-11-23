@@ -24,6 +24,7 @@ import type { StudentProfile } from "@/lib/api";
 import { AssignCounsellorDialog, TransferDialog } from "./CounsellorDialog";
 import { MarkLostDialog } from "./MarkLostDialog";
 import { PassportWarningChip } from "./PassportWarning";
+import { PriorityPicker } from "./PriorityPicker";
 
 type ProfileHeaderProps = {
   profile: StudentProfile;
@@ -66,7 +67,10 @@ export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
             </div>
           </div>
         </div>
-        <HeaderActions profile={profile} onOpen={setOpen} />
+        <div className="flex flex-wrap items-start gap-3">
+          <PriorityPicker profile={profile} onSaved={onSaved} />
+          <HeaderActions profile={profile} onOpen={setOpen} />
+        </div>
       </div>
       {open === "message" && (
         <EmailComposer

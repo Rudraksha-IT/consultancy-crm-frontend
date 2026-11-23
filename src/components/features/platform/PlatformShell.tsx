@@ -18,7 +18,8 @@ import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 
 import { PlatformTabs } from "./PlatformTabs";
-import { useProductLogo } from "./productLogo";
+import { useProductName } from "@/components/features/brand/ProductName";
+import { useProductMark } from "./productLogo";
 import { PlatformAdminContext } from "./platformAdminContext";
 import { usePlatformSession } from "./usePlatformSession";
 
@@ -56,8 +57,9 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
   const [admin, setAdmin] = useState(loaded);
   const current = useMemo(() => ({ admin, setAdmin }), [admin]);
   const colourMode = useColourMode(`platform-${admin.id}`);
-  const productLogo = useProductLogo();
+  const productLogo = useProductMark();
   useAppliedTheme(DEFAULT_THEME, colourMode.mode);
+  const productName = useProductName();
 
   return (
     <PlatformAdminContext value={current}>
@@ -67,8 +69,8 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             href={ROUTES.platformHome}
             className="min-h-control flex min-w-0 items-center gap-3"
           >
-            <BrandMark name={LABELS.productName} logo={productLogo} />
-            <b className="text-body font-bold">{LABELS.productName}</b>
+            <BrandMark name={productName} logo={productLogo} />
+            <b className="text-body font-bold">{productName}</b>
           </Link>
           <div className="flex items-center gap-2">
             <IconLink
@@ -88,9 +90,12 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             </span>
           </div>
         </header>
-        <PlatformTabs />
         <main className="px-page wide:pt-10 min-w-0 pt-7 pb-30">
-          <div className="max-w-content mx-auto grid grid-cols-1 gap-8">{children}</div>
+          <div className="max-w-content mx-auto grid grid-cols-1 gap-8">
+            {/* In the page, above its content, like every other page's tabs (ticket 16). */}
+            <PlatformTabs />
+            {children}
+          </div>
         </main>
       </div>
     </PlatformAdminContext>

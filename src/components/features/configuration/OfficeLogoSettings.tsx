@@ -10,7 +10,6 @@ import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
 import { LOGO_ACCEPT, LOGO_TEXT } from "@/constants/logo";
-import { LABELS } from "@/constants/messages";
 import type { OfficeLogo } from "@/lib/api";
 
 import { RemoveLogoButton } from "./RemoveLogoButton";
@@ -35,11 +34,7 @@ export function OfficeLogoSettings() {
               data-testid="logo-preview"
               className="bg-fill rounded-panel flex min-h-18 min-w-0 items-center p-4"
             >
-              <BrandLockup
-                name={consultancy.name}
-                tagline={LABELS.consultancyTagline}
-                logo={logo}
-              />
+              <BrandLockup name={consultancy.name} logo={logo} />
             </div>
             <LogoPicker
               hasLogo={logo !== null}

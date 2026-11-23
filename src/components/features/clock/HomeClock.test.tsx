@@ -140,7 +140,7 @@ describe("HomeClock", () => {
   });
 
   it.each([
-    ["off", "Not on the office network"],
+    ["off", "Not a saved office network"],
     ["none", "No office network set up"],
   ])("says so when the network is %s", async (state, words) => {
     backend(on("GET", CLOCK, { ...NOT_IN, office_network: state }));
@@ -201,7 +201,10 @@ describe("HomeClock", () => {
       on(
         "POST",
         "/api/clock/in/",
-        { detail: "You can only clock in from the office network." },
+        {
+          detail:
+            "This network isn't saved as an office network. At the office? The office's internet address may have changed. Ask an Admin to open the CRM here; it takes one tap.",
+        },
         403,
       ),
     );
@@ -209,9 +212,11 @@ describe("HomeClock", () => {
 
     await user.click(within(await clockRegion()).getByRole("button", { name: "Clock in" }));
 
-    const dialog = await screen.findByRole("dialog", { name: "You're not on the office network" });
+    const dialog = await screen.findByRole("dialog", { name: "Not a saved office network" });
     expect(
-      within(dialog).getByText("You can only clock in from the office network."),
+      within(dialog).getByText(
+        "This network isn't saved as an office network. At the office? The office's internet address may have changed. Ask an Admin to open the CRM here; it takes one tap.",
+      ),
     ).toBeInTheDocument();
     expect(within(dialog).getByText(/Nothing was recorded/)).toBeInTheDocument();
     await user.keyboard("{Escape}");
@@ -270,7 +275,7 @@ describe("HomeClock", () => {
     const clock = await clockRegion();
 
     expect(within(clock).getByText("Admins can clock in anywhere")).toBeInTheDocument();
-    expect(within(clock).queryByText("Not on the office network")).not.toBeInTheDocument();
+    expect(within(clock).queryByText("Not a saved office network")).not.toBeInTheDocument();
     expect(within(clock).queryByRole("button", { name: "Work from home" })).not.toBeInTheDocument();
   });
 
@@ -324,14 +329,17 @@ describe("HomeClock", () => {
       on(
         "POST",
         "/api/clock/in/",
-        { detail: "You can only clock in from the office network." },
+        {
+          detail:
+            "This network isn't saved as an office network. At the office? The office's internet address may have changed. Ask an Admin to open the CRM here; it takes one tap.",
+        },
         403,
       ),
     );
     renderGreeting();
 
     await user.click(within(await clockRegion()).getByRole("button", { name: "Clock in" }));
-    const dialog = await screen.findByRole("dialog", { name: "You're not on the office network" });
+    const dialog = await screen.findByRole("dialog", { name: "Not a saved office network" });
     expect(
       within(dialog).getByText(
         "Nothing was recorded. Working from home? Ask an Admin for Work from home dates first.",

@@ -1,7 +1,7 @@
 /** Fees and Balances (GLOSSARY: Fee, Balance), with the Accounts Module (issue 35). */
 
 /** How many Students who owe the Admin's Home shows. */
-export const OWING_ON_HOME = 5;
+export const OWING_ON_HOME = 3;
 
 export const FEE_TEXT = {
   // The Student's Fees tab (spec 76a-76b).
@@ -68,7 +68,6 @@ export const FEE_TEXT = {
   thisMonth: "Payments this month",
   feesToCollect: "Fees still to collect",
   whoStillOwes: "Who still owes fees",
-  allFees: "All fees",
   left: (amount: string) => `${amount} left`,
   paidOf: (paid: string, fees: string, percent: number) =>
     `Paid ${paid} of ${fees} (${String(percent)}%)`,

@@ -131,6 +131,19 @@ describe("Employees → Working hours", () => {
     expect(screen.getByText("On the office network")).toBeInTheDocument();
   });
 
+  it("off the saved networks, says so without telling the Admin to go to the office", async () => {
+    backend(
+      on("GET", NOW_PATH, { ...TEAM_NOW, office_network: "off" }),
+      on("GET", TEAM_PATH, TEAM),
+    );
+
+    renderPage();
+
+    expect(
+      await screen.findByText("This network isn't saved as an office network."),
+    ).toBeInTheDocument();
+  });
+
   it("puts everyone in one of three groups, each person with a time and no button", async () => {
     backend(on("GET", NOW_PATH, TEAM_NOW), on("GET", TEAM_PATH, TEAM));
     renderPage();

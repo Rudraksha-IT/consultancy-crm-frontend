@@ -13,7 +13,6 @@ import {
   fetchProductLogo,
   invitePlatformAdmin,
   reactivatePlatformAdmin,
-  removeProductLogo,
   requestPlatformJoinCode,
   resendPlatformAdminCode,
   uploadProductLogo,
@@ -187,7 +186,7 @@ describe("the product logo (issue 65)", () => {
     ).resolves.toBeNull();
   });
 
-  it("uploads a file as a form and removes the logo", async () => {
+  it("uploads a file as a form", async () => {
     const upload = answering(jsonResponse({ logo: { url: "/api/platform/brand/logo/1/" } }));
     const file = new File(["png"], "logo.png", { type: "image/png" });
 
@@ -198,10 +197,6 @@ describe("the product logo (issue 65)", () => {
     const sent = call(upload);
     expect(sent.path).toBe("/api/platform/brand/logo/");
     expect(sent.body).toBeInstanceOf(FormData);
-
-    const remove = answering(new Response(null, { status: 204 }));
-    await removeProductLogo(remove);
-    expect(call(remove)).toMatchObject({ path: "/api/platform/brand/logo/", method: "DELETE" });
   });
 
   it("names a refused file", async () => {

@@ -34,8 +34,9 @@ export function useSaveFeatures(
       await saveSwitches(switches);
     } catch {
       setError(MESSAGES.saveFeaturesFailed);
-      setIsSaving(false);
     }
+    // Configuration stays open after a save (ticket 16), ready for the next change.
+    setIsSaving(false);
   }
 
   return {

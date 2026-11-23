@@ -150,6 +150,29 @@ describe("the Bin tab (Admins, issue 79)", () => {
     expect(tab.location.replace).toHaveBeenCalledWith("https://files.test/k?sig=1");
   });
 
+  it("saves a zip in the Bin without opening a tab (ticket 09)", async () => {
+    const zipped = { ...ONE_FILE, files: [{ id: uid(50), file_name: "papers.zip" }] };
+    const fetchFn = backend(
+      on("GET", BIN_PATH, { ...BIN, count: 1, results: [zipped] }),
+      on("GET", `/api/documents/bin/files/${uid(50)}/link/?action=download`, {
+        url: "https://files.test/z?sig=1",
+        expires_in: 300,
+      }),
+    );
+    renderPage("admin");
+
+    await userEvent.click(
+      within(await itemFor("papers.zip")).getByRole("button", { name: "Download papers.zip" }),
+    );
+
+    await waitFor(() => {
+      expect(
+        callsTo(fetchFn, "GET", `/api/documents/bin/files/${uid(50)}/link/?action=download`),
+      ).toHaveLength(1);
+    });
+    expect(openBlankTab).not.toHaveBeenCalled();
+  });
+
   it("restores an item and says so", async () => {
     let restored = false;
     const fetchFn = backend(

@@ -14,6 +14,19 @@ import {
 } from "../core/types";
 
 /** One page of the Students matching the search and filters, newest first. */
+/**
+ * The High priority Students still being worked on (Lost left out), newest first: the first page
+ * and the total, for Home (ticket 12). `mine` keeps a counsellor to their own Students.
+ */
+export function fetchHighPriorityStudents(
+  { mine }: { mine: boolean },
+  fetchFn: typeof fetch = fetch,
+): Promise<StudentPage> {
+  const query = new URLSearchParams({ priority: "high", hide_lost: "true" });
+  if (mine) query.set("counsellor", "me");
+  return getJson(`${API_PATHS.students}?${query.toString()}`, StudentPageSchema, fetchFn);
+}
+
 export function fetchStudents(
   filters: StudentFilters,
   page: number,

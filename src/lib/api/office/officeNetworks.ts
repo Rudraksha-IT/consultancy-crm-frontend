@@ -17,28 +17,17 @@ const OfficeNetworkSchema = z.object({
   network: NetworkTextSchema,
 });
 
-const OfficeNetworkChangeSchema = z.object({
-  id: RecordIdSchema,
-  action: z.enum(["added", "removed"]),
-  label: z.string(),
-  network: NetworkTextSchema,
-  by: z.string(),
-  at: z.iso.datetime({ offset: true }),
-});
-
 const OfficeNetworkListSchema = z
   .object({
     networks: z.array(OfficeNetworkSchema),
-    changes: z.array(OfficeNetworkChangeSchema),
     limits: z.object({
       max_networks: z.number().int().positive(),
       ipv4_widest_prefix: z.number().int().min(0).max(32),
       ipv6_widest_prefix: z.number().int().min(0).max(128),
     }),
   })
-  .transform(({ networks, changes, limits }) => ({
+  .transform(({ networks, limits }) => ({
     networks,
-    changes,
     limits: {
       maxNetworks: limits.max_networks,
       ipv4WidestPrefix: limits.ipv4_widest_prefix,
@@ -47,18 +36,28 @@ const OfficeNetworkListSchema = z
   }));
 
 const CurrentNetworkSchema = z
-  .object({ address: z.union([z.ipv4(), z.ipv6()]).nullable(), covered: z.boolean() })
-  .transform(({ address, covered }) => ({ address, isCovered: covered }));
+  .object({
+    address: z.union([z.ipv4(), z.ipv6()]).nullable(),
+    /** What adding it saves: the address on IPv4, its /64 (the office's group) on IPv6. */
+    suggested_network: NetworkTextSchema.nullable(),
+    covered: z.boolean(),
+  })
+  .transform(({ address, suggested_network, covered }) => ({
+    address,
+    suggestedNetwork: suggested_network,
+    isCovered: covered,
+  }));
 
 const RefusalSchema = z.object({ detail: z.string() });
 
 /** One internet address or range Staff may clock in from (spec 105). */
 export type OfficeNetwork = z.infer<typeof OfficeNetworkSchema>;
-/** One Office Network added or removed: who and when. */
-export type OfficeNetworkChange = z.infer<typeof OfficeNetworkChangeSchema>;
 export type OfficeNetworkList = z.infer<typeof OfficeNetworkListSchema>;
 export type OfficeNetworkLimits = OfficeNetworkList["limits"];
-/** The caller's own internet address (null when it isn't known) and whether it is listed. */
+/**
+ * The caller's own internet address, what "Add the network I'm on now" would add (both null when
+ * it isn't known) and whether it is listed.
+ */
 export type CurrentNetwork = z.infer<typeof CurrentNetworkSchema>;
 
 export const OFFICE_NETWORK_FIELDS = { label: "label", network: "network" } as const;
@@ -71,7 +70,7 @@ export class OfficeNetworkRefusedError extends Error {
   }
 }
 
-/** The office's Office Networks, the latest adds and removes, and the limits (Admins only). */
+/** The office's Office Networks and the limits (Admins only). */
 export function fetchOfficeNetworks(fetchFn: typeof fetch = fetch): Promise<OfficeNetworkList> {
   return getJson(API_PATHS.officeNetworks, OfficeNetworkListSchema, fetchFn);
 }

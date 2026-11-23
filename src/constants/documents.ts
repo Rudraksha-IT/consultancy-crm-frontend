@@ -186,6 +186,13 @@ export const MAX_UPLOAD_BYTES = 2 * MAX_DOCUMENT_BYTES;
 /** File types offered when choosing a file; the server checks what the file really is. */
 export const DOCUMENT_FILE_ACCEPT = ".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png";
 export const DOCUMENT_FILE_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"] as const;
+/** A Student's Documents also take zips, kept as sent and only ever downloaded (ticket 09). */
+export const ZIP_EXTENSION = ".zip";
+export const STUDENT_DOCUMENT_FILE_ACCEPT = `${DOCUMENT_FILE_ACCEPT},${ZIP_EXTENSION},application/zip,application/x-zip-compressed`;
+export const STUDENT_DOCUMENT_FILE_EXTENSIONS = [
+  ...DOCUMENT_FILE_EXTENSIONS,
+  ZIP_EXTENSION,
+] as const;
 
 /** Whose Students the Documents page lists. */
 export const PaperworkScope = { Mine: "mine", Everyone: "everyone" } as const;
@@ -215,10 +222,11 @@ export const DOCUMENT_TEXT = {
   documentType: "Document Type",
   file: "File",
   fileHint:
-    "PDF or photos, up to 10 MB each. Pick several for one Document, for example the front and back of a passport. Stored privately.",
+    "PDF, JPG, PNG or ZIP, up to 10 MB each. Pick several for one Document, for example the front and back of a passport. Stored privately.",
   chooseFile: "Choose a file to upload.",
   fileTooBig: "The file is too big. Upload at most 10 MB.",
   fileKind: "Upload a PDF, JPG or PNG file.",
+  studentFileKind: "Upload a PDF, JPG, PNG or ZIP file.",
   tooManyAtOnce: `Upload at most ${String(MAX_FILES_AT_ONCE)} files at once.`,
   tooBigTogether: "The files are too big together. Upload at most 20 MB at once.",
   uploading: "Uploading…",
@@ -230,7 +238,7 @@ export const DOCUMENT_TEXT = {
   addFileTo: (type: string) => `Add a file to ${type}`,
   addFileLead: (student: string, needsCheckAgain: boolean) =>
     `For ${student}. The new file joins the same Document${needsCheckAgain ? ", which then needs checking again" : ""}.`,
-  addFileHint: "PDF or photos, up to 10 MB each. Stored privately.",
+  addFileHint: "PDF, JPG, PNG or ZIP, up to 10 MB each. Stored privately.",
   addFileSave: "Add",
   fileAdded: (count: number, needsCheckAgain: boolean) =>
     `${count === 1 ? "File added" : `${String(count)} files added`}${needsCheckAgain ? ". The Document needs checking again." : ""}`,

@@ -11,18 +11,27 @@ type RemoveLogoButtonProps = {
   title: string;
   body: string;
   isDisabled: boolean;
+  /** The button's name for screen readers when several logos are listed, e.g. "Remove: …". */
+  label?: string;
   /** Removes it; rejects when that failed. */
   onRemove: () => Promise<void>;
 };
 
 /** "Remove" beside a logo, asking first in the shared confirm dialog. */
-export function RemoveLogoButton({ title, body, isDisabled, onRemove }: RemoveLogoButtonProps) {
+export function RemoveLogoButton({
+  title,
+  body,
+  isDisabled,
+  label,
+  onRemove,
+}: RemoveLogoButtonProps) {
   const [isAsking, setIsAsking] = useState(false);
   return (
     <>
       <Button
         variant="ghost"
         isDisabled={isDisabled}
+        label={label}
         onClick={() => {
           setIsAsking(true);
         }}

@@ -17,6 +17,9 @@ export const API_PATHS = {
   /** A person's own Settings (issue 38). */
   me: "/api/me/",
   myPassword: "/api/me/password/",
+  /** Change my own work email: ask for a Code, then confirm with it (first live fixes, 04). */
+  myEmail: "/api/me/email/",
+  myEmailConfirm: "/api/me/email/confirm/",
   myDevices: "/api/me/devices/",
   signOutOtherDevices: "/api/me/devices/sign-out-others/",
   employees: "/api/staff/",
@@ -49,6 +52,7 @@ export const API_PATHS = {
   student: (id: RecordId) => `/api/students/${id}/`,
   studentDetails: (id: RecordId) => `/api/students/${id}/details/`,
   studentNote: (id: RecordId) => `/api/students/${id}/note/`,
+  studentPriority: (id: RecordId) => `/api/students/${id}/priority/`,
   studentHistory: (id: RecordId) => `/api/students/${id}/history/`,
   studentStage: (id: RecordId) => `/api/students/${id}/stage/`,
   studentAssign: (id: RecordId) => `/api/students/${id}/assign/`,
@@ -228,6 +232,13 @@ export const API_PATHS = {
   platformJoinComplete: "/api/platform/auth/join/complete/",
   productBrand: "/api/platform/brand/",
   productLogo: "/api/platform/brand/logo/",
+  // Saved product logos (first live fixes, ticket 07).
+  savedLogos: "/api/platform/brand/logos/",
+  savedLogo: (logoId: RecordId) => `/api/platform/brand/logos/${logoId}/`,
+  savedLogoFile: (logoId: RecordId) => `/api/platform/brand/logos/${logoId}/file/`,
+  savedLogoInUse: "/api/platform/brand/in-use/",
+  // The product's name (first live fixes, ticket 15).
+  productName: "/api/platform/brand/name/",
   platformEmail: "/api/platform/email/",
   platformTestEmail: "/api/platform/email/test/",
   platformConsultancies: "/api/platform/consultancies/",
@@ -254,6 +265,7 @@ export const HTTP_STATUS = {
   created: 201,
   accepted: 202,
   noContent: 204,
+  temporaryRedirect: 307,
   badRequest: 400,
   unauthorized: 401,
   forbidden: 403,

@@ -4,6 +4,7 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
+import { APP_LOGO_URL } from "@/lib/brand/appLogo";
 
 import { useCurrentPlatformAdmin } from "./platformAdminContext";
 import { PlatformShell } from "./PlatformShell";
@@ -81,6 +82,17 @@ describe("PlatformShell", () => {
     expect(screen.getByText("Platform Ops")).toBeInTheDocument();
   });
 
+  it("shows the app's own logo beside the product's name while no upload is in use (ticket 07)", async () => {
+    answerMeWith(jsonResponse({ platform_admin: ADMIN }));
+
+    render(<PlatformShell>page</PlatformShell>);
+
+    await screen.findByText("page");
+    const home = screen.getByRole("link", { name: new RegExp(LABELS.productName) });
+    expect(home.querySelector("img")?.getAttribute("src")).toBe(APP_LOGO_URL);
+    expect(home).not.toHaveTextContent("RC");
+  });
+
   it.each([
     ["/platform", "Consultancies"],
     ["/platform/admins", "Platform Admins"],
@@ -91,7 +103,11 @@ describe("PlatformShell", () => {
 
     render(<PlatformShell>page</PlatformShell>);
 
-    const tabs = within(await screen.findByRole("navigation", { name: "Platform" }));
+    const nav = await screen.findByRole("navigation", { name: "Platform" });
+    const tabs = within(nav);
+    // In the page, above its content, not under the header (ticket 16).
+    expect(screen.getByRole("main")).toContainElement(nav);
+    expect(screen.getByRole("banner")).not.toContainElement(nav);
     expect(
       tabs.getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")]),
     ).toEqual([

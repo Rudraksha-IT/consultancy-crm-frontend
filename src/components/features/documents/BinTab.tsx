@@ -33,6 +33,7 @@ import {
   type BinTarget,
 } from "@/lib/api";
 import { openBlankTab } from "@/lib/documents";
+import type { LinkAction } from "./useDocumentLink";
 
 import { OpenFileButton } from "./OpenFileButton";
 import { binFailure } from "./useBinActions";
@@ -59,8 +60,8 @@ export function BinTab({ state, onPage, onChanged }: BinTabProps) {
       <BinContent
         state={state}
         onPage={onPage}
-        onOpen={(link) => {
-          void actions.open(link);
+        onOpen={(link, action) => {
+          void actions.open(link, action);
         }}
         onRestore={(item) => {
           void actions.restore(item);
@@ -120,9 +121,9 @@ function useBinTabActions(onChanged: () => void) {
   const [problem, setProblem] = useState<string | null>(null);
   return {
     problem,
-    open: async (link: () => Promise<string>) => {
+    open: async (link: () => Promise<string>, action: LinkAction) => {
       setProblem(null);
-      const tab = openBlankTab();
+      const tab = action === "open" ? openBlankTab() : null;
       try {
         const url = await link();
         if (tab === null) {
@@ -170,7 +171,7 @@ type BinContentProps = {
   state: BinState;
   onPage: (page: number) => void;
   /** Open a file through the link the function fetches. */
-  onOpen: (link: () => Promise<string>) => void;
+  onOpen: (link: () => Promise<string>, action: LinkAction) => void;
   onRestore: (item: BinEntry) => void;
   onDelete: (item: BinEntry) => void;
 };
@@ -237,8 +238,8 @@ function BinRow({ item, onOpen, onRestore, onDelete }: BinRowProps) {
             <li key={file.id}>
               <OpenFileButton
                 fileName={file.fileName}
-                onOpen={() => {
-                  onOpen(() => fetchBinFileLink(file.id, "open"));
+                onOpen={(action) => {
+                  onOpen(() => fetchBinFileLink(file.id, action), action);
                 }}
               />
             </li>
@@ -277,8 +278,8 @@ function CourseFileRow({
         <div className="text-secondary">
           <OpenFileButton
             fileName={courseFile.fileName}
-            onOpen={() => {
-              onOpen(() => fetchBinCourseFileLink(courseFile.id));
+            onOpen={(action) => {
+              onOpen(() => fetchBinCourseFileLink(courseFile.id), action);
             }}
           />
         </div>
@@ -313,8 +314,8 @@ function ExampleRow({
         <div className="text-secondary">
           <OpenFileButton
             fileName={example.fileName}
-            onOpen={() => {
-              onOpen(() => fetchBinDocumentExampleLink(example.id));
+            onOpen={(action) => {
+              onOpen(() => fetchBinDocumentExampleLink(example.id), action);
             }}
           />
         </div>

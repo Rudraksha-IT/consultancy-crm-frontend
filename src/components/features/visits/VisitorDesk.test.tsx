@@ -54,6 +54,7 @@ const SITA_ROW = {
   country: "australia",
   source: "walk_in",
   stage: "counselling",
+  priority: "normal",
   assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
 };
 

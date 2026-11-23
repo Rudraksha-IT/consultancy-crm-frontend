@@ -12,6 +12,9 @@ export type Described = Pick<TimelineItem, "title" | "before" | "detail">;
 
 /** What each kind of change says, and the text to show under it. */
 const DESCRIBE: Record<HistoryKind, (entry: HistoryEntry, dates: Dates) => Described> = {
+  [HistoryKind.PriorityChanged]: (entry) => ({
+    title: LABELS.priorityChange(entry.before, entry.after),
+  }),
   [HistoryKind.NoteEdited]: (entry) => ({
     title: HISTORY_KIND_LABELS[entry.kind],
     before: entry.before,

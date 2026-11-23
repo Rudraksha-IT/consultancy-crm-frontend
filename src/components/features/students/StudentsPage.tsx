@@ -22,6 +22,7 @@ import { EXPORT_TEXT } from "@/constants/exports";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
+import { PRIORITY_LABELS } from "@/constants/priority";
 import { STAGE_LABELS } from "@/constants/stages";
 import { PROFILE_TEXT } from "@/constants/studentProfile";
 import { COUNTRY_LABELS, SOURCE_LABELS, TARGET_LEVEL_LABELS } from "@/constants/students";
@@ -50,10 +51,19 @@ type StudentsPageProps = {
   initialSearch: string;
   /** A Stage from the address (checked before use), e.g. from a pipeline card. */
   initialStage?: string;
+  /** A Priority from the address (checked before use), e.g. from Home (ticket 11). */
+  initialPriority?: string;
+  /** A counsellor filter from the address (checked before use), from Home (ticket 12). */
+  initialCounsellor?: string;
 };
 
 /** Every Student, searchable and filtered, for every Role but Teachers (spec 29-31). */
-export function StudentsPage({ initialSearch, initialStage = "" }: StudentsPageProps) {
+export function StudentsPage({
+  initialSearch,
+  initialStage = "",
+  initialPriority = "",
+  initialCounsellor = "",
+}: StudentsPageProps) {
   const { staff } = useCurrentStaff();
   if (staff.role === Role.Teacher) {
     return (
@@ -65,15 +75,38 @@ export function StudentsPage({ initialSearch, initialStage = "" }: StudentsPageP
     );
   }
   return (
-    <StudentList role={staff.role} initialSearch={initialSearch} initialStage={initialStage} />
+    <StudentList
+      role={staff.role}
+      initialSearch={initialSearch}
+      initialStage={initialStage}
+      initialPriority={initialPriority}
+      initialCounsellor={initialCounsellor}
+    />
   );
 }
 
-type StudentListProps = { role: Role; initialSearch: string; initialStage: string };
+type StudentListProps = {
+  role: Role;
+  initialSearch: string;
+  initialStage: string;
+  initialPriority: string;
+  initialCounsellor: string;
+};
 
-function StudentList({ role, initialSearch, initialStage }: StudentListProps) {
+function StudentList({
+  role,
+  initialSearch,
+  initialStage,
+  initialPriority,
+  initialCounsellor,
+}: StudentListProps) {
   const [filters, setFilters] = useState<StudentFilters>(() =>
-    defaultStudentFilters(role, initialSearch, initialStage),
+    defaultStudentFilters(role, {
+      search: initialSearch,
+      stage: initialStage,
+      priority: initialPriority,
+      counsellor: initialCounsellor,
+    }),
   );
   const [search, setSearch] = useState(filters.search);
   const settledSearch = useDebouncedValue(search, SEARCH_DELAY_MS);
@@ -90,6 +123,7 @@ function StudentList({ role, initialSearch, initialStage }: StudentListProps) {
   function change(next: Partial<StudentFilters>): void {
     setFilters((current) => ({ ...current, ...next }));
     setPage(1);
+    if (next.priority !== undefined) keepPriorityInAddress(next.priority);
   }
 
   const addButton = (
@@ -245,15 +279,29 @@ function studentFiltersText(filters: StudentFilters, counsellors: readonly Couns
   return describeFilters(
     [
       [EXPORT_TEXT.search, filters.search],
-      [LABELS.stage, filters.stage === "" ? "" : STAGE_LABELS[filters.stage]],
+      [LABELS.stage, wordFor(filters.stage, STAGE_LABELS)],
+      [LABELS.priority, wordFor(filters.priority, PRIORITY_LABELS)],
       [LABELS.counsellor, counsellorWords(filters.counsellor, counsellors)],
-      [LABELS.howTheyFoundUs, filters.source === "" ? "" : SOURCE_LABELS[filters.source]],
-      [LABELS.wantsToStudyIn, filters.country === "" ? "" : COUNTRY_LABELS[filters.country]],
-      [
-        PROFILE_TEXT.targetLevel,
-        filters.targetLevel === "" ? "" : TARGET_LEVEL_LABELS[filters.targetLevel],
-      ],
+      [LABELS.howTheyFoundUs, wordFor(filters.source, SOURCE_LABELS)],
+      [LABELS.wantsToStudyIn, wordFor(filters.country, COUNTRY_LABELS)],
+      [PROFILE_TEXT.targetLevel, wordFor(filters.targetLevel, TARGET_LEVEL_LABELS)],
     ],
     EXPORT_TEXT.noFilters,
   );
+}
+
+/** A filter's value in words, or "" when it is "any". */
+function wordFor<Value extends string>(value: Value | "", labels: Record<Value, string>): string {
+  return value === "" ? "" : labels[value];
+}
+
+/**
+ * Write the Priority filter into the address (or take it out), so a reload or a shared link
+ * keeps it (ticket 11). Replaces the entry without scrolling or reloading the page.
+ */
+function keepPriorityInAddress(priority: string): void {
+  const url = new URL(window.location.href);
+  if (priority === "") url.searchParams.delete("priority");
+  else url.searchParams.set("priority", priority);
+  window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }

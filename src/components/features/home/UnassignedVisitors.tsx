@@ -18,11 +18,13 @@ import { Stage } from "@/constants/stages";
 import { COUNTRY_LABELS, CounsellorFilter, SOURCE_LABELS } from "@/constants/students";
 import { fetchStudents, type StudentPage, type StudentRow } from "@/lib/api";
 
+import { SeeAllLink } from "./SeeAllLink";
 import { useLoaded, type Loaded } from "./useLoaded";
 
 const NEW_WITHOUT_COUNSELLOR = {
   search: "",
   stage: Stage.Lead,
+  priority: "",
   counsellor: CounsellorFilter.None,
   source: "",
   country: "",
@@ -40,7 +42,7 @@ export function UnassignedVisitors() {
   const state = useLoaded(loadUnassigned, version);
 
   return (
-    <Section title={HOME_TEXT.unassignedTitle}>
+    <Section title={HOME_TEXT.unassignedTitle} fills>
       <VisitorsBody state={state} onAssign={setAssigning} />
       {assigning !== null && (
         <AssignCounsellorDialog
@@ -69,18 +71,27 @@ function VisitorsBody({ state, onAssign }: VisitorsBodyProps) {
     return <Banner tone="problem">{HOME_TEXT.unassignedFailed}</Banner>;
   }
   const shown = state.data.students.slice(0, UNASSIGNED_SHOWN);
-  return (
-    <Panel>
-      {shown.length === 0 ? (
+  if (shown.length === 0) {
+    return (
+      <Panel>
         <EmptyState>{HOME_TEXT.everyoneHasCounsellor}</EmptyState>
-      ) : (
+      </Panel>
+    );
+  }
+  return (
+    <div className="grid grid-rows-[1fr_auto] gap-3">
+      <Panel>
         <RowList label={HOME_TEXT.unassignedTitle}>
           {shown.map((student) => (
             <VisitorRow key={student.id} student={student} onAssign={onAssign} />
           ))}
         </RowList>
-      )}
-    </Panel>
+      </Panel>
+      <SeeAllLink
+        href={ROUTES.studentsWhere({ stage: Stage.Lead, counsellor: CounsellorFilter.None })}
+        count={state.data.count}
+      />
+    </div>
   );
 }
 

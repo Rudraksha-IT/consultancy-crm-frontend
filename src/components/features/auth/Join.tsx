@@ -1,5 +1,6 @@
 "use client";
 
+import { useProductName } from "@/components/features/brand/ProductName";
 import Link from "next/link";
 import { useRef, type ReactNode, type SubmitEvent } from "react";
 
@@ -37,7 +38,7 @@ export function Join({ brand, side = "staff", knownEmail = "", codeSent = false 
     <JoinSteps
       brand={brand}
       side={side}
-      title={platformTitle}
+      title={usePlatformJoinTitle}
       loginPath={ROUTES.platformLogin}
       {...known}
     />
@@ -89,9 +90,10 @@ function JoinSteps(props: JoinStepsProps) {
   );
 }
 
-/** "Join <product>" on the Platform's first step. */
-function platformTitle(step: JoinState["step"]): string {
-  return step === 1 ? LABELS.chooseYourPassword : LABELS.joinOffice(LABELS.productName);
+/** "Join <product>" on the Platform's first step (the product's saved name, ticket 15). */
+function usePlatformJoinTitle(step: JoinState["step"]): string {
+  const product = useProductName();
+  return step === 1 ? LABELS.chooseYourPassword : LABELS.joinOffice(product);
 }
 
 /** "Join <office>" on the first step, once the office is known. */

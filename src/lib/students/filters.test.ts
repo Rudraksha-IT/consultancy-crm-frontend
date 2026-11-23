@@ -19,21 +19,21 @@ describe("defaultStudentFilters", () => {
   });
 
   it("starts with the search typed in the top bar", () => {
-    expect(defaultStudentFilters(Role.Counsellor, "  sita ").search).toBe("sita");
+    expect(defaultStudentFilters(Role.Counsellor, { search: "  sita " }).search).toBe("sita");
   });
 
   it("drops the counsellor filter when a search comes from the top bar", () => {
-    expect(defaultStudentFilters(Role.Counsellor, "sita").counsellor).toBe("");
+    expect(defaultStudentFilters(Role.Counsellor, { search: "sita" }).counsellor).toBe("");
   });
 
   it("starts at a Stage given in the address, for everyone's Students", () => {
-    const filters = defaultStudentFilters(Role.Counsellor, "", "visa");
+    const filters = defaultStudentFilters(Role.Counsellor, { stage: "visa" });
     expect(filters.stage).toBe(Stage.Visa);
     expect(filters.counsellor).toBe("");
   });
 
   it.each(["graduated", "<script>", "Lead"])("ignores %j as a Stage from the address", (stage) => {
-    const filters = defaultStudentFilters(Role.Counsellor, "", stage);
+    const filters = defaultStudentFilters(Role.Counsellor, { stage });
     expect(filters.stage).toBe("");
     expect(filters.counsellor).toBe("me");
   });
@@ -61,6 +61,7 @@ describe("studentListQuery", () => {
       {
         search: "sita karki",
         stage: Stage.Counselling,
+        priority: "",
         counsellor: "me",
         source: Source.SubAgent,
         country: Country.Uk,

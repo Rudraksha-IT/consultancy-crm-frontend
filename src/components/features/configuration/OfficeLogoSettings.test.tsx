@@ -74,6 +74,7 @@ describe("OfficeLogoSettings", () => {
     const preview = within(section).getByTestId("logo-preview");
     expect(preview).toHaveTextContent("AE");
     expect(preview).toHaveTextContent("Acme Education");
+    expect(preview).not.toHaveTextContent("Education consultancy");
     expect(within(section).getByLabelText("Upload a logo")).toHaveAttribute(
       "accept",
       "image/png,image/svg+xml,image/jpeg,image/webp",

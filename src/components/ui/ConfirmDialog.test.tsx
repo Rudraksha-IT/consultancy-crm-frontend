@@ -77,6 +77,26 @@ describe("ConfirmDialog", () => {
     expect(screen.queryByRole("button", { name: "Cancel" })).toBeNull();
   });
 
+  it("uses the accent for an action that adds rather than removes", () => {
+    render(
+      <ConfirmDialog
+        title="This network isn't on your office list"
+        actionLabel="Add this network"
+        actionVariant="primary"
+        cancelLabel="Not now"
+        onConfirm={() => Promise.resolve()}
+        onClose={() => undefined}
+      >
+        Adding it lets anyone on this network clock in and out.
+      </ConfirmDialog>,
+    );
+
+    const action = screen.getByRole("button", { name: "Add this network" });
+    expect(action.className).toContain("bg-accent");
+    expect(action.className).not.toContain("text-bad");
+    expect(screen.getByRole("button", { name: "Not now" })).toHaveFocus();
+  });
+
   it("starts with focus on Cancel", async () => {
     render(<Harness onConfirm={vi.fn().mockResolvedValue(undefined)} />);
     await openIt();

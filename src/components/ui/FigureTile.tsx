@@ -11,7 +11,7 @@ const TILE_CLASSES =
 type FigureTileProps = {
   label: string;
   value: ReactNode;
-  footnote?: string | undefined;
+  footnote?: ReactNode;
   href?: string;
   /** A fixed status colour for the number; the label always says what it means. */
   tone?: "good" | "warn" | "bad" | undefined;

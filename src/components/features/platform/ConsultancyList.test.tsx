@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { backend, on } from "@/test/backend";
+import { backend, callsTo, on, type Answer as Answer2 } from "@/test/backend";
 import { applyThemeCase, CONTRASTING_THEME, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { ConsultancyList } from "./ConsultancyList";
@@ -84,11 +84,23 @@ function renderList() {
   );
 }
 
-function featuresOf(name: string): string[] {
-  const features = within(rowFor(name)).getByRole("list", { name: "Features on" });
-  return within(features)
-    .getAllByRole("listitem")
-    .map((item) => item.textContent);
+const ROW_BUTTONS = ["Configuration", "Open as Platform Admin", "Change status"];
+
+function buttonsOf(name: string): string[] {
+  return within(rowFor(name))
+    .queryAllByRole("button")
+    .map((button) => button.textContent);
+}
+
+/** Open a Consultancy's Configuration (ticket 16), on one of its parts. */
+async function openConfiguration(
+  name = "Acme Education",
+  part: "Features" | "Colours" | "Admins" = "Features",
+): Promise<HTMLElement> {
+  await userEvent.click(within(await findRow(name)).getByRole("button", { name: "Configuration" }));
+  const dialog = screen.getByRole("dialog", { name: `Configuration for ${name}` });
+  if (part !== "Features") await userEvent.click(within(dialog).getByRole("tab", { name: part }));
+  return dialog;
 }
 
 async function findRow(name: string): Promise<HTMLElement> {
@@ -111,7 +123,7 @@ describe("ConsultancyList", () => {
     expect(screen.getAllByText("Loading…")[0]).toBeInTheDocument();
   });
 
-  it("lists each Consultancy with its subdomain, Status and extra features", async () => {
+  it("lists each Consultancy with its subdomain and Status, and only three buttons (ticket 16)", async () => {
     answerWith({ list: jsonResponse([ACME, CEDAR, BETA]) });
 
     renderList();
@@ -120,15 +132,21 @@ describe("ConsultancyList", () => {
     const acme = within(rowFor("Acme Education"));
     expect(acme.getByText(testHost("acme"))).toBeInTheDocument();
     expect(acme.getByText("Active")).toBeInTheDocument();
-    expect(featuresOf("Acme Education")).toEqual(["Test-prep classes", "Email"]);
-    const cedar = within(rowFor("Cedar Abroad"));
-    expect(cedar.getByText("Only the standard features")).toBeVisible();
-    expect(cedar.getByText("Evaluation, ends 12 Nov 2099")).toBeInTheDocument();
-    const beta = within(rowFor("Beta Overseas"));
-    expect(beta.getByText("Terminated")).toBeInTheDocument();
-    expect(beta.queryByRole("button", { name: "Change status" })).not.toBeInTheDocument();
-    expect(beta.queryByRole("button", { name: "Features" })).not.toBeInTheDocument();
-    expect(beta.queryByRole("button", { name: "Open as Platform Admin" })).not.toBeInTheDocument();
+    expect(buttonsOf("Acme Education")).toEqual(ROW_BUTTONS);
+    expect(within(rowFor("Cedar Abroad")).getByText("Evaluation, ends 12 Nov 2099")).toBeVisible();
+    expect(within(rowFor("Beta Overseas")).getByText("Terminated")).toBeInTheDocument();
+    expect(buttonsOf("Beta Overseas")).toEqual([]);
+  });
+
+  it("shows no Features on the row: they are inside Configuration (ticket 16)", async () => {
+    answerWith({ list: jsonResponse([ACME, CEDAR]) });
+
+    renderList();
+
+    await screen.findByText("Acme Education");
+    expect(screen.queryByRole("list", { name: "Features on" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Test-prep classes")).not.toBeInTheDocument();
+    expect(screen.queryByText("Only the standard features")).not.toBeInTheDocument();
   });
 
   it("opens an office as Platform Admin from its row, with a reason", async () => {
@@ -146,20 +164,20 @@ describe("ConsultancyList", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  describe("Colours dialog", () => {
+  describe("Configuration: Colours (ticket 16)", () => {
     async function openColours(answers: Partial<Answers> = {}): Promise<typeof fetch> {
       const fetchFn = answerWith({ list: jsonResponse([ACME]), ...answers });
       renderList();
-      await userEvent.click(
-        within(await findRow("Acme Education")).getByRole("button", { name: "Colours" }),
-      );
+      await openConfiguration("Acme Education", "Colours");
       return fetchFn;
     }
 
     it("shows the office's colours with a live preview in light and dark", async () => {
       await openColours();
 
-      const dialog = within(screen.getByRole("dialog", { name: "Colours for Acme Education" }));
+      const dialog = within(
+        screen.getByRole("dialog", { name: "Configuration for Acme Education" }),
+      );
       expect(dialog.getByRole("img", { name: "Preview in light mode" })).toBeInTheDocument();
       expect(dialog.getByRole("img", { name: "Preview in dark mode" })).toBeInTheDocument();
     });
@@ -173,7 +191,8 @@ describe("ConsultancyList", () => {
       await userEvent.click(screen.getByRole("button", { name: "Save colours" }));
 
       expect(await screen.findByText("Colours saved for Acme Education")).toBeInTheDocument();
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      // The popup stays open on its part, for the next change.
+      expect(screen.getByRole("tab", { name: "Colours" })).toHaveAttribute("aria-selected", "true");
       const call = vi
         .mocked(fetchFn)
         .mock.calls.find(([path]) => path === `/api/platform/consultancies/${uid(3)}/theme/`);
@@ -188,7 +207,9 @@ describe("ConsultancyList", () => {
       expect(await screen.findByRole("alert")).toHaveTextContent(
         "We couldn't save the colours. Please try again.",
       );
-      expect(screen.getByRole("dialog", { name: "Colours for Acme Education" })).toBeVisible();
+      expect(
+        screen.getByRole("dialog", { name: "Configuration for Acme Education" }),
+      ).toBeVisible();
     });
 
     it("closes with Escape without saving", async () => {
@@ -263,18 +284,38 @@ describe("ConsultancyList", () => {
     expect(screen.queryByText("Acme Education")).not.toBeInTheDocument();
   });
 
-  describe("Features dialog", () => {
+  describe("Configuration: Features (ticket 16)", () => {
     async function openFeatures(answers: Partial<Answers> = {}): Promise<typeof fetch> {
       const fetchFn = answerWith({ list: jsonResponse([ACME]), ...answers });
       renderList();
-      await userEvent.click(await screen.findByRole("button", { name: "Features" }));
+      await openConfiguration();
       return fetchFn;
     }
+
+    it("opens on Features, with its three parts as tabs", async () => {
+      await openFeatures();
+
+      const dialog = within(
+        screen.getByRole("dialog", { name: "Configuration for Acme Education" }),
+      );
+      expect(dialog.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
+        "Features",
+        "Colours",
+        "Admins",
+      ]);
+      expect(dialog.getByRole("tab", { name: "Features" })).toHaveAttribute(
+        "aria-selected",
+        "true",
+      );
+      expect(dialog.getByRole("tabpanel")).toHaveAccessibleName("Features");
+    });
 
     it("shows one switch per extra feature, set to what the Consultancy has", async () => {
       await openFeatures();
 
-      const dialog = within(screen.getByRole("dialog", { name: "Features for Acme Education" }));
+      const dialog = within(
+        screen.getByRole("dialog", { name: "Configuration for Acme Education" }),
+      );
       expect(
         dialog.getByText(
           "Students, documents, applications, tasks and the visitor desk are always included. Turn on the extras this office pays for.",
@@ -292,7 +333,7 @@ describe("ConsultancyList", () => {
       );
     });
 
-    it("saves the switches, closes and shows the new features", async () => {
+    it("saves the switches and keeps the popup open with them as saved", async () => {
       const fetchFn = await openFeatures({
         features: jsonResponse({ ...ACME, modules: ["students", "batches", "accounts"] }),
       });
@@ -315,8 +356,12 @@ describe("ConsultancyList", () => {
         }),
       );
       expect(await screen.findByText("Features saved for Acme Education")).toBeInTheDocument();
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      expect(featuresOf("Acme Education")).toEqual(["Test-prep classes", "Accounts"]);
+      expect(screen.getByRole("switch", { name: "Email" })).not.toBeChecked();
+      expect(screen.getByRole("switch", { name: "Accounts" })).toBeChecked();
+
+      await userEvent.click(screen.getByRole("button", { name: "Done" }));
+      await openConfiguration();
+      expect(screen.getByRole("switch", { name: "Accounts" })).toBeChecked();
     });
 
     it("keeps the dialog open with a message when saving fails", async () => {
@@ -325,20 +370,21 @@ describe("ConsultancyList", () => {
       await userEvent.click(screen.getByRole("switch", { name: "Accounts" }));
       await userEvent.click(screen.getByRole("button", { name: "Save features" }));
 
-      const dialog = within(screen.getByRole("dialog", { name: "Features for Acme Education" }));
+      const dialog = within(
+        screen.getByRole("dialog", { name: "Configuration for Acme Education" }),
+      );
       expect(await dialog.findByRole("alert")).toHaveTextContent(
         "We couldn't save the features. Please try again.",
       );
       expect(dialog.getByRole("switch", { name: "Accounts" })).toBeChecked();
-      expect(featuresOf("Acme Education")).toEqual(["Test-prep classes", "Email"]);
     });
 
-    it("closes without saving on Cancel, and starts fresh when opened again", async () => {
+    it("closes without saving on Done, and starts fresh when opened again", async () => {
       const fetchFn = await openFeatures();
 
       await userEvent.click(screen.getByRole("switch", { name: "Accounts" }));
-      await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
-      await userEvent.click(screen.getByRole("button", { name: "Features" }));
+      await userEvent.click(screen.getByRole("button", { name: "Done" }));
+      await openConfiguration();
 
       // Only the list and the visits were loaded: nothing was saved.
       expect(fetchFn).toHaveBeenCalledTimes(2);
@@ -348,7 +394,7 @@ describe("ConsultancyList", () => {
     it("closes on Escape, moving focus into the dialog first", async () => {
       await openFeatures();
 
-      expect(screen.getByRole("switch", { name: "Test-prep classes" })).toHaveFocus();
+      expect(screen.getByRole("dialog").contains(document.activeElement)).toBe(true);
       await userEvent.keyboard("{Escape}");
 
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -584,39 +630,137 @@ describe("ConsultancyList", () => {
   });
 });
 
-describe("Add admin (issue 64)", () => {
-  it("adds an Admin to an office from its row and confirms", async () => {
-    backend(
+describe("Configuration: Admins (issue 64, ticket 16)", () => {
+  const ADMINS_PATH = `/api/platform/consultancies/${uid(3)}/admins/`;
+  const INVITED = { name: "Sita Sharma", email: "sita@acme.test", status: "invited" };
+
+  function onList(...more: Answer2[]) {
+    return backend(
       on("GET", "/api/platform/consultancies/", [ACME, BETA]),
       on("GET", "/api/platform/support-visits/", []),
-      on(
-        "POST",
-        `/api/platform/consultancies/${uid(3)}/admins/`,
-        { name: "Sita Sharma", email: "sita@acme.test", status: "invited" },
-        201,
-      ),
+      ...more,
     );
-    renderList();
-    const row = (await screen.findByText("Acme Education")).closest("li");
-    if (row === null) throw new Error("no row");
+  }
 
-    await userEvent.click(within(row).getByRole("button", { name: "Add admin" }));
-    await userEvent.type(screen.getByLabelText("Name"), "Sita Sharma");
-    await userEvent.type(screen.getByLabelText("Email"), "sita@acme.test");
+  async function fillAndSend(name = "Sita Sharma", email = "sita@acme.test"): Promise<void> {
+    if (name !== "") await userEvent.type(screen.getByRole("textbox", { name: "Name" }), name);
+    if (email !== "") await userEvent.type(screen.getByRole("textbox", { name: "Email" }), email);
     await userEvent.click(screen.getByRole("button", { name: "Send invite" }));
+  }
 
-    expect(await screen.findByText("Invite sent to Sita Sharma")).toBeVisible();
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  it("explains the invite and asks no password", async () => {
+    onList();
+    renderList();
+
+    await openConfiguration("Acme Education", "Admins");
+
+    expect(
+      screen.getByText(
+        "We'll email them a 6-digit code. They use it to choose their own password.",
+      ),
+    ).toBeVisible();
+    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Admins" })).toHaveFocus();
   });
 
-  it("offers Add admin only on offices that are set up and not Terminated", async () => {
+  it("invites an Admin, says who, and stays open with the form empty for another", async () => {
+    const fetchFn = onList(on("POST", ADMINS_PATH, INVITED, 201));
+    renderList();
+    await openConfiguration("Acme Education", "Admins");
+
+    await fillAndSend();
+
+    expect(await screen.findByText("Invite sent to Sita Sharma")).toBeVisible();
+    const [call] = callsTo(fetchFn, "POST", ADMINS_PATH);
+    expect(call?.[1]?.body).toBe(JSON.stringify({ name: "Sita Sharma", email: "sita@acme.test" }));
+    expect(screen.getByRole("dialog", { name: "Configuration for Acme Education" })).toBeVisible();
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("");
+    expect(screen.getByRole("textbox", { name: "Email" })).toHaveValue("");
+  });
+
+  it("asks for both fields before sending anything", async () => {
+    const fetchFn = onList();
+    renderList();
+    await openConfiguration("Acme Education", "Admins");
+
+    await fillAndSend("", "");
+
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveAccessibleDescription(
+      "Enter their name.",
+    );
+    expect(screen.getByRole("textbox", { name: "Email" })).toHaveAccessibleDescription(
+      "Enter their email.",
+    );
+    expect(callsTo(fetchFn, "POST", ADMINS_PATH)).toHaveLength(0);
+  });
+
+  it("shows the server's reasons under the fields", async () => {
+    onList(on("POST", ADMINS_PATH, { email: ["Someone here already uses this email."] }, 400));
+    renderList();
+    await openConfiguration("Acme Education", "Admins");
+
+    await fillAndSend();
+
+    expect(await screen.findByRole("textbox", { name: "Email" })).toHaveAccessibleDescription(
+      "Someone here already uses this email.",
+    );
+  });
+
+  it("shows why the office can't take an Admin in a banner", async () => {
+    onList(on("POST", ADMINS_PATH, { detail: "A Terminated Consultancy can't be changed." }, 400));
+    renderList();
+    await openConfiguration("Acme Education", "Admins");
+
+    await fillAndSend();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "A Terminated Consultancy can't be changed.",
+    );
+  });
+
+  it("shows a general message when sending fails", async () => {
+    onList(on("POST", ADMINS_PATH, {}, 500));
+    renderList();
+    await openConfiguration("Acme Education", "Admins");
+
+    await fillAndSend();
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "We couldn't send the invite. Please try again.",
+    );
+  });
+
+  it("keeps a name shaped like code as text", async () => {
+    onList(on("POST", ADMINS_PATH, { name: ["Enter a name of 1 to 200 letters."] }, 400));
+    renderList();
+    await openConfiguration("Acme Education", "Admins");
+
+    await fillAndSend("<b>Sita</b>");
+
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("<b>Sita</b>");
+    expect(document.querySelector("[role=dialog] b")).toBeNull();
+  });
+
+  it("keeps what was typed when moving between parts", async () => {
+    onList();
+    renderList();
+    const dialog = await openConfiguration("Acme Education", "Admins");
+    await userEvent.type(screen.getByRole("textbox", { name: "Name" }), "Sita");
+
+    await userEvent.click(within(dialog).getByRole("tab", { name: "Features" }));
+    await userEvent.click(within(dialog).getByRole("tab", { name: "Admins" }));
+
+    expect(screen.getByRole("textbox", { name: "Name" })).toHaveValue("Sita");
+  });
+
+  it("offers Configuration only on offices that are set up and not Terminated", async () => {
     answerWith({
       list: jsonResponse([ACME, BETA, { ...CEDAR, setup_state: "setting_up" }]),
     });
     renderList();
     await screen.findByText("Acme Education");
 
-    const buttons = screen.getAllByRole("button", { name: "Add admin" });
+    const buttons = screen.getAllByRole("button", { name: "Configuration" });
     expect(buttons.map((button) => button.hasAttribute("disabled"))).toEqual([false, true]);
   });
 });
@@ -645,7 +789,7 @@ describe("Offices being set up (issue 60)", () => {
     expect(
       row.getByText("Its features, colours and status can be changed once it is set up."),
     ).toBeVisible();
-    for (const name of ["Features", "Colours", "Open as Platform Admin", "Change status"]) {
+    for (const name of ROW_BUTTONS) {
       expect(row.getByRole("button", { name })).toBeDisabled();
     }
     expect(row.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
@@ -668,7 +812,7 @@ describe("Offices being set up (issue 60)", () => {
 
     expect(await screen.findByText("Active")).toBeInTheDocument();
     expect(
-      within(rowFor("Acme Education")).getByRole("button", { name: "Features" }),
+      within(rowFor("Acme Education")).getByRole("button", { name: "Configuration" }),
     ).toBeEnabled();
     await act(() => vi.advanceTimersByTimeAsync(10_000));
     expect(listCalls(fetchFn)).toBe(3);
