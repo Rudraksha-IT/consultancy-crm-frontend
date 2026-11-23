@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { z } from "zod";
 
@@ -64,7 +64,8 @@ function NameElsewhere() {
   return <output aria-label="Name elsewhere">{useProductName()}</output>;
 }
 
-function renderPage(name = "Rudraksha CRM") {
+/** The Platform's Settings, opened at one section from its menu (list tidy-ups 04). */
+function renderPage(name = "Rudraksha CRM", section = "Product logo") {
   render(
     <ProductNameProvider name={name}>
       <ToastProvider>
@@ -73,6 +74,9 @@ function renderPage(name = "Rudraksha CRM") {
       </ToastProvider>
     </ProductNameProvider>,
   );
+  const menu = screen.getByRole("navigation", { name: "Settings" });
+  const item = within(menu).getByRole("button", { name: section });
+  if (item.getAttribute("aria-current") !== "true") fireEvent.click(item);
 }
 
 function png(size = 10): File {
@@ -87,13 +91,35 @@ beforeEach(() => {
   resetProductLogo();
 });
 
+describe("one Settings on the Platform (list tidy-ups 04)", () => {
+  it("has a menu of the product's parts and my own account, opening on Product name", () => {
+    backend(on("GET", BRAND_PATH, { logo: null }), ...savedLogos([]));
+    render(
+      <ProductNameProvider name="Rudraksha CRM">
+        <ToastProvider>
+          <PlatformSettingsPage />
+        </ToastProvider>
+      </ProductNameProvider>,
+    );
+
+    const menu = screen.getByRole("navigation", { name: "Settings" });
+    expect(
+      within(menu)
+        .getAllByRole("button")
+        .map((item) => item.textContent),
+    ).toEqual(["Product name", "Product logo", "Email", "My details", "Password", "Security"]);
+    expect(screen.getByRole("region", { name: "Product name" })).toBeVisible();
+    expect(screen.queryByRole("region", { name: "Product logo" })).not.toBeInTheDocument();
+  });
+});
+
 describe("PlatformSettingsPage: the product logo (issue 65)", () => {
   it("offers to upload a logo while there is none", async () => {
     backend(on("GET", BRAND_PATH, { logo: null }), ...savedLogos([]));
     renderPage();
 
     expect(await screen.findByRole("heading", { level: 1, name: "Settings" })).toBeVisible();
-    expect(screen.getByText("Product logo")).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "Product logo" })).toBeVisible();
     expect(screen.getByLabelText("Upload a logo")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument();
     expect(logoSrc()).toBe(APP_LOGO_URL);
@@ -332,7 +358,7 @@ describe("the product's name (first live fixes, ticket 15)", () => {
 
   it("shows the saved name, at most 40 characters, with what it may contain", () => {
     backend(onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })));
-    renderPage("Acme Office Suite");
+    renderPage("Acme Office Suite", "Product name");
 
     expect(field()).toHaveValue("Acme Office Suite");
     expect(field()).toHaveAttribute("maxlength", "40");
@@ -346,7 +372,7 @@ describe("the product's name (first live fixes, ticket 15)", () => {
       onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })),
       on("PUT", NAME_PATH, { name: "Acme Office Suite" }),
     );
-    renderPage();
+    renderPage(undefined, "Product name");
 
     await userEvent.clear(field());
     await userEvent.type(field(), "  Acme   Office Suite ");
@@ -358,12 +384,17 @@ describe("the product's name (first live fixes, ticket 15)", () => {
     expect(screen.getByRole("status", { name: "Name elsewhere" })).toHaveTextContent(
       "Acme Office Suite",
     );
+    await userEvent.click(
+      within(screen.getByRole("navigation", { name: "Settings" })).getByRole("button", {
+        name: "Product logo",
+      }),
+    );
     expect(within(screen.getByTestId("logo-preview")).getByText("Acme Office Suite")).toBeVisible();
   });
 
   it("asks for a name before sending a blank one", async () => {
     const fetchFn = backend(onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })));
-    renderPage();
+    renderPage(undefined, "Product name");
 
     await userEvent.clear(field());
     await userEvent.click(screen.getByRole("button", { name: "Save name" }));
@@ -374,7 +405,7 @@ describe("the product's name (first live fixes, ticket 15)", () => {
 
   it("says when nothing changed, without sending", async () => {
     const fetchFn = backend(onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })));
-    renderPage();
+    renderPage(undefined, "Product name");
 
     await userEvent.click(screen.getByRole("button", { name: "Save name" }));
 
@@ -387,7 +418,7 @@ describe("the product's name (first live fixes, ticket 15)", () => {
       onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })),
       on("PUT", NAME_PATH, { name: ["Use letters, numbers, spaces and . - & ' ( ) + only."] }, 400),
     );
-    renderPage();
+    renderPage(undefined, "Product name");
 
     await userEvent.clear(field());
     await userEvent.type(field(), "<b>Acme</b>");
@@ -407,7 +438,7 @@ describe("the product's name (first live fixes, ticket 15)", () => {
       onEach("GET", SAVED_PATH, () => ({ logos: [], limit: 10 })),
       on("PUT", NAME_PATH, { detail: "Server error" }, 500),
     );
-    renderPage();
+    renderPage(undefined, "Product name");
 
     await userEvent.clear(field());
     await userEvent.type(field(), "Acme Office Suite");

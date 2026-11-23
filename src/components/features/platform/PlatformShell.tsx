@@ -9,10 +9,8 @@ import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
 import { useColourMode } from "@/components/features/theme/useColourMode";
 import { Avatar } from "@/components/ui/Avatar";
 import { BrandMark } from "@/components/ui/BrandMark";
-import { IconLink } from "@/components/ui/IconLink";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { LABELS, MESSAGES } from "@/constants/messages";
-import { PLATFORM_ACCOUNT_TEXT } from "@/constants/platformAccount";
 import { ROUTES } from "@/constants/routes";
 import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
@@ -73,12 +71,6 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             <b className="text-body font-bold">{productName}</b>
           </Link>
           <div className="flex items-center gap-2">
-            <IconLink
-              href={ROUTES.platformAccount}
-              icon="gear"
-              label={PLATFORM_ACCOUNT_TEXT.openAccount}
-              tone="sidebar"
-            />
             <ThemeToggle mode={colourMode.mode} onToggle={colourMode.toggleMode} tone="sidebar" />
             <span className="border-side-rule phone:pl-4 flex items-center gap-3 border-l pl-2">
               <Avatar name={admin.name} />

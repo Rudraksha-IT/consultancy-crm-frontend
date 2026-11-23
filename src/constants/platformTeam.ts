@@ -38,7 +38,9 @@ export const PLATFORM_TEAM_TEXT = {
 /** The Platform's Settings tab (issue 65). */
 export const PLATFORM_SETTINGS_TEXT = {
   title: "Settings",
-  intro: "How the product itself looks before anyone logs in, and whether its email is working.",
+  intro: "The product's name, logo and email, and your own account.",
+  /** At phone width, back to the list of Settings' sections (list tidy-ups 04). */
+  backLabel: "All of Settings",
   logoTitle: "Product logo",
   logoHelp:
     "Shown on the Platform login, the Central login and at the top of the Platform. A square or wide PNG, SVG or JPG works best.",
