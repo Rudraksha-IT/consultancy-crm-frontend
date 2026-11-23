@@ -788,7 +788,7 @@ describe("A tidier Home (ticket 12)", () => {
     ]);
   });
 
-  it("shows at most 3 High Students as boxes in one row, each opening the Student", async () => {
+  it("shows at most 4 High Students as slim boxes in one row, each opening the Student", async () => {
     backend(...TIDY);
     renderHome(ADMIN);
     const high = within(await region("High priority Students"));
@@ -797,19 +797,33 @@ describe("A tidier Home (ticket 12)", () => {
     const boxes = high.getByRole("list", { name: "High priority Students" });
     expect(boxes).toHaveClass("wide:grid-cols-4");
     expect(asha).toHaveAttribute("href", `/students/${uid(41)}`);
-    expect(asha).toHaveTextContent("Counselling");
+    expect(asha).toHaveTextContent("Counsellor: Not assigned");
+    expect(asha).toHaveTextContent("Stage: Counselling");
     expect(within(boxes).getAllByRole("listitem")).toHaveLength(4);
-    expect(high.queryByText("Dev Shah")).toBeNull();
+    expect(high.getByRole("link", { name: /^Dev Shah/ })).toBeInTheDocument();
+    expect(high.queryByText("Esha Gurung")).toBeNull();
   });
 
-  it("ends the row with a See all box, opening the list at High", async () => {
+  it("puts See all at the right of the title only when there are more than 4", async () => {
     backend(...TIDY);
+    renderHome(ADMIN);
+    const section = await region("High priority Students");
+
+    const seeAll = await within(section).findByRole("link", { name: "See all (5)" });
+    expect(seeAll).toHaveAttribute("href", "/students?priority=high");
+    expect(within(section).getByRole("list")).not.toContainElement(seeAll);
+  });
+
+  it("shows no See all when there are 4 or fewer", async () => {
+    backend(
+      on("GET", HIGH_ALL, { ...FIVE_HIGH, count: 4, results: FIVE_HIGH.results.slice(0, 4) }),
+      ...TIDY,
+    );
     renderHome(ADMIN);
     const high = within(await region("High priority Students"));
 
-    const seeAll = await high.findByRole("link", { name: "See all (5)" });
-    expect(seeAll).toHaveAttribute("href", "/students?priority=high");
-    expect(within(high.getByRole("list")).getAllByRole("listitem").at(-1)).toContainElement(seeAll);
+    expect(await high.findByRole("link", { name: /^Dev Shah/ })).toBeInTheDocument();
+    expect(high.queryByRole("link", { name: /See all/ })).toBeNull();
   });
 
   it("sends a counsellor's See all to their own High Students", async () => {

@@ -7,8 +7,8 @@ export const TASKS_SHOWN = 4;
 export const HOME_LIST_SHOWN = 3;
 /** How many new visitors without a counsellor the Admin's Home lists. */
 export const UNASSIGNED_SHOWN = HOME_LIST_SHOWN;
-/** How many High priority Students Home lists. */
-export const HIGH_PRIORITY_SHOWN = HOME_LIST_SHOWN;
+/** How many High priority Students Home shows as boxes in one row. */
+export const HIGH_PRIORITY_SHOWN = 4;
 
 const students = (count: number) => (count === 1 ? "1 Student" : `${String(count)} Students`);
 
@@ -54,6 +54,8 @@ export const HOME_TEXT = {
   andMore: (count: number) => `and ${String(count)} more`,
   seeAllCount: (count: number) => `See all (${String(count)})`,
   highPriorityTitle: "High priority Students",
+  counsellorLine: (name: string) => `Counsellor: ${name}`,
+  stageLine: (stage: string) => `Stage: ${stage}`,
   noHighPriority: "No Students are High priority right now.",
   highPriorityFailed: "We couldn't load the High priority Students. Please try again.",
 } as const;
