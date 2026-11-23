@@ -8,6 +8,7 @@ import { SupportAccessBanner } from "@/components/features/supportAccess/Support
 import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
 import { useSavedColourMode } from "@/components/features/theme/useSavedColourMode";
 import { LABELS } from "@/constants/messages";
+import { useTabTitle } from "@/hooks/useTabTitle";
 import { saveColourMode, type StaffContext } from "@/lib/api";
 import { buildNavigation } from "@/lib/navigation";
 
@@ -39,6 +40,7 @@ type ShellFrameProps = {
  * at the bottom on phones (design system: Phones).
  */
 export function ShellFrame({ context, children }: ShellFrameProps) {
+  useTabTitle(context.consultancy.name, context.staff.role);
   // A Platform Admin has no account here to save it in (issue 27): it lasts for the visit.
   const colourMode = useSavedColourMode(
     context.colourMode,

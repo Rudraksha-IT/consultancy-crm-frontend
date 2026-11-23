@@ -84,6 +84,20 @@ afterEach(() => {
   resetTheme();
 });
 
+describe("AppShell: the browser tab (first live fixes, ticket 08)", () => {
+  afterEach(() => {
+    document.title = "";
+  });
+
+  it("names the office and the product on Home", async () => {
+    await renderShellFor(ADMIN_CONTEXT);
+
+    await waitFor(() => {
+      expect(document.title).toBe("Acme Education - Rudraksha CRM");
+    });
+  });
+});
+
 /** A page showing one date the way every screen does, with a way to switch the calendar. */
 function DatedPage() {
   const dates = useDates();

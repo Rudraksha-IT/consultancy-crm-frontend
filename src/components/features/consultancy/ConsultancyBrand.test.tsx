@@ -1,10 +1,14 @@
 import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { render, screen, waitFor } from "@testing-library/react";
 
+import { APP_LOGO_URL } from "@/lib/brand/appLogo";
 import { buildThemeTokens, normaliseThemeConfig } from "@/lib/theme";
 import { resetTheme } from "@/test/themes";
 
 import { ConsultancyBrand } from "./ConsultancyBrand";
+
+const pathname = vi.hoisted(() => ({ current: "/login" }));
+vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
 
 const CRIMSON = { page: "ice", sidebar: TEST_COLOURS.white, accent: TEST_COLOURS.crimson };
 
@@ -12,7 +16,11 @@ function answerWith(response: Response): void {
   vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue(response));
 }
 
-afterEach(resetTheme);
+afterEach(() => {
+  resetTheme();
+  document.title = "";
+  pathname.current = "/login";
+});
 
 describe("ConsultancyBrand", () => {
   it("shows the current Consultancy's mark and name, large and centred", async () => {
@@ -96,5 +104,42 @@ describe("ConsultancyBrand", () => {
 
     await screen.findByRole("heading", { level: 2, name: "Acme Education" });
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+});
+
+describe("ConsultancyBrand: the welcome and the tab (first live fixes, ticket 08)", () => {
+  it("welcomes people back by the office's name on the login page", async () => {
+    answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON })));
+
+    render(<ConsultancyBrand isWelcome />);
+
+    expect(
+      await screen.findByRole("heading", { level: 2, name: "Welcome back, Acme Education" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the app's own logo, never initials, when the office has no logo", async () => {
+    answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON })));
+
+    const { container } = render(<ConsultancyBrand isWelcome />);
+
+    await screen.findByRole("heading", { level: 2 });
+    expect(container.querySelector("img")).toHaveAttribute("src", APP_LOGO_URL);
+    expect(screen.queryByText("AE")).toBeNull();
+  });
+
+  it.each([
+    ["/login", "Log in | Acme Education"],
+    ["/forgot-password", "Forgot password | Acme Education"],
+    ["/join", "Join | Acme Education"],
+  ])("names the page and the office in the tab on %s", async (path, title) => {
+    pathname.current = path;
+    answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON })));
+
+    render(<ConsultancyBrand />);
+
+    await waitFor(() => {
+      expect(document.title).toBe(title);
+    });
   });
 });

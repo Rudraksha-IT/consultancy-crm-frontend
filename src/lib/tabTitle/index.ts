@@ -1,0 +1,1 @@
+export { tabTitle } from "./tabTitle";
