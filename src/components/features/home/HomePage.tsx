@@ -15,6 +15,7 @@ import { Module } from "@/constants/modules";
 import { HighPriorityStudents } from "./HighPriorityStudents";
 import { HomeGreeting } from "./HomeGreeting";
 import { loadOwing, MonthAtAGlance, WhoStillOwes } from "./MoneySections";
+import { useHomeAmounts } from "./useHomeAmounts";
 import { PipelineSection } from "./PipelineSection";
 import { ProgressSection } from "./ProgressSection";
 import { TasksDueSoon } from "./TasksDueSoon";
@@ -49,13 +50,14 @@ function AdminHome() {
   return modules.includes(Module.Accounts) ? <AdminHomeWithMoney /> : <AdminHomeSections />;
 }
 
-/** With the Accounts Module: one load of who owes serves both money sections. */
+/** With the Accounts Module: one load of who owes and one eye (ticket 13) serve both money sections. */
 function AdminHomeWithMoney() {
   const owing = useLoaded(loadOwing, 0);
+  const amounts = useHomeAmounts();
   return (
     <AdminHomeSections
-      glance={<MonthAtAGlance owing={owing} />}
-      owes={<WhoStillOwes owing={owing} />}
+      glance={<MonthAtAGlance owing={owing} amounts={amounts} />}
+      owes={<WhoStillOwes owing={owing} isShown={amounts.isShown} />}
     />
   );
 }

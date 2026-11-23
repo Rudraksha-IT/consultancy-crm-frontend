@@ -19,6 +19,8 @@ type IconButtonProps = {
   tone?: IconButtonTone | undefined;
   isDisabled?: boolean;
   isExpanded?: boolean;
+  /** For an on/off button (`aria-pressed`). */
+  isPressed?: boolean;
   /** The id of what the button opens or closes. */
   controls?: string;
   /** Extra content on top of the icon, such as an unread count. */
@@ -35,6 +37,7 @@ export function IconButton({
   tone = "page",
   isDisabled = false,
   isExpanded,
+  isPressed,
   controls,
   badge,
   ref,
@@ -46,6 +49,7 @@ export function IconButton({
       aria-label={label}
       title={label}
       aria-expanded={isExpanded}
+      aria-pressed={isPressed}
       aria-controls={controls}
       onClick={onClick}
       disabled={isDisabled}

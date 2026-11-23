@@ -6,6 +6,7 @@ import { HomePage } from "@/components/features/home/HomePage";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { StudentProfilePage } from "@/components/features/students/profile/StudentProfilePage";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { HOME_AMOUNTS_KEY } from "@/constants/home";
 import type { StaffContext } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 import { backend as backendOnly, callsTo, on, onEach, type Answer } from "@/test/backend";
@@ -114,6 +115,7 @@ const OWING = {
 };
 
 beforeEach(() => {
+  window.localStorage.clear();
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date("2026-11-03T10:00:00"));
 });
@@ -656,6 +658,11 @@ describe("Accounts -> Student fees", () => {
 describe("the Admin's Home money", () => {
   const MONTH = { ...NO_PAYMENTS, count: 3, total: 58000 };
 
+  // These check the figures themselves, so the amounts start shown (ticket 13).
+  beforeEach(() => {
+    window.localStorage.setItem(HOME_AMOUNTS_KEY, "shown");
+  });
+
   it("shows this month's money in and the fees still to collect, then who owes most", async () => {
     backend(
       on("GET", HOME_OWING_URL, OWING),
@@ -719,6 +726,131 @@ describe("the Admin's Home money", () => {
     expect(
       await screen.findByText("We couldn't load this month's money. Please refresh the page."),
     ).toBeInTheDocument();
+  });
+});
+
+describe("an eye on Home's money (ticket 13)", () => {
+  const MONTH = { ...NO_PAYMENTS, count: 3, total: 58000 };
+
+  function onHomeMoney() {
+    return backend(
+      on("GET", HOME_OWING_URL, OWING),
+      on("GET", THIS_MONTH, MONTH),
+      on("GET", MONEY_OUT, NO_EXPENSES),
+      on("GET", RECEIVED, { total: 0, count: 0 }),
+      on("GET", COMMISSION, NO_COMMISSION),
+    );
+  }
+
+  async function openHome() {
+    const view = withProviders(ADMIN, <HomePage />);
+    const glance = await screen.findByRole("region", { name: "This month at a glance" });
+    await within(glance).findByText("Fees still to collect");
+    const owes = screen.getByRole("region", { name: "Who still owes fees" });
+    return { view, glance, owes };
+  }
+
+  function eye(name: "Show amounts" | "Hide amounts") {
+    return screen.getByRole("button", { name });
+  }
+
+  it("hides every amount at first, keeping names, counts and labels", async () => {
+    onHomeMoney();
+    const { glance, owes } = await openHome();
+
+    expect(within(glance).queryByText(/NPR/)).not.toBeInTheDocument();
+    expect(within(owes).queryByText(/NPR/)).not.toBeInTheDocument();
+    expect(within(glance).getByText("***** from Students, ***** commission")).toBeInTheDocument();
+    expect(within(glance).getByText("Fees still to collect")).toBeInTheDocument();
+    expect(
+      within(glance).getByText("2 Students owe money. See it by Fee Type"),
+    ).toBeInTheDocument();
+    expect(within(owes).getByRole("link", { name: "Sita Karki" })).toBeInTheDocument();
+    expect(within(owes).getAllByText("***** left")).toHaveLength(2);
+    expect(within(owes).getByText("Paid ***** of ***** (23%)")).toBeInTheDocument();
+    expect(eye("Show amounts")).toHaveAttribute("aria-pressed", "false");
+    expect(eye("Show amounts")).toHaveAttribute("title", "Show amounts");
+  });
+
+  it("lets screen readers hear Hidden in place of each amount", async () => {
+    onHomeMoney();
+    const { glance, owes } = await openHome();
+
+    expect(within(owes).getAllByText("Hidden left")[0]).toHaveClass("sr-only");
+    expect(within(owes).getAllByText("***** left")[0]).toHaveAttribute("aria-hidden", "true");
+    expect(
+      within(glance).getByRole("link", { name: /Fees still to collect/ }),
+    ).toHaveAccessibleName(/Hidden/);
+  });
+
+  it("shows and hides both sections with the one eye, keeping the scroll and the focus", async () => {
+    onHomeMoney();
+    const { glance, owes } = await openHome();
+
+    await userEvent.click(eye("Show amounts"));
+
+    expect(
+      within(glance).getByText("NPR 58,000 from Students, NPR 0 commission"),
+    ).toBeInTheDocument();
+    expect(within(owes).getByText("NPR 80,000 left")).toBeInTheDocument();
+    expect(within(owes).getByText("Paid NPR 15,000 of NPR 65,000 (23%)")).toBeInTheDocument();
+    expect(eye("Hide amounts")).toHaveAttribute("aria-pressed", "true");
+    expect(eye("Hide amounts")).toHaveFocus();
+
+    await userEvent.click(eye("Hide amounts"));
+
+    expect(within(glance).queryByText(/NPR/)).not.toBeInTheDocument();
+    expect(within(owes).getAllByText("***** left")).toHaveLength(2);
+    expect(eye("Show amounts")).toHaveFocus();
+  });
+
+  it("remembers the choice on this device", async () => {
+    onHomeMoney();
+    const { view } = await openHome();
+    await userEvent.click(eye("Show amounts"));
+    view.unmount();
+
+    onHomeMoney();
+    const { owes } = await openHome();
+
+    expect(within(owes).getByText("NPR 80,000 left")).toBeInTheDocument();
+    expect(eye("Hide amounts")).toBeInTheDocument();
+  });
+
+  it("starts hidden for anything stored that isn't a choice", async () => {
+    window.localStorage.setItem(HOME_AMOUNTS_KEY, "<script>");
+    onHomeMoney();
+    const { owes } = await openHome();
+
+    expect(within(owes).getAllByText("***** left")).toHaveLength(2);
+  });
+
+  it("still works for this visit when the browser refuses storage", async () => {
+    const refuse = () => {
+      throw new DOMException("Storage refused", "SecurityError");
+    };
+    const reads = vi.spyOn(Storage.prototype, "getItem").mockImplementation(refuse);
+    const writes = vi.spyOn(Storage.prototype, "setItem").mockImplementation(refuse);
+    try {
+      onHomeMoney();
+      const { owes } = await openHome();
+      expect(within(owes).getAllByText("***** left")).toHaveLength(2);
+
+      await userEvent.click(eye("Show amounts"));
+
+      expect(within(owes).getByText("NPR 80,000 left")).toBeInTheDocument();
+    } finally {
+      reads.mockRestore();
+      writes.mockRestore();
+    }
+  });
+
+  it("leaves the Accounts page alone", async () => {
+    backend(on("GET", OWING_URL, OWING));
+    withProviders(ADMIN, <AccountsPage />);
+
+    expect(await screen.findByText("NPR 1,70,000")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Show amounts" })).not.toBeInTheDocument();
   });
 });
 

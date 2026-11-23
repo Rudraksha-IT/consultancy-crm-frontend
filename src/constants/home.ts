@@ -59,3 +59,16 @@ export const HOME_TEXT = {
   noHighPriority: "No Students are High priority right now.",
   highPriorityFailed: "We couldn't load the High priority Students. Please try again.",
 } as const;
+
+/** Where this device keeps whether Home's amounts are shown (ticket 13); anything else: hidden. */
+export const HOME_AMOUNTS_KEY = "crm:home-amounts";
+
+/** The eye on Home's money (ticket 13). */
+export const AMOUNTS_TEXT = {
+  show: "Show amounts",
+  hide: "Hide amounts",
+  /** What sighted people see in place of an amount. */
+  masked: "*****",
+  /** What screen readers hear in place of an amount. */
+  hidden: "Hidden",
+} as const;

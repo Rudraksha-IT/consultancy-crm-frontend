@@ -11,6 +11,7 @@ import { backend, callsTo, on, onEach } from "@/test/backend";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
+import { HOME_AMOUNTS_KEY } from "@/constants/home";
 
 const ADMIN: StaffContext = {
   staff: { id: uid(1), name: "Sunita Shrestha", email: "sunita@acme.test", role: "admin" },
@@ -463,6 +464,15 @@ describe("Received commission in Money in", () => {
 });
 
 describe("Commission on the Admin's Home", () => {
+  // These check the figures themselves, so the amounts start shown (ticket 13).
+  beforeEach(() => {
+    window.localStorage.setItem(HOME_AMOUNTS_KEY, "shown");
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
   it("shows the commission to come, money in with commission, and the profit", async () => {
     backend(
       on("GET", HOME_OWING_URL, {
