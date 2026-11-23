@@ -4,7 +4,9 @@ export const PRODUCT_NAME = {
   /** The longest name the server keeps. */
   maxLength: 40,
   /** The server asks Django again after this long, so offices see a change within a minute. */
-  cacheMs: 60_000,
+  cacheSeconds: 60,
+  /** After this long without a visit, the kept name is dropped and asked afresh. */
+  expireSeconds: 3_600,
   timeoutMs: 3_000,
   backendPath: "/api/platform/brand/",
 } as const;

@@ -1,10 +1,13 @@
 // @vitest-environment node
-import { forgetProductName, getProductName } from "./productName";
+import { cacheLife } from "next/cache";
+
+import { askProductName, forgetProductName, getProductName } from "./productName";
 import { TEST_PRODUCT_DOMAIN, testHost } from "@/test/hosts";
+
+vi.mock("next/cache", () => ({ cacheLife: vi.fn() }));
 
 const TOKEN = "a-test-internal-token-that-is-32-chars-or-more";
 const BACKEND = "http://backend:8000";
-const MINUTE = 60_000;
 
 beforeEach(() => {
   vi.stubEnv("BACKEND_BASE_URL", BACKEND);
@@ -38,7 +41,7 @@ describe("the product's name for every page (first live fixes, ticket 15)", () =
   it("asks Django on the Platform's address with the internal token", async () => {
     const fetchFn = djangoSays(named("Acme Office Suite"));
 
-    expect(await getProductName("https", 0)).toBe("Acme Office Suite");
+    expect(await askProductName()).toBe("Acme Office Suite");
 
     const [url, init] = fetchFn.mock.calls[0] ?? [];
     expect(url).toBe(`${BACKEND}/api/platform/brand/`);
@@ -48,29 +51,26 @@ describe("the product's name for every page (first live fixes, ticket 15)", () =
     expect(headers.get("x-internal-token")).toBe(TOKEN);
   });
 
-  it("keeps the name for a minute, then asks again", async () => {
-    const fetchFn = djangoSays(named("First Name"), named("Second Name"));
+  it("is kept for a minute, so offices see a change within one", async () => {
+    djangoSays(named("Acme Office Suite"));
 
-    await getProductName("http", 0);
-    expect(await getProductName("http", MINUTE - 1)).toBe("First Name");
-    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(await getProductName()).toBe("Acme Office Suite");
 
-    expect(await getProductName("http", MINUTE)).toBe("Second Name");
-    expect(fetchFn).toHaveBeenCalledTimes(2);
+    expect(cacheLife).toHaveBeenCalledWith({ stale: 60, revalidate: 60, expire: 3600 });
   });
 
   it("is the default before Django has ever said", async () => {
     djangoSays(() => new Response("down", { status: 503 }));
 
-    expect(await getProductName("http", 0)).toBe("Rudraksha CRM");
+    expect(await askProductName()).toBe("Rudraksha CRM");
   });
 
   it("keeps the last name when Django can't say", async () => {
     djangoSays(named("Acme Office Suite"), () => new Response("down", { status: 503 }));
 
-    await getProductName("http", 0);
+    await askProductName();
 
-    expect(await getProductName("http", MINUTE)).toBe("Acme Office Suite");
+    expect(await askProductName()).toBe("Acme Office Suite");
   });
 
   it.each([
@@ -82,7 +82,7 @@ describe("the product's name for every page (first live fixes, ticket 15)", () =
   ])("ignores %s", async (_, answer) => {
     djangoSays(answer);
 
-    expect(await getProductName("http", 0)).toBe("Rudraksha CRM");
+    expect(await askProductName()).toBe("Rudraksha CRM");
   });
 
   it("gives up after three seconds", async () => {
@@ -98,7 +98,7 @@ describe("the product's name for every page (first live fixes, ticket 15)", () =
       }),
     );
     try {
-      const name = getProductName("http", 0);
+      const name = askProductName();
       await vi.advanceTimersByTimeAsync(3_000);
 
       expect(await name).toBe("Rudraksha CRM");
