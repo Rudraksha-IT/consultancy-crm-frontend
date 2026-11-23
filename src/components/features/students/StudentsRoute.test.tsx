@@ -97,4 +97,35 @@ describe("StudentsRoute", () => {
     await screen.findByText("No Students match. Try clearing the search or a filter.");
     expect(fetchFn).toHaveBeenCalledWith("/api/students/?counsellor=me", expect.anything());
   });
+
+  it("starts with No counsellor yet from the address, for Home's new visitors", async () => {
+    navigation.search = new URLSearchParams({ stage: "lead", counsellor: "none" });
+    const fetchFn = renderRoute();
+
+    await screen.findByText("No Students match. Try clearing the search or a filter.");
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/students/?stage=lead&counsellor=none",
+      expect.anything(),
+    );
+    expect(screen.getByRole("combobox", { name: "Counsellor" })).toHaveValue("none");
+  });
+
+  it("starts with My Students and High from the address, for a counsellor's See all", async () => {
+    navigation.search = new URLSearchParams({ priority: "high", counsellor: "me" });
+    const fetchFn = renderRoute();
+
+    await screen.findByText("No Students match. Try clearing the search or a filter.");
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/students/?priority=high&counsellor=me",
+      expect.anything(),
+    );
+  });
+
+  it("ignores a counsellor in the address that isn't one", async () => {
+    navigation.search = new URLSearchParams({ stage: "lead", counsellor: "<b>x</b>" });
+    const fetchFn = renderRoute();
+
+    await screen.findByText("No Students match. Try clearing the search or a filter.");
+    expect(fetchFn).toHaveBeenCalledWith("/api/students/?stage=lead", expect.anything());
+  });
 });

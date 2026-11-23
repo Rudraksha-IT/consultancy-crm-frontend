@@ -685,13 +685,13 @@ describe("the Admin's Home money", () => {
     const owes = screen.getByRole("region", { name: "Who still owes fees" });
     expect(within(owes).getByText("NPR 80,000 left")).toBeInTheDocument();
     expect(within(owes).getByText("Paid NPR 15,000 of NPR 65,000 (23%)")).toBeInTheDocument();
-    expect(within(owes).getByRole("link", { name: "All fees" })).toHaveAttribute(
+    expect(within(owes).getByRole("link", { name: "See all (2)" })).toHaveAttribute(
       "href",
       "/accounts",
     );
   });
 
-  it("shows at most five who owe", async () => {
+  it("shows at most three who owe (ticket 12)", async () => {
     const many = Array.from({ length: 7 }, (_, index) => ({
       student: { id: uid(index + 1), name: `Student ${String(index + 1)}` },
       fees: 1000,
@@ -708,7 +708,7 @@ describe("the Admin's Home money", () => {
     withProviders(ADMIN, <HomePage />);
 
     const owes = await screen.findByRole("list", { name: "Who still owes fees" });
-    expect(within(owes).getAllByRole("listitem")).toHaveLength(5);
+    expect(within(owes).getAllByRole("listitem")).toHaveLength(3);
   });
 
   it("says when everyone has paid, and when the money can't be loaded", async () => {

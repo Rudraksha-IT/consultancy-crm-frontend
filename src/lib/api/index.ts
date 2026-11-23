@@ -426,7 +426,7 @@ export type {
   Receipt,
   ReceiptLine,
 } from "./money/payments";
-export { addStudent, fetchStudents } from "./students/students";
+export { addStudent, fetchHighPriorityStudents, fetchStudents } from "./students/students";
 export { fetchAttendanceDay, fetchStudentClasses, saveAttendanceDay } from "./classes/attendance";
 export type { AttendanceDay, DayMarks, StudentClass } from "./classes/attendance";
 export {

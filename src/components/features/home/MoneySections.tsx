@@ -33,6 +33,7 @@ import {
 import { todayIso } from "@/lib/dates";
 import { formatNpr, paidShare } from "@/lib/money";
 
+import { SeeAllLink } from "./SeeAllLink";
 import { useLoaded, type Loaded } from "./useLoaded";
 
 /** The first day of this month, "YYYY-MM-01" (AD). */
@@ -144,52 +145,61 @@ function GlanceFigures({ owing, month }: { owing: OwingPage; month: ThisMonth })
 /** The Students who owe most, each with a paid-so-far bar (spec 22a). */
 export function WhoStillOwes({ owing }: { owing: Loaded<OwingPage> }) {
   return (
-    <Section
-      title={FEE_TEXT.whoStillOwes}
-      aside={
-        <Link href={ROUTES.accounts} className={ACCOUNTS_LINK}>
-          {FEE_TEXT.allFees}
-        </Link>
-      }
-    >
-      {owing.status === "loading" && <p className="text-ink-2">{MESSAGES.loading}</p>}
-      {owing.status === "failed" && <Banner tone="problem">{FEE_TEXT.owingFailed}</Banner>}
-      {owing.status === "loaded" && (
-        <Panel>
-          {owing.data.rows.length === 0 ? (
-            <EmptyState>{FEE_TEXT.everyonePaid}</EmptyState>
-          ) : (
-            <RowList label={FEE_TEXT.whoStillOwes}>
-              {owing.data.rows.slice(0, OWING_ON_HOME).map((row) => {
-                const percent = paidShare(row.fees, row.paid);
-                return (
-                  <RowItem
-                    key={row.student.id}
-                    title={
-                      <Link
-                        href={ROUTES.student(row.student.id)}
-                        className="text-ink hover:text-accent min-h-control inline-flex items-center break-words underline-offset-4 hover:underline"
-                      >
-                        {row.student.name}
-                      </Link>
-                    }
-                    right={
-                      <span className="text-warn font-semibold whitespace-nowrap tabular-nums">
-                        {FEE_TEXT.left(formatNpr(row.stillToPay))}
-                      </span>
-                    }
-                  >
-                    <ProgressBar label={FEE_TEXT.paidShareOf(row.student.name)} value={percent} />
-                    <span className="text-small text-ink-2">
-                      {FEE_TEXT.paidOf(formatNpr(row.paid), formatNpr(row.fees), percent)}
-                    </span>
-                  </RowItem>
-                );
-              })}
-            </RowList>
-          )}
-        </Panel>
-      )}
+    <Section title={FEE_TEXT.whoStillOwes} fills>
+      <OwingBody owing={owing} />
     </Section>
+  );
+}
+
+function OwingBody({ owing }: { owing: Loaded<OwingPage> }) {
+  if (owing.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (owing.status === "failed") return <Banner tone="problem">{FEE_TEXT.owingFailed}</Banner>;
+  if (owing.data.rows.length === 0) {
+    return (
+      <Panel>
+        <EmptyState>{FEE_TEXT.everyonePaid}</EmptyState>
+      </Panel>
+    );
+  }
+  return (
+    <div className="grid grid-rows-[1fr_auto] gap-3">
+      <Panel>
+        <OwingRows owing={owing.data} />
+      </Panel>
+      <SeeAllLink href={ROUTES.accounts} count={owing.data.count} />
+    </div>
+  );
+}
+
+function OwingRows({ owing }: { owing: OwingPage }) {
+  return (
+    <RowList label={FEE_TEXT.whoStillOwes}>
+      {owing.rows.slice(0, OWING_ON_HOME).map((row) => {
+        const percent = paidShare(row.fees, row.paid);
+        return (
+          <RowItem
+            key={row.student.id}
+            title={
+              <Link
+                href={ROUTES.student(row.student.id)}
+                className="text-ink hover:text-accent min-h-control inline-flex items-center break-words underline-offset-4 hover:underline"
+              >
+                {row.student.name}
+              </Link>
+            }
+            right={
+              <span className="text-warn font-semibold whitespace-nowrap tabular-nums">
+                {FEE_TEXT.left(formatNpr(row.stillToPay))}
+              </span>
+            }
+          >
+            <ProgressBar label={FEE_TEXT.paidShareOf(row.student.name)} value={percent} />
+            <span className="text-small text-ink-2">
+              {FEE_TEXT.paidOf(formatNpr(row.paid), formatNpr(row.fees), percent)}
+            </span>
+          </RowItem>
+        );
+      })}
+    </RowList>
   );
 }

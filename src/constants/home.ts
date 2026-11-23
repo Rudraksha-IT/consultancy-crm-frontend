@@ -3,8 +3,12 @@ export const ADMIN_PROGRESS_LIMIT = 6;
 export const COUNSELLOR_PROGRESS_LIMIT = 10;
 /** How many tasks due soon the Counsellor's and Admin's Homes list; Teachers see them grouped. */
 export const TASKS_SHOWN = 4;
+/** How many rows each short list on Home shows before "See all (N)" (ticket 12). */
+export const HOME_LIST_SHOWN = 3;
 /** How many new visitors without a counsellor the Admin's Home lists. */
-export const UNASSIGNED_SHOWN = 5;
+export const UNASSIGNED_SHOWN = HOME_LIST_SHOWN;
+/** How many High priority Students Home lists. */
+export const HIGH_PRIORITY_SHOWN = HOME_LIST_SHOWN;
 
 const students = (count: number) => (count === 1 ? "1 Student" : `${String(count)} Students`);
 
@@ -48,4 +52,8 @@ export const HOME_TEXT = {
   appointmentLine: (student: string, appointment: string, when: string) =>
     `${student}, ${appointment} ${when}`,
   andMore: (count: number) => `and ${String(count)} more`,
+  seeAllCount: (count: number) => `See all (${String(count)})`,
+  highPriorityTitle: "High priority Students",
+  noHighPriority: "No Students are High priority right now.",
+  highPriorityFailed: "We couldn't load the High priority Students. Please try again.",
 } as const;

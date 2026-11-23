@@ -53,6 +53,8 @@ type StudentsPageProps = {
   initialStage?: string;
   /** A Priority from the address (checked before use), e.g. from Home (ticket 11). */
   initialPriority?: string;
+  /** A counsellor filter from the address (checked before use), from Home (ticket 12). */
+  initialCounsellor?: string;
 };
 
 /** Every Student, searchable and filtered, for every Role but Teachers (spec 29-31). */
@@ -60,6 +62,7 @@ export function StudentsPage({
   initialSearch,
   initialStage = "",
   initialPriority = "",
+  initialCounsellor = "",
 }: StudentsPageProps) {
   const { staff } = useCurrentStaff();
   if (staff.role === Role.Teacher) {
@@ -77,6 +80,7 @@ export function StudentsPage({
       initialSearch={initialSearch}
       initialStage={initialStage}
       initialPriority={initialPriority}
+      initialCounsellor={initialCounsellor}
     />
   );
 }
@@ -86,11 +90,23 @@ type StudentListProps = {
   initialSearch: string;
   initialStage: string;
   initialPriority: string;
+  initialCounsellor: string;
 };
 
-function StudentList({ role, initialSearch, initialStage, initialPriority }: StudentListProps) {
+function StudentList({
+  role,
+  initialSearch,
+  initialStage,
+  initialPriority,
+  initialCounsellor,
+}: StudentListProps) {
   const [filters, setFilters] = useState<StudentFilters>(() =>
-    defaultStudentFilters(role, initialSearch, initialStage, initialPriority),
+    defaultStudentFilters(role, {
+      search: initialSearch,
+      stage: initialStage,
+      priority: initialPriority,
+      counsellor: initialCounsellor,
+    }),
   );
   const [search, setSearch] = useState(filters.search);
   const settledSearch = useDebouncedValue(search, SEARCH_DELAY_MS);
