@@ -19,14 +19,15 @@ function startsAt(path: string, start: string): boolean {
 }
 
 /**
- * The browser tab's title on an office's address (first live fixes, ticket 08): on Home
- * "<office> - <product>" (the product's saved name, ticket 15); elsewhere "<page> | <office>". A record's page is named by its
+ * The browser tab's title on an office's address (first live fixes, ticket 08): "<page> |
+ * <office>", Home too (list tidy-ups 07); the office alone on a page it doesn't know. A record's page is named by its
  * section ("Students"), never by the Student or person, so no name is kept in browser history.
  * Before anyone logs in (the login pages) there is no Role.
  */
-export function tabTitle(path: string, office: string, role: Role | null, product: string): string {
+export function tabTitle(path: string, office: string, role: Role | null): string {
+  if (path === ROUTES.home) return TAB_TITLE.page(TAB_TITLE.homeName, office);
   const found = pageNames(role)
     .filter(([start]) => startsAt(path, start))
     .sort(([a], [b]) => b.length - a.length)[0];
-  return found === undefined ? TAB_TITLE.home(office, product) : TAB_TITLE.page(found[1], office);
+  return found === undefined ? office : TAB_TITLE.page(found[1], office);
 }

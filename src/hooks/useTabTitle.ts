@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-import { useProductName } from "@/components/features/brand/ProductName";
 import type { Role } from "@/constants/roles";
 import { tabTitle } from "@/lib/tabTitle";
 
@@ -13,8 +12,7 @@ import { tabTitle } from "@/lib/tabTitle";
  */
 export function useTabTitle(office: string | null, role: Role | null): void {
   const pathname = usePathname();
-  const product = useProductName();
   useEffect(() => {
-    if (office !== null) document.title = tabTitle(pathname, office, role, product);
-  }, [pathname, office, role, product]);
+    if (office !== null) document.title = tabTitle(pathname, office, role);
+  }, [pathname, office, role]);
 }

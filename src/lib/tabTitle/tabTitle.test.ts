@@ -4,16 +4,11 @@ import { uid } from "@/test/ids";
 import { tabTitle } from "./tabTitle";
 
 const OFFICE = "Northwind Education";
-const PRODUCT = "Acme Office Suite";
 
 describe("the browser tab's title on an office's address (first live fixes, ticket 08)", () => {
-  it("is the office and the product's saved name on Home (ticket 15)", () => {
-    expect(tabTitle("/", OFFICE, Role.Admin, PRODUCT)).toBe(
-      "Northwind Education - Acme Office Suite",
-    );
-    expect(tabTitle("/", OFFICE, Role.FrontDesk, PRODUCT)).toBe(
-      "Northwind Education - Acme Office Suite",
-    );
+  it("is Home and the office on Home, like every other page (list tidy-ups 07)", () => {
+    expect(tabTitle("/", OFFICE, Role.Admin)).toBe("Home | Northwind Education");
+    expect(tabTitle("/", OFFICE, Role.FrontDesk)).toBe("Home | Northwind Education");
   });
 
   it.each([
@@ -40,7 +35,7 @@ describe("the browser tab's title on an office's address (first live fixes, tick
     ["/forgot-password", "Forgot password"],
     ["/join", "Join"],
   ])("is the page's name and the office on %s", (path, page) => {
-    expect(tabTitle(path, OFFICE, Role.Admin, PRODUCT)).toBe(`${page} | Northwind Education`);
+    expect(tabTitle(path, OFFICE, Role.Admin)).toBe(`${page} | Northwind Education`);
   });
 
   it.each([
@@ -49,18 +44,14 @@ describe("the browser tab's title on an office's address (first live fixes, tick
     [`/batches/${uid(2)}`, "Classes"],
     [`/staff/${uid(3)}`, "Employees"],
   ])("names a record's page by its section, never the person (%s)", (path, page) => {
-    expect(tabTitle(path, OFFICE, Role.Admin, PRODUCT)).toBe(`${page} | Northwind Education`);
+    expect(tabTitle(path, OFFICE, Role.Admin)).toBe(`${page} | Northwind Education`);
   });
 
   it("never matches part of a word", () => {
-    expect(tabTitle("/studentsx", OFFICE, Role.Admin, PRODUCT)).toBe(
-      "Northwind Education - Acme Office Suite",
-    );
+    expect(tabTitle("/studentsx", OFFICE, Role.Admin)).toBe("Northwind Education");
   });
 
-  it("is the office and the product on a page it doesn't know", () => {
-    expect(tabTitle("/somewhere", OFFICE, Role.Admin, PRODUCT)).toBe(
-      "Northwind Education - Acme Office Suite",
-    );
+  it("is the office alone on a page it doesn't know", () => {
+    expect(tabTitle("/somewhere", OFFICE, Role.Admin)).toBe("Northwind Education");
   });
 });

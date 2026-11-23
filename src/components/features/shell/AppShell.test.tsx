@@ -89,11 +89,11 @@ describe("AppShell: the browser tab (first live fixes, ticket 08)", () => {
     document.title = "";
   });
 
-  it("names the office and the product on Home", async () => {
+  it("names Home and the office on Home (list tidy-ups 07)", async () => {
     await renderShellFor(ADMIN_CONTEXT);
 
     await waitFor(() => {
-      expect(document.title).toBe("Acme Education - Rudraksha CRM");
+      expect(document.title).toBe("Home | Acme Education");
     });
   });
 });
