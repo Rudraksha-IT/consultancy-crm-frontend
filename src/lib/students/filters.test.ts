@@ -61,6 +61,7 @@ describe("studentListQuery", () => {
       {
         search: "sita karki",
         stage: Stage.Counselling,
+        priority: "",
         counsellor: "me",
         source: Source.SubAgent,
         country: Country.Uk,

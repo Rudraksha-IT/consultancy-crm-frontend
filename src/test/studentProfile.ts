@@ -50,6 +50,7 @@ export const PROFILE = {
   sub_agent_name: "",
   note: "Wants Melbourne only.",
   stage: "counselling",
+  priority: "normal",
   assigned_counsellor: { id: uid(5), name: "Bikash Thapa" },
   created_at: "2026-10-01T10:00:00+05:45",
   academic_records: [
@@ -59,7 +60,6 @@ export const PROFILE = {
     { id: uid(3), test: "ielts", overall: "6.5", taken_on: "2026-09-14", details: "L 7, R 6.5" },
   ],
   lost_reason: "",
-  priority: "normal",
   stage_changes: [],
   progress: { percent: 20, next_step: "Choose a course and apply", is_done: false },
   applications: [],

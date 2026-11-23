@@ -194,6 +194,7 @@ describe("fetchChoosable", () => {
     const filters = {
       search: "sita",
       stage: "counselling",
+      priority: "",
       counsellor: "",
       source: "",
       country: "",

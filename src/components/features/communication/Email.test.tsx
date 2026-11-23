@@ -94,6 +94,7 @@ function row(id: RecordId, name: string, email: string, stage = "counselling") {
     country: "australia",
     source: "walk_in",
     stage,
+    priority: "normal",
     assigned_counsellor: null,
   };
 }

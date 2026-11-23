@@ -5,11 +5,14 @@ import { DataCell, DataRow, DataTable } from "@/components/ui/DataTable";
 import { OneLine } from "@/components/ui/OneLine";
 import { StageMeter } from "@/components/ui/StageMeter";
 import { LABELS } from "@/constants/messages";
+import { Priority } from "@/constants/priority";
 import { ROUTES } from "@/constants/routes";
 import { COUNTRY_LABELS } from "@/constants/students";
 import { SelectAllHeader, SelectRowCell } from "@/components/features/exports/SelectionCells";
 import type { RowSelection } from "@/components/features/exports/useRowSelection";
 import type { StudentRow } from "@/lib/api";
+
+import { PriorityWord } from "./PriorityWord";
 
 type StudentTableProps = {
   students: readonly StudentRow[];
@@ -21,7 +24,7 @@ const HEAD = "text-small text-ink-2 bg-fill px-6 py-3 text-left font-semibold";
 const CELL = "px-6 py-4 align-middle max-tablet:p-0";
 
 /**
- * Students with their phone, Stage, counsellor and where they want to go. Below tablet width
+ * Students with their phone, Priority, Stage, counsellor and where they want to go. Below tablet width
  * each row stacks into a card, so the page never scrolls sideways. On a phone a row is the name,
  * where they want to go and the Stage, with an arrow to their page.
  */
@@ -33,6 +36,9 @@ export function StudentTable({ students, selection }: StudentTableProps) {
           <SelectAllHeader selection={selection} />
           <th scope="col" className={HEAD}>
             {LABELS.student}
+          </th>
+          <th scope="col" className={HEAD}>
+            {LABELS.priority}
           </th>
           <th scope="col" className={HEAD}>
             {LABELS.stage}
@@ -65,9 +71,21 @@ function StudentTableRow({ student, selection }: { student: StudentRow; selectio
         >
           <OneLine>{student.name}</OneLine>
         </Link>
+        {student.priority === Priority.High && (
+          <span className="phone:hidden ml-2 align-middle">
+            <Chip tone="bad" icon="arrowUp">
+              {LABELS.highPriority}
+            </Chip>
+          </span>
+        )}
         <div className="text-secondary text-ink-2 max-phone:hidden tabular-nums">
           {student.phone}
         </div>
+      </DataCell>
+      <DataCell label={LABELS.priority} className={CELL}>
+        <span data-testid="priority" className="text-ink">
+          <PriorityWord priority={student.priority} />
+        </span>
       </DataCell>
       <DataCell part="fact" className={CELL}>
         <StageMeter stage={student.stage} />

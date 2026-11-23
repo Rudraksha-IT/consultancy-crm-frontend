@@ -11,12 +11,7 @@ import { PRIORITIES, PRIORITY_LABELS, type Priority } from "@/constants/priority
 import { STUDENT_PRIORITY_TEXT as TEXT } from "@/constants/students";
 import { saveStudentPriority, type StudentProfile } from "@/lib/api";
 
-/** Each Priority's colour dot; the word is always shown beside it. */
-const DOTS: Record<Priority, string> = {
-  high: "bg-bad",
-  normal: "bg-accent",
-  low: "bg-ink-3",
-};
+import { PRIORITY_DOTS, PriorityWord } from "../PriorityWord";
 
 type PriorityPickerProps = {
   profile: StudentProfile;
@@ -47,9 +42,8 @@ function PriorityValue({ priority }: { priority: Priority }) {
   return (
     <>
       <span className="text-ink-2">{TEXT.label}</span>
-      <span className="text-ink inline-flex items-center gap-2 font-semibold">
-        <span aria-hidden="true" className={clsx("size-2.5 rounded-full", DOTS[priority])} />
-        {PRIORITY_LABELS[priority]}
+      <span className="text-ink font-semibold">
+        <PriorityWord priority={priority} />
       </span>
     </>
   );
@@ -98,7 +92,7 @@ function PriorityMenu({ profile, onSaved }: PriorityPickerProps) {
             items={PRIORITIES.map((priority) => ({
               label: PRIORITY_LABELS[priority],
               hint: TEXT.hints[priority],
-              dot: DOTS[priority],
+              dot: PRIORITY_DOTS[priority],
               isChosen: priority === current,
               onSelect: () => {
                 change(priority);

@@ -77,4 +77,24 @@ describe("StudentsRoute", () => {
     await screen.findByText("No Students match. Try clearing the search or a filter.");
     expect(fetchFn).toHaveBeenCalledWith("/api/students/?counsellor=me", expect.anything());
   });
+
+  it("starts with the Priority in the address, still the counsellor's own Students", async () => {
+    navigation.search = new URLSearchParams({ priority: "high" });
+    const fetchFn = renderRoute();
+
+    await screen.findByText("No Students match. Try clearing the search or a filter.");
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/students/?priority=high&counsellor=me",
+      expect.anything(),
+    );
+    expect(screen.getByRole("combobox", { name: "Priority" })).toHaveValue("high");
+  });
+
+  it("ignores a Priority in the address that isn't one", async () => {
+    navigation.search = new URLSearchParams({ priority: "urgent" });
+    const fetchFn = renderRoute();
+
+    await screen.findByText("No Students match. Try clearing the search or a filter.");
+    expect(fetchFn).toHaveBeenCalledWith("/api/students/?counsellor=me", expect.anything());
+  });
 });

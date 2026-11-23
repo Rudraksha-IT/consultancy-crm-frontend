@@ -500,6 +500,7 @@ describe("New Task", () => {
             country: "australia",
             source: "walk_in",
             stage: "lead",
+            priority: "normal",
             assigned_counsellor: null,
           },
         ],

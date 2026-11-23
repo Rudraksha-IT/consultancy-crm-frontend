@@ -95,6 +95,7 @@ const RAM = progressRow(uid(8), "Ram Karki", {
     id: uid(8),
     name: "Ram Karki",
     stage: "lead",
+    priority: "normal",
     assigned_counsellor: null,
   },
   percent: 8,
@@ -119,6 +120,7 @@ const NEW_VISITOR = {
   country: "canada",
   source: "facebook",
   stage: "lead",
+  priority: "normal",
   assigned_counsellor: null,
 };
 

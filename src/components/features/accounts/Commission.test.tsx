@@ -153,6 +153,7 @@ const SITA = {
   country: "australia",
   source: "walk_in",
   stage: "applying",
+  priority: "normal",
   assigned_counsellor: null,
 };
 

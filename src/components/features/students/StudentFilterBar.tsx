@@ -6,6 +6,7 @@ import { FilterBar, MoreFiltersButton } from "@/components/ui/FilterBar";
 import { FilterSelect } from "@/components/ui/FilterSelect";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { LABELS } from "@/constants/messages";
+import { PRIORITIES, PRIORITY_LABELS } from "@/constants/priority";
 import { Stage } from "@/constants/stages";
 import { PROFILE_TEXT } from "@/constants/studentProfile";
 import {
@@ -17,10 +18,15 @@ import {
   type TargetLevel,
 } from "@/constants/students";
 import type { CounsellorChoice } from "@/lib/api";
-import type { StudentFilters } from "@/lib/students";
+import { priorityFrom, type StudentFilters } from "@/lib/students";
 
 import { counsellorFilterOptions } from "./counsellorFilter";
 import { COUNTRY_OPTIONS, SOURCE_OPTIONS, STAGE_OPTIONS, TARGET_LEVEL_OPTIONS } from "./options";
+
+const PRIORITY_OPTIONS = [
+  { value: "", label: LABELS.allPriorities },
+  ...PRIORITIES.map((priority) => ({ value: priority, label: PRIORITY_LABELS[priority] })),
+];
 
 const COUNSELLOR_FILTER_LABELS = {
   any: LABELS.anyCounsellor,
@@ -40,7 +46,7 @@ type StudentFilterBarProps = {
 };
 
 /**
- * Search, Stage and counsellor, with "How they found us", "Wants to study in" and "Target level"
+ * Search, Stage, Priority and counsellor, with "How they found us", "Wants to study in" and "Target level"
  * under More filters.
  */
 export function StudentFilterBar(props: StudentFilterBarProps) {
@@ -68,6 +74,14 @@ export function StudentFilterBar(props: StudentFilterBarProps) {
         options={[{ value: "", label: LABELS.allStages }, ...STAGE_OPTIONS]}
         onChange={(stage) => {
           onChange({ stage: toStage(stage) });
+        }}
+      />
+      <FilterSelect
+        label={LABELS.priority}
+        value={filters.priority}
+        options={PRIORITY_OPTIONS}
+        onChange={(priority) => {
+          onChange({ priority: priorityFrom(priority) });
         }}
       />
       <FilterSelect

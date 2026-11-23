@@ -23,6 +23,7 @@ import { useLoaded, type Loaded } from "./useLoaded";
 const NEW_WITHOUT_COUNSELLOR = {
   search: "",
   stage: Stage.Lead,
+  priority: "",
   counsellor: CounsellorFilter.None,
   source: "",
   country: "",

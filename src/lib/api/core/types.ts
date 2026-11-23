@@ -337,6 +337,8 @@ const StudentRowFields = {
   country: z.enum(COUNTRIES),
   source: z.enum(SOURCES),
   stage: z.enum(Stage),
+  /** How urgently their case needs attention (tickets 10, 11). */
+  priority: z.enum(PRIORITIES),
   assigned_counsellor: AssignedCounsellorSchema,
 };
 
@@ -388,6 +390,7 @@ function toStudent(student: StudentFromApi) {
     country: student.country,
     source: student.source,
     stage: student.stage,
+    priority: student.priority,
     assignedCounsellor: student.assigned_counsellor,
     highestQualification: student.highest_qualification,
     pastDegree: student.past_degree,
@@ -617,8 +620,6 @@ export const StudentProfileSchema = z
     academic_records: z.array(AcademicRecordSchema),
     test_scores: z.array(TestScoreSchema),
     lost_reason: z.string(),
-    /** How urgently their case needs attention (ticket 10). */
-    priority: z.enum(PRIORITIES),
     /** Every Stage change, oldest first, for the Activity timeline and the Lost ⓘ (issue 82). */
     stage_changes: z.array(HistoryEntrySchema),
     /** How far along they are and their next step, by the same rule as Home (spec 113). */
@@ -679,7 +680,6 @@ export const StudentProfileSchema = z
     academicRecords: profile.academic_records,
     testScores: profile.test_scores,
     lostReason: profile.lost_reason,
-    priority: profile.priority,
     canSetPriority: profile.can_set_priority,
     stageChanges: profile.stage_changes,
     progress: {

@@ -102,6 +102,7 @@ const SEARCH_RESULT = {
   country: "australia",
   source: "walk_in",
   stage: "counselling",
+  priority: "normal",
   assigned_counsellor: null,
 };
 

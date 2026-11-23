@@ -2,6 +2,7 @@ import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { addStudent, fetchStudents } from "./students";
 import { jsonResponse } from "../core/test-helpers";
 import { uid } from "@/test/ids";
+import { NO_STUDENT_FILTERS } from "@/lib/students";
 
 const ROW = {
   id: uid(9),
@@ -11,6 +12,7 @@ const ROW = {
   country: "canada",
   source: "walk_in",
   stage: "lead",
+  priority: "normal",
   assigned_counsellor: { id: uid(2), name: "Bikash Thapa" },
 };
 
@@ -59,6 +61,7 @@ describe("fetchStudents", () => {
       {
         search: "anish",
         stage: "lead",
+        priority: "",
         counsellor: "me",
         source: "",
         country: "",
@@ -82,6 +85,7 @@ describe("fetchStudents", () => {
         country: "canada",
         source: "walk_in",
         stage: "lead",
+        priority: "normal",
         assignedCounsellor: { id: uid(2), name: "Bikash Thapa" },
       },
     ]);
@@ -90,11 +94,7 @@ describe("fetchStudents", () => {
   it("accepts a Student with no counsellor yet", async () => {
     const fetchFn = answering(jsonResponse(pageOf([{ ...ROW, assigned_counsellor: null }])));
 
-    const page = await fetchStudents(
-      { search: "", stage: "", counsellor: "", source: "", country: "", targetLevel: "" },
-      1,
-      fetchFn,
-    );
+    const page = await fetchStudents({ ...NO_STUDENT_FILTERS }, 1, fetchFn);
 
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/students/");
     expect(page.students[0]?.assignedCounsellor).toBeNull();
@@ -108,13 +108,9 @@ describe("fetchStudents", () => {
   ])("refuses an answer with %s", async (_, row) => {
     const fetchFn = answering(jsonResponse(pageOf([row])));
 
-    await expect(
-      fetchStudents(
-        { search: "", stage: "", counsellor: "", source: "", country: "", targetLevel: "" },
-        1,
-        fetchFn,
-      ),
-    ).rejects.toBeInstanceOf(ApiRequestError);
+    await expect(fetchStudents({ ...NO_STUDENT_FILTERS }, 1, fetchFn)).rejects.toBeInstanceOf(
+      ApiRequestError,
+    );
   });
 });
 
@@ -143,6 +139,7 @@ describe("addStudent", () => {
       id: uid(9),
       name: "Anish Neupane",
       stage: "lead",
+      priority: "normal",
       note: "Wants a diploma.",
     });
   });

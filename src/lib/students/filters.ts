@@ -1,4 +1,5 @@
 import { Role } from "@/constants/roles";
+import { PRIORITIES, type Priority } from "@/constants/priority";
 import { isStage, type Stage } from "@/constants/stages";
 import {
   CounsellorFilter,
@@ -11,6 +12,8 @@ import {
 export type StudentFilters = {
   search: string;
   stage: Stage | "";
+  /** Only Students with this Priority (ticket 11). */
+  priority: Priority | "";
   /** "", "me", "none" or a Staff id. */
   counsellor: string;
   source: Source | "";
@@ -23,6 +26,7 @@ export type StudentFilters = {
 export const NO_STUDENT_FILTERS: StudentFilters = {
   search: "",
   stage: "",
+  priority: "",
   counsellor: "",
   source: "",
   country: "",
@@ -32,20 +36,38 @@ export const NO_STUDENT_FILTERS: StudentFilters = {
 /**
  * Where the Student list starts: a Counsellor sees the Students assigned to them (spec 30),
  * unless they arrived with a search from the top bar or a Stage from the Admin's pipeline, which
- * look through everyone. A Stage from the address that isn't one is ignored.
+ * look through everyone. A Stage or Priority from the address that isn't one is ignored; a
+ * Priority (from Home's "See all") keeps a Counsellor on their own Students.
  */
-export function defaultStudentFilters(role: Role, search = "", stageParam = ""): StudentFilters {
+export function defaultStudentFilters(
+  role: Role,
+  search = "",
+  stageParam = "",
+  priorityParam = "",
+): StudentFilters {
   const query = search.trim();
   const stage = stageFrom(stageParam);
-  const isMine = role === Role.Counsellor && `${query}${stage}` === "";
   return {
     search: query,
     stage,
-    counsellor: isMine ? CounsellorFilter.Me : CounsellorFilter.Any,
+    priority: priorityFrom(priorityParam),
+    counsellor: startingCounsellor(role, `${query}${stage}`),
     source: "",
     country: "",
     targetLevel: "",
   };
+}
+
+/** A Counsellor starts on their own Students, unless a search or Stage looks through everyone. */
+function startingCounsellor(role: Role, searchOrStage: string): string {
+  return role === Role.Counsellor && searchOrStage === ""
+    ? CounsellorFilter.Me
+    : CounsellorFilter.Any;
+}
+
+/** A Priority read from the address or a filter, or "" when it isn't one. */
+export function priorityFrom(param: string): Priority | "" {
+  return PRIORITIES.find((priority) => priority === param) ?? "";
 }
 
 /** A Stage read from the address, or "" when it isn't one. */
@@ -65,6 +87,7 @@ export function studentFilterValues(filters: StudentFilters): Record<string, str
   const sent: [string, string][] = [
     ["q", filters.search.trim()],
     ["stage", filters.stage],
+    ["priority", filters.priority],
     ["counsellor", filters.counsellor],
     ["source", filters.source],
     ["country", filters.country],
