@@ -64,7 +64,7 @@ function StudentTableRow({ student, selection }: { student: StudentRow; selectio
   return (
     <DataRow opensPage className="hover:bg-fill max-tablet:grid max-tablet:gap-3 max-tablet:p-5">
       <SelectRowCell selection={selection} id={student.id} name={student.name} />
-      <DataCell part="title" shrinks className={CELL}>
+      <DataCell part="title" shrinks="quarter" className={CELL}>
         <Link
           href={ROUTES.student(student.id)}
           className="text-ink hover:text-accent min-h-control inline-flex max-w-full items-center font-semibold underline-offset-4 hover:underline"

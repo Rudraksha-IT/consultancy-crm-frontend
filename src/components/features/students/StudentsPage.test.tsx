@@ -188,6 +188,17 @@ describe("Priority on the Students list (ticket 11)", () => {
   });
 });
 
+describe("a narrower Name column (list tidy-ups 01)", () => {
+  it("gives the Student's name about a quarter of the table, not half", async () => {
+    backend(listing(), counsellors);
+    renderPage();
+
+    const row = await rowFor("Sita Karki");
+    const name = within(row).getByRole("link", { name: "Sita Karki" }).closest("td");
+    expect(name).toHaveAttribute("data-shrinks", "quarter");
+  });
+});
+
 describe("StudentsPage", () => {
   it("lists each Student with phone, Stage, counsellor and where they want to go", async () => {
     backend(listing(), counsellors);

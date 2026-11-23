@@ -102,6 +102,7 @@ describe("a table with many columns fits by sharing out its width", () => {
     expect(rules).toMatch(/:is\(td, th\)\[data-shrinks="small"\][^{]*\{[^}]*width: 10%/);
     expect(rules).toMatch(/:is\(td, th\)\[data-shrinks="medium"\][^{]*\{[^}]*width: 15%/);
     expect(rules).toMatch(/:is\(td, th\)\[data-shrinks="large"\][^{]*\{[^}]*width: 20%/);
+    expect(rules).toMatch(/:is\(td, th\)\[data-shrinks="quarter"\][^{]*\{[^}]*width: 25%/);
     expect(rules).toMatch(
       /:not\(\[data-wraps\]\)[^{]*td:not\(\[data-shrinks\]\)[^{]*\{[^}]*white-space: nowrap/,
     );
