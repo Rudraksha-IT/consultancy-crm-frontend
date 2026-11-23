@@ -24,6 +24,7 @@ import type { StudentProfile } from "@/lib/api";
 import { AssignCounsellorDialog, TransferDialog } from "./CounsellorDialog";
 import { MarkLostDialog } from "./MarkLostDialog";
 import { PassportWarningChip } from "./PassportWarning";
+import { PriorityPicker } from "./PriorityPicker";
 
 type ProfileHeaderProps = {
   profile: StudentProfile;
@@ -51,9 +52,12 @@ export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
         <div className="flex min-w-0 items-center gap-5">
           <Avatar name={profile.name} size="lg" />
           <div className="grid min-w-0 gap-1">
-            <h1 className="text-page-title-sm wide:text-page-title wrap-anywhere">
-              {profile.name}
-            </h1>
+            <div className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
+              <h1 className="text-page-title-sm wide:text-page-title wrap-anywhere">
+                {profile.name}
+              </h1>
+              <PriorityPicker profile={profile} onSaved={onSaved} />
+            </div>
             <div className="text-secondary text-ink-2 flex flex-wrap gap-x-5 gap-y-1">
               <MetaItem icon="phone">
                 <span className="tabular-nums">{profile.phone}</span>

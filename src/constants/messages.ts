@@ -392,6 +392,7 @@ export const LABELS = {
   currentlyWith: "Currently with",
   deactivateAnyway: "Deactivate anyway",
   stageChange: (before: string, after: string) => `Stage: ${before} → ${after}`,
+  priorityChange: (before: string, after: string) => `Priority changed from ${before} to ${after}`,
   // The Activity timeline and the Lost ⓘ (issue 82).
   becameALead: "Became a Lead",
   markedLost: "Marked Lost",

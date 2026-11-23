@@ -351,7 +351,12 @@ export {
   resetEmployeeTwoFactor,
   setEmployeeTwoFactor,
 } from "./staff/staff";
-export { fetchStudentHistory, fetchStudentProfile, saveNote } from "./students/studentProfile";
+export {
+  fetchStudentHistory,
+  fetchStudentProfile,
+  saveNote,
+  saveStudentPriority,
+} from "./students/studentProfile";
 export {
   EDIT_LISTS,
   saveEditDetails,

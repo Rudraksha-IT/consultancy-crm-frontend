@@ -139,8 +139,9 @@ describe("StudentProfilePage", () => {
 
     const name = await screen.findByRole("heading", { level: 1, name: "Sita Gurung" });
     expect(name).toHaveClass("wrap-anywhere");
-    expect(name.parentElement).toHaveClass("min-w-0");
+    expect(name.parentElement).toHaveClass("min-w-0", "flex-wrap");
     expect(name.parentElement?.parentElement).toHaveClass("min-w-0");
+    expect(name.parentElement?.parentElement?.parentElement).toHaveClass("min-w-0");
     const counsellor = screen.getByText("Bikash Thapa", { selector: "span span" });
     const meta = counsellor.closest("span.inline-flex")?.parentElement;
     expect(meta).toHaveClass("flex-wrap");

@@ -52,6 +52,7 @@ export const API_PATHS = {
   student: (id: RecordId) => `/api/students/${id}/`,
   studentDetails: (id: RecordId) => `/api/students/${id}/details/`,
   studentNote: (id: RecordId) => `/api/students/${id}/note/`,
+  studentPriority: (id: RecordId) => `/api/students/${id}/priority/`,
   studentHistory: (id: RecordId) => `/api/students/${id}/history/`,
   studentStage: (id: RecordId) => `/api/students/${id}/stage/`,
   studentAssign: (id: RecordId) => `/api/students/${id}/assign/`,

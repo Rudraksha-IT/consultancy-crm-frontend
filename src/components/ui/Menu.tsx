@@ -12,6 +12,8 @@ export type MenuItem = {
   icon?: IconName;
   /** Destructive items always sit last, in red. */
   isDestructive?: boolean;
+  /** For a choice of one (e.g. a Priority): whether this is the one chosen now. */
+  isChosen?: boolean;
 } & ({ onSelect: () => void } | { href: string });
 
 type MenuProps = {

@@ -125,6 +125,8 @@ export const HistoryKind = {
   DocumentRejected: "document_rejected",
   /** Before and after are moments (empty for none); detail is the appointment. */
   VisaDateChanged: "visa_date_changed",
+  /** Before and after are the Priorities' words, e.g. "Normal" and "High" (ticket 10). */
+  PriorityChanged: "priority_changed",
 } as const;
 
 export type HistoryKind = (typeof HistoryKind)[keyof typeof HistoryKind];
@@ -155,6 +157,7 @@ export const HISTORY_KIND_LABELS: Record<HistoryKind, string> = {
   document_verified: "Checked and correct",
   document_rejected: "Rejected",
   visa_date_changed: "Visa date changed",
+  priority_changed: "Priority changed",
 };
 
 /** How many History entries the API sends per page. */
@@ -251,3 +254,12 @@ export const PASSPORT_WARNINGS = Object.values(PassportWarning);
 
 /** The most jobs a Student can have on their profile (spec 35e). */
 export const MAX_JOBS = 20;
+
+/** The words of a Student's Priority on their page (first live fixes, ticket 10). */
+export const STUDENT_PRIORITY_TEXT = {
+  chip: (priority: string) => `${priority} priority`,
+  change: (priority: string) => `Priority: ${priority}. Change it`,
+  menu: "Priority",
+  saved: (priority: string) => `Priority set to ${priority}`,
+  failed: "We couldn't change the priority. Try again.",
+};

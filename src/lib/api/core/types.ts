@@ -10,6 +10,7 @@ import {
 } from "@/constants/consultancyStatus";
 import { DATE_DISPLAYS } from "@/constants/dates";
 import { MODULES } from "@/constants/modules";
+import { PRIORITIES } from "@/constants/priority";
 import { COLOUR_MODE_CHOICES } from "@/constants/mySettings";
 import { OFFICE_DETAILS_LIMITS } from "@/constants/officeDetails";
 import { ROLES } from "@/constants/roles";
@@ -616,6 +617,8 @@ export const StudentProfileSchema = z
     academic_records: z.array(AcademicRecordSchema),
     test_scores: z.array(TestScoreSchema),
     lost_reason: z.string(),
+    /** How urgently their case needs attention (ticket 10). */
+    priority: z.enum(PRIORITIES),
     /** Every Stage change, oldest first, for the Activity timeline and the Lost ⓘ (issue 82). */
     stage_changes: z.array(HistoryEntrySchema),
     /** How far along they are and their next step, by the same rule as Home (spec 113). */
@@ -632,6 +635,8 @@ export const StudentProfileSchema = z
     /** Moves on with every change to what the Edit details page shows (issue 81). */
     details_version: z.number().int().positive(),
     can_change: z.boolean(),
+    /** Anyone who can open the Student may set their Priority (ticket 10). */
+    can_set_priority: z.boolean(),
     /** Whether the viewer may open Edit details: their counsellor or an Admin. */
     can_edit_details: z.boolean(),
     can_set_stage: z.boolean(),
@@ -674,6 +679,8 @@ export const StudentProfileSchema = z
     academicRecords: profile.academic_records,
     testScores: profile.test_scores,
     lostReason: profile.lost_reason,
+    priority: profile.priority,
+    canSetPriority: profile.can_set_priority,
     stageChanges: profile.stage_changes,
     progress: {
       percent: profile.progress.percent,

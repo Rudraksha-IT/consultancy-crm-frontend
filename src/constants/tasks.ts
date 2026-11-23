@@ -1,3 +1,5 @@
+import { PRIORITIES, Priority } from "./priority";
+
 /** Which of my Tasks to show; values match the API's `view`. */
 export const TaskView = {
   Mine: "mine",
@@ -21,17 +23,13 @@ export type TaskTiming = (typeof TaskTiming)[keyof typeof TaskTiming];
 
 export const TASK_TIMINGS = Object.values(TaskTiming);
 
-/** How important a Task is (spec 77a); values match the API's `priority`. */
-export const TaskPriority = {
-  High: "high",
-  Normal: "normal",
-  Low: "low",
-} as const;
+/** How important a Task is (spec 77a), in the same words as a Student's Priority (ticket 10). */
+export const TaskPriority = Priority;
 
-export type TaskPriority = (typeof TaskPriority)[keyof typeof TaskPriority];
+export type TaskPriority = Priority;
 
 /** High first: the order "To do" and the choices show them in. */
-export const TASK_PRIORITIES = Object.values(TaskPriority);
+export const TASK_PRIORITIES = PRIORITIES;
 
 /** The longest title the API accepts. */
 export const TASK_TITLE_MAX_LENGTH = 200;
