@@ -450,10 +450,24 @@ describe("uploading", () => {
     expect(type).toHaveFocus();
     expect(
       within(dialog).getByText(
-        "PDF or photos, up to 10 MB each. Pick several for one Document, for example the front and back of a passport. Stored privately.",
+        "PDF, JPG, PNG or ZIP, up to 10 MB each. Pick several for one Document, for example the front and back of a passport. Stored privately.",
       ),
     ).toBeVisible();
     expect(within(dialog).getByLabelText("File")).toHaveAttribute("multiple");
+    expect(within(dialog).getByLabelText("File").getAttribute("accept")).toContain(".zip");
+  });
+
+  it("uploads a zip like any other file", async () => {
+    const fetchFn = backend(checklist(), on("POST", CHECKLIST_PATH, uploaded, 201));
+    renderSection();
+    const dialog = await openUpload();
+    const zip = new File(["PK"], "papers.zip", { type: "application/zip" });
+
+    await userEvent.upload(within(dialog).getByLabelText("File"), zip);
+    await userEvent.click(within(dialog).getByRole("button", { name: "Upload" }));
+
+    expect(await screen.findByText("Uploaded. Waiting for a check.")).toBeInTheDocument();
+    expect(callsTo(fetchFn, "POST", CHECKLIST_PATH)).toHaveLength(1);
   });
 
   it("uploads the file, confirms and shows the new state and count", async () => {
@@ -520,7 +534,11 @@ describe("uploading", () => {
 
   it.each([
     ["a file over 10 MB", pdf("big.pdf", 10 * 1024 * 1024 + 1), "The file is too big."],
-    ["a file that isn't a PDF or photo", pdf("page.html"), "Upload a PDF, JPG or PNG file."],
+    [
+      "a file that isn't a PDF, photo or zip",
+      pdf("page.html"),
+      "Upload a PDF, JPG, PNG or ZIP file.",
+    ],
   ])("refuses %s before sending it", async (_case, file, message) => {
     const fetchFn = backend(checklist());
     renderSection();
@@ -536,7 +554,7 @@ describe("uploading", () => {
   it("shows the server's refusal under the file", async () => {
     backend(
       checklist(),
-      on("POST", CHECKLIST_PATH, { file: ["Upload a PDF, JPG or PNG file."] }, 400),
+      on("POST", CHECKLIST_PATH, { file: ["Upload a PDF, JPG, PNG or ZIP file."] }, 400),
     );
     renderSection();
     const dialog = await openUpload();
@@ -544,7 +562,7 @@ describe("uploading", () => {
     await userEvent.upload(within(dialog).getByLabelText("File"), pdf("fake.pdf"));
     await userEvent.click(within(dialog).getByRole("button", { name: "Upload" }));
 
-    expect(await within(dialog).findByText("Upload a PDF, JPG or PNG file.")).toBeVisible();
+    expect(await within(dialog).findByText("Upload a PDF, JPG, PNG or ZIP file.")).toBeVisible();
     expect(within(dialog).getByLabelText("File")).toHaveAttribute("aria-invalid", "true");
   });
 
@@ -724,7 +742,11 @@ describe("adding a file to a Document (issue 78)", () => {
 
   it.each([
     ["no file", [], "Choose a file to upload."],
-    ["a file that isn't a PDF or photo", [pdf("page.html")], "Upload a PDF, JPG or PNG file."],
+    [
+      "a file that isn't a PDF, photo or zip",
+      [pdf("page.html")],
+      "Upload a PDF, JPG, PNG or ZIP file.",
+    ],
   ])("refuses %s before sending anything", async (_case, files, message) => {
     const fetchFn = backend(checklist());
     renderSection();
@@ -742,14 +764,17 @@ describe("adding a file to a Document (issue 78)", () => {
   });
 
   it("shows the server's refusal under the file", async () => {
-    backend(checklist(), on("POST", FILES_PATH, { file: ["Upload a PDF, JPG or PNG file."] }, 400));
+    backend(
+      checklist(),
+      on("POST", FILES_PATH, { file: ["Upload a PDF, JPG, PNG or ZIP file."] }, 400),
+    );
     renderSection();
     const dialog = await openAddFile();
 
     await userEvent.upload(within(dialog).getByLabelText("File"), pdf("fake.pdf"));
     await userEvent.click(within(dialog).getByRole("button", { name: "Add" }));
 
-    expect(await within(dialog).findByText("Upload a PDF, JPG or PNG file.")).toBeVisible();
+    expect(await within(dialog).findByText("Upload a PDF, JPG, PNG or ZIP file.")).toBeVisible();
   });
 
   it("shows the server's reason when adding is refused", async () => {
@@ -1234,5 +1259,48 @@ describe("documents asked for this Student alone", () => {
     expect(
       screen.queryByRole("button", { name: "Ask for another document" }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("zip files (first live fixes, ticket 09)", () => {
+  const ZIPPED = {
+    ...CHECKLIST,
+    items: [
+      item({
+        id: uid(1),
+        name: "Passport",
+        state: "waiting",
+        document: { ...PASSPORT_DOCUMENT, files: [apiFile(uid(41), "papers.zip")] },
+      }),
+    ],
+  };
+
+  it("names a zip with a download button, never one that opens it", async () => {
+    backend(checklist(ZIPPED));
+    renderSection();
+
+    expect(await screen.findByRole("button", { name: "Download papers.zip" })).toBeVisible();
+    expect(screen.getAllByRole("button", { name: "Download papers.zip" })).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Open papers.zip" })).toBeNull();
+  });
+
+  it("saves a zip through its download link, without a new tab", async () => {
+    const url = `https://files.test/abc/documents/${uid(7)}/papers.zip?sig=3`;
+    backend(
+      checklist(ZIPPED),
+      on(
+        "GET",
+        `/api/students/${uid(7)}/documents/${uid(31)}/files/${uid(41)}/link/?action=download`,
+        { url, expires_in: 300 },
+      ),
+    );
+    renderSection();
+
+    await userEvent.click(await screen.findByRole("button", { name: "Download papers.zip" }));
+
+    await waitFor(() => {
+      expect(navigate).toHaveBeenCalledWith(url);
+    });
+    expect(openBlankTab).not.toHaveBeenCalled();
   });
 });

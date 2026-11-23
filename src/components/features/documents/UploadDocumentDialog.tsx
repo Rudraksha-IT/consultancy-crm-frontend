@@ -7,7 +7,7 @@ import { SaveDialog } from "@/components/features/students/profile/SaveDialog";
 import { useFormSave } from "@/components/features/students/profile/useFormSave";
 import { FileField } from "@/components/ui/FileField";
 import { SelectField } from "@/components/ui/SelectField";
-import { DOCUMENT_FILE_ACCEPT, DOCUMENT_TEXT } from "@/constants/documents";
+import { DOCUMENT_TEXT, STUDENT_DOCUMENT_FILE_ACCEPT } from "@/constants/documents";
 import { uploadDocument, type Checklist, type DocumentLinkOption } from "@/lib/api";
 import { documentFilesProblem } from "@/lib/documents";
 
@@ -79,7 +79,7 @@ export function UploadDocumentDialog(props: UploadDocumentDialogProps) {
         <FileField
           label={DOCUMENT_TEXT.file}
           name="file"
-          accept={DOCUMENT_FILE_ACCEPT}
+          accept={STUDENT_DOCUMENT_FILE_ACCEPT}
           multiple
           hint={DOCUMENT_TEXT.fileHint}
           errors={fileErrors}

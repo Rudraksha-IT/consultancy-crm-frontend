@@ -145,6 +145,14 @@ export const ICON_PATHS = {
       <path d="M14 3.5V7h3.5" />
     </>
   ),
+  zip: (
+    <>
+      <path d="M14 3.5H6.5v17h11V7L14 3.5z" />
+      <path d="M14 3.5V7h3.5" />
+      <path d="M11 4v2M11 8v2M11 12v2" />
+      <path d="M10 16h2v2.5h-2z" />
+    </>
+  ),
   send: (
     <>
       <path d="M20.5 3.5 10 14" />
