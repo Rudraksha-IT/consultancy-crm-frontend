@@ -8,8 +8,8 @@ import { Banner } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
+import { Loading } from "@/components/ui/Loading";
 import { HOME_TEXT, TASKS_SHOWN } from "@/constants/home";
-import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { TaskView } from "@/constants/tasks";
 import { fetchMyTasks, type Task } from "@/lib/api";
@@ -56,7 +56,7 @@ export function TasksDueSoon({ isGrouped }: TasksDueSoonProps) {
 type TasksBodyProps = { state: Loaded<Task[]>; isGrouped: boolean; onChanged: () => void };
 
 function TasksBody({ state, isGrouped, onChanged }: TasksBodyProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{HOME_TEXT.tasksFailed}</Banner>;
   if (state.data.length === 0) {
     return (

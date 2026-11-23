@@ -9,8 +9,8 @@ import { Banner } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { IconButton } from "@/components/ui/IconButton";
 import { PanelFoot } from "@/components/ui/PanelFoot";
+import { Loading } from "@/components/ui/Loading";
 import { INBOX_TEXT } from "@/constants/inbox";
-import { MESSAGES } from "@/constants/messages";
 import type { InboxMessage, InboxPerson, InboxThread } from "@/lib/api";
 
 import { ComposeForm } from "./ComposeForm";
@@ -29,7 +29,7 @@ type ConversationPaneProps = {
 export function ConversationPane({ personId, latest, onBack, onChanged }: ConversationPaneProps) {
   const [state, replace] = useThread(personId, String(latest), onChanged);
 
-  if (state.status === "loading") return <p className="text-ink-2 px-6 py-5">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status !== "loaded") {
     return (
       <Unavailable

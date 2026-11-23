@@ -17,8 +17,8 @@ import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
 import { TileGrid } from "@/components/ui/TileGrid";
+import { Loading } from "@/components/ui/Loading";
 import { FEE_TYPE_STUDENTS_TEXT as TEXT, FEES_BY_TYPE_TEXT } from "@/constants/feesByType";
-import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { STAGE_LABELS } from "@/constants/stages";
 import {
@@ -105,11 +105,7 @@ function NotYet({ hasFailed }: { hasFailed: boolean }) {
   return (
     <div className="grid gap-8">
       <PageHeader title={FEES_BY_TYPE_TEXT.title} crumbs={BACK} />
-      {hasFailed ? (
-        <Banner tone="problem">{TEXT.failed}</Banner>
-      ) : (
-        <p className="text-ink-2">{MESSAGES.loading}</p>
-      )}
+      {hasFailed ? <Banner tone="problem">{TEXT.failed}</Banner> : <Loading />}
     </div>
   );
 }

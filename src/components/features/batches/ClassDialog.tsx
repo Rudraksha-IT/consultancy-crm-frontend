@@ -16,6 +16,7 @@ import { Panel } from "@/components/ui/Panel";
 import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { useToast } from "@/components/ui/useToast";
+import { Loading } from "@/components/ui/Loading";
 import { BATCH_TEXT } from "@/constants/batches";
 import { MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
@@ -70,7 +71,7 @@ export function ClassDialog({ batch, onClose, onChanged }: ClassDialogProps) {
 type BodyProps = { state: Loaded<BatchWithStudents>; onChanged: () => void };
 
 function ClassDialogBody({ state, onChanged }: BodyProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status !== "loaded") return <Banner tone="problem">{BATCH_TEXT.classFailed}</Banner>;
   const batch = state.data;
   return (

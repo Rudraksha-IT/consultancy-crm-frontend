@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from "react";
 
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { Loading } from "@/components/ui/Loading";
 import { MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
 import type { SavedOfficeDetails, StaffContext } from "@/lib/api";
@@ -31,7 +32,7 @@ export function AppShell({ children }: AppShellProps) {
   const session = useStaffSession();
 
   if (session.status === "loading") {
-    return <p className="text-ink-2 p-6">{MESSAGES.loading}</p>;
+    return <Loading size="page" />;
   }
   if (session.status === "failed") {
     return (

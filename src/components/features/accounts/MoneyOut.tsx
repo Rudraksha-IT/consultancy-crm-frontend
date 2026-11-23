@@ -17,13 +17,13 @@ import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
 import { SelectField } from "@/components/ui/SelectField";
 import { useToast } from "@/components/ui/useToast";
+import { Loading } from "@/components/ui/Loading";
 import {
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_METHOD_LABELS,
   EXPENSE_MONTHS_SHOWN,
   EXPENSE_TEXT,
 } from "@/constants/expenses";
-import { MESSAGES } from "@/constants/messages";
 import { fetchExpenses, type Expense, type ExpensePage } from "@/lib/api";
 import { formatMonth, recentMonths, todayIso } from "@/lib/dates";
 import { formatNpr } from "@/lib/money";
@@ -116,7 +116,7 @@ type MonthBodyProps = {
 };
 
 function MonthBody({ state, isThisMonth, onPage, onAdd, onEdit }: MonthBodyProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{EXPENSE_TEXT.listFailed}</Banner>;
   const { data } = state;
   const monthName = formatMonth(data.month);

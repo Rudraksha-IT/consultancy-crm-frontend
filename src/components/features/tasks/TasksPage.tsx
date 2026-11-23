@@ -10,7 +10,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
-import { MESSAGES } from "@/constants/messages";
+import { Loading } from "@/components/ui/Loading";
 import {
   TASK_PRIORITIES,
   TASK_TEXT,
@@ -135,7 +135,7 @@ export function TaskPanelBody({
   onPage,
   onChanged,
 }: TaskPanelBodyProps) {
-  if (state.status === "loading") return <p className="text-ink-2 px-6 py-5">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") {
     return (
       <div className="px-6 py-5">

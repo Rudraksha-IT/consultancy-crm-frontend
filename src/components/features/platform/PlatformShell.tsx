@@ -10,6 +10,7 @@ import { useColourMode } from "@/components/features/theme/useColourMode";
 import { Avatar } from "@/components/ui/Avatar";
 import { BrandMark } from "@/components/ui/BrandMark";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { Loading } from "@/components/ui/Loading";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
@@ -30,7 +31,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
   const session = usePlatformSession();
 
   if (session.status === "loading") {
-    return <p className="text-ink-2 p-6">{MESSAGES.loading}</p>;
+    return <Loading size="page" />;
   }
   if (session.status === "failed") {
     return (

@@ -11,8 +11,8 @@ import { Panel } from "@/components/ui/Panel";
 import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
+import { Loading } from "@/components/ui/Loading";
 import { HOME_TEXT, UNASSIGNED_SHOWN } from "@/constants/home";
-import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { Stage } from "@/constants/stages";
 import { COUNTRY_LABELS, CounsellorFilter, SOURCE_LABELS } from "@/constants/students";
@@ -66,7 +66,7 @@ type VisitorsBodyProps = {
 };
 
 function VisitorsBody({ state, onAssign }: VisitorsBodyProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") {
     return <Banner tone="problem">{HOME_TEXT.unassignedFailed}</Banner>;
   }

@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/Button";
 import { CheckboxGroup } from "@/components/ui/CheckboxGroup";
 import { Field } from "@/components/ui/Field";
 import { useToast } from "@/components/ui/useToast";
+import { Loading } from "@/components/ui/Loading";
 import { DOCUMENT_TEXT } from "@/constants/documents";
-import { MESSAGES } from "@/constants/messages";
 import {
   addPickedDocumentType,
   InvalidFieldsError,
@@ -90,7 +90,7 @@ type ChoicesProps = {
 
 /** A tick box for each document not every Student needs. */
 function Choices({ state, ticked, onChange }: ChoicesProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{DOCUMENT_TEXT.typesFailed}</Banner>;
   const offered = state.types.filter((type) => !type.neededByEveryone);
   if (offered.length === 0) return <p className="text-ink-2">{DOCUMENT_TEXT.pickerNone}</p>;

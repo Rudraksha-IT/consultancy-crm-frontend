@@ -14,6 +14,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
+import { Loading } from "@/components/ui/Loading";
 import { BATCH_TEXT } from "@/constants/batches";
 import { COMMUNICATION_TEXT } from "@/constants/communication";
 import { LABELS, MESSAGES } from "@/constants/messages";
@@ -63,7 +64,7 @@ function LoadedClass({ batchId }: { batchId: RecordId }) {
   const reload = () => {
     setVersion((current) => current + 1);
   };
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "missing") {
     return (
       <Panel>

@@ -90,7 +90,10 @@ describe("ConsultancyBrand", () => {
 
     render(<ConsultancyBrand />);
 
-    expect(await screen.findByRole("status")).toHaveTextContent(message);
+    // The loader's "Loading…" is a status too, until the office has answered.
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent(message);
+    });
   });
 
   it("shows no Status message for a working office", async () => {

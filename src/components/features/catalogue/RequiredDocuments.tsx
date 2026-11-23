@@ -2,9 +2,9 @@ import type { RecordId } from "@/lib/recordId";
 
 import { Banner } from "@/components/ui/Banner";
 import { CheckboxGroup } from "@/components/ui/CheckboxGroup";
+import { Loading } from "@/components/ui/Loading";
 import { CATALOGUE_TEXT } from "@/constants/catalogue";
 import { DOCUMENT_TEXT } from "@/constants/documents";
-import { MESSAGES } from "@/constants/messages";
 
 import type { OptionalTypesState } from "./useOptionalDocumentTypes";
 
@@ -26,7 +26,7 @@ export function RequiredDocuments({
   onChange,
   errors,
 }: RequiredDocumentsProps) {
-  if (types.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (types.status === "loading") return <Loading />;
   if (types.status === "failed") return <Banner tone="problem">{DOCUMENT_TEXT.typesFailed}</Banner>;
   return (
     <CheckboxGroup

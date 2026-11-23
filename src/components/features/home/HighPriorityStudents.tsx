@@ -8,8 +8,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
 import { Icon } from "@/components/ui/Icon";
+import { Loading } from "@/components/ui/Loading";
 import { HIGH_PRIORITY_SHOWN, HOME_TEXT } from "@/constants/home";
-import { LABELS, MESSAGES } from "@/constants/messages";
+import { LABELS } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { STAGE_LABELS } from "@/constants/stages";
 import { CounsellorFilter } from "@/constants/students";
@@ -55,7 +56,7 @@ export function HighPriorityStudents({ mine }: HighPriorityStudentsProps) {
 }
 
 function HighBody({ state }: { state: Loaded<StudentPage> }) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") {
     return <Banner tone="problem">{HOME_TEXT.highPriorityFailed}</Banner>;
   }

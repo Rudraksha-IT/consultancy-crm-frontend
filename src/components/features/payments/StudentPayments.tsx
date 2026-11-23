@@ -8,7 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
-import { MESSAGES } from "@/constants/messages";
+import { Loading } from "@/components/ui/Loading";
 import { PAYMENT_TEXT } from "@/constants/payments";
 import type { PaymentPage } from "@/lib/api";
 
@@ -35,7 +35,7 @@ export function StudentPayments({ studentId, onChanged, aside }: StudentPayments
   return (
     <Section title={PAYMENT_TEXT.paymentsReceived} aside={aside}>
       <Panel>
-        {state.status === "loading" && <p className="text-ink-2 px-6 py-5">{MESSAGES.loading}</p>}
+        {state.status === "loading" && <Loading />}
         {state.status === "loaded" ? (
           <Loaded page={state.page} onPage={setPage} onChanged={onChanged} />
         ) : (

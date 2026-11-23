@@ -12,6 +12,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { Tabs } from "@/components/ui/Tabs";
+import { Loading } from "@/components/ui/Loading";
 import { APPLICATION_TEXT } from "@/constants/applications";
 import { BATCH_TEXT } from "@/constants/batches";
 import { DOCUMENT_TEXT } from "@/constants/documents";
@@ -106,7 +107,7 @@ type LoadedProfileProps = { studentId: RecordId; role: Role; startTab: Tab };
 
 function LoadedProfile({ studentId, role, startTab }: LoadedProfileProps) {
   const { state, replace, update, refresh } = useStudentProfile(studentId);
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{MESSAGES.studentFailed}</Banner>;
   if (state.status === "notFound") {
     return (

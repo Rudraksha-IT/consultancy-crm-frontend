@@ -17,6 +17,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/useToast";
+import { Loading } from "@/components/ui/Loading";
 import { HOME_TEXT } from "@/constants/home";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { PAYMENT_TEXT } from "@/constants/payments";
@@ -75,7 +76,7 @@ export function ReturningVisitor({ studentId, onChooseAnother, onLogged }: Retur
   if (state.status === "loading") {
     return (
       <Panel isPadded>
-        <p className="text-ink-2">{MESSAGES.loading}</p>
+        <Loading />
       </Panel>
     );
   }

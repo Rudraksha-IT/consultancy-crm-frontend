@@ -17,6 +17,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
+import { Loading } from "@/components/ui/Loading";
 import { COMMUNICATION_TEXT } from "@/constants/communication";
 import { EXPORT_TEXT } from "@/constants/exports";
 import { LABELS, MESSAGES } from "@/constants/messages";
@@ -215,7 +216,7 @@ type ListContentProps = {
 };
 
 function ListContent({ list, isFiltered, addButton, onPage, selection }: ListContentProps) {
-  if (list.status === "loading") return <p className="text-ink-2 p-6">{MESSAGES.loading}</p>;
+  if (list.status === "loading") return <Loading />;
   if (list.status === "failed") {
     return (
       <div className="p-6">

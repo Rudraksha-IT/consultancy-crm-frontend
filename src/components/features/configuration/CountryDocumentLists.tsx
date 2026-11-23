@@ -11,6 +11,7 @@ import { Panel } from "@/components/ui/Panel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { SelectField } from "@/components/ui/SelectField";
 import { useToast } from "@/components/ui/useToast";
+import { Loading } from "@/components/ui/Loading";
 import {
   COUNTRY_LIST_TEXT,
   DOCUMENT_GROUP_HELP,
@@ -19,7 +20,6 @@ import {
   DOCUMENT_TEXT,
   DocumentGroup,
 } from "@/constants/documents";
-import { MESSAGES } from "@/constants/messages";
 import { COUNTRIES, COUNTRY_LABELS, Country } from "@/constants/students";
 import {
   requirementRefusal,
@@ -50,7 +50,7 @@ type Row = CountryList["documents"][number];
  */
 export function CountryDocumentLists() {
   const { state, keep, keepType } = useCountryLists();
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{COUNTRY_LIST_TEXT.failed}</Banner>;
   return <LoadedLists lists={state.lists} types={state.types} keep={keep} keepType={keepType} />;
 }

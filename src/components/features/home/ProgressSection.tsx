@@ -10,8 +10,8 @@ import { Banner } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
+import { Loading } from "@/components/ui/Loading";
 import { HOME_TEXT } from "@/constants/home";
-import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { STAGE_LABELS } from "@/constants/stages";
 import { COUNTRY_LABELS } from "@/constants/students";
@@ -47,7 +47,7 @@ export function ProgressSection({ title, mine, limit, showsCounsellor }: Progres
         </Link>
       }
     >
-      {state.status === "loading" && <p className="text-ink-2">{MESSAGES.loading}</p>}
+      {state.status === "loading" && <Loading />}
       {state.status === "failed" && <Banner tone="problem">{HOME_TEXT.progressFailed}</Banner>}
       {state.status === "loaded" && (
         <ProgressPanel list={state.data} showsCounsellor={showsCounsellor} onOpen={setOpen} />

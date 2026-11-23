@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
+import { Loading } from "@/components/ui/Loading";
 import {
   Timeline,
   type TimelineEntry,
@@ -185,7 +186,7 @@ type ActivityContentProps = {
 
 function ActivityContent({ story, state, isLoadingMore, onLoadOlder }: ActivityContentProps) {
   const dates = useDates();
-  if (state.status === "loading") return <p className="text-ink-2 p-6">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") {
     return (
       <div className="p-6">

@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
+import { Loading } from "@/components/ui/Loading";
 import {
   DOCUMENT_TEXT,
   DOCUMENTS_PARTS_TEXT,
   DocumentsPart,
   EXAMPLE_TEXT,
 } from "@/constants/documents";
-import { MESSAGES } from "@/constants/messages";
 import type { ConfiguredDocumentType as DocumentType } from "@/lib/api";
 
 import { AddDocumentTypeForm } from "./AddDocumentTypeForm";
@@ -92,7 +92,7 @@ type TypeListProps = TypeActions & {
 };
 
 function TypeList({ state, isExtra, ...actions }: TypeListProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{DOCUMENT_TEXT.typesFailed}</Banner>;
   const title = DOCUMENTS_PARTS_TEXT[isExtra ? DocumentsPart.Extra : DocumentsPart.Always].tab;
   const types = state.types.filter((type) => type.neededByEveryone !== isExtra);

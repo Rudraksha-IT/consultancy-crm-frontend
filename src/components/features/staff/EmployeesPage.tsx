@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Loading } from "@/components/ui/Loading";
 import { CLOCK_TEXT } from "@/constants/clock";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Module } from "@/constants/modules";
@@ -195,7 +196,7 @@ type ListContentProps = {
 };
 
 function ListContent({ list, render }: ListContentProps) {
-  if (list.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (list.status === "loading") return <Loading />;
   if (list.status === "failed") return <Banner tone="problem">{MESSAGES.employeesFailed}</Banner>;
   return (
     <Panel>
