@@ -33,12 +33,7 @@ export function SidebarHead({
         }
       >
         <div className="flex min-w-0 flex-1 items-center px-2 py-2.5">
-          <BrandLockup
-            name={consultancyName}
-            tagline={LABELS.consultancyTagline}
-            logo={logo}
-            tone="sidebar"
-          />
+          <BrandLockup name={consultancyName} logo={logo} />
         </div>
         {!isCollapsed && (
           <span className="wide:block hidden">

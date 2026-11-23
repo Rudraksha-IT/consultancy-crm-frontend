@@ -41,30 +41,23 @@ describe("BrandMark", () => {
 });
 
 describe("BrandLockup", () => {
-  it("writes the name and tagline beside the initials", () => {
-    render(<BrandLockup name="Acme Education" tagline="Education consultancy" />);
+  it("writes the name alone beside the initials", () => {
+    render(<BrandLockup name="Acme Education" />);
 
     expect(screen.getByText("Acme Education")).toBeInTheDocument();
-    expect(screen.getByText("Education consultancy")).toBeInTheDocument();
+    expect(screen.queryByText("Education consultancy")).toBeNull();
   });
 
   it("writes the name beside a logo when chosen", () => {
-    render(<BrandLockup name="Acme Education" tagline="Education consultancy" logo={LOGO} />);
+    render(<BrandLockup name="Acme Education" logo={LOGO} />);
 
     expect(screen.getByText("Acme Education")).toBeInTheDocument();
   });
 
   it("shows the logo alone when the name is switched off, still named for screen readers", () => {
-    render(
-      <BrandLockup
-        name="Acme Education"
-        tagline="Education consultancy"
-        logo={{ ...LOGO, showName: false }}
-      />,
-    );
+    render(<BrandLockup name="Acme Education" logo={{ ...LOGO, showName: false }} />);
 
     expect(screen.queryByText("Acme Education")).toBeNull();
-    expect(screen.queryByText("Education consultancy")).toBeNull();
     expect(screen.getByRole("img", { name: "Acme Education" })).toBeInTheDocument();
   });
 });

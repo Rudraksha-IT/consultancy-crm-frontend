@@ -275,7 +275,6 @@ export const LABELS = {
   settings: "Settings",
   notifications: "Notifications",
   nothingNew: "Nothing new.",
-  consultancyTagline: "Education consultancy",
   /** The office's login page (first live fixes, ticket 08). */
   welcomeBack: (office: string) => `Welcome back, ${office}`,
   skipToContent: "Skip to content",

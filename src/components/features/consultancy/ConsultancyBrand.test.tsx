@@ -31,7 +31,7 @@ describe("ConsultancyBrand", () => {
     expect(
       await screen.findByRole("heading", { level: 2, name: "Acme Education" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Education consultancy")).toBeInTheDocument();
+    expect(screen.queryByText("Education consultancy")).toBeNull();
   });
 
   it("shows the office logo large and centred, with the name", async () => {

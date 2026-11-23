@@ -48,7 +48,6 @@ function LoadedBrand({ consultancy, isWelcome }: LoadedBrandProps) {
       <AuthBrand
         name={consultancy.name}
         heading={isWelcome ? LABELS.welcomeBack(consultancy.name) : undefined}
-        tagline={LABELS.consultancyTagline}
         logo={consultancy.logo ?? APP_LOGO}
       />
       <StatusNotice message={consultancy.statusMessage} />
