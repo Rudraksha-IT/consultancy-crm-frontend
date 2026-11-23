@@ -67,5 +67,9 @@ describe("proxy", () => {
     expect(matches("/login")).toBe(true);
     expect(matches("/api/central-login/")).toBe(false);
     expect(matches("/_next/static/chunk.js")).toBe(false);
+    // The tab icon (first live fixes, ticket 05) is the same on every address.
+    expect(matches("/tab-icon")).toBe(false);
+    expect(matches("/tab-icon/7")).toBe(false);
+    expect(matches("/tab-icons")).toBe(true);
   });
 });

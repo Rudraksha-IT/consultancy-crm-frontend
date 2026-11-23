@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Public_Sans } from "next/font/google";
 
 import { LABELS } from "@/constants/messages";
+import { TAB_ICON } from "@/constants/tabIcon";
 
 import "./globals.css";
 
@@ -14,6 +15,8 @@ const publicSans = Public_Sans({
 export const metadata: Metadata = {
   title: LABELS.productName,
   description: "CRM for education consultancies",
+  // The product logo on every address (first live fixes, ticket 05); the Next.js starter is gone.
+  icons: { icon: TAB_ICON.path },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

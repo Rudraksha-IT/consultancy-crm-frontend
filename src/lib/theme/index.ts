@@ -1,5 +1,6 @@
 export { buildThemeTokens, normaliseThemeConfig } from "./theme";
 export { contrastRatio, isHexColour } from "./colour";
+export { DEFAULT_TAB_ICON_SVG } from "./defaultTabIcon";
 export {
   ACCENT_PRESETS,
   DARK_BASES,

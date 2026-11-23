@@ -43,6 +43,7 @@ export function proxy(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  // `/healthz` (ticket 14) answers the same on every host, for Docker's healthcheck.
-  matcher: ["/((?!api/|_next/|favicon.ico|healthz$).*)"],
+  // `/healthz` (ticket 14) answers the same on every host, for Docker's healthcheck; so does the
+  // tab icon (first live fixes, ticket 05).
+  matcher: ["/((?!api/|_next/|favicon.ico|healthz$|tab-icon$|tab-icon/).*)"],
 };

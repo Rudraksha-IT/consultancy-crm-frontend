@@ -257,6 +257,7 @@ export const HTTP_STATUS = {
   created: 201,
   accepted: 202,
   noContent: 204,
+  temporaryRedirect: 307,
   badRequest: 400,
   unauthorized: 401,
   forbidden: 403,
