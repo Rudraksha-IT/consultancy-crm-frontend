@@ -1,22 +1,21 @@
 "use client";
 
+import clsx from "clsx";
 import Link from "next/link";
 import { useCallback } from "react";
 
 import { Banner } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
-import { RowItem } from "@/components/ui/RowItem";
-import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
-import { StageMeter } from "@/components/ui/StageMeter";
+import { Icon } from "@/components/ui/Icon";
 import { HIGH_PRIORITY_SHOWN, HOME_TEXT } from "@/constants/home";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
+import { STAGE_LABELS } from "@/constants/stages";
 import { COUNTRY_LABELS, CounsellorFilter } from "@/constants/students";
 import { fetchHighPriorityStudents, type StudentPage, type StudentRow } from "@/lib/api";
 
-import { SeeAllLink } from "./SeeAllLink";
 import { useLoaded, type Loaded } from "./useLoaded";
 
 type HighPriorityStudentsProps = {
@@ -25,8 +24,9 @@ type HighPriorityStudentsProps = {
 };
 
 /**
- * The High priority Students still being worked on (Lost left out), first 3 with "See all (N)"
- * opening the Students list at High (ticket 12; spec 90-94).
+ * The High priority Students still being worked on (Lost left out): at most 3 small boxes in one
+ * row, each opening the Student, and a last box "See all (N)" opening the Students list at High
+ * (ticket 12; spec 90-94). Two to a row on tablets, one on phones.
  */
 export function HighPriorityStudents({ mine }: HighPriorityStudentsProps) {
   const load = useCallback(() => fetchHighPriorityStudents({ mine }), [mine]);
@@ -57,39 +57,45 @@ function HighBody({ state, seeAll, showsCounsellor }: HighBodyProps) {
     );
   }
   return (
-    <>
-      <Panel>
-        <RowList label={HOME_TEXT.highPriorityTitle}>
-          {students.slice(0, HIGH_PRIORITY_SHOWN).map((student) => (
-            <HighRow key={student.id} student={student} showsCounsellor={showsCounsellor} />
-          ))}
-        </RowList>
-      </Panel>
-      <SeeAllLink href={seeAll} count={count} />
-    </>
+    <ul
+      aria-label={HOME_TEXT.highPriorityTitle}
+      className="tablet:grid-cols-2 wide:grid-cols-4 grid gap-4"
+    >
+      {students.slice(0, HIGH_PRIORITY_SHOWN).map((student) => (
+        <li key={student.id} className="grid">
+          <HighBox student={student} showsCounsellor={showsCounsellor} />
+        </li>
+      ))}
+      <li className="grid">
+        <Link
+          href={seeAll}
+          className={clsx(BOX, "text-accent items-center justify-center gap-1.5 font-semibold")}
+        >
+          {HOME_TEXT.seeAllCount(count)}
+          <Icon name="right" size="sm" />
+        </Link>
+      </li>
+    </ul>
   );
 }
 
-function HighRow({ student, showsCounsellor }: { student: StudentRow; showsCounsellor: boolean }) {
+const BOX =
+  "rounded-panel border-rule bg-paper shadow-raise hover:border-accent focus-visible:border-accent flex min-h-24 min-w-0 border p-5 transition-colors";
+
+/** One High Student as a small box; the whole box opens their page. */
+function HighBox({ student, showsCounsellor }: { student: StudentRow; showsCounsellor: boolean }) {
   return (
-    <RowItem
-      title={
-        <Link
-          href={ROUTES.student(student.id)}
-          className="text-ink hover:text-accent min-h-control inline-flex items-center break-words underline-offset-4 hover:underline"
-        >
-          {student.name}
-        </Link>
-      }
-      meta={
-        <>
-          <span>{HOME_TEXT.wants(COUNTRY_LABELS[student.country])}</span>
-          {showsCounsellor && (
-            <span>{student.assignedCounsellor?.name ?? LABELS.noCounsellorYet}</span>
-          )}
-        </>
-      }
-      right={<StageMeter stage={student.stage} />}
-    />
+    <Link href={ROUTES.student(student.id)} className={clsx(BOX, "flex-col gap-2")}>
+      <span className="text-ink flex min-w-0 items-center gap-2 font-semibold">
+        <span aria-hidden="true" className="bg-bad size-2.5 shrink-0 rounded-full" />
+        <span className="truncate">{student.name}</span>
+      </span>
+      <span className="text-secondary text-ink-2">{STAGE_LABELS[student.stage]}</span>
+      <span className="text-small text-ink-3 truncate">
+        {showsCounsellor
+          ? (student.assignedCounsellor?.name ?? LABELS.noCounsellorYet)
+          : HOME_TEXT.wants(COUNTRY_LABELS[student.country])}
+      </span>
+    </Link>
   );
 }

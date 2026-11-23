@@ -726,9 +726,9 @@ describe("A tidier Home (ticket 12)", () => {
       "High priority Students",
       "Pipeline",
       "This month at a glance",
+      "Students' progress",
       "Who still owes fees",
       "New visitors without a counsellor",
-      "Students' progress",
       "Your tasks due soon",
     ]);
   });
@@ -741,8 +741,8 @@ describe("A tidier Home (ticket 12)", () => {
       "Waiting on you",
       "High priority Students",
       "Pipeline",
-      "New visitors without a counsellor",
       "Students' progress",
+      "New visitors without a counsellor",
       "Your tasks due soon",
     ]);
     const visitors = await region("New visitors without a counsellor");
@@ -788,21 +788,28 @@ describe("A tidier Home (ticket 12)", () => {
     ]);
   });
 
-  it("shows 3 High Students and See all, opening the list at High", async () => {
+  it("shows at most 3 High Students as boxes in one row, each opening the Student", async () => {
     backend(...TIDY);
     renderHome(ADMIN);
     const high = within(await region("High priority Students"));
 
-    expect(await high.findByRole("link", { name: "Asha Rai" })).toHaveAttribute(
-      "href",
-      `/students/${uid(41)}`,
-    );
-    expect(high.getAllByRole("listitem")).toHaveLength(3);
+    const asha = await high.findByRole("link", { name: /^Asha Rai/ });
+    const boxes = high.getByRole("list", { name: "High priority Students" });
+    expect(boxes).toHaveClass("wide:grid-cols-4");
+    expect(asha).toHaveAttribute("href", `/students/${uid(41)}`);
+    expect(asha).toHaveTextContent("Counselling");
+    expect(within(boxes).getAllByRole("listitem")).toHaveLength(4);
     expect(high.queryByText("Dev Shah")).toBeNull();
-    expect(high.getByRole("link", { name: "See all (5)" })).toHaveAttribute(
-      "href",
-      "/students?priority=high",
-    );
+  });
+
+  it("ends the row with a See all box, opening the list at High", async () => {
+    backend(...TIDY);
+    renderHome(ADMIN);
+    const high = within(await region("High priority Students"));
+
+    const seeAll = await high.findByRole("link", { name: "See all (5)" });
+    expect(seeAll).toHaveAttribute("href", "/students?priority=high");
+    expect(within(high.getByRole("list")).getAllByRole("listitem").at(-1)).toContainElement(seeAll);
   });
 
   it("sends a counsellor's See all to their own High Students", async () => {

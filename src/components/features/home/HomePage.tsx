@@ -1,5 +1,7 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { canManageClasses, canSeeClasses } from "@/components/features/batches/canUseClasses";
 import { ClassesSection } from "@/components/features/batches/ClassesSection";
 import { ClassesToday } from "@/components/features/batches/ClassesToday";
@@ -39,41 +41,49 @@ export function HomePage() {
 
 /**
  * The Admin's Home in the order they work (ticket 12): what's waiting, High priority Students,
- * the pipeline, this month's money and who owes beside new visitors (with the Accounts Module;
- * the visitors alone without it), everyone's progress, then tasks due soon, full width.
+ * the pipeline, this month's money (with the Accounts Module), everyone's progress, who owes
+ * beside new visitors (the visitors alone without Accounts), then tasks due soon, full width.
  */
 function AdminHome() {
   const { modules } = useCurrentStaff();
+  return modules.includes(Module.Accounts) ? <AdminHomeWithMoney /> : <AdminHomeSections />;
+}
+
+/** With the Accounts Module: one load of who owes serves both money sections. */
+function AdminHomeWithMoney() {
+  const owing = useLoaded(loadOwing, 0);
+  return (
+    <AdminHomeSections
+      glance={<MonthAtAGlance owing={owing} />}
+      owes={<WhoStillOwes owing={owing} />}
+    />
+  );
+}
+
+type AdminHomeSectionsProps = { glance?: ReactNode; owes?: ReactNode };
+
+function AdminHomeSections({ glance, owes }: AdminHomeSectionsProps) {
   return (
     <>
       <WaitingRow />
       <HighPriorityStudents mine={false} />
       <PipelineSection />
-      {modules.includes(Module.Accounts) ? <MoneyAndVisitors /> : <UnassignedVisitors />}
+      {glance}
       <ProgressSection
         title={HOME_TEXT.everyonesProgress}
         mine={false}
         limit={ADMIN_PROGRESS_LIMIT}
         showsCounsellor
       />
-      <TasksDueSoon isGrouped={false} />
-    </>
-  );
-}
-
-/**
- * With the Accounts Module: this month at a glance, then who still owes beside the new visitors,
- * the two boxes the same height (ticket 12). One load of who owes serves both money sections.
- */
-function MoneyAndVisitors() {
-  const owing = useLoaded(loadOwing, 0);
-  return (
-    <>
-      <MonthAtAGlance owing={owing} />
-      <div className="wide:grid-cols-2 grid gap-8">
-        <WhoStillOwes owing={owing} />
+      {owes === undefined ? (
         <UnassignedVisitors />
-      </div>
+      ) : (
+        <div className="wide:grid-cols-2 grid gap-8">
+          {owes}
+          <UnassignedVisitors />
+        </div>
+      )}
+      <TasksDueSoon isGrouped={false} />
     </>
   );
 }
