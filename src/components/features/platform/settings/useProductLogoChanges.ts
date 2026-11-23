@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { BrandLogo } from "@/components/ui/BrandMark";
 import { useToast } from "@/components/ui/useToast";
 import { LOGO_FILE_TYPES, LOGO_TEXT, MAX_LOGO_BYTES } from "@/constants/logo";
-import { InvalidFieldsError, removeProductLogo, uploadProductLogo } from "@/lib/api";
+import { InvalidFieldsError, uploadProductLogo } from "@/lib/api";
 
 import { setProductLogo } from "../productLogo";
 
@@ -23,8 +23,11 @@ function uploadProblem(error: unknown): string {
   return message ?? LOGO_TEXT.saveFailed;
 }
 
-/** Change the product's logo (issue 65); each change shows everywhere at once. */
-export function useProductLogoChanges() {
+/**
+ * Upload a product logo (issue 65): it shows everywhere at once and joins the saved logos
+ * (ticket 07), which `onUploaded` reloads.
+ */
+export function useProductLogoChanges(onUploaded: () => Promise<void>) {
   const { showToast } = useToast();
   const [problem, setProblem] = useState<string | null>(null);
   const [isBusy, setIsBusy] = useState(false);
@@ -53,20 +56,8 @@ export function useProductLogoChanges() {
       return;
     }
     await change(() => uploadProductLogo(file), uploadProblem, LOGO_TEXT.saved);
+    await onUploaded();
   }
 
-  /** Rejects when it failed, so the confirm dialog says so (LOGO_TEXT.removeFailed). */
-  async function remove(): Promise<void> {
-    setProblem(null);
-    setIsBusy(true);
-    try {
-      await removeProductLogo();
-      setProductLogo(null);
-      showToast(LOGO_TEXT.removed);
-    } finally {
-      setIsBusy(false);
-    }
-  }
-
-  return { problem, isBusy, upload, remove };
+  return { problem, isBusy, upload };
 }

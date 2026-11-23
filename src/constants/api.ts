@@ -231,6 +231,11 @@ export const API_PATHS = {
   platformJoinComplete: "/api/platform/auth/join/complete/",
   productBrand: "/api/platform/brand/",
   productLogo: "/api/platform/brand/logo/",
+  // Saved product logos (first live fixes, ticket 07).
+  savedLogos: "/api/platform/brand/logos/",
+  savedLogo: (logoId: RecordId) => `/api/platform/brand/logos/${logoId}/`,
+  savedLogoFile: (logoId: RecordId) => `/api/platform/brand/logos/${logoId}/file/`,
+  savedLogoInUse: "/api/platform/brand/in-use/",
   platformEmail: "/api/platform/email/",
   platformTestEmail: "/api/platform/email/test/",
   platformConsultancies: "/api/platform/consultancies/",

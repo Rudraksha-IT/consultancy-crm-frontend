@@ -13,7 +13,7 @@ export const TAB_ICON = {
   /** Where the brand answer says the logo is; the number is its version. */
   logoUrlPattern: /^\/api\/platform\/brand\/logo\/([0-9]{1,10})\/$/,
   versionPattern: /^[0-9]{1,10}$/,
-  /** A new upload shows within 5 minutes, without a deploy. */
+  /** A new upload or pick shows within 5 minutes, without a deploy. */
   lookupCache: "public, max-age=300",
   /** A version's file never changes, so browsers keep it for a year. */
   versionCache: "public, max-age=31536000, immutable",

@@ -1,7 +1,9 @@
 // @vitest-environment node
 import { DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT } from "./route";
 import * as versionRoute from "./[version]/route";
-import { DEFAULT_TAB_ICON_SVG, DEFAULT_THEME } from "@/lib/theme";
+import { readFileSync } from "node:fs";
+
+import { APP_LOGO_URL } from "@/lib/brand/appLogo";
 import { TEST_PRODUCT_DOMAIN, testHost } from "@/test/hosts";
 
 const TOKEN = "a-test-internal-token-that-is-32-chars-or-more";
@@ -39,20 +41,20 @@ function versionRequest(version: string) {
   });
 }
 
-async function expectDefaultIcon(response: Response) {
-  expect(response.status).toBe(200);
-  expect(response.headers.get("content-type")).toBe("image/svg+xml");
+/** The app's own logo (ticket 07): the file kept in the app, at the address the build gives it. */
+function expectAppLogo(response: Response) {
+  expect(response.status).toBe(307);
+  expect(response.headers.get("location")).toBe(APP_LOGO_URL);
   expect(response.headers.get("cache-control")).toBe(SHORT_CACHE);
-  expect(response.headers.get("x-content-type-options")).toBe("nosniff");
-  expect(await response.text()).toBe(DEFAULT_TAB_ICON_SVG);
 }
 
-describe("the default tab icon", () => {
-  it("is a small emerald square with a white mark, never the Next.js N", () => {
-    expect(DEFAULT_TAB_ICON_SVG).toMatch(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
-    expect(DEFAULT_TAB_ICON_SVG).toContain('viewBox="0 0 32 32"');
-    expect(DEFAULT_TAB_ICON_SVG).toContain(`fill="${DEFAULT_THEME.accent}"`);
-    expect(DEFAULT_TAB_ICON_SVG).not.toMatch(/<script|<text|href=/);
+describe("the app's own logo (first live fixes, ticket 07)", () => {
+  it("is the SVG kept in the app's code, at an address of this server", () => {
+    expect(APP_LOGO_URL).toMatch(/^\/[^/]/);
+    expect(APP_LOGO_URL).toContain("app-logo");
+    const file = readFileSync("src/assets/brand/app-logo.svg", "utf8");
+    expect(file).toMatch(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+    expect(file).not.toMatch(/<script|on[a-z]+=|href=|<foreignObject|<image/i);
   });
 });
 
@@ -79,10 +81,10 @@ describe("/tab-icon (first live fixes, ticket 05)", () => {
     },
   );
 
-  it("shows the default icon until a product logo is uploaded", async () => {
+  it("shows the app's own logo while no uploaded logo is in use", async () => {
     backendAnswers(() => Promise.resolve(Response.json({ logo: null })));
 
-    await expectDefaultIcon(await GET(iconRequest("/tab-icon")));
+    expectAppLogo(await GET(iconRequest("/tab-icon")));
   });
 
   it.each([
@@ -97,11 +99,11 @@ describe("/tab-icon (first live fixes, ticket 05)", () => {
     () => Promise.resolve(Response.json({ logo: { url: "/api/platform/brand/logo/7/../../x/" } })),
     () => Promise.resolve(Response.json({ logo: "<script>" })),
   ])(
-    "shows the default icon when Django can't be reached or answers oddly (%#)",
+    "shows the app's own logo when Django can't be reached or answers oddly (%#)",
     async (answer) => {
       backendAnswers(answer);
 
-      await expectDefaultIcon(await GET(iconRequest("/tab-icon")));
+      expectAppLogo(await GET(iconRequest("/tab-icon")));
     },
   );
 
@@ -123,7 +125,7 @@ describe("/tab-icon (first live fixes, ticket 05)", () => {
       const pending = GET(iconRequest("/tab-icon"));
       await vi.advanceTimersByTimeAsync(3_000);
 
-      await expectDefaultIcon(await pending);
+      expectAppLogo(await pending);
     } finally {
       vi.useRealTimers();
     }
@@ -188,7 +190,7 @@ describe("/tab-icon/<version> (first live fixes, ticket 05)", () => {
         ),
       );
 
-      await expectDefaultIcon(await versionRequest("3"));
+      expectAppLogo(await versionRequest("3"));
     },
   );
 
@@ -199,7 +201,7 @@ describe("/tab-icon/<version> (first live fixes, ticket 05)", () => {
       ),
     );
 
-    await expectDefaultIcon(await versionRequest("3"));
+    expectAppLogo(await versionRequest("3"));
   });
 
   it.each([
@@ -207,11 +209,11 @@ describe("/tab-icon/<version> (first live fixes, ticket 05)", () => {
     () => Promise.resolve(Response.json({ detail: "Not found." }, { status: 404 })),
     () => Promise.resolve(new Response(PNG_BYTES, { status: 302, headers: { location: "/x" } })),
   ])(
-    "shows the default icon, briefly cached, for an old version or a failure (%#)",
+    "shows the app's own logo, briefly cached, for an old version or a failure (%#)",
     async (answer) => {
       backendAnswers(answer);
 
-      await expectDefaultIcon(await versionRequest("3"));
+      expectAppLogo(await versionRequest("3"));
     },
   );
 
@@ -220,7 +222,7 @@ describe("/tab-icon/<version> (first live fixes, ticket 05)", () => {
     async (version) => {
       const fetchFn = backendAnswers(() => Promise.resolve(new Response(PNG_BYTES)));
 
-      await expectDefaultIcon(await versionRequest(version));
+      expectAppLogo(await versionRequest(version));
       expect(fetchFn).not.toHaveBeenCalled();
     },
   );

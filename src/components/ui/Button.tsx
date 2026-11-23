@@ -23,6 +23,11 @@ type ButtonProps = {
   isExpanded?: boolean;
   /** For giving the cursor back to the button, such as after what it opened closes. */
   ref?: Ref<HTMLButtonElement>;
+  /**
+   * The name screen readers hear when the words alone don't say which item it is for; it starts
+   * with the visible words ("Use this: …"), so speech control still finds it.
+   */
+  label?: string | undefined;
 };
 
 const DEFAULTS = {
@@ -50,6 +55,7 @@ export function Button(props: ButtonProps) {
     hasFirstFocus,
     isExpanded,
     ref,
+    label,
   } = {
     ...DEFAULTS,
     ...props,
@@ -60,6 +66,7 @@ export function Button(props: ButtonProps) {
       type={type}
       form={form}
       aria-expanded={isExpanded}
+      aria-label={label}
       disabled={isDisabled || isLoading}
       aria-busy={isLoading}
       onClick={onClick}

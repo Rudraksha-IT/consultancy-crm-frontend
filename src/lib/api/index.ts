@@ -568,11 +568,12 @@ export {
   fetchProductLogo,
   invitePlatformAdmin,
   reactivatePlatformAdmin,
-  removeProductLogo,
   requestPlatformJoinCode,
   resendPlatformAdminCode,
   uploadProductLogo,
 } from "./platform/platformTeam";
+export { fetchSavedLogos, pickSavedLogo, removeSavedLogo } from "./platform/savedLogos";
+export type { SavedLogo, SavedLogos } from "./platform/savedLogos";
 export type {
   NewPlatformAdmin,
   PlatformAdminRow,

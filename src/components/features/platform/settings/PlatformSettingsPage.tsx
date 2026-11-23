@@ -13,16 +13,20 @@ import { LOGO_ACCEPT, LOGO_TEXT } from "@/constants/logo";
 import { LABELS } from "@/constants/messages";
 import { PLATFORM_SETTINGS_TEXT as TEXT } from "@/constants/platformTeam";
 
-import { RemoveLogoButton } from "@/components/features/configuration/RemoveLogoButton";
-
 import { useProductLogo } from "../productLogo";
 import { PlatformEmailSettings } from "./PlatformEmailSettings";
+import { SavedLogosSection } from "./SavedLogosSection";
 import { useProductLogoChanges } from "./useProductLogoChanges";
+import { useSavedLogos } from "./useSavedLogos";
 
-/** The Platform's Settings tab: whether email works (ADR 0023) and the product's logo (issue 65). */
+/**
+ * The Platform's Settings tab: whether email works (ADR 0023), the product's logo (issue 65) and
+ * the saved logos to pick from (first live fixes, ticket 07).
+ */
 export function PlatformSettingsPage() {
   const logo = useProductLogo();
-  const changes = useProductLogoChanges();
+  const savedLogos = useSavedLogos();
+  const changes = useProductLogoChanges(savedLogos.reload);
 
   return (
     <>
@@ -64,20 +68,13 @@ export function PlatformSettingsPage() {
                       }}
                     />
                   </label>
-                  {logo !== null && (
-                    <RemoveLogoButton
-                      title={LOGO_TEXT.removeProductTitle}
-                      body={LOGO_TEXT.removeProductBody}
-                      isDisabled={changes.isBusy}
-                      onRemove={changes.remove}
-                    />
-                  )}
                 </div>
                 {changes.problem !== null && <Banner tone="problem">{changes.problem}</Banner>}
               </div>
             </Panel>
           </div>
         </Section>
+        <SavedLogosSection logos={savedLogos} />
       </div>
     </>
   );

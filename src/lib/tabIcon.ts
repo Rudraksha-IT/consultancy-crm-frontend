@@ -6,8 +6,8 @@ import { HTTP_STATUS } from "@/constants/api";
 import { BACKEND_HEADERS, RELAYED_RESPONSE_HEADERS } from "@/constants/backend";
 import { LOGO_FILE_TYPES } from "@/constants/logo";
 import { TAB_ICON } from "@/constants/tabIcon";
+import { APP_LOGO_URL } from "@/lib/brand/appLogo";
 import { getServerConfig } from "@/lib/config";
-import { DEFAULT_TAB_ICON_SVG } from "@/lib/theme";
 
 const ALLOWED_TYPES: readonly string[] = LOGO_FILE_TYPES;
 const BrandSchema = z.object({
@@ -16,27 +16,25 @@ const BrandSchema = z.object({
 
 /**
  * `GET /tab-icon` on every address (first live fixes, ticket 05): sends the tab to the product
- * logo's current version, or shows the default icon when there is none or Django can't say.
+ * logo's current version, or to the app's own logo (ticket 07) when none is in use or Django
+ * can't say.
  */
 export async function answerTabIcon(request: Request): Promise<Response> {
   const answer = await askPlatform(request, TAB_ICON.brandBackendPath);
   const version = answer === null ? null : await logoVersion(answer);
-  if (version === null) return defaultIcon();
-  return new Response(null, {
-    status: HTTP_STATUS.temporaryRedirect,
-    headers: { location: TAB_ICON.versionPath(version), "cache-control": TAB_ICON.lookupCache },
-  });
+  if (version === null) return appLogo();
+  return sendTo(TAB_ICON.versionPath(version));
 }
 
 /**
  * `GET /tab-icon/<version>`: that version of the product logo, only as one of the image types an
- * upload may be, kept for a year. An old version or a failure shows the default, briefly.
+ * upload may be, kept for a year. An old version or a failure shows the app's own logo.
  */
 export async function answerTabIconVersion(request: Request, version: string): Promise<Response> {
-  if (!TAB_ICON.versionPattern.test(version)) return defaultIcon();
+  if (!TAB_ICON.versionPattern.test(version)) return appLogo();
   const answer = await askPlatform(request, TAB_ICON.logoBackendPath(version));
   const logo = answer === null ? null : await readLogo(answer);
-  if (logo === null) return defaultIcon();
+  if (logo === null) return appLogo();
   return new Response(logo.bytes, {
     headers: {
       ...RELAYED_RESPONSE_HEADERS,
@@ -67,7 +65,7 @@ async function askPlatform(request: Request, path: string): Promise<Response | n
     });
     return answer.status === HTTP_STATUS.ok ? answer : null;
   } catch {
-    // silent: the default icon shows instead, and the next page asks again
+    // silent: the app's own logo shows instead, and the next page asks again
     return null;
   } finally {
     clearTimeout(timer);
@@ -101,13 +99,16 @@ function imageType(answer: Response): string | null {
   return ALLOWED_TYPES.includes(trimmed) ? trimmed : null;
 }
 
-function defaultIcon(): Response {
-  return new Response(DEFAULT_TAB_ICON_SVG, {
-    headers: {
-      ...RELAYED_RESPONSE_HEADERS,
-      "content-type": "image/svg+xml",
-      "cache-control": TAB_ICON.lookupCache,
-    },
+/** The app's own logo, at the address the build gives it (ticket 07). */
+function appLogo(): Response {
+  return sendTo(APP_LOGO_URL);
+}
+
+/** Send the tab elsewhere; asked again within 5 minutes, so a change shows soon. */
+function sendTo(location: string): Response {
+  return new Response(null, {
+    status: HTTP_STATUS.temporaryRedirect,
+    headers: { location, "cache-control": TAB_ICON.lookupCache },
   });
 }
 
