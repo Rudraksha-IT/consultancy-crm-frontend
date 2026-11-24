@@ -287,6 +287,22 @@ describe("EmailComposer to one Student", () => {
     expect(within(dialog).getByRole("textbox", { name: "Subject" })).toHaveValue("Kept");
   });
 
+  it("fits the form with tighter gaps, Write / Preview as plain words (list tidy-ups 33)", () => {
+    backend();
+    const { dialog } = renderComposer();
+    const form = within(dialog).getByRole("textbox", { name: "Subject" }).closest("form");
+    const show = within(dialog).getByRole("group", { name: "Show" });
+
+    expect(form).toHaveClass("gap-3", "py-4");
+    expect(within(dialog).getByRole("textbox", { name: "Message" })).toHaveAttribute("rows", "8");
+    expect(show).not.toHaveClass("bg-fill-2");
+    expect(within(show).getByRole("button", { name: "Write" })).toHaveClass("border-b-2");
+    expect(within(show).getByRole("button", { name: "Write" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+  });
+
   it("shows writing or the preview, one at a time at every width (list tidy-ups 32)", async () => {
     backend();
     const { dialog } = renderComposer();

@@ -3,7 +3,6 @@
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { FigureTile } from "@/components/ui/FigureTile";
-import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { COMMUNICATION_TEXT as TEXT, TO_CHIPS_SHOWN } from "@/constants/communication";
 import type { BulkResult } from "@/lib/api";
 
@@ -17,11 +16,26 @@ const PANES = [
   { value: "preview", label: TEXT.preview },
 ] as const;
 
-/** Write / Preview: one shows at a time, at every width (list tidy-ups 32). */
+/**
+ * Write / Preview: one shows at a time, at every width (list tidy-ups 32). Two plain words, the
+ * chosen one underlined (list tidy-ups 33).
+ */
 export function PaneToggle({ pane, onPane }: { pane: Pane; onPane: (pane: Pane) => void }) {
   return (
-    <div>
-      <SegmentedControl label={TEXT.show} options={PANES} value={pane} onChange={onPane} />
+    <div role="group" aria-label={TEXT.show} className="flex gap-5">
+      {PANES.map((option) => (
+        <button
+          key={option.value}
+          type="button"
+          aria-pressed={option.value === pane}
+          onClick={() => {
+            onPane(option.value);
+          }}
+          className="text-small text-ink-3 hover:text-ink aria-pressed:text-ink aria-pressed:border-accent min-h-control cursor-pointer border-b-2 border-transparent font-semibold"
+        >
+          {option.label}
+        </button>
+      ))}
     </div>
   );
 }

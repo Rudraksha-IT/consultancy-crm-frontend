@@ -122,7 +122,7 @@ function Composer({
             noValidate
             onSubmit={handleSubmit}
             className={clsx(
-              "phone:px-8 grid min-h-0 content-start gap-5 overflow-y-auto overscroll-contain px-4 py-6",
+              "phone:px-8 grid min-h-0 content-start gap-3 overflow-y-auto overscroll-contain px-4 py-4",
               draft.pane === "preview" && "hidden",
             )}
           >
@@ -196,7 +196,7 @@ function ComposerFields({ draft, sending, hint }: ComposerFieldsProps) {
       <TextAreaField
         label={TEXT.message}
         name="body"
-        rows={12}
+        rows={8}
         placeholder={TEXT.messagePlaceholder}
         value={draft.body}
         onChange={draft.setBody}
