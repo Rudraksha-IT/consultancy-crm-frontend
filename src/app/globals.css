@@ -103,7 +103,7 @@
 
 /* Dark by the person's choice. Same values as above. */
 :root[data-theme="dark"] {
-  --mark: #f49aa3;
+  --mark: #ff5263;
   --paper: #2b2b2d;
   --canvas: #1f1f21;
   --fill: #323234;
