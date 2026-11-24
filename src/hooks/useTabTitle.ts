@@ -1,10 +1,11 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect } from "react";
 
 import type { Role } from "@/constants/roles";
 import { tabTitle } from "@/lib/tabTitle";
+
+import { useKeptTitle } from "./useKeptTitle";
 
 /**
  * Keep the browser tab's title on an office's address (first live fixes, ticket 08) in step with
@@ -12,7 +13,5 @@ import { tabTitle } from "@/lib/tabTitle";
  */
 export function useTabTitle(office: string | null, role: Role | null): void {
   const pathname = usePathname();
-  useEffect(() => {
-    if (office !== null) document.title = tabTitle(pathname, office, role);
-  }, [pathname, office, role]);
+  useKeptTitle(office === null ? null : tabTitle(pathname, office, role));
 }
