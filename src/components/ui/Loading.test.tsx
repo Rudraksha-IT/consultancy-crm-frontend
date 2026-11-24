@@ -65,9 +65,9 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
     const rules = loaderRules();
 
     expect(rules).toMatch(/@keyframes logo-loader-turn/);
-    expect(rules).toMatch(
-      /@keyframes logo-loader-breathe \{[\s\S]*?scale\(0\.49\)[\s\S]*?scale\(1\.05\)/,
-    );
+    expect(rules).toMatch(/@keyframes logo-loader-breathe \{[\s\S]*?scale\(0\.49\)/);
+    // No bounce: it opens straight back to full size (list tidy-ups 19).
+    expect(rules).not.toMatch(/scale\(1\.0[1-9]\)/);
     expect(rules).toMatch(
       /prefers-reduced-motion: reduce[\s\S]*\.logo-loader-breathe[\s\S]*animation: none/,
     );
