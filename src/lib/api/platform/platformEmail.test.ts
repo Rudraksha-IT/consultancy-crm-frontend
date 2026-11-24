@@ -45,6 +45,23 @@ describe("the Platform's email status (spec 2026-11-18 stories 3-4)", () => {
     });
   });
 
+  it("reads a sender on a host without a dot, as a local copy has (list tidy-ups 11)", async () => {
+    const fetchFn = answering(jsonResponse({ ...ANSWER, from_address: "no-reply@localhost" }));
+
+    await expect(fetchPlatformEmail(fetchFn)).resolves.toMatchObject({
+      fromAddress: "no-reply@localhost",
+    });
+  });
+
+  it.each(["not an address", "<b>x</b>@host", "a@b c", "@host"])(
+    "refuses a sender that isn't an address (%s)",
+    async (from) => {
+      const fetchFn = answering(jsonResponse({ ...ANSWER, from_address: from }));
+
+      await expect(fetchPlatformEmail(fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+    },
+  );
+
   it("refuses an answer it doesn't understand", async () => {
     const fetchFn = answering(
       jsonResponse({ ...ANSWER, email: { ...ANSWER.email, state: "<b>ok</b>" } }),
