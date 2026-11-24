@@ -10,8 +10,8 @@ import { Panel } from "@/components/ui/Panel";
 import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
+import { Loading } from "@/components/ui/Loading";
 import { BATCH_TEXT, BatchTiming } from "@/constants/batches";
-import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import type { Batch } from "@/lib/api";
 
@@ -32,7 +32,7 @@ export function ClassesToday() {
 }
 
 function TodayList({ state }: { state: ReturnType<typeof useBatchPage> }) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status !== "loaded") return <Banner tone="problem">{BATCH_TEXT.listFailed}</Banner>;
   const today = state.data.batches.filter((batch) => batch.timing === BatchTiming.Running);
   return (

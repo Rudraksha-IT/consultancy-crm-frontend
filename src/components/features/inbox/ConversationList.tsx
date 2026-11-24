@@ -7,8 +7,8 @@ import { useDates } from "@/components/features/shell/dateDisplay";
 import { Avatar } from "@/components/ui/Avatar";
 import { Banner } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { Loading } from "@/components/ui/Loading";
 import { INBOX_TEXT } from "@/constants/inbox";
-import { MESSAGES } from "@/constants/messages";
 import type { InboxConversation } from "@/lib/api";
 import { localDayIso, localTime, todayIso } from "@/lib/dates";
 
@@ -22,7 +22,7 @@ type ConversationListProps = {
 
 /** My conversations, newest first: who, the start of the last message, when, and if unread. */
 export function ConversationList({ state, openId, onOpen }: ConversationListProps) {
-  if (state.status === "loading") return <p className="text-ink-2 px-6 py-5">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{INBOX_TEXT.loadFailed}</Banner>;
   if (state.conversations.length === 0)
     return <EmptyState>{INBOX_TEXT.noConversations}</EmptyState>;

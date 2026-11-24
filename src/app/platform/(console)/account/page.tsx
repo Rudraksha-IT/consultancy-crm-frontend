@@ -1,5 +1,8 @@
-import { PlatformAccountPage } from "@/components/features/platform/account/PlatformAccountPage";
+import { redirect } from "next/navigation";
 
-export default function PlatformAccountRoute() {
-  return <PlatformAccountPage />;
+import { ROUTES } from "@/constants/routes";
+
+/** The Account page is now part of Settings (list tidy-ups 04); old links land there. */
+export default function PlatformAccountRoute(): never {
+  redirect(ROUTES.platformSettings);
 }

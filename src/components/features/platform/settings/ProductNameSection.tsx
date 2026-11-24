@@ -19,12 +19,10 @@ import { InvalidFieldsError, saveProductName } from "@/lib/api";
 export function ProductNameSection() {
   return (
     <Section title={TEXT.title}>
-      <div className="wide:grid-cols-[minmax(0,var(--spacing-settings-label))_minmax(0,1fr)] grid gap-x-12 gap-y-6">
-        <p className="text-ink-2">{TEXT.help}</p>
-        <Panel isPadded>
-          <ProductNameForm />
-        </Panel>
-      </div>
+      <p className="text-small text-ink-2">{TEXT.help}</p>
+      <Panel isPadded>
+        <ProductNameForm />
+      </Panel>
     </Section>
   );
 }

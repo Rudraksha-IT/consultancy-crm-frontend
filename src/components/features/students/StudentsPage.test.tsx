@@ -188,6 +188,17 @@ describe("Priority on the Students list (ticket 11)", () => {
   });
 });
 
+describe("a narrower Name column (list tidy-ups 01)", () => {
+  it("gives the Student's name about a quarter of the table, not half", async () => {
+    backend(listing(), counsellors);
+    renderPage();
+
+    const row = await rowFor("Sita Karki");
+    const name = within(row).getByRole("link", { name: "Sita Karki" }).closest("td");
+    expect(name).toHaveAttribute("data-shrinks", "quarter");
+  });
+});
+
 describe("StudentsPage", () => {
   it("lists each Student with phone, Stage, counsellor and where they want to go", async () => {
     backend(listing(), counsellors);
@@ -594,46 +605,19 @@ describe("adding a visitor", () => {
   });
 });
 
-describe("StudentsPage selection and export (issue 51)", () => {
+describe("StudentsPage export (issue 51)", () => {
+  it("shows no tick boxes: Download gives the whole filtered list (list tidy-ups 25)", async () => {
+    backend(listing(), counsellors);
+    renderPage();
+
+    await screen.findAllByText("Sita Karki");
+    expect(screen.queryAllByRole("checkbox")).toEqual([]);
+  });
+
   const exported: Answer = (path, init) =>
     path === "/api/exports/" && init?.method === "POST"
       ? new Response("﻿Name\r\n", { status: 200 })
       : undefined;
-
-  it("copies the ticked Students' phones, one per line", async () => {
-    const user = userEvent.setup();
-    backend(listing(), counsellors);
-    renderPage();
-
-    await user.click(await screen.findByRole("checkbox", { name: "Select Anish Neupane" }));
-    await user.click(screen.getByRole("checkbox", { name: "Select Sita Karki" }));
-    await user.click(screen.getByRole("button", { name: "Copy phones" }));
-
-    expect(await navigator.clipboard.readText()).toBe("9819988776\n9841234567");
-    expect(await screen.findByText("2 phone numbers copied")).toBeInTheDocument();
-  });
-
-  it("says so when none of the ticked Students has an email", async () => {
-    const user = userEvent.setup();
-    backend(listing(), counsellors);
-    renderPage();
-
-    await user.click(await screen.findByRole("checkbox", { name: "Select Anish Neupane" }));
-    await user.click(screen.getByRole("button", { name: "Copy emails" }));
-
-    expect(await screen.findByText("None of them has an email.")).toBeInTheDocument();
-  });
-
-  it("has a visible Select all on this page for the stacked cards", async () => {
-    const user = userEvent.setup();
-    backend(listing(), counsellors);
-    renderPage();
-
-    await user.click(await screen.findByRole("checkbox", { name: "Select all on this page" }));
-
-    expect(screen.getByText("2 selected")).toBeInTheDocument();
-    expect(screen.getByRole("checkbox", { name: "Select Sita Karki" })).toBeChecked();
-  });
 
   it("exports with the filters on screen, named in words", async () => {
     const user = userEvent.setup();

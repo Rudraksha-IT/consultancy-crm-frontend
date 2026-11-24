@@ -16,6 +16,7 @@ import {
   plainEmailText,
 } from "@/constants/communication";
 import { LABELS } from "@/constants/messages";
+import { Stage } from "@/constants/stages";
 import { refsOf, type Attachable, type BulkResult, type ReadyMadeTarget } from "@/lib/api";
 
 import { AttachmentsArea } from "./AttachmentsArea";
@@ -83,7 +84,7 @@ function Composer({
   const attachments = useAttachments(target, filesOf(startWith));
   const draft = useComposerText({
     target,
-    startWith,
+    startWith: startFor(startWith, recipients),
     firstBody: plainEmailText(wording.greetingName, staff.name, consultancy.name),
     onSuggested: attachments.suggest,
   });
@@ -102,6 +103,7 @@ function Composer({
       <Dialog
         isOpen
         isFull
+        hasSmallText
         title={wording.title}
         onClose={onClose}
         headerAside={<PaneToggle pane={draft.pane} onPane={draft.setPane} />}
@@ -115,14 +117,14 @@ function Composer({
           />
         }
       >
-        <div className="tablet:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] grid h-full min-h-0">
+        <div className="grid h-full min-h-0">
           <form
             id={formId}
             noValidate
             onSubmit={handleSubmit}
             className={clsx(
-              "phone:px-8 grid min-h-0 content-start gap-5 overflow-y-auto overscroll-contain px-4 py-6",
-              draft.pane === "preview" && "max-tablet:hidden",
+              "phone:px-8 flex min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-4",
+              draft.pane === "preview" && "hidden",
             )}
           >
             <ContactEmailBanner />
@@ -170,6 +172,17 @@ function filesOf(startWith: StartWith | undefined): readonly Attachable[] {
 }
 
 /** The one Student's name when they have no email address, else null. */
+/** The email asked for; else, for Lost Students, Checking in (list tidy-ups 34). */
+function startFor(
+  startWith: StartWith | undefined,
+  recipients: readonly EmailRecipient[],
+): StartWith | undefined {
+  if (startWith !== undefined) return startWith;
+  const isAllLost =
+    recipients.length > 0 && recipients.every((recipient) => recipient.stage === Stage.Lost);
+  return isAllLost ? { kind: "checking_in" } : undefined;
+}
+
 function addressMissingFor(only: EmailRecipient | null): string | null {
   return only !== null && only.email === "" ? only.name : null;
 }
@@ -192,16 +205,22 @@ function ComposerFields({ draft, sending, hint }: ComposerFieldsProps) {
         }}
         errors={draft.subjectError === null ? fieldErrors.subject : [draft.subjectError]}
       />
-      <TextAreaField
-        label={TEXT.message}
-        name="body"
-        rows={12}
-        placeholder={TEXT.messagePlaceholder}
-        value={draft.body}
-        onChange={draft.setBody}
-        hint={hint}
-        errors={fieldErrors.body}
-      />
+      {/* The message fills the spare height, so the files sit at the bottom (list tidy-ups 33). */}
+      <div
+        data-message-fills=""
+        className="flex min-h-48 flex-1 flex-col *:flex-1 *:grid-rows-[auto_minmax(0,1fr)] *:content-stretch [&_textarea]:h-full [&_textarea]:resize-none"
+      >
+        <TextAreaField
+          label={TEXT.message}
+          name="body"
+          rows={8}
+          placeholder={TEXT.messagePlaceholder}
+          value={draft.body}
+          onChange={draft.setBody}
+          hint={hint}
+          errors={fieldErrors.body}
+        />
+      </div>
       {draft.isEdited && (
         <div ref={startAgainRow} className="-mt-3 flex justify-end">
           <Button

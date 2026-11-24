@@ -13,6 +13,7 @@ import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
+import { Loading } from "@/components/ui/Loading";
 import { BATCH_TEXT } from "@/constants/batches";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
@@ -102,7 +103,7 @@ type ListBodyProps = {
 };
 
 function ListBody({ state, emptyText, onPeek, onPage }: ListBodyProps) {
-  if (state.status === "loading") return <p className="text-ink-2 px-6 py-5">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status !== "loaded") {
     return (
       <div className="px-6 py-5">

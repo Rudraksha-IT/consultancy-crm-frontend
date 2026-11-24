@@ -7,6 +7,7 @@ import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "r
 import { SupportAccessBanner } from "@/components/features/supportAccess/SupportAccessBanner";
 import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
 import { useSavedColourMode } from "@/components/features/theme/useSavedColourMode";
+import { PageLoadProvider } from "@/components/ui/pageLoad";
 import { LABELS } from "@/constants/messages";
 import { useTabTitle } from "@/hooks/useTabTitle";
 import { saveColourMode, type StaffContext } from "@/lib/api";
@@ -56,55 +57,58 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
 
   return (
     <ShellThemeContext value={shellTheme}>
-      <div
-        className={clsx(
-          "grid min-h-full transition-[grid-template-columns]",
-          sidebar.isCollapsed
-            ? "wide:grid-cols-[var(--spacing-rail)_minmax(0,1fr)]"
-            : "wide:grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]",
-        )}
-      >
-        <a
-          href={`#${MAIN_ID}`}
-          className="rounded-control bg-paper sr-only z-50 focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:p-3"
+      {/* A reload covers the whole app with one loader (list tidy-ups 27). */}
+      <PageLoadProvider>
+        <div
+          className={clsx(
+            "grid min-h-full transition-[grid-template-columns]",
+            sidebar.isCollapsed
+              ? "wide:grid-cols-[var(--spacing-rail)_minmax(0,1fr)]"
+              : "wide:grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]",
+          )}
         >
-          {LABELS.skipToContent}
-        </a>
-        <Sidebar ref={menuRef} context={context} sidebar={sidebar} colourMode={colourMode} />
-        {sidebar.isDrawerOpen && (
-          <div
-            aria-hidden="true"
-            onClick={sidebar.closeDrawer}
-            className="bg-scrim wide:hidden fixed inset-0 z-39"
-          />
-        )}
-        <div className="flex min-w-0 flex-col">
-          {context.supportAccess !== null && (
-            <SupportAccessBanner
-              office={context.consultancy.name}
-              platformHost={context.supportAccess.platformHost}
+          <a
+            href={`#${MAIN_ID}`}
+            className="rounded-control bg-paper sr-only z-50 focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:p-3"
+          >
+            {LABELS.skipToContent}
+          </a>
+          <Sidebar ref={menuRef} context={context} sidebar={sidebar} colourMode={colourMode} />
+          {sidebar.isDrawerOpen && (
+            <div
+              aria-hidden="true"
+              onClick={sidebar.closeDrawer}
+              className="bg-scrim wide:hidden fixed inset-0 z-39"
             />
           )}
-          <TopBar
-            context={context}
-            colourMode={colourMode}
-            isDrawerOpen={sidebar.isDrawerOpen}
-            onOpenDrawer={sidebar.openDrawer}
+          <div className="flex min-w-0 flex-col">
+            {context.supportAccess !== null && (
+              <SupportAccessBanner
+                office={context.consultancy.name}
+                platformHost={context.supportAccess.platformHost}
+              />
+            )}
+            <TopBar
+              context={context}
+              colourMode={colourMode}
+              isDrawerOpen={sidebar.isDrawerOpen}
+              onOpenDrawer={sidebar.openDrawer}
+            />
+            <PulledPage pull={pull}>
+              <ConsultancyStatusBanner shown={context.consultancy} />
+              <UnexpectedErrorBanner />
+              {children}
+            </PulledPage>
+          </div>
+          <TabBar
+            role={context.staff.role}
+            modules={context.modules}
+            isMenuOpen={sidebar.isDrawerOpen}
+            onOpenMenu={sidebar.openDrawer}
           />
-          <PulledPage pull={pull}>
-            <ConsultancyStatusBanner shown={context.consultancy} />
-            <UnexpectedErrorBanner />
-            {children}
-          </PulledPage>
         </div>
-        <TabBar
-          role={context.staff.role}
-          modules={context.modules}
-          isMenuOpen={sidebar.isDrawerOpen}
-          onOpenMenu={sidebar.openDrawer}
-        />
-      </div>
-      <OfficeNetworkCheck context={context} />
+        <OfficeNetworkCheck context={context} />
+      </PageLoadProvider>
     </ShellThemeContext>
   );
 }

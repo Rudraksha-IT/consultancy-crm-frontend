@@ -9,15 +9,16 @@ import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
 import { useColourMode } from "@/components/features/theme/useColourMode";
 import { Avatar } from "@/components/ui/Avatar";
 import { BrandMark } from "@/components/ui/BrandMark";
-import { IconLink } from "@/components/ui/IconLink";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { Loading } from "@/components/ui/Loading";
+import { PageLoadProvider } from "@/components/ui/pageLoad";
 import { LABELS, MESSAGES } from "@/constants/messages";
-import { PLATFORM_ACCOUNT_TEXT } from "@/constants/platformAccount";
 import { ROUTES } from "@/constants/routes";
 import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
 import { DEFAULT_THEME } from "@/lib/theme";
 
 import { PlatformTabs } from "./PlatformTabs";
+import { usePlatformTabTitle } from "@/hooks/usePlatformTabTitle";
 import { useProductName } from "@/components/features/brand/ProductName";
 import { useProductMark } from "./productLogo";
 import { PlatformAdminContext } from "./platformAdminContext";
@@ -32,7 +33,7 @@ export function PlatformShell({ children }: PlatformShellProps) {
   const session = usePlatformSession();
 
   if (session.status === "loading") {
-    return <p className="text-ink-2 p-6">{MESSAGES.loading}</p>;
+    return <Loading size="page" />;
   }
   if (session.status === "failed") {
     return (
@@ -60,6 +61,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
   const productLogo = useProductMark();
   useAppliedTheme(DEFAULT_THEME, colourMode.mode);
   const productName = useProductName();
+  usePlatformTabTitle();
 
   return (
     <PlatformAdminContext value={current}>
@@ -73,12 +75,6 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             <b className="text-body font-bold">{productName}</b>
           </Link>
           <div className="flex items-center gap-2">
-            <IconLink
-              href={ROUTES.platformAccount}
-              icon="gear"
-              label={PLATFORM_ACCOUNT_TEXT.openAccount}
-              tone="sidebar"
-            />
             <ThemeToggle mode={colourMode.mode} onToggle={colourMode.toggleMode} tone="sidebar" />
             <span className="border-side-rule phone:pl-4 flex items-center gap-3 border-l pl-2">
               <Avatar name={admin.name} />
@@ -94,7 +90,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
           <div className="max-w-content mx-auto grid grid-cols-1 gap-8">
             {/* In the page, above its content, like every other page's tabs (ticket 16). */}
             <PlatformTabs />
-            {children}
+            <PageLoadProvider>{children}</PageLoadProvider>
           </div>
         </main>
       </div>

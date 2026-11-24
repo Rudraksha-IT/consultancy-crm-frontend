@@ -5,6 +5,7 @@ import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
 import { useColourMode } from "@/components/features/theme/useColourMode";
 import { Banner } from "@/components/ui/Banner";
 import { BrandMark, type BrandLogo } from "@/components/ui/BrandMark";
+import { Loading } from "@/components/ui/Loading";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { useTabTitle } from "@/hooks/useTabTitle";
 import { APP_LOGO_URL } from "@/lib/brand/appLogo";
@@ -98,7 +99,7 @@ export function AuthBrand({ name, heading, tagline, logo = null }: AuthBrandProp
 
 /** While the office loads, or (behind OfficeGate, rarely) if it can't be found. */
 function BrandPending({ isLoading }: { isLoading: boolean }) {
-  if (isLoading) return <p className="text-ink-2 text-center">{MESSAGES.loading}</p>;
+  if (isLoading) return <Loading />;
   return (
     <p role="alert" className="text-bad text-center font-semibold">
       {MESSAGES.consultancyNotFound}

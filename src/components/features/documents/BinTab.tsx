@@ -55,7 +55,6 @@ export function BinTab({ state, onPage, onChanged }: BinTabProps) {
   const actions = useBinTabActions(onChanged);
   return (
     <div className="grid gap-4">
-      <p className="text-ink-2 max-w-prose">{BIN_TEXT.binIntro}</p>
       {actions.problem !== null && <Banner tone="problem">{actions.problem}</Banner>}
       <BinContent
         state={state}

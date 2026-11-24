@@ -56,6 +56,18 @@ describe("the app's own logo (first live fixes, ticket 07)", () => {
     expect(file).toMatch(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
     expect(file).not.toMatch(/<script|on[a-z]+=|href=|<foreignObject|<image/i);
   });
+
+  it("draws like the loader: its reds and its longer lines (list tidy-ups 29)", () => {
+    const file = readFileSync("src/assets/brand/app-logo.svg", "utf8");
+    expect(file).toMatch(/\.mark\{stroke:#c8102e\}/);
+    expect(file).toMatch(/prefers-color-scheme: dark\)\{\.mark\{stroke:#ff5263\}/);
+    expect(file).toContain("M18 0L117 0");
+    expect(file).not.toMatch(/8B0A1A|F49AA3/i);
+    // Lines 0.75 times the petals' width, so they show at a tab's 16 px (list tidy-ups 29).
+    expect(file).toMatch(/stroke-width="7.5"[^>]*d="M18 0L117 0/);
+    // All 8 lines, the top ones too.
+    expect(/stroke-width="7.5" d="([^"]*)"/.exec(file)?.[1]?.match(/M/g)).toHaveLength(8);
+  });
 });
 
 describe("/tab-icon (first live fixes, ticket 05)", () => {

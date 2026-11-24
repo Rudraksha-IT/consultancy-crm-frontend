@@ -10,7 +10,8 @@ import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { SectionMenu, useSectionChoice } from "@/components/ui/SectionMenu";
-import { LABELS, MESSAGES } from "@/constants/messages";
+import { Loading } from "@/components/ui/Loading";
+import { LABELS } from "@/constants/messages";
 import {
   MY_SETTINGS_SECTIONS,
   MY_SETTINGS_TEXT,
@@ -133,7 +134,7 @@ function withDetails(state: MyDetailsState, render: (details: MyDetails) => Reac
     return <Banner tone="problem">{MY_SETTINGS_TEXT.loadFailed}</Banner>;
   return (
     <Panel isPadded>
-      <p className="text-ink-2">{MESSAGES.loading}</p>
+      <Loading />
     </Panel>
   );
 }

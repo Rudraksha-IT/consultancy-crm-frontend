@@ -36,7 +36,7 @@ export function DatesSettings() {
   return (
     <Section title={DATE_TEXT.dates}>
       <div className="grid gap-4">
-        <p className="text-ink-2">{DATE_TEXT.datesHelp}</p>
+        <p className="text-small text-ink-2">{DATE_TEXT.datesHelp}</p>
         <Panel isPadded>
           <div className="grid gap-4">
             <SegmentedControl

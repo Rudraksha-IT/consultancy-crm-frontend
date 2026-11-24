@@ -6,8 +6,9 @@ import { useEffect, useId, useState, type SubmitEvent } from "react";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { SelectField, type SelectOption } from "@/components/ui/SelectField";
+import { Loading } from "@/components/ui/Loading";
 import { INBOX_TEXT } from "@/constants/inbox";
-import { LABELS, MESSAGES } from "@/constants/messages";
+import { LABELS } from "@/constants/messages";
 import { fetchInboxPeople, type InboxContact } from "@/lib/api";
 
 type NewMessageDialogProps = {
@@ -69,7 +70,7 @@ type PeoplePickerProps = {
 };
 
 function PeoplePicker({ state, options, picked, onPick }: PeoplePickerProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <p className="text-bad">{INBOX_TEXT.loadFailed}</p>;
   if (picked === null) return <p className="text-ink-2">{INBOX_TEXT.nobodyToWrite}</p>;
   return (

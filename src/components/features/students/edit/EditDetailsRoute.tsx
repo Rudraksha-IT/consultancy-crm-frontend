@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
+import { Loading } from "@/components/ui/Loading";
 import { HTTP_STATUS } from "@/constants/api";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
@@ -86,7 +87,7 @@ function useFreshProfile(studentId: RecordId): Loaded {
 
 function EditDetailsLoader({ studentId }: { studentId: RecordId }) {
   const loaded = useFreshProfile(studentId);
-  if (loaded.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (loaded.status === "loading") return <Loading size="page" />;
   if (loaded.status === "failed") return <Banner tone="problem">{MESSAGES.studentFailed}</Banner>;
   if (loaded.status === "notFound") return <NotFound />;
   if (!loaded.profile.canEditDetails) return <NotAllowed profile={loaded.profile} />;

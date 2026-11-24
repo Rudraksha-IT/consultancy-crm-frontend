@@ -88,7 +88,7 @@ export function OfficeDetailsSettings() {
   return (
     <Section title={TEXT.title}>
       <div className="grid gap-4">
-        <p className="text-ink-2">{TEXT.help}</p>
+        <p className="text-small text-ink-2">{TEXT.help}</p>
         <Panel isPadded>
           <form noValidate onSubmit={handleSubmit} className="grid min-w-0 gap-5">
             <TextField

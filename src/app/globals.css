@@ -8,6 +8,8 @@
  * Consultancy's own tokens onto <html>. A test keeps these defaults equal to the function's output.
  */
 :root {
+  /* the product logo's own red, for the loading animation (list tidy-ups 06); brighter (24) */
+  --mark: #c8102e;
   /* themed: default, light */
   --paper: #ffffff;
   --canvas: #f1f2ef;
@@ -101,6 +103,7 @@
 
 /* Dark by the person's choice. Same values as above. */
 :root[data-theme="dark"] {
+  --mark: #ff5263;
   --paper: #2b2b2d;
   --canvas: #1f1f21;
   --fill: #323234;
@@ -160,6 +163,7 @@
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
   --color-accent: var(--accent);
+  --color-mark: var(--mark);
   --color-accent-hover: var(--accent-hover);
   --color-accent-ink: var(--accent-ink);
   --color-tint: var(--tint);
@@ -238,7 +242,7 @@
   /* the tallest a bottom sheet grows on a phone, leaving the page peeking above it */
   --spacing-sheet: 92dvh;
   /* the email composer's height above 640 px: the window less a margin, so it never scrolls */
-  --spacing-composer: calc(100dvh - 2rem);
+  --spacing-composer: calc(100dvh - 6rem);
   --spacing-grab-h: 0.3125rem;
   --spacing-sidebar: 18.75rem;
   --spacing-drawer: 20rem;
@@ -255,6 +259,8 @@
   --spacing-chart: 40rem;
   --spacing-popover: 26.25rem;
   --spacing-popover-list: 26.25rem;
+  /* The email Student picker's list: only it scrolls (list tidy-ups 28). */
+  --spacing-picker-list: min(28rem, 50dvh);
   --spacing-menu: 17.5rem;
   --spacing-field-label: 12.5rem;
   --spacing-settings-label: 20rem;
@@ -736,6 +742,10 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   table[data-stacks] > tbody > tr > :is(td, th)[data-shrinks="large"] {
     width: 20%;
   }
+
+  table[data-stacks] > tbody > tr > :is(td, th)[data-shrinks="quarter"] {
+    width: 25%;
+  }
 }
 
 @media (width >= 40.0625rem) {
@@ -759,5 +769,138 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   table:not([data-stacks]) > tbody > tr > :is(td, th)[data-shrinks="large"] {
     width: 20%;
   }
+
+  table:not([data-stacks]) > tbody > tr > :is(td, th)[data-shrinks="quarter"] {
+    width: 25%;
+  }
 }
 /* End of tables fit their panel. */
+
+/* The logo loader (list tidy-ups 06, chosen in 19): the product's logo turns at one steady speed,
+   never stopping, while its petals and lines close together into a small flower and open out
+   again, with no bounce. Turn and breath are both 2 s. In a button it takes the button's own
+   text colour. With reduced motion it only turns, slowly. */
+.logo-loader {
+  display: block;
+  flex: none;
+  fill: none;
+  stroke: var(--mark);
+  stroke-linecap: round;
+}
+
+.logo-loader[data-size="page"] {
+  width: 8.75rem;
+  height: 8.75rem;
+}
+
+.logo-loader[data-size="panel"] {
+  width: 3.5rem;
+  height: 3.5rem;
+}
+
+.logo-loader[data-size="button"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke: currentColor;
+}
+
+/* In the gap a pull opens, the pull turns the logo and opens its petals (list tidy-ups 20). */
+.logo-loader[data-size="pull"] {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.logo-loader[data-pull] :is(.logo-loader-turn, .logo-loader-breathe) {
+  animation: none;
+}
+
+.logo-loader[data-pull] .logo-loader-breathe {
+  transition: transform 150ms ease-out;
+}
+
+.logo-loader-turn,
+.logo-loader-breathe {
+  /* The logo's centre is the drawing's 0 0 (its viewBox is centred), so it turns in place on
+     its own axis and the petals and lines close toward that same centre. */
+  transform-origin: 0 0;
+}
+
+.logo-loader-turn {
+  animation: logo-loader-turn 2s linear infinite;
+}
+
+.logo-loader-breathe {
+  animation: logo-loader-breathe 2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+@keyframes logo-loader-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* A smooth breath with no rest at either end, so the motion never looks stuck. */
+@keyframes logo-loader-breathe {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.49);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo-loader-turn {
+    animation-duration: 6s;
+  }
+
+  .logo-loader-breathe {
+    animation: none;
+  }
+}
+/* End of the logo loader */
+
+/* Filter boxes fit their choice (list tidy-ups 10): a filter's select is as wide as the chosen
+   text, not its longest option, with the same room on the left as on the right of its arrow.
+   Browsers without field-sizing keep the longest option's width, still padded. */
+@layer components {
+  select[data-filter] {
+    appearance: none;
+    field-sizing: content;
+    padding-inline: 0.875rem 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23686867' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.875rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem;
+  }
+
+  :root[data-theme="dark"] select[data-filter] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a9a9b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+  }
+}
+/* End of filter boxes */
+
+/* Small text in a dialog (list tidy-ups 31): the email writer and the Student picker step every
+   size down one, set here as sizes (not each other) so they don't shrink twice. */
+[data-small-text] {
+  font-size: 0.875rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --size-secondary: 0.875rem;
+  --size-secondary-line: 1.25rem;
+  --size-small: 0.8125rem;
+  --size-small-line: 1.125rem;
+  --text-section-title: 1.125rem;
+  --text-section-title--line-height: 1.625rem;
+}
+
+/* Typing boxes too, above phone width: on phones they stay 16px so iPhones don't zoom in. */
+@media (width >= 40.0625rem) {
+  [data-small-text] :is(input, textarea, select) {
+    font-size: 0.875rem;
+  }
+}
+/* End of small text in a dialog */

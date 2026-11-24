@@ -118,6 +118,27 @@ async function rowFor(name: string): Promise<HTMLElement> {
 }
 
 describe("ApplicationsPage", () => {
+  it("keeps dates, Intake and Status on one line (list tidy-ups 26)", async () => {
+    backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    expect(screen.getByRole("table")).not.toHaveAttribute("data-wraps");
+  });
+
+  it("gives the text columns fixed shares so nothing spills or scrolls sideways (list tidy-ups 17)", async () => {
+    backend(listing(), choices, counsellors);
+    renderPage();
+
+    const row = await rowFor("Sita Karki");
+    const marked = [...row.querySelectorAll("[data-shrinks]")].map((cell) =>
+      cell.getAttribute("data-shrinks"),
+    );
+    expect(marked).toEqual(["large", "quarter", "medium"]);
+    expect(screen.getByRole("columnheader", { name: "Applied date" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Applied" })).toBeNull();
+  });
+
   it("lists each Application with its Student, University, Intake, Status, counsellor and days", async () => {
     backend(listing(), choices, counsellors);
     renderPage();
@@ -133,13 +154,17 @@ describe("ApplicationsPage", () => {
     expect(within(sita).getByText("Deakin University")).toBeInTheDocument();
     expect(within(sita).getByText("Master of IT, Australia")).toBeInTheDocument();
     expect(within(sita).getByText("Jul 2027")).toBeInTheDocument();
-    expect(within(sita).getAllByRole("cell")[4]).toHaveTextContent("Offer, conditional");
+    expect(within(sita).getAllByRole("cell")[3]).toHaveTextContent("Offer, conditional");
     expect(within(sita).getByText("Bikash Thapa")).toBeInTheDocument();
     expect(within(sita).getByText("2 Oct 2026")).toBeInTheDocument();
-    expect(within(sita).getByText("30 Sep 2026")).toBeInTheDocument();
+    // No Added column (list tidy-ups 15).
+    expect(within(sita).queryByText("30 Sep 2026")).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: "Added" })).toBeNull();
     expect(screen.getByText("2 applications")).toBeInTheDocument();
     expect(
-      screen.getByText("Applied is the day the application was added, recorded automatically."),
+      screen.getByText(
+        "Applied date is the day the application was added, recorded automatically.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -150,7 +175,7 @@ describe("ApplicationsPage", () => {
     const gita = await rowFor("Gita Rai");
     expect(within(gita).getByText("9801112222")).toBeInTheDocument();
     expect(within(gita).getByText("Not assigned")).toBeInTheDocument();
-    expect(within(gita).getAllByRole("cell")[4]).toHaveTextContent("Applied");
+    expect(within(gita).getAllByRole("cell")[3]).toHaveTextContent("Applied");
     expect(within(gita).getByText("—")).toBeInTheDocument();
     expect(within(gita).getByText("Not recorded")).toBeInTheDocument();
   });
@@ -200,6 +225,7 @@ describe("ApplicationsPage", () => {
     const fetchFn = backend(listing(), choices, counsellors);
     renderPage();
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
     await screen.findByRole("option", { name: "Feb 2028" });
     await screen.findByRole("option", { name: "Bikash Thapa" });
 
@@ -217,8 +243,11 @@ describe("ApplicationsPage", () => {
   });
 
   it("offers the office's countries by name, in order", async () => {
+    const user = userEvent.setup();
     backend(listing(), choices, counsellors);
     renderPage();
+    await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
 
     await screen.findByRole("option", { name: "Canada" });
     const country = screen.getByRole("combobox", { name: "Country" });
@@ -310,10 +339,12 @@ describe("ApplicationsPage", () => {
   });
 
   it("still filters with Any when the choices can't be loaded", async () => {
+    const user = userEvent.setup();
     backend(listing(), counsellors);
     renderPage();
 
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
     const intake = screen.getByRole("combobox", { name: "Intake" });
     expect(
       within(intake)
@@ -347,13 +378,52 @@ describe("ApplicationsPage", () => {
   });
 });
 
-async function selectAllBox(): Promise<HTMLElement> {
-  const [box] = await screen.findAllByRole("checkbox", { name: "Select every row on this page" });
-  if (box === undefined) throw new Error("No select-all box");
-  return box;
-}
+describe("ApplicationsPage More filters (list tidy-ups 03)", () => {
+  it("shows Status, Counsellor and Sort on one line, and the rest under More filters", async () => {
+    const user = userEvent.setup();
+    backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
 
-describe("ApplicationsPage selection and export (issue 51)", () => {
+    for (const name of ["Status", "Counsellor", "Sort"]) {
+      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+    }
+    for (const name of ["Intake", "Intake year", "Country"]) {
+      expect(screen.queryByRole("combobox", { name })).not.toBeInTheDocument();
+    }
+
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+
+    for (const name of ["Intake", "Intake year", "Country"]) {
+      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole("button", { name: "More filters" })).not.toBeInTheDocument();
+  });
+
+  it("closes on a press below, the button counting what is set there (list tidy-ups 18)", async () => {
+    const user = userEvent.setup();
+    backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Country" }), "australia");
+    await user.click(screen.getByRole("heading", { level: 1, name: "Applications" }));
+
+    expect(screen.queryByRole("combobox", { name: "Country" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More filters · 1" })).toBeInTheDocument();
+  });
+});
+
+describe("ApplicationsPage export (issue 51)", () => {
+  it("shows no tick boxes: Download gives the whole filtered list (list tidy-ups 25)", async () => {
+    backend(listing(), choices, counsellors);
+    renderPage();
+
+    await screen.findAllByText("Sita Karki");
+    expect(screen.queryAllByRole("checkbox")).toEqual([]);
+  });
+
   function exportsToo(
     fetchFn: ReturnType<typeof backend>,
     answer: () => Response = () => new Response("\uFEFFStudent\r\n", { status: 200 }),
@@ -365,89 +435,6 @@ describe("ApplicationsPage selection and export (issue 51)", () => {
     });
     return fetchFn;
   }
-
-  it("ticks a row in its own 44 px box without leaving the list, and counts it", async () => {
-    const user = userEvent.setup();
-    backend(listing(), choices, counsellors);
-    renderPage();
-
-    const box = await screen.findByRole("checkbox", {
-      name: "Select Sita Karki, Deakin University",
-    });
-    expect(box.closest("label")).toHaveClass("size-control");
-    await user.click(box);
-
-    expect(box).toBeChecked();
-    const bar = screen.getByRole("region", { name: "Selected rows" });
-    expect(within(bar).getByText("1 selected")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Sita Karki" })).toBeInTheDocument();
-  });
-
-  it("selects every row on the page, and clears them", async () => {
-    const user = userEvent.setup();
-    backend(listing(), choices, counsellors);
-    renderPage();
-
-    await user.click(await selectAllBox());
-
-    expect(screen.getByText("2 selected")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Clear" }));
-    expect(screen.queryByRole("region", { name: "Selected rows" })).not.toBeInTheDocument();
-  });
-
-  it("copies the ticked Students' emails, skipping who has none", async () => {
-    const user = userEvent.setup();
-    backend(listing(), choices, counsellors);
-    renderPage();
-    await user.click(await selectAllBox());
-
-    await user.click(screen.getByRole("button", { name: "Copy emails" }));
-
-    expect(await navigator.clipboard.readText()).toBe("sita@gmail.test");
-    expect(await screen.findByText("1 email copied. 1 Student has none")).toBeInTheDocument();
-  });
-
-  it("copies phones one per line", async () => {
-    const user = userEvent.setup();
-    backend(listing(), choices, counsellors);
-    renderPage();
-    await user.click(await selectAllBox());
-
-    await user.click(screen.getByRole("button", { name: "Copy phones" }));
-
-    expect(await navigator.clipboard.readText()).toBe("9841234567\n9801112222");
-    expect(await screen.findByText("2 phone numbers copied")).toBeInTheDocument();
-  });
-
-  it("shows the text to copy by hand when the browser won't copy", async () => {
-    const user = userEvent.setup();
-    backend(listing(), choices, counsellors);
-    renderPage();
-    vi.spyOn(navigator.clipboard, "writeText").mockRejectedValue(new Error("denied"));
-    await user.click(
-      await screen.findByRole("checkbox", { name: "Select Sita Karki, Deakin University" }),
-    );
-
-    await user.click(screen.getByRole("button", { name: "Copy emails" }));
-
-    const dialog = await screen.findByRole("dialog", { name: "Copy emails" });
-    expect(within(dialog).getByRole("textbox", { name: "The emails to copy" })).toHaveValue(
-      "sita@gmail.test",
-    );
-    await user.keyboard("{Escape}");
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-  });
-
-  it.each(["counsellor", "front_desk"] as const)("offers no Export to %s", async (role) => {
-    backend(listing(), choices, counsellors);
-    renderPage(as(role));
-
-    await screen.findByRole("link", { name: "Sita Karki" });
-    expect(screen.queryByRole("button", { name: "Export" })).not.toBeInTheDocument();
-    expect(
-      screen.getAllByRole("checkbox", { name: "Select every row on this page" }),
-    ).not.toHaveLength(0);
-  });
 
   it("exports the whole filtered list as the screen shows it", async () => {
     const user = userEvent.setup();

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag, revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import { LABELS } from "@/constants/messages";
@@ -24,6 +24,7 @@ export async function getProductName(): Promise<string> {
     revalidate: PRODUCT_NAME.cacheSeconds,
     expire: PRODUCT_NAME.expireSeconds,
   });
+  cacheTag(PRODUCT_NAME.cacheTag);
   return askProductName();
 }
 
@@ -32,6 +33,17 @@ export async function askProductName(): Promise<string> {
   const name = await askName();
   if (name !== null) lastGood = name;
   return name ?? lastGood ?? LABELS.productName;
+}
+
+/**
+ * After a call forwarded to Django: when it was a name change Django accepted, drop the kept
+ * name and every page built with it, so the next page anyone opens has the new one (list
+ * tidy-ups 05). Only the Platform's address can change it; Django refuses it anywhere else.
+ */
+export function dropProductNameIfChanged(request: Request, answer: Response): void {
+  const path = new URL(request.url).pathname;
+  const isChange = request.method === "PUT" && path === PRODUCT_NAME.changePath;
+  if (isChange && answer.ok) revalidateTag(PRODUCT_NAME.cacheTag, { expire: 0 });
 }
 
 /** Forget the last name; for tests. */

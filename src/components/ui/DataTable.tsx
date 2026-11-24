@@ -17,7 +17,7 @@ export type PhoneLayout = "list" | "cards";
 export type PhonePart = "select" | "title" | "line" | "fact" | "action" | "actions";
 
 /** A shrinking cell's fixed share of the table's width. */
-export type ShrinkShare = "small" | "medium" | "large";
+export type ShrinkShare = "small" | "medium" | "large" | "quarter";
 
 type TableSettings = { phone: PhoneLayout; stacksBelowTablet: boolean };
 
@@ -55,7 +55,8 @@ export function DataTable({
         data-phone={phone}
         {...flag("data-stacks", stacksBelowTablet)}
         {...flag("data-wraps", wraps)}
-        className={clsx("text-body w-full border-collapse", className)}
+        // Small text, column titles on one line (list tidy-ups 26).
+        className={clsx("text-small w-full border-collapse [&_th]:whitespace-nowrap", className)}
       >
         {children}
       </table>
@@ -93,7 +94,8 @@ type DataCellProps = {
    * The cell gives up width so the table fits its panel: its text is cut with … (use `OneLine`
    * inside), while the other cells stay on one line (globals.css, "Tables fit their panel").
    * `true` shares out what the other cells leave; a size gives it a fixed share of the table
-   * (small 10%, medium 15%, large 20%), for a table with many columns.
+   * (small 10%, medium 15%, large 20%, quarter 25%), for a table with many columns, or to keep a
+   * main column from taking half the table (the Students list's name, list tidy-ups 01).
    */
   shrinks?: boolean | ShrinkShare;
   colSpan?: number;

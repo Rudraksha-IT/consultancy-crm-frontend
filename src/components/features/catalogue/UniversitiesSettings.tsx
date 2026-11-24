@@ -11,8 +11,8 @@ import { Panel } from "@/components/ui/Panel";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { Switch } from "@/components/ui/Switch";
 import { useToast } from "@/components/ui/useToast";
+import { Loading } from "@/components/ui/Loading";
 import { CATALOGUE_TEXT } from "@/constants/catalogue";
-import { MESSAGES } from "@/constants/messages";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { CatalogueRefusedError, setCourseIntakes, type Course } from "@/lib/api";
 import { formatIntake } from "@/lib/dates";
@@ -169,7 +169,7 @@ type ListContentProps = {
 };
 
 function ListContent({ list, hasSearch, onPage, actions }: ListContentProps) {
-  if (list.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (list.status === "loading") return <Loading />;
   if (list.status === "failed") return <Banner tone="problem">{CATALOGUE_TEXT.loadFailed}</Banner>;
   const { page } = list;
   if (page.universities.length === 0) {

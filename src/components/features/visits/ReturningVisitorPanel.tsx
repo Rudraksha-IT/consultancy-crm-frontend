@@ -9,12 +9,12 @@ import { Banner } from "@/components/ui/Banner";
 import { Panel } from "@/components/ui/Panel";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { StageMeter } from "@/components/ui/StageMeter";
+import { Loading } from "@/components/ui/Loading";
 import {
   RETURNING_MATCHES_SHOWN,
   RETURNING_SEARCH_MIN_LENGTH,
   VISIT_TEXT,
 } from "@/constants/visits";
-import { MESSAGES } from "@/constants/messages";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { fetchStudents, type StudentPage, type StudentRow } from "@/lib/api";
 import { NO_STUDENT_FILTERS } from "@/lib/students";
@@ -87,7 +87,7 @@ function MatchList({
   state: Loaded<StudentPage>;
   onPick: (id: RecordId) => void;
 }) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{VISIT_TEXT.searchFailed}</Banner>;
   const shown = state.data.students.slice(0, RETURNING_MATCHES_SHOWN);
   if (shown.length === 0) return <p className="text-ink-2">{VISIT_TEXT.noOneMatches}</p>;

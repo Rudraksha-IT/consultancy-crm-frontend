@@ -23,17 +23,18 @@ type ChipProps = {
   icon?: IconName;
 };
 
-/** A status: a dot and a word, coloured by the status. */
+/** A status: a dot and a word, coloured by the status. Never wider than its container. */
 export function Chip({ children, tone = "muted", hasDot = true, icon }: ChipProps) {
   return (
     <span
       className={clsx(
-        "rounded-pill text-small inline-flex items-center gap-2 px-3 leading-7 font-semibold whitespace-nowrap",
+        "rounded-pill text-small inline-flex max-w-full items-center gap-2 px-3 leading-7 font-semibold whitespace-nowrap",
         TONE_CLASSES[tone],
       )}
     >
       <ChipMark icon={icon} hasDot={hasDot} />
-      {children}
+      {/* In a narrow cell the word is cut with …, never spilling out (list tidy-ups 17). */}
+      <span className="min-w-0 truncate">{children}</span>
     </span>
   );
 }

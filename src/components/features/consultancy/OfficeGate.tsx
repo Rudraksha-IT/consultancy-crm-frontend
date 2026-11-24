@@ -6,6 +6,7 @@ import { AuthThemeToggle } from "@/components/features/auth/AuthThemeToggle";
 import { MESSAGES } from "@/constants/messages";
 
 import { useCurrentConsultancy } from "./useCurrentConsultancy";
+import { Loading } from "@/components/ui/Loading";
 
 /**
  * An office's login screens appear only on an office's own address (issue 66). Anywhere else
@@ -18,7 +19,7 @@ export function OfficeGate({ children }: { children: ReactNode }) {
   if (state.status === "loading") {
     return (
       <main className="bg-canvas grid min-h-full place-items-center px-4 py-16">
-        <p className="text-ink-2">{MESSAGES.loading}</p>
+        <Loading size="page" />
       </main>
     );
   }

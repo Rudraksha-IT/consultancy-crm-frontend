@@ -219,3 +219,23 @@ describe("SectionMenu at phone width", () => {
     expect(screen.getByText("Docs")).not.toBeVisible();
   });
 });
+
+describe("section descriptions are small (list tidy-ups 23)", () => {
+  it("shows a section's description in small words", () => {
+    render(
+      <Menu
+        sections={[
+          {
+            id: "dates",
+            title: "Dates",
+            description: "How dates are shown.",
+            content: <p>Dates content</p>,
+          },
+        ]}
+      />,
+    );
+
+    const shown = screen.getAllByText("How dates are shown.");
+    expect(shown.filter((text) => !text.classList.contains("text-small"))).toEqual([]);
+  });
+});

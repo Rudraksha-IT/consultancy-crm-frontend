@@ -1,10 +1,10 @@
 // @vitest-environment node
-import { cacheLife } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 
 import { askProductName, forgetProductName, getProductName } from "./productName";
 import { TEST_PRODUCT_DOMAIN, testHost } from "@/test/hosts";
 
-vi.mock("next/cache", () => ({ cacheLife: vi.fn() }));
+vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn() }));
 
 const TOKEN = "a-test-internal-token-that-is-32-chars-or-more";
 const BACKEND = "http://backend:8000";
@@ -57,6 +57,8 @@ describe("the product's name for every page (first live fixes, ticket 15)", () =
     expect(await getProductName()).toBe("Acme Office Suite");
 
     expect(cacheLife).toHaveBeenCalledWith({ stale: 60, revalidate: 60, expire: 3600 });
+    // Tagged, so a saved change drops it at once (list tidy-ups 05).
+    expect(cacheTag).toHaveBeenCalledWith("product-name");
   });
 
   it("is the default before Django has ever said", async () => {

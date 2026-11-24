@@ -19,7 +19,7 @@ import type { MyTwoFactor } from "./useMyTwoFactor";
 
 // Where switching on leads: the login page once signed out, the page back after setup.
 const SIDE_ROUTES: Record<TwoFactorSide, { login: string; afterSetup: string }> = {
-  platform: { login: ROUTES.platformLogin, afterSetup: ROUTES.platformAccount },
+  platform: { login: ROUTES.platformLogin, afterSetup: ROUTES.platformSettings },
   staff: { login: ROUTES.login, afterSetup: ROUTES.mySettings },
 };
 

@@ -17,6 +17,7 @@ import {
 import { Banner } from "@/components/ui/Banner";
 import { SelectField } from "@/components/ui/SelectField";
 import { TextField } from "@/components/ui/TextField";
+import { Loading } from "@/components/ui/Loading";
 import { HTTP_STATUS } from "@/constants/api";
 import { COMMISSION_TEXT } from "@/constants/commission";
 import { MESSAGES } from "@/constants/messages";
@@ -117,7 +118,7 @@ type UniversityFieldsProps = {
 /** A University from the Catalogue, then one of the Intakes its Courses run. */
 function UniversityFields(props: UniversityFieldsProps) {
   const { universities, fieldErrors } = props;
-  if (universities.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (universities.status === "loading") return <Loading />;
   if (universities.status === "failed") {
     return <Banner tone="problem">{COMMISSION_TEXT.universitiesFailed}</Banner>;
   }

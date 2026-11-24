@@ -9,7 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
-import { MESSAGES } from "@/constants/messages";
+import { Loading } from "@/components/ui/Loading";
 import { ROUTES } from "@/constants/routes";
 import { VisitKind, VISIT_TEXT } from "@/constants/visits";
 import { fetchTodaysVisits, type TimelineVisit, type TodaysVisits } from "@/lib/api";
@@ -39,7 +39,7 @@ export function TodaysVisitors({ version }: { version: number }) {
 }
 
 function TodayBody({ state }: { state: Loaded<TodaysVisits> }) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{VISIT_TEXT.todayFailed}</Banner>;
   if (state.data.visits.length === 0) {
     return (

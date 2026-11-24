@@ -1,7 +1,4 @@
-import { ContactKind } from "@/constants/exports";
-
-import { contactsToCopy, describeFilters, exportFileName, exportFilters } from ".";
-import { uid } from "@/test/ids";
+import { describeFilters, exportFileName, exportFilters } from ".";
 
 describe("exportFilters", () => {
   it("is empty for everyone", () => {
@@ -50,38 +47,5 @@ describe("describeFilters", () => {
 
   it("says when nothing narrows the list", () => {
     expect(describeFilters([["Stage", ""]], "Everyone")).toBe("Everyone");
-  });
-});
-
-describe("contactsToCopy", () => {
-  const rows = [
-    { studentId: uid(1), email: "sita@example.com", phone: "9841000001" },
-    { studentId: uid(2), email: "", phone: " 9841000002 " },
-    { studentId: uid(1), email: "sita@example.com", phone: "9841000001" },
-    { studentId: uid(3), email: "SITA@example.com ", phone: "9841000001" },
-  ];
-
-  it("joins emails with a comma, leaving out empty ones and counting who has none", () => {
-    expect(contactsToCopy(rows, ContactKind.Email)).toEqual({
-      text: "sita@example.com, SITA@example.com",
-      count: 2,
-      missing: 1,
-    });
-  });
-
-  it("puts phones one per line, each once", () => {
-    expect(contactsToCopy(rows, ContactKind.Phone)).toEqual({
-      text: "9841000001\n9841000002",
-      count: 2,
-      missing: 0,
-    });
-  });
-
-  it("copies nothing when nobody has one", () => {
-    expect(contactsToCopy(rows.slice(1, 2), ContactKind.Email)).toEqual({
-      text: "",
-      count: 0,
-      missing: 1,
-    });
   });
 });

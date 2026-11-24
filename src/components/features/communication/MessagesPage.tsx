@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
+import { Loading } from "@/components/ui/Loading";
 import { COMMUNICATION_TEXT as TEXT } from "@/constants/communication";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
@@ -92,7 +93,7 @@ function AllEmails() {
   const [page, setPage] = useState(1);
   const state = useMessagePage(fetchMessages, page);
 
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{TEXT.listFailed}</Banner>;
   const { rows, count, pageSize } = state.page;
   return (

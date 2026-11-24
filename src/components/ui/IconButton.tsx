@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import type { ReactNode, Ref } from "react";
 
-import { Icon, type IconName } from "./Icon";
+import { Icon, type IconName, type IconSize } from "./Icon";
 
 export type IconButtonTone = "page" | "sidebar";
 
@@ -13,6 +13,8 @@ export const ICON_TONE_CLASSES: Record<IconButtonTone, string> = {
 
 type IconButtonProps = {
   icon: IconName;
+  /** The icon's size; "md" unless a control should stand out a little (Home's eye). */
+  iconSize?: IconSize;
   /** The button's accessible name; also shown as its tooltip. */
   label: string;
   onClick?: () => void;
@@ -32,6 +34,7 @@ type IconButtonProps = {
 /** A 44 by 44 button showing only a line icon; always named by `label`. */
 export function IconButton({
   icon,
+  iconSize = "md",
   label,
   onClick,
   tone = "page",
@@ -58,7 +61,7 @@ export function IconButton({
         ICON_TONE_CLASSES[tone],
       )}
     >
-      <Icon name={icon} />
+      <Icon name={icon} size={iconSize} />
       {badge}
     </button>
   );

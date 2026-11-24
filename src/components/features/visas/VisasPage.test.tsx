@@ -118,7 +118,26 @@ afterEach(() => {
 });
 
 describe("VisasPage", () => {
-  it("lists each Visa with its Student, where to, Intake, Status, next appointment, documents and counsellor", async () => {
+  it("keeps Intake, Visa status and documents on one line (list tidy-ups 26)", async () => {
+    backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    expect(screen.getByRole("table")).not.toHaveAttribute("data-wraps");
+  });
+
+  it("gives the text columns fixed shares so nothing spills or scrolls sideways (list tidy-ups 17)", async () => {
+    backend(listing(), choices, counsellors);
+    renderPage();
+
+    const row = await rowFor("Sita Karki");
+    const marked = [...row.querySelectorAll("[data-shrinks]")].map((cell) =>
+      cell.getAttribute("data-shrinks"),
+    );
+    expect(marked).toEqual(["large", "quarter", "medium"]);
+  });
+
+  it("lists each Visa with its Student, where to, Intake, Status, documents and counsellor", async () => {
     backend(listing(), choices, counsellors);
     renderPage();
 
@@ -132,9 +151,10 @@ describe("VisasPage", () => {
     expect(within(sita).getByText("University of Toronto, Master of IT")).toBeInTheDocument();
     expect(within(sita).getByText("Sep 2027")).toBeInTheDocument();
     expect(within(sita).getByText("Applied")).toBeInTheDocument();
-    expect(within(sita).getByText("Biometrics")).toBeInTheDocument();
-    expect(within(sita).getByText("20 Nov 2026")).toBeInTheDocument();
-    expect(within(sita).getByText("2:00 PM")).toBeInTheDocument();
+    // No Next appointment column (list tidy-ups 15).
+    expect(within(sita).queryByText("Biometrics")).toBeNull();
+    expect(within(sita).queryByText("20 Nov 2026")).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: "Next appointment" })).toBeNull();
     expect(
       within(sita).getByRole("button", {
         name: "Open the checklist for Sita Karki: 5 of 13 documents, 1 rejected, 2 waiting to check",
@@ -144,12 +164,11 @@ describe("VisasPage", () => {
     expect(screen.getByText("2 visas")).toBeInTheDocument();
   });
 
-  it("shows a dash when there's no appointment and Not assigned without a counsellor", async () => {
+  it("shows Not assigned without a counsellor", async () => {
     backend(listing(), choices, counsellors);
     renderPage();
 
     const gita = await rowFor("Gita Rai");
-    expect(within(gita).getByText("No appointment yet")).toBeInTheDocument();
     expect(within(gita).getByText("Not assigned")).toBeInTheDocument();
     expect(within(gita).getByText("Refused")).toBeInTheDocument();
   });
@@ -212,6 +231,7 @@ describe("VisasPage", () => {
     const fetchFn = backend(listing(), choices, counsellors);
     renderPage();
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
     await screen.findByRole("option", { name: "Sep 2027" });
     await screen.findByRole("option", { name: "Bikash Thapa" });
 
@@ -251,6 +271,7 @@ describe("VisasPage", () => {
     const fetchFn = backend(listing(), choices, counsellors);
     renderPage();
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
 
     await user.selectOptions(
       screen.getByRole("combobox", { name: "Sort" }),
@@ -312,10 +333,12 @@ describe("VisasPage", () => {
   });
 
   it("still filters with Any when the choices can't be loaded", async () => {
+    const user = userEvent.setup();
     backend(listing(), counsellors);
     renderPage();
 
     await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
     const intake = screen.getByRole("combobox", { name: "Intake" });
     expect(
       within(intake)
@@ -350,17 +373,36 @@ describe("VisasPage", () => {
   });
 });
 
-describe("VisasPage selection and export (issue 51)", () => {
-  it("copies the ticked Students' emails", async () => {
+describe("VisasPage More filters (list tidy-ups 03)", () => {
+  it("shows Visa status, Counsellor and Appointment on one line, and the rest under More filters", async () => {
     const user = userEvent.setup();
     backend(listing(), choices, counsellors);
     renderPage();
+    await rowFor("Sita Karki");
 
-    await user.click(await screen.findByRole("checkbox", { name: "Select Sita Karki" }));
-    await user.click(screen.getByRole("button", { name: "Copy emails" }));
+    for (const name of ["Visa status", "Counsellor", "Appointment"]) {
+      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+    }
+    for (const name of ["Country", "Intake", "Sort"]) {
+      expect(screen.queryByRole("combobox", { name })).not.toBeInTheDocument();
+    }
 
-    expect(await navigator.clipboard.readText()).toBe("sita@gmail.test");
-    expect(await screen.findByText("1 email copied")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+
+    for (const name of ["Country", "Intake", "Sort"]) {
+      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+    }
+    expect(screen.queryByRole("button", { name: "More filters" })).not.toBeInTheDocument();
+  });
+});
+
+describe("VisasPage export (issue 51)", () => {
+  it("shows no tick boxes: Download gives the whole filtered list (list tidy-ups 25)", async () => {
+    backend(listing(), choices, counsellors);
+    renderPage();
+
+    await screen.findAllByText("Sita Karki");
+    expect(screen.queryAllByRole("checkbox")).toEqual([]);
   });
 
   it("shows the Export dialog with the Visas columns, for Admins only", async () => {

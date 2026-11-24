@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 import { Banner } from "@/components/ui/Banner";
-import { MESSAGES } from "@/constants/messages";
+import { Loading } from "@/components/ui/Loading";
 import { REPORTS_TEXT } from "@/constants/reports";
 
 import type { ReportState } from "./useReport";
@@ -14,7 +14,7 @@ export function ReportBody<T>({
   state: ReportState<T>;
   children: (data: T) => ReactNode;
 }) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "loaded") return children(state.data);
   // Refused dates are shown on the date fields themselves.
   if (state.status === "refused") return null;

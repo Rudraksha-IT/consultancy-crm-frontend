@@ -9,9 +9,9 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
+import { Loading } from "@/components/ui/Loading";
 import { HTTP_STATUS } from "@/constants/api";
 import { CATALOGUE_TEXT } from "@/constants/catalogue";
-import { MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { ApiRequestError, fetchUniversity, type University } from "@/lib/api";
@@ -99,7 +99,7 @@ function useFreshUniversity(id: RecordId): Loaded {
 
 function UniversityEditLoader({ id }: { id: RecordId }) {
   const loaded = useFreshUniversity(id);
-  if (loaded.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (loaded.status === "loading") return <Loading size="page" />;
   if (loaded.status === "failed")
     return <Banner tone="problem">{CATALOGUE_TEXT.loadFailed}</Banner>;
   if (loaded.status === "notFound") return <NotFound />;

@@ -8,12 +8,12 @@ import { Panel } from "@/components/ui/Panel";
 import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
+import { Loading } from "@/components/ui/Loading";
 import {
   CONSULTANCY_STATUS_LABELS,
   ConsultancyStatus,
   READ_ONLY_STATUSES,
 } from "@/constants/consultancyStatus";
-import { MESSAGES } from "@/constants/messages";
 import { SUPPORT_TEXT } from "@/constants/supportAccess";
 import { fetchSupportVisits, type SupportVisit } from "@/lib/api";
 import { formatAdDateTime } from "@/lib/dates";
@@ -56,7 +56,7 @@ export function SupportVisitList({ loadVisits = fetchSupportVisits }: SupportVis
 }
 
 function VisitsBody({ state }: { state: VisitsState }) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") {
     return (
       <p role="alert" className="text-bad font-semibold">

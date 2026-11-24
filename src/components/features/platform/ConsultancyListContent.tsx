@@ -1,6 +1,7 @@
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { RowList } from "@/components/ui/RowList";
+import { Loading } from "@/components/ui/Loading";
 import { MESSAGES } from "@/constants/messages";
 import type { ConsultancyOverview } from "@/lib/api";
 
@@ -24,7 +25,7 @@ export function ConsultancyListContent({
   onOpenOffice,
   onTryAgain,
 }: ConsultancyListContentProps) {
-  if (list.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (list.status === "loading") return <Loading />;
   if (list.status === "failed") {
     return (
       <p role="alert" className="text-bad font-semibold">

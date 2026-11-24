@@ -12,11 +12,11 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
+import { Loading } from "@/components/ui/Loading";
 import { COMMISSION_TEXT } from "@/constants/commission";
 import { EXPENSE_TEXT } from "@/constants/expenses";
 import { FEE_TEXT, OWING_ON_HOME } from "@/constants/fees";
 import { FEES_BY_TYPE_TEXT } from "@/constants/feesByType";
-import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import {
   fetchCommission,
@@ -86,13 +86,11 @@ export function MonthAtAGlance({
   return (
     <Section
       title={FEE_TEXT.atAGlance}
+      titleAside={<AmountsEye amounts={amounts} />}
       aside={
-        <span className="flex items-center gap-3">
-          <AmountsEye amounts={amounts} />
-          <Link href={ROUTES.accounts} className={ACCOUNTS_LINK}>
-            {FEE_TEXT.openAccounts}
-          </Link>
-        </span>
+        <Link href={ROUTES.accounts} className={ACCOUNTS_LINK}>
+          {FEE_TEXT.openAccounts}
+        </Link>
       }
     >
       <GlanceBody owing={owing} month={month} isShown={amounts.isShown} />
@@ -108,7 +106,7 @@ function GlanceBody({ owing, month, isShown }: GlanceBodyProps) {
   }
   const hasFailed = owing.status === "failed" || month.status === "failed";
   if (hasFailed) return <Banner tone="problem">{FEE_TEXT.glanceFailed}</Banner>;
-  return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  return <Loading />;
 }
 
 type GlanceFiguresProps = { owing: OwingPage; month: ThisMonth; isShown: boolean };
@@ -173,7 +171,7 @@ export function WhoStillOwes({ owing, isShown }: { owing: Loaded<OwingPage>; isS
 type OwingProps = { owing: Loaded<OwingPage>; isShown: boolean };
 
 function OwingBody({ owing, isShown }: OwingProps) {
-  if (owing.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (owing.status === "loading") return <Loading />;
   if (owing.status === "failed") return <Banner tone="problem">{FEE_TEXT.owingFailed}</Banner>;
   if (owing.data.rows.length === 0) {
     return (

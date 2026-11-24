@@ -37,6 +37,19 @@ export function fetchStudents(
 }
 
 /**
+ * The first page of Students matching `search` (everyone when it is empty), A to Z by name: the
+ * email picker (list tidy-ups 34).
+ */
+export function fetchStudentsByName(
+  search: string,
+  fetchFn: typeof fetch = fetch,
+): Promise<StudentPage> {
+  const typed = search.trim();
+  const query = new URLSearchParams({ ...(typed === "" ? {} : { q: typed }), order: "name" });
+  return getJson(`${API_PATHS.students}?${query.toString()}`, StudentPageSchema, fetchFn);
+}
+
+/**
  * Add a new visitor as a Lead. Rejects with `InvalidFieldsError` when the API refuses some of
  * the input.
  */

@@ -136,7 +136,7 @@ function ColoursPart({ consultancy, onSave }: ColoursPartProps) {
 
   return (
     <>
-      <p className="text-ink-2">{MESSAGES.coloursHelp}</p>
+      <p className="text-small text-ink-2">{MESSAGES.coloursHelp}</p>
       {error !== null && <Banner tone="problem">{error}</Banner>}
       <ThemeEditor value={draft} onChange={setDraft} />
       <ThemePreview theme={draft} />

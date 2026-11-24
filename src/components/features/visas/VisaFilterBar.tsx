@@ -1,9 +1,12 @@
 "use client";
 
-import { FilterBar } from "@/components/ui/FilterBar";
+import { useCallback, useState } from "react";
+
+import { FilterBar, MoreFiltersButton } from "@/components/ui/FilterBar";
 import { FilterSelect } from "@/components/ui/FilterSelect";
 import { counsellorFilterOptions } from "@/components/features/students/counsellorFilter";
 import type { SelectOption } from "@/components/ui/SelectField";
+import { LABELS } from "@/constants/messages";
 import { COUNTRIES, COUNTRY_LABELS, type Country } from "@/constants/students";
 import {
   DEFAULT_VISA_SORT,
@@ -48,21 +51,24 @@ const SORT_OPTIONS: SelectOption[] = VISA_SORTS.map((sort) => ({
   label: VISA_SORT_LABELS[sort],
 }));
 
-/** Visa status, country, Intake, counsellor, appointment dates and the order (spec 62b). */
+/**
+ * Visa status, counsellor and appointment dates on one line; country, Intake and the order under
+ * More filters, as on Students (spec 62b, list tidy-ups 03). The counsellor stays up front: a
+ * Counsellor starts on My Students.
+ */
 export function VisaFilterBar(props: VisaFilterBarProps) {
   const { filters, onChange, choices } = props;
-  return (
-    <FilterBar label={TEXT.filters}>
-      <FilterSelect
-        label={TEXT.status}
-        value={filters.status}
-        options={STATUS_OPTIONS}
-        onChange={(status) => {
-          onChange({ status: toStatus(status) });
-        }}
-      />
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  // Closes on a press outside the filters or Esc; the button then counts what is set there.
+  const closeMore = useCallback(() => {
+    setIsMoreOpen(false);
+  }, []);
+  const moreSet = [filters.country, filters.intake].filter((value) => value !== "").length;
+  const more = (
+    <>
       <FilterSelect
         label={TEXT.country}
+        isLabelShown
         value={filters.country}
         options={[{ value: "", label: TEXT.anyCountry }, ...countryOptions(choices.countries)]}
         onChange={(country) => {
@@ -71,6 +77,7 @@ export function VisaFilterBar(props: VisaFilterBarProps) {
       />
       <FilterSelect
         label={TEXT.intake}
+        isLabelShown
         value={filters.intake}
         options={[
           { value: "", label: TEXT.anyIntake },
@@ -81,6 +88,27 @@ export function VisaFilterBar(props: VisaFilterBarProps) {
         ]}
         onChange={(intake) => {
           onChange({ intake });
+        }}
+      />
+      <FilterSelect
+        label={TEXT.sort}
+        isLabelShown
+        value={filters.sort}
+        options={SORT_OPTIONS}
+        onChange={(sort) => {
+          onChange({ sort: toSort(sort) });
+        }}
+      />
+    </>
+  );
+  return (
+    <FilterBar label={TEXT.filters} more={isMoreOpen ? more : undefined} onMoreClose={closeMore}>
+      <FilterSelect
+        label={TEXT.status}
+        value={filters.status}
+        options={STATUS_OPTIONS}
+        onChange={(status) => {
+          onChange({ status: toStatus(status) });
         }}
       />
       <FilterSelect
@@ -103,14 +131,16 @@ export function VisaFilterBar(props: VisaFilterBarProps) {
           onChange({ appointment: toAppointmentWhen(appointment) });
         }}
       />
-      <FilterSelect
-        label={TEXT.sort}
-        value={filters.sort}
-        options={SORT_OPTIONS}
-        onChange={(sort) => {
-          onChange({ sort: toSort(sort) });
-        }}
-      />
+      {!isMoreOpen && (
+        <MoreFiltersButton
+          setCount={moreSet}
+          onClick={() => {
+            setIsMoreOpen(true);
+          }}
+        >
+          {LABELS.moreFilters}
+        </MoreFiltersButton>
+      )}
     </FilterBar>
   );
 }
