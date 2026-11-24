@@ -11,21 +11,27 @@ export function savedTitleKey(pathname: string): string {
  * title; no storage (a private window), no harm. Self-contained: it runs as the page's first
  * script, from its own text.
  */
-export function keepSavedTitle(prefix: string): void {
-  try {
-    const keep = () => {
+export function keepSavedTitle(prefix: string): () => void {
+  const keep = () => {
+    // Storage can be refused at any time (a private window, blocked site data): never throw.
+    try {
       const saved = localStorage.getItem(prefix + location.pathname);
       if (saved !== null && document.title !== saved) document.title = saved;
-    };
-    keep();
-    new MutationObserver(keep).observe(document.documentElement, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-    });
-  } catch {
-    // No storage: the product name shows for a moment.
-  }
+    } catch {
+      // The product name shows for a moment.
+    }
+  };
+  keep();
+  const watcher = new MutationObserver(keep);
+  watcher.observe(document.documentElement, {
+    subtree: true,
+    childList: true,
+    characterData: true,
+  });
+  // The page never stops it; tests do.
+  return () => {
+    watcher.disconnect();
+  };
 }
 
 /** keepSavedTitle as a script for the page's <head>, run before anything is drawn. */
