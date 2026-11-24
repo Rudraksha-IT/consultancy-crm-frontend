@@ -118,6 +118,19 @@ async function rowFor(name: string): Promise<HTMLElement> {
 }
 
 describe("ApplicationsPage", () => {
+  it("gives the text columns fixed shares so nothing spills or scrolls sideways (list tidy-ups 17)", async () => {
+    backend(listing(), choices, counsellors);
+    renderPage();
+
+    const row = await rowFor("Sita Karki");
+    const marked = [...row.querySelectorAll("[data-shrinks]")].map((cell) =>
+      cell.getAttribute("data-shrinks"),
+    );
+    expect(marked).toEqual(["large", "quarter", "medium"]);
+    expect(screen.getByRole("columnheader", { name: "Applied date" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "Applied" })).toBeNull();
+  });
+
   it("lists each Application with its Student, University, Intake, Status, counsellor and days", async () => {
     backend(listing(), choices, counsellors);
     renderPage();
@@ -141,7 +154,9 @@ describe("ApplicationsPage", () => {
     expect(screen.queryByRole("columnheader", { name: "Added" })).toBeNull();
     expect(screen.getByText("2 applications")).toBeInTheDocument();
     expect(
-      screen.getByText("Applied is the day the application was added, recorded automatically."),
+      screen.getByText(
+        "Applied date is the day the application was added, recorded automatically.",
+      ),
     ).toBeInTheDocument();
   });
 

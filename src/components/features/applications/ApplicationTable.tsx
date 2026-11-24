@@ -73,7 +73,7 @@ function ApplicationRow({ application, selection }: ApplicationRowProps) {
         id={application.id}
         name={TEXT.rowName(student.name, university.name)}
       />
-      <DataCell part="title" shrinks="medium" className={CELL}>
+      <DataCell part="title" shrinks="large" className={CELL}>
         <Link
           href={ROUTES.student(student.id)}
           className="text-ink hover:text-accent min-h-control inline-flex max-w-full items-center font-semibold underline-offset-4 hover:underline"
@@ -84,7 +84,7 @@ function ApplicationRow({ application, selection }: ApplicationRowProps) {
           {student.email === "" ? student.phone : student.email}
         </OneLine>
       </DataCell>
-      <DataCell part="line" shrinks="large" className={CELL}>
+      <DataCell part="line" shrinks="quarter" className={CELL}>
         <OneLine block className="font-semibold">
           {university.name}
         </OneLine>
@@ -100,7 +100,7 @@ function ApplicationRow({ application, selection }: ApplicationRowProps) {
           {applicationStatusText(application.status, application.offerKind)}
         </Chip>
       </DataCell>
-      <DataCell label={TEXT.counsellor} shrinks="small" className={CELL}>
+      <DataCell label={TEXT.counsellor} shrinks="medium" className={CELL}>
         {assignedCounsellor === null ? (
           <Chip tone="warn">{TEXT.notAssigned}</Chip>
         ) : (

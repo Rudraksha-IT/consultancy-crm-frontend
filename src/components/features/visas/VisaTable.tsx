@@ -77,7 +77,7 @@ function VisaRow({ visa, selection, onOpenDocuments }: VisaRowProps) {
   return (
     <DataRow opensPage className="hover:bg-fill max-tablet:grid max-tablet:gap-3 max-tablet:p-5">
       <SelectRowCell selection={selection} id={visa.id} name={student.name} />
-      <DataCell part="title" shrinks="medium" className={CELL}>
+      <DataCell part="title" shrinks="large" className={CELL}>
         <Link
           href={ROUTES.student(student.id)}
           className="text-ink hover:text-accent min-h-control inline-flex max-w-full items-center font-semibold underline-offset-4 hover:underline"
@@ -88,7 +88,7 @@ function VisaRow({ visa, selection, onOpenDocuments }: VisaRowProps) {
           {student.phone}
         </div>
       </DataCell>
-      <DataCell part="line" shrinks="large" className={CELL}>
+      <DataCell part="line" shrinks="quarter" className={CELL}>
         <OneLine block className="font-semibold">
           {COUNTRY_LABELS[university.country]}
         </OneLine>
@@ -109,7 +109,7 @@ function VisaRow({ visa, selection, onOpenDocuments }: VisaRowProps) {
           onOpen={onOpenDocuments}
         />
       </DataCell>
-      <DataCell label={TEXT.counsellor} shrinks="small" className={CELL}>
+      <DataCell label={TEXT.counsellor} shrinks="medium" className={CELL}>
         {assignedCounsellor === null ? (
           <Chip tone="warn">{TEXT.notAssigned}</Chip>
         ) : (
