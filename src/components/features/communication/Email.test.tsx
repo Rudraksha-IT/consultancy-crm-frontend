@@ -842,6 +842,6 @@ describe("the email windows are wide (list tidy-ups 28)", () => {
     // As wide as the screen, less its 1rem edges.
     expect(css).toMatch(/--container-composer: 100%;/);
     // The writer: wide but not as tall as the screen.
-    expect(css).toMatch(/--spacing-composer: min\(46rem, calc\(100dvh - 2rem\)\);/);
+    expect(css).toMatch(/--spacing-composer: min\(38rem, calc\(100dvh - 2rem\)\);/);
   });
 });
