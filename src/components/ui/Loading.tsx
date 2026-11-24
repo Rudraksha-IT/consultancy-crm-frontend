@@ -1,11 +1,11 @@
 "use client";
 
 import clsx from "clsx";
+import { useEffect, useState } from "react";
 
 import { MESSAGES } from "@/constants/messages";
 
 import { LogoLoader } from "./LogoLoader";
-import { usePageLoading } from "./pageLoad";
 
 type LoadingProps = {
   /**
@@ -18,8 +18,8 @@ type LoadingProps = {
 
 /** Something is loading: the logo animation, with "Loading…" for screen readers (list tidy-ups 06). */
 export function Loading({ size = "panel", className }: LoadingProps) {
-  // While its page loads, the one loader in the middle stands for the box's (list tidy-ups 27).
-  const isPageLoading = usePageLoading();
+  // A box's loader shows only once its data has taken over 1 s (list tidy-ups 27).
+  const isSlow = useIsSlow(size === "panel");
   return (
     <div
       role="status"
@@ -30,10 +30,28 @@ export function Loading({ size = "panel", className }: LoadingProps) {
         className,
       )}
     >
-      <span className={clsx("contents", isPageLoading && size === "panel" && "invisible")}>
+      <span className={clsx("contents", !isSlow && "invisible")}>
         <LogoLoader size={size} />
       </span>
       <span className="sr-only">{MESSAGES.loading}</span>
     </div>
   );
+}
+
+/** How long a box waits before showing its loader: quick loads show none. */
+const SLOW_MS = 1000;
+
+/** True once `SLOW_MS` has passed; at once when `waits` is false. */
+function useIsSlow(waits: boolean): boolean {
+  const [isSlow, setIsSlow] = useState(!waits);
+  useEffect(() => {
+    if (!waits) return undefined;
+    const timer = setTimeout(() => {
+      setIsSlow(true);
+    }, SLOW_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [waits]);
+  return isSlow;
 }

@@ -41,7 +41,6 @@ type ShellFrameProps = {
  * at the bottom on phones (design system: Phones).
  */
 export function ShellFrame({ context, children }: ShellFrameProps) {
-  const pathname = usePathname();
   useTabTitle(context.consultancy.name, context.staff.role);
   // A Platform Admin has no account here to save it in (issue 27): it lasts for the visit.
   const colourMode = useSavedColourMode(
@@ -59,7 +58,7 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
   return (
     <ShellThemeContext value={shellTheme}>
       {/* A reload covers the whole app with one loader (list tidy-ups 27). */}
-      <PageLoadProvider page={pathname}>
+      <PageLoadProvider>
         <div
           className={clsx(
             "grid min-h-full transition-[grid-template-columns]",

@@ -131,10 +131,10 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
   });
 });
 
-describe("one loader in the middle while a page loads (list tidy-ups 27)", () => {
+describe("a reload's cover, and box loaders only when slow (list tidy-ups 27)", () => {
   function App({ page = "/", loading }: { page?: string; loading: readonly string[] }) {
     return (
-      <PageLoadProvider page={page}>
+      <PageLoadProvider>
         <h1>Page</h1>
         {loading.map((box) => (
           <Loading key={`${page}-${box}`} />
@@ -143,9 +143,10 @@ describe("one loader in the middle while a page loads (list tidy-ups 27)", () =>
     );
   }
   const cover = () => document.querySelector("[data-reload-cover]");
-  const middle = () => document.querySelector("[data-page-loader]");
-  const boxMarks = () => [...document.querySelectorAll("svg[data-size=panel]")];
-  const shownBoxMarks = () => boxMarks().filter((mark) => !mark.closest(".invisible"));
+  const shownBoxMarks = () =>
+    [...document.querySelectorAll("svg[data-size=panel]")].filter(
+      (mark) => !mark.closest(".invisible"),
+    );
   const tick = (ms: number) => {
     act(() => {
       vi.advanceTimersByTime(ms);
@@ -161,67 +162,42 @@ describe("one loader in the middle while a page loads (list tidy-ups 27)", () =>
     vi.restoreAllMocks();
   });
 
-  it("covers the app after a reload, the page loading behind it, its boxes showing no loader", () => {
-    render(<App loading={["progress", "money"]} />);
+  it("covers the app for 2 s after a reload while the page loads behind it", () => {
+    render(<App loading={["progress"]} />);
 
     expect(cover()).toHaveClass("fixed", "inset-0", "bg-canvas");
     expect(cover()?.querySelector("svg")).toHaveAttribute("data-size", "page");
     expect(screen.getByRole("heading", { name: "Page" })).toBeInTheDocument();
-    expect(boxMarks()).toHaveLength(2);
-    expect(shownBoxMarks()).toEqual([]);
-  });
-
-  it("lifts the cover 2 s after the reload, the one loader staying while boxes still load", () => {
-    const { rerender } = render(<App loading={["progress", "money"]} />);
     tick(1_600);
     expect(cover()).not.toBeNull();
     tick(200);
-
     expect(cover()).toBeNull();
-    expect(middle()).not.toBeNull();
-    expect(shownBoxMarks()).toEqual([]);
-
-    rerender(<App loading={["money"]} />);
-    tick(0);
-    expect(middle()).not.toBeNull();
-    rerender(<App loading={[]} />);
-    tick(0);
-    expect(middle()).toBeNull();
   });
 
-  it("shows one loader in the middle on another page only after 1 s, the boxes none", () => {
+  it("shows a box's loader in the box, still loading after the cover", () => {
+    render(<App loading={["progress"]} />);
+    tick(2_000);
+
+    expect(shownBoxMarks()).toHaveLength(1);
+  });
+
+  it("shows nothing in a box that loads within 1 s, as when moving between pages", () => {
     const { rerender } = render(<App loading={[]} />);
     tick(2_000);
 
     rerender(<App page="/students" loading={["list", "counts"]} />);
-    expect(cover()).toBeNull();
-    expect(middle()).toBeNull();
-    tick(1_000);
-
-    expect(middle()).not.toBeNull();
+    tick(900);
     expect(shownBoxMarks()).toEqual([]);
+    expect(document.querySelector("[data-page-loader]")).toBeNull();
+
+    tick(100);
+    expect(shownBoxMarks()).toHaveLength(2);
   });
 
-  it("shows a box's own loader once its page has loaded, as for a tab inside the page", () => {
-    const { rerender } = render(<App page="/documents" loading={["list"]} />);
-    tick(2_000);
-    rerender(<App page="/documents" loading={[]} />);
-    tick(0);
+  it("shows a page's own loader straight away", () => {
+    render(<Loading size="page" />);
 
-    rerender(<App page="/documents" loading={["bin"]} />);
-
-    expect(middle()).toBeNull();
-    expect(shownBoxMarks()).toHaveLength(1);
-  });
-
-  it("never keeps the middle loader more than 8 s", () => {
-    const { rerender } = render(<App loading={[]} />);
-    tick(2_000);
-    rerender(<App page="/students" loading={["stuck"]} />);
-
-    tick(8_000);
-
-    expect(middle()).toBeNull();
-    expect(shownBoxMarks()).toHaveLength(1);
+    expect(screen.getByRole("status").querySelector("svg")).not.toHaveClass("invisible");
+    expect(screen.getByRole("status").querySelector(".invisible")).toBeNull();
   });
 });
