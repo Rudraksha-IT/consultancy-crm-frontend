@@ -293,8 +293,11 @@ describe("EmailComposer to one Student", () => {
     const form = within(dialog).getByRole("textbox", { name: "Subject" }).closest("form");
     const show = within(dialog).getByRole("group", { name: "Show" });
 
-    expect(form).toHaveClass("gap-3", "py-4");
-    expect(within(dialog).getByRole("textbox", { name: "Message" })).toHaveAttribute("rows", "8");
+    expect(form).toHaveClass("gap-3", "py-4", "flex", "flex-col");
+    // The message fills the spare height, so the files sit at the bottom (list tidy-ups 33).
+    const message = within(dialog).getByRole("textbox", { name: "Message" });
+    expect(message.closest("[data-message-fills]")).toHaveClass("flex-1", "min-h-48");
+    expect(form?.lastElementChild).toHaveAccessibleName("Attached files");
     expect(show).not.toHaveClass("bg-fill-2");
     expect(within(show).getByRole("button", { name: "Write" })).toHaveClass("border-b-2");
     expect(within(show).getByRole("button", { name: "Write" })).toHaveAttribute(

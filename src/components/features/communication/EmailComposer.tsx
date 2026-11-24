@@ -122,7 +122,7 @@ function Composer({
             noValidate
             onSubmit={handleSubmit}
             className={clsx(
-              "phone:px-8 grid min-h-0 content-start gap-3 overflow-y-auto overscroll-contain px-4 py-4",
+              "phone:px-8 flex min-h-0 flex-col gap-3 overflow-y-auto overscroll-contain px-4 py-4",
               draft.pane === "preview" && "hidden",
             )}
           >
@@ -193,16 +193,22 @@ function ComposerFields({ draft, sending, hint }: ComposerFieldsProps) {
         }}
         errors={draft.subjectError === null ? fieldErrors.subject : [draft.subjectError]}
       />
-      <TextAreaField
-        label={TEXT.message}
-        name="body"
-        rows={8}
-        placeholder={TEXT.messagePlaceholder}
-        value={draft.body}
-        onChange={draft.setBody}
-        hint={hint}
-        errors={fieldErrors.body}
-      />
+      {/* The message fills the spare height, so the files sit at the bottom (list tidy-ups 33). */}
+      <div
+        data-message-fills=""
+        className="flex min-h-48 flex-1 flex-col *:flex-1 *:grid-rows-[auto_minmax(0,1fr)] *:content-stretch [&_textarea]:h-full [&_textarea]:resize-none"
+      >
+        <TextAreaField
+          label={TEXT.message}
+          name="body"
+          rows={8}
+          placeholder={TEXT.messagePlaceholder}
+          value={draft.body}
+          onChange={draft.setBody}
+          hint={hint}
+          errors={fieldErrors.body}
+        />
+      </div>
       {draft.isEdited && (
         <div ref={startAgainRow} className="-mt-3 flex justify-end">
           <Button
