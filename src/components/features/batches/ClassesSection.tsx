@@ -11,8 +11,8 @@ import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Loading } from "@/components/ui/Loading";
 import { BATCH_TEXT, ClassesTab } from "@/constants/batches";
-import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import type { Batch, EnrolledStudent } from "@/lib/api";
 
@@ -88,7 +88,7 @@ type ClassButtonsProps = {
 };
 
 function ClassButtons({ state, classes, onPeek }: ClassButtonsProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status !== "loaded") return <Banner tone="problem">{BATCH_TEXT.listFailed}</Banner>;
   if (classes.length === 0) {
     return (
@@ -133,7 +133,7 @@ type EnrolledTableProps = {
 
 /** Each Student in a class, the classes they're in, and how much they attended. */
 function EnrolledTable({ state, onPeek }: EnrolledTableProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status !== "loaded") return <Banner tone="problem">{BATCH_TEXT.enrolledFailed}</Banner>;
   const { students } = state.data;
   return (

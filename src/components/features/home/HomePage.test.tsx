@@ -474,11 +474,11 @@ describe("The Counsellor's Home", () => {
     expect(progress.queryByText(/furthest along/)).toBeNull();
   });
 
-  it("says when they have no Students yet", async () => {
+  it("says when no Student is on their way, finished ones left out (list tidy-ups 14)", async () => {
     backend(on("GET", PROGRESS_MINE, { count: 0, results: [] }), ...EVERYTHING);
     renderHome(COUNSELLOR);
 
-    expect(await screen.findByText("No Students yet.")).toBeInTheDocument();
+    expect(await screen.findByText("No Students on their way right now.")).toBeInTheDocument();
   });
 
   it("has no Classes while test-prep classes are off", async () => {

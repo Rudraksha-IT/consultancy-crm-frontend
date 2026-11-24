@@ -34,7 +34,10 @@ export function plainEmailText(firstName: string | null, sender: string, office:
   return `${greeting}\n\n\n\nKind regards,\n${sender}\n${office}`;
 }
 
-/** The eight ready-made emails (ticket 09), in the order offered; values match the API. */
+/**
+ * The nine ready-made emails (ticket 09), in the order offered; values match the API. Checking in
+ * asks a Lost Student whether they want to carry on, or what happened (list tidy-ups 34).
+ */
 export const READY_MADE_KINDS = [
   "welcome",
   "documents_needed",
@@ -43,29 +46,22 @@ export const READY_MADE_KINDS = [
   "offer_received",
   "visa_result",
   "class_details",
+  "checking_in",
   "plain",
 ] as const;
 export type ReadyMadeKind = (typeof READY_MADE_KINDS)[number];
 
-/** Each ready-made email's name and what it says (prototype: the composer's Email row). */
-export const READY_MADE: Record<ReadyMadeKind, { name: string; what: string }> = {
-  welcome: { name: "Welcome", what: "Greets them by name and names their counsellor" },
-  documents_needed: {
-    name: "Documents needed",
-    what: "The documents still missing from their checklist",
-  },
-  payment_received: {
-    name: "Payment received",
-    what: "Amount, Fee Type, date and method",
-  },
-  fee_reminder: { name: "Fee reminder", what: "Their fees, what they paid and what is left" },
-  offer_received: {
-    name: "Offer received",
-    what: "The University, Course and Intake of an offer",
-  },
-  visa_result: { name: "Visa result", what: "Granted or Refused, in the right tone" },
-  class_details: { name: "Class details", what: "A class's days, time and start date" },
-  plain: { name: "Plain email", what: "Only the greeting and sign-off" },
+/** Each ready-made email's name (prototype: the composer's Email row). */
+export const READY_MADE: Record<ReadyMadeKind, { name: string }> = {
+  welcome: { name: "Welcome" },
+  documents_needed: { name: "Documents needed" },
+  payment_received: { name: "Payment received" },
+  fee_reminder: { name: "Fee reminder" },
+  offer_received: { name: "Offer received" },
+  visa_result: { name: "Visa result" },
+  class_details: { name: "Class details" },
+  checking_in: { name: "Checking in" },
+  plain: { name: "Plain email" },
 };
 
 /** What a ready-made email is about, picked beside it; values match the API. */
@@ -149,8 +145,6 @@ export const COMMUNICATION_TEXT = {
   readyMade: "Email",
   readyMadeOption: (name: string, unavailable: string | null) =>
     unavailable === null ? name : `${name} (${unavailable.toLowerCase()})`,
-  readyMadeHint: (what: string) =>
-    `${what}. Choosing another email replaces the subject line and message.`,
   startAgain: "Start again",
   readyMadeFailed:
     "The ready-made emails couldn't be loaded. You can still write the email yourself.",
@@ -162,10 +156,9 @@ export const COMMUNICATION_TEXT = {
   openOfficeDetails: "Open Office details",
   findAStudent: "Find a Student",
   findPlaceholder: "Name, phone or email",
-  pickOneHint:
-    "Choose who to email. Lost Students and Students without an email address can't be chosen.",
+  pickOneHint: "Choose who to email. Students without an email address can't be chosen.",
   pickManyHint:
-    'Tick everyone who should get it. Each gets their own copy, starting "Dear Student,". Lost Students and Students without an email address can\'t be chosen.',
+    'Tick everyone who should get it. Each gets their own copy, starting "Dear Student,". Students without an email address can\'t be chosen.',
   noEmail: "No email address",
   chosenCount: (count: number) =>
     count === 1 ? "1 Student chosen" : `${String(count)} Students chosen`,
@@ -173,6 +166,7 @@ export const COMMUNICATION_TEXT = {
   clear: "Clear",
   remove: (name: string) => `Remove ${name}`,
   nextWrite: "Next: write the email",
+  studentsList: "Students",
   noMatch: (search: string) => `No Student matches “${search}”.`,
   searchFailed: "The Students couldn't be loaded. Try again.",
   loadingStudents: "Loading Students…",

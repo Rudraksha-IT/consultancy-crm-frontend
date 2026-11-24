@@ -36,7 +36,6 @@ export function ReadyMadeRow({ text }: { text: ComposerText }) {
           label: TEXT.readyMadeOption(READY_MADE[entry.kind].name, entry.unavailable),
           isDisabled: entry.unavailable !== null,
         }))}
-        hint={TEXT.readyMadeHint(READY_MADE[choice.kind].what)}
       />
       {chosen !== undefined && <RecordPicker entry={chosen} text={text} />}
       {text.hasDraftFailed && (

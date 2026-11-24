@@ -754,6 +754,25 @@ describe("an eye on Home's money (ticket 13)", () => {
     return screen.getByRole("button", { name });
   }
 
+  it("sits right after the title, slightly bigger than other icons (list tidy-ups 13)", async () => {
+    onHomeMoney();
+    const { glance } = await openHome();
+
+    const title = within(glance).getByRole("heading", { name: "This month at a glance" });
+    const button = eye("Show amounts");
+    expect(title.nextElementSibling).toBe(button);
+    expect(button.querySelector("svg")).toHaveClass("size-6");
+  });
+
+  it("shows a crossed-out eye while hidden and an open eye while shown (list tidy-ups 16)", async () => {
+    onHomeMoney();
+    await openHome();
+
+    expect(eye("Show amounts").querySelector("svg")).toHaveAttribute("data-icon", "eyeOff");
+    await userEvent.click(eye("Show amounts"));
+    expect(eye("Hide amounts").querySelector("svg")).toHaveAttribute("data-icon", "eye");
+  });
+
   it("hides every amount at first, keeping names, counts and labels", async () => {
     onHomeMoney();
     const { glance, owes } = await openHome();

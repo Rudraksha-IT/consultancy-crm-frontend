@@ -783,8 +783,9 @@ describe("Offices being set up (issue 60)", () => {
     renderList();
 
     const row = within(await findRow("Acme Education"));
-    const chip = row.getByText("Setting up");
-    expect(chip.querySelector("svg")).not.toBeNull();
+    // The word sits in its own span inside the chip (list tidy-ups 17).
+    const chip = row.getByText("Setting up").parentElement;
+    expect(chip?.querySelector("svg")).not.toBeNull();
     expect(row.queryByText("Active")).not.toBeInTheDocument();
     expect(
       row.getByText("Its features, colours and status can be changed once it is set up."),
@@ -858,8 +859,9 @@ describe("Offices being set up (issue 60)", () => {
     });
     renderList();
     const row = within(await findRow("Acme Education"));
-    const chip = row.getByText("Setup failed");
-    expect(chip.querySelector("svg")).not.toBeNull();
+    // The word sits in its own span inside the chip (list tidy-ups 17).
+    const chip = row.getByText("Setup failed").parentElement;
+    expect(chip?.querySelector("svg")).not.toBeNull();
     expect(row.getByRole("button", { name: "Change status" })).toBeDisabled();
 
     await userEvent.click(row.getByRole("button", { name: "Try again" }));

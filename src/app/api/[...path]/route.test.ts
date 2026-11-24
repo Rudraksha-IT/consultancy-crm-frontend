@@ -1,4 +1,5 @@
 // @vitest-environment node
+import { revalidateTag } from "next/cache";
 import { z } from "zod";
 
 import {
@@ -12,6 +13,8 @@ import {
 import { DELETE, GET, HEAD, OPTIONS, PATCH, POST, PUT } from "./route";
 import { TEST_PRODUCT_DOMAIN, testHost } from "@/test/hosts";
 import { uid } from "@/test/ids";
+
+vi.mock("next/cache", () => ({ cacheLife: vi.fn(), cacheTag: vi.fn(), revalidateTag: vi.fn() }));
 
 const TOKEN = "a-test-internal-token-that-is-32-chars-or-more";
 const BROWSER_HOST = `${testHost("acme")}:8080`;
@@ -2538,5 +2541,42 @@ describe("the browser a login comes from (issue 71)", () => {
     const text = JSON.stringify(logged());
     expect(text).not.toContain(key);
     expect(text).not.toContain("Chrome/130");
+  });
+});
+
+describe("a changed product name shows at once (list tidy-ups 05)", () => {
+  const NAME_PATH = "/api/platform/brand/name/";
+  const PLATFORM = { host: testHost("admin"), origin: `http://${testHost("admin")}` };
+
+  afterEach(() => {
+    vi.mocked(revalidateTag).mockClear();
+  });
+
+  it("drops the kept name once Django accepts a new one, so the next page has it", async () => {
+    fakeBackend(() => Response.json({ name: "Acme Office Suite" }));
+
+    const response = await PUT(
+      incoming(NAME_PATH, { method: "PUT", body: '{"name":"Acme Office Suite"}', ...PLATFORM }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(revalidateTag).toHaveBeenCalledExactlyOnceWith("product-name", { expire: 0 });
+  });
+
+  it("keeps the name when Django refuses the change", async () => {
+    fakeBackend(() => Response.json({ name: ["Enter the product's name."] }, { status: 400 }));
+
+    await PUT(incoming(NAME_PATH, { method: "PUT", body: '{"name":""}', ...PLATFORM }));
+
+    expect(revalidateTag).not.toHaveBeenCalled();
+  });
+
+  it("keeps the name for any other call", async () => {
+    fakeBackend();
+
+    await GET(incoming("/api/platform/brand/", PLATFORM));
+    await PUT(incoming("/api/platform/brand/in-use/", { method: "PUT", body: "{}", ...PLATFORM }));
+
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });

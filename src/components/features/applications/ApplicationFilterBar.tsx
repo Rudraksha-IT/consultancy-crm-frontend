@@ -1,10 +1,13 @@
 "use client";
 
-import { FilterBar } from "@/components/ui/FilterBar";
+import { useCallback, useState } from "react";
+
+import { FilterBar, MoreFiltersButton } from "@/components/ui/FilterBar";
 import { FilterSelect } from "@/components/ui/FilterSelect";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { counsellorFilterOptions } from "@/components/features/students/counsellorFilter";
 import type { SelectOption } from "@/components/ui/SelectField";
+import { LABELS } from "@/constants/messages";
 import {
   APPLICATION_LIST_TEXT as TEXT,
   APPLICATION_SORTS,
@@ -47,12 +50,65 @@ const SORT_OPTIONS: SelectOption[] = APPLICATION_SORTS.map((sort) => ({
   label: APPLICATION_SORT_LABELS[sort],
 }));
 
-/** Search, then Status, Intake, intake year, country, counsellor and the order (spec 57a). */
+/**
+ * Search, Status, counsellor and the order on one line; Intake, intake year and country under
+ * More filters, as on Students (spec 57a, list tidy-ups 03).
+ */
 export function ApplicationFilterBar(props: ApplicationFilterBarProps) {
   const { filters, onChange, choices } = props;
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  // Closes on a press outside the filters or Esc; the button then counts what is set there.
+  const closeMore = useCallback(() => {
+    setIsMoreOpen(false);
+  }, []);
+  const moreSet = [filters.intake, filters.year, filters.country].filter(
+    (value) => value !== "",
+  ).length;
+  const more = (
+    <>
+      <FilterSelect
+        label={TEXT.intake}
+        isLabelShown
+        value={filters.intake}
+        options={[
+          { value: "", label: TEXT.anyIntake },
+          ...withCurrent(choices.intakes, filters.intake).map((intake) => ({
+            value: intake,
+            label: formatIntake(intake),
+          })),
+        ]}
+        onChange={(intake) => {
+          onChange({ intake });
+        }}
+      />
+      <FilterSelect
+        label={TEXT.year}
+        isLabelShown
+        value={filters.year}
+        options={[
+          { value: "", label: TEXT.anyYear },
+          ...withCurrent(choices.years, filters.year).map((year) => ({ value: year, label: year })),
+        ]}
+        onChange={(year) => {
+          onChange({ year });
+        }}
+      />
+      <FilterSelect
+        label={TEXT.country}
+        isLabelShown
+        value={filters.country}
+        options={[{ value: "", label: TEXT.anyCountry }, ...countryOptions(choices.countries)]}
+        onChange={(country) => {
+          onChange({ country: toCountry(country) });
+        }}
+      />
+    </>
+  );
   return (
     <FilterBar
       label={TEXT.filters}
+      more={isMoreOpen ? more : undefined}
+      onMoreClose={closeMore}
       search={
         <SearchBox
           label={TEXT.search}
@@ -68,39 +124,6 @@ export function ApplicationFilterBar(props: ApplicationFilterBarProps) {
         options={STATUS_OPTIONS}
         onChange={(status) => {
           onChange({ status: toStatus(status) });
-        }}
-      />
-      <FilterSelect
-        label={TEXT.intake}
-        value={filters.intake}
-        options={[
-          { value: "", label: TEXT.anyIntake },
-          ...withCurrent(choices.intakes, filters.intake).map((intake) => ({
-            value: intake,
-            label: formatIntake(intake),
-          })),
-        ]}
-        onChange={(intake) => {
-          onChange({ intake });
-        }}
-      />
-      <FilterSelect
-        label={TEXT.year}
-        value={filters.year}
-        options={[
-          { value: "", label: TEXT.anyYear },
-          ...withCurrent(choices.years, filters.year).map((year) => ({ value: year, label: year })),
-        ]}
-        onChange={(year) => {
-          onChange({ year });
-        }}
-      />
-      <FilterSelect
-        label={TEXT.country}
-        value={filters.country}
-        options={[{ value: "", label: TEXT.anyCountry }, ...countryOptions(choices.countries)]}
-        onChange={(country) => {
-          onChange({ country: toCountry(country) });
         }}
       />
       <FilterSelect
@@ -123,6 +146,16 @@ export function ApplicationFilterBar(props: ApplicationFilterBarProps) {
           onChange({ sort: toSort(sort) });
         }}
       />
+      {!isMoreOpen && (
+        <MoreFiltersButton
+          setCount={moreSet}
+          onClick={() => {
+            setIsMoreOpen(true);
+          }}
+        >
+          {LABELS.moreFilters}
+        </MoreFiltersButton>
+      )}
     </FilterBar>
   );
 }

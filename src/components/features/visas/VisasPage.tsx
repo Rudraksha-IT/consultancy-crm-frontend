@@ -1,13 +1,9 @@
 "use client";
 
-import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { counsellorWords } from "@/components/features/exports/counsellorWords";
 import { ExportButton } from "@/components/features/exports/ExportButton";
-import { SelectAllStrip } from "@/components/features/exports/SelectionCells";
-import { SelectionBar } from "@/components/features/exports/SelectionBar";
-import { useRowSelection, type RowSelection } from "@/components/features/exports/useRowSelection";
 import { ChecklistDialog } from "@/components/features/documents/ChecklistDialog";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { canBeAssignedStudents } from "@/components/features/students/counsellorFilter";
@@ -73,7 +69,6 @@ function VisaList({ role, initialAppointment }: VisaListProps) {
   const choices = useVisaFilterChoices();
   const counsellors = useCounsellorChoices();
   const list = useVisaList(filters, page, version);
-  const selection = useRowSelection(visaIds(list));
 
   return (
     <>
@@ -99,7 +94,6 @@ function VisaList({ role, initialAppointment }: VisaListProps) {
           list={list}
           isFiltered={hasAnyVisaFilter(filters)}
           onPage={setPage}
-          selection={selection}
           onOpenDocuments={(visa) => {
             setChecklistOf(visa.student);
           }}
@@ -123,10 +117,9 @@ type ListContentProps = {
   isFiltered: boolean;
   onPage: (page: number) => void;
   onOpenDocuments: (visa: OfficeVisa) => void;
-  selection: RowSelection;
 };
 
-function ListContent({ list, isFiltered, onPage, onOpenDocuments, selection }: ListContentProps) {
+function ListContent({ list, isFiltered, onPage, onOpenDocuments }: ListContentProps) {
   if (list.status === "loading") return <p className="text-ink-2 p-6">{TEXT.loading}</p>;
   if (list.status === "failed") {
     return (
@@ -141,17 +134,6 @@ function ListContent({ list, isFiltered, onPage, onOpenDocuments, selection }: L
   }
   return (
     <>
-      <SelectionBar
-        selected={visas
-          .filter((visa) => selection.isSelected(visa.id))
-          .map(({ student }) => ({
-            studentId: student.id,
-            email: student.email,
-            phone: student.phone,
-          }))}
-        onClear={selection.clear}
-      />
-      <SelectAllStrip selection={selection} />
       {/* All seven columns fit: long names and courses are cut with … and dates may wrap
           (ui/DataTable `shrinks`, `wraps`). The box only scrolls as a last resort, never the page. `relative` keeps the hidden column labels
           inside it too. */}
@@ -161,7 +143,7 @@ function ListContent({ list, isFiltered, onPage, onOpenDocuments, selection }: L
         tabIndex={0}
         className="relative min-w-0 overflow-x-auto focus-visible:-outline-offset-4"
       >
-        <VisaTable visas={visas} onOpenDocuments={onOpenDocuments} selection={selection} />
+        <VisaTable visas={visas} onOpenDocuments={onOpenDocuments} />
       </div>
       <Pager
         summary={TEXT.count(count)}
@@ -172,10 +154,6 @@ function ListContent({ list, isFiltered, onPage, onOpenDocuments, selection }: L
       />
     </>
   );
-}
-
-function visaIds(list: VisaListState): RecordId[] {
-  return list.status === "loaded" ? list.page.visas.map((visa) => visa.id) : [];
 }
 
 type VisasExportProps = {

@@ -34,6 +34,13 @@ export class TooManyTestEmailsError extends Error {
   }
 }
 
+// The sender, shown as text: one "@" between a name and a host, no spaces or markup. A host
+// without a dot is allowed, as a local copy sends from no-reply@localhost (list tidy-ups 11).
+const SENDER = z
+  .string()
+  .max(254)
+  .regex(/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+$/);
+
 // A correlation ID: letters, digits and dashes only; anything else is dropped.
 const REFERENCE = /^[A-Za-z0-9-]{1,64}$/;
 
@@ -44,7 +51,7 @@ const PlatformEmailSchema = z
       tested_at: z.iso.datetime({ offset: true }).nullable(),
       reference: z.string().regex(REFERENCE).nullable().catch(null),
     }),
-    from_address: z.email(),
+    from_address: SENDER,
     product_name: z.string().min(1).max(100),
     sent_to: z.email(),
   })

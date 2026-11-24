@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from "react";
 
 import { buttonClasses, type ButtonSize, type ButtonVariant } from "./buttonStyles";
+import { LogoLoader } from "./LogoLoader";
 import { Icon, type IconName } from "./Icon";
 
 type ButtonProps = {
@@ -74,12 +75,14 @@ export function Button(props: ButtonProps) {
       data-variant={variant}
       className={buttonClasses(variant, size)}
     >
-      <ButtonIcon icon={icon} />
+      <ButtonIcon icon={icon} isLoading={isLoading} />
       {isLoading ? (loadingLabel ?? children) : children}
     </button>
   );
 }
 
-function ButtonIcon({ icon }: { icon: IconName | undefined }) {
+/** The button's icon; while it works, the small logo loader instead (list tidy-ups 06). */
+function ButtonIcon({ icon, isLoading }: { icon: IconName | undefined; isLoading: boolean }) {
+  if (isLoading) return <LogoLoader size="button" />;
   return icon === undefined ? null : <Icon name={icon} size="sm" />;
 }

@@ -9,7 +9,7 @@ import { Panel } from "@/components/ui/Panel";
 import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { useToast } from "@/components/ui/useToast";
-import { MESSAGES } from "@/constants/messages";
+import { Loading } from "@/components/ui/Loading";
 import { PLATFORM_TEAM_TEXT as TEXT } from "@/constants/platformTeam";
 import {
   reactivatePlatformAdmin,
@@ -118,7 +118,7 @@ type AdminsListProps = {
 };
 
 function AdminsList({ state, onResend, onDeactivate, onReactivate }: AdminsListProps) {
-  if (state.kind === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.kind === "loading") return <Loading />;
   if (state.kind === "failed") {
     return (
       <p role="alert" className="text-bad font-semibold">

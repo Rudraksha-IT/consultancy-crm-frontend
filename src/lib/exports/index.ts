@@ -1,5 +1,4 @@
-import type { RecordId } from "@/lib/recordId";
-import { ContactKind, type ExportList } from "@/constants/exports";
+import type { ExportList } from "@/constants/exports";
 
 /** A list's filters as the export endpoint takes them: the list's own query, minus the page. */
 export type ExportFilters = Record<string, string | string[]>;
@@ -33,31 +32,4 @@ export type FilterWords = readonly [label: string, value: string];
 export function describeFilters(filters: readonly FilterWords[], none: string): string {
   const set = filters.filter(([, value]) => value.trim() !== "");
   return set.length === 0 ? none : set.map(([label, value]) => `${label}: ${value}`).join(", ");
-}
-
-/** One selected row's Student, for copying. */
-export type Contact = { studentId: RecordId; email: string; phone: string };
-
-/** What a Copy button copies: the text, how many values, and how many Students had none. */
-export type CopiedContacts = { text: string; count: number; missing: number };
-
-/**
- * The emails (joined with ", ") or phones (one per line) of the selected rows' Students. Each
- * Student counts once however many of their rows are ticked; empty and repeated values are left
- * out.
- */
-export function contactsToCopy(rows: readonly Contact[], kind: ContactKind): CopiedContacts {
-  const students = [...new Map(rows.map((row) => [row.studentId, row])).values()];
-  const all = students.map((row) => contactOf(row, kind));
-  const values = [...new Set(all.filter((value) => value !== ""))];
-  const separator = kind === ContactKind.Email ? ", " : "\n";
-  return {
-    text: values.join(separator),
-    count: values.length,
-    missing: all.length - all.filter(Boolean).length,
-  };
-}
-
-function contactOf(row: Contact, kind: ContactKind): string {
-  return (kind === ContactKind.Email ? row.email : row.phone).trim();
 }

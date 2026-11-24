@@ -16,13 +16,13 @@ import { PanelFoot } from "@/components/ui/PanelFoot";
 import { Section } from "@/components/ui/Section";
 import { SelectField } from "@/components/ui/SelectField";
 import { useToast } from "@/components/ui/useToast";
+import { Loading } from "@/components/ui/Loading";
 import {
   COMMISSION_STATUS_LABELS,
   COMMISSION_STATUSES,
   COMMISSION_TEXT,
   CommissionStatus,
 } from "@/constants/commission";
-import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import {
   changeCommissionStatus,
@@ -117,7 +117,7 @@ type CommissionBodyProps = {
 };
 
 function CommissionBody({ state, failure, addButton, onPage, onStatus }: CommissionBodyProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") {
     return <Banner tone="problem">{COMMISSION_TEXT.listFailed}</Banner>;
   }

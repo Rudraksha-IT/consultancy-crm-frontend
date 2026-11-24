@@ -40,7 +40,7 @@ export function EmailPreview({
       aria-label={TEXT.preview}
       className={clsx(
         "bg-fill max-phone:p-4 min-h-0 overflow-y-auto overscroll-contain p-6",
-        isHiddenWhenNarrow && "max-tablet:hidden",
+        isHiddenWhenNarrow && "hidden",
       )}
     >
       <p className="text-small text-ink-2 font-semibold">{TEXT.previewOf(whose)}</p>

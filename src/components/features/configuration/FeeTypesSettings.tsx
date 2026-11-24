@@ -33,7 +33,7 @@ export function FeeTypesSettings() {
   return (
     <Section title={TEXT.title}>
       <div className="grid gap-4">
-        <p className="text-ink-2">{TEXT.help}</p>
+        <p className="text-small text-ink-2">{TEXT.help}</p>
         {state.status === "loading" && <p className="text-ink-2">{TEXT.loading}</p>}
         {state.status === "failed" && <Banner tone="problem">{TEXT.loadFailed}</Banner>}
         {state.status === "loaded" && <Loaded types={state.types} feeTypes={feeTypes} />}

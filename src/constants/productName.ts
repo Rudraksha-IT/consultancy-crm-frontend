@@ -9,11 +9,15 @@ export const PRODUCT_NAME = {
   expireSeconds: 3_600,
   timeoutMs: 3_000,
   backendPath: "/api/platform/brand/",
+  /** Where a Platform Admin saves a new name; once Django accepts it, the kept name is dropped. */
+  changePath: "/api/platform/brand/name/",
+  /** The tag the kept name carries, so a saved change drops it at once (list tidy-ups 05). */
+  cacheTag: "product-name",
 } as const;
 
 export const PRODUCT_NAME_TEXT = {
   title: "Product name",
-  help: "Shown in every browser tab, on the login screens, at the top of the Platform and in its emails. Offices see a change within about a minute.",
+  help: "Shown in every browser tab, on the login screens, at the top of the Platform and in its emails. Offices see a change on their next page.",
   label: "Product name",
   hint: "At most 40 characters: letters, numbers, spaces and . - & ' ( ) +",
   save: "Save name",

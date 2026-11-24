@@ -26,7 +26,7 @@ export function ExportsSettings() {
   return (
     <Section title={EXPORT_TEXT.exports}>
       <div className="grid gap-4">
-        <p className="text-ink-2">{EXPORT_TEXT.exportsHelp}</p>
+        <p className="text-small text-ink-2">{EXPORT_TEXT.exportsHelp}</p>
         <Panel>
           <Records records={records} onPage={setPage} />
         </Panel>

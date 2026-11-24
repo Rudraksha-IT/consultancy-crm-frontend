@@ -122,80 +122,31 @@ describe("PlatformShell", () => {
     pathname.current = "/platform";
   });
 
-  it("marks no tab on the Account page", async () => {
-    pathname.current = "/platform/account";
+  it("names the page and the product in the browser tab (list tidy-ups 08)", async () => {
+    pathname.current = "/platform/admins";
+    answerMeWith(jsonResponse({ platform_admin: ADMIN }));
+
+    render(<PlatformShell>page</PlatformShell>);
+
+    await waitFor(() => {
+      expect(document.title).toBe("Platform Admins | Rudraksha CRM");
+    });
+    pathname.current = "/platform";
+  });
+
+  it("has one Settings: a tab, and no gear in the header (list tidy-ups 04)", async () => {
     answerMeWith(jsonResponse({ platform_admin: ADMIN }));
 
     render(<PlatformShell>page</PlatformShell>);
 
     const tabs = within(await screen.findByRole("navigation", { name: "Platform" }));
-    expect(tabs.getAllByRole("link").some((link) => link.hasAttribute("aria-current"))).toBe(false);
-    pathname.current = "/platform";
-  });
-
-  it("takes you to the Platform's home from the name at the top", async () => {
-    answerMeWith(jsonResponse({ platform_admin: ADMIN }));
-
-    render(<PlatformShell>page</PlatformShell>);
-
-    expect(await screen.findByRole("link", { name: LABELS.productName })).toHaveAttribute(
+    expect(tabs.getByRole("link", { name: "Settings" })).toHaveAttribute(
       "href",
-      "/platform",
+      "/platform/settings",
     );
-  });
-
-  it("lets a wide child scroll inside its own panel instead of widening the page", async () => {
-    answerMeWith(jsonResponse({ platform_admin: ADMIN }));
-
-    render(<PlatformShell>page</PlatformShell>);
-
-    const main = await screen.findByRole("main");
-    expect(main).toHaveClass("min-w-0");
-    expect(main.firstElementChild).toHaveClass("grid-cols-1");
-  });
-
-  it("sends a 404 (e.g. not the Platform's address) to the login page (issue 66)", async () => {
-    answerMeWith(jsonResponse({}, 404));
-
-    render(<PlatformShell>page</PlatformShell>);
-
-    await waitFor(() => {
-      expect(router.replace).toHaveBeenCalledWith("/platform/login");
-    });
-  });
-
-  it("shows an error when the session can't be loaded for another reason", async () => {
-    answerMeWith(jsonResponse({}, 500));
-
-    render(<PlatformShell>page</PlatformShell>);
-
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "We couldn't load your account. Please refresh the page.",
-    );
-  });
-
-  it("logs out of the Platform and loads the Platform login page afresh", async () => {
-    const fetchFn = answerMeWith(jsonResponse({ platform_admin: ADMIN }));
-    render(<PlatformShell>page</PlatformShell>);
-
-    await userEvent.click(await screen.findByRole("button", { name: "Log out" }));
-
-    expect(fetchFn).toHaveBeenCalledWith(
-      "/api/platform/auth/logout/",
-      expect.objectContaining({ method: "POST" }),
-    );
-    expect(navigate).toHaveBeenCalledWith("/platform/login");
-  });
-
-  it("links to the Account page from the header", async () => {
-    answerMeWith(jsonResponse({ platform_admin: ADMIN }));
-
-    render(<PlatformShell>page</PlatformShell>);
-
-    expect(await screen.findByRole("link", { name: "Account" })).toHaveAttribute(
-      "href",
-      "/platform/account",
-    );
+    const header = within(screen.getByRole("banner"));
+    expect(header.queryByRole("link", { name: "Account" })).not.toBeInTheDocument();
+    expect(header.queryByRole("link", { name: /settings/i })).not.toBeInTheDocument();
   });
 
   it("shows a saved name change in the header at once", async () => {

@@ -6,8 +6,8 @@ import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Banner } from "@/components/ui/Banner";
 import { Section } from "@/components/ui/Section";
 import { StageCards } from "@/components/ui/StageCards";
+import { Loading } from "@/components/ui/Loading";
 import { HOME_TEXT } from "@/constants/home";
-import { MESSAGES } from "@/constants/messages";
 import { Module } from "@/constants/modules";
 import { ROUTES } from "@/constants/routes";
 import type { Stage } from "@/constants/stages";
@@ -34,7 +34,7 @@ export function PipelineSection() {
   ) : undefined;
   return (
     <Section title={HOME_TEXT.pipeline} aside={charts}>
-      {state.status === "loading" && <p className="text-ink-2">{MESSAGES.loading}</p>}
+      {state.status === "loading" && <Loading />}
       {state.status === "failed" && <Banner tone="problem">{HOME_TEXT.pipelineFailed}</Banner>}
       {state.status === "loaded" && <StageCards counts={state.data} hrefFor={studentsAtStage} />}
     </Section>

@@ -10,7 +10,7 @@ import { fakeMatchMedia } from "@/test/matchMedia";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { PlatformAdminContext } from "../platformAdminContext";
-import { PlatformAccountPage } from "./PlatformAccountPage";
+import { PlatformSettingsPage } from "./PlatformSettingsPage";
 
 const ADMIN: PlatformAdmin = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 const ME_PATH = "/api/platform/me/";
@@ -23,16 +23,16 @@ function renderPage(admin: PlatformAdmin = ADMIN) {
   render(
     <PlatformAdminContext value={{ admin, setAdmin }}>
       <ToastProvider>
-        <PlatformAccountPage />
+        <PlatformSettingsPage />
       </ToastProvider>
     </PlatformAdminContext>,
   );
   return { setAdmin };
 }
 
-/** Opens a section from the Account page's section menu, one section shown at a time. */
+/** Opens a section from Settings' section menu, one section shown at a time (list tidy-ups 04). */
 function openSection(name: string): HTMLElement {
-  const menu = screen.getByRole("navigation", { name: "Account" });
+  const menu = screen.getByRole("navigation", { name: "Settings" });
   const item = within(menu).getByRole("button", { name });
   if (item.getAttribute("aria-current") !== "true") fireEvent.click(item);
   return screen.getByRole("region", { name });
@@ -72,19 +72,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("PlatformAccountPage", () => {
-  it("has a menu of My details, Password and Security, with My details open first", () => {
+describe("Platform Settings: my account", () => {
+  it("keeps My details, Password and Security in Settings, after the product's parts", () => {
     backend();
     renderPage();
 
-    const menu = screen.getByRole("navigation", { name: "Account" });
+    const menu = screen.getByRole("navigation", { name: "Settings" });
     expect(
       within(menu)
         .getAllByRole("button")
-        .map((item) => item.textContent),
+        .map((item) => item.textContent)
+        .slice(-3),
     ).toEqual(["My details", "Password", "Security"]);
-    expect(screen.getByRole("region", { name: "My details" })).toBeVisible();
-    expect(screen.queryByRole("region", { name: "Password" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "My details" })).not.toBeInTheDocument();
+    expect(detailsSection()).toBeVisible();
   });
 
   it("starts at the list of sections at phone width", () => {
@@ -100,23 +101,19 @@ describe("PlatformAccountPage", () => {
 
     expect(screen.queryByRole("region", { name: "My details" })).not.toBeInTheDocument();
     expect(passwordSection()).toBeVisible();
-    expect(screen.getByRole("button", { name: "All of Account" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "All of Settings" })).toBeVisible();
   });
 
   it("shows my name ready to change and my email as text that can't be changed", () => {
     renderPage();
 
-    expect(screen.getByRole("heading", { level: 1, name: "Account" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Settings" })).toBeInTheDocument();
     const section = within(detailsSection());
     expect(section.getByLabelText("Name")).toHaveValue("Platform Ops");
     expect(section.queryByRole("textbox", { name: "Email" })).not.toBeInTheDocument();
     expect(section.getByText("ops@platform.test")).toBeInTheDocument();
     expect(section.getByText("Your email can't be changed here.")).toBeInTheDocument();
     expect(section.queryByLabelText("Current password")).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Consultancies" })).toHaveAttribute(
-      "href",
-      "/platform",
-    );
   });
 
   it("saves a new name without a password and shows it everywhere", async () => {
@@ -245,7 +242,7 @@ function securitySection(): HTMLElement {
   return openSection("Security");
 }
 
-describe("PlatformAccountPage: two-step login (issue 61)", () => {
+describe("Platform Settings: my account: two-step login (issue 61)", () => {
   it("shows that two-step login is off, as a word", async () => {
     backend(on("GET", TWO_FACTOR_PATH, OFF));
     renderPage();
@@ -354,19 +351,22 @@ describe("PlatformAccountPage: two-step login (issue 61)", () => {
   });
 });
 
-describe.each(THEME_CASES)("PlatformAccountPage in the $name Theme", ({ config, mode }) => {
-  beforeEach(() => {
-    applyThemeCase(config, mode);
-  });
-  afterEach(resetTheme);
+describe.each(THEME_CASES)(
+  "Platform Settings: my account in the $name Theme",
+  ({ config, mode }) => {
+    beforeEach(() => {
+      applyThemeCase(config, mode);
+    });
+    afterEach(resetTheme);
 
-  it("renders both sections with labelled fields", async () => {
-    backend(on("GET", TWO_FACTOR_PATH, ON));
-    renderPage();
+    it("renders both sections with labelled fields", async () => {
+      backend(on("GET", TWO_FACTOR_PATH, ON));
+      renderPage();
 
-    expect(await within(securitySection()).findByText("On")).toBeInTheDocument();
-    expect(detailsSection()).toBeInTheDocument();
-    expect(passwordSection()).toBeInTheDocument();
-    expect(within(passwordSection()).getByLabelText("Current password")).toBeInTheDocument();
-  });
-});
+      expect(await within(securitySection()).findByText("On")).toBeInTheDocument();
+      expect(detailsSection()).toBeInTheDocument();
+      expect(passwordSection()).toBeInTheDocument();
+      expect(within(passwordSection()).getByLabelText("Current password")).toBeInTheDocument();
+    });
+  },
+);

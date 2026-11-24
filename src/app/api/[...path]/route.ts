@@ -9,6 +9,7 @@ import {
   methodNotAllowed,
   refusal,
 } from "@/lib/backend";
+import { dropProductNameIfChanged } from "@/lib/brand/productName";
 import { getServerConfig, type ServerConfig } from "@/lib/config";
 
 /**
@@ -21,7 +22,9 @@ async function forward(request: Request): Promise<Response> {
   // Limited per browser address too: the Platform's reset and Join (63, 65), the email step (66).
   const limited = limitPlatformPasswordReset(request) ?? limitLoginStep(request);
   if (limited !== null) return limited;
-  return forwardToBackend(request, { config });
+  const answer = await forwardToBackend(request, { config });
+  dropProductNameIfChanged(request, answer);
+  return answer;
 }
 
 /** Startup already refuses a bad environment (src/instrumentation.ts); this is the fallback. */

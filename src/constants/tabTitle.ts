@@ -13,7 +13,15 @@ export const OTHER_PAGE_NAMES: Readonly<Record<string, string>> = {
   [ROUTES.join]: "Join",
 };
 
+/** The Platform's pages by where they start (list tidy-ups 08); the longest match wins. */
+export const PLATFORM_PAGE_NAMES: Readonly<Record<string, string>> = {
+  [ROUTES.platformHome]: "Consultancies",
+  [ROUTES.platformAdmins]: "Platform Admins",
+  [ROUTES.platformSettings]: "Settings",
+};
+
 export const TAB_TITLE = {
-  home: (office: string, product: string) => `${office} - ${product}`,
+  /** Home reads like every other page, "Home | <office>" (list tidy-ups 07). */
+  homeName: "Home",
   page: (page: string, office: string) => `${page} | ${office}`,
 } as const;

@@ -17,8 +17,8 @@ import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
 import { useToast } from "@/components/ui/useToast";
+import { Loading } from "@/components/ui/Loading";
 import { FEE_TEXT } from "@/constants/fees";
-import { MESSAGES } from "@/constants/messages";
 import { PAYMENT_TEXT } from "@/constants/payments";
 import { describeFeeType, fetchStudentFees, type Fee, type StudentFees as Fees } from "@/lib/api";
 import { formatNpr } from "@/lib/money";
@@ -47,7 +47,7 @@ export function StudentFees(props: StudentFeesProps) {
   const [version, setVersion] = useState(0);
   const load = useCallback(() => fetchStudentFees(props.student.id), [props.student.id]);
   const state = useLoaded(load, version);
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{FEE_TEXT.feesFailed}</Banner>;
   return (
     <LoadedFees

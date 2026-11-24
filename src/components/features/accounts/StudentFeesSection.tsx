@@ -22,9 +22,9 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { RowItem } from "@/components/ui/RowItem";
 import { RowList } from "@/components/ui/RowList";
 import { useToast } from "@/components/ui/useToast";
+import { Loading } from "@/components/ui/Loading";
 import { FEE_TEXT } from "@/constants/fees";
 import { FEES_BY_TYPE_TEXT } from "@/constants/feesByType";
-import { MESSAGES } from "@/constants/messages";
 import { PAYMENT_TEXT } from "@/constants/payments";
 import { ROUTES } from "@/constants/routes";
 import {
@@ -87,7 +87,7 @@ type OwingBodyProps = {
 };
 
 function OwingBody({ state, onPage, onDetails }: OwingBodyProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{FEE_TEXT.owingFailed}</Banner>;
   const page = state.data;
   return (
@@ -289,7 +289,7 @@ function FeeDetailsDialog({ student, onClose, onAdd, onPayment }: FeeDetailsDial
         </>
       }
     >
-      {state.status === "loading" && <p className="text-ink-2">{MESSAGES.loading}</p>}
+      {state.status === "loading" && <Loading />}
       {state.status === "failed" && <Banner tone="problem">{FEE_TEXT.feesFailed}</Banner>}
       {state.status === "loaded" && (
         <div className="grid gap-6">

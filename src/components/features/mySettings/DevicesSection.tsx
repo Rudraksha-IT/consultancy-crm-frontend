@@ -9,7 +9,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
 import { useToast } from "@/components/ui/useToast";
-import { MESSAGES } from "@/constants/messages";
+import { Loading } from "@/components/ui/Loading";
 import { MY_SETTINGS_TEXT as TEXT } from "@/constants/mySettings";
 import { fetchSignedInDevices, signOutOtherDevices, type SignedInDevice } from "@/lib/api";
 import { localDayIso } from "@/lib/dates";
@@ -60,11 +60,7 @@ export function DevicesSection() {
 
   return (
     <Panel isPadded>
-      {state.status === "loading" ? (
-        <p className="text-ink-2">{MESSAGES.loading}</p>
-      ) : (
-        <DeviceList devices={state.devices} />
-      )}
+      {state.status === "loading" ? <Loading /> : <DeviceList devices={state.devices} />}
       {problem !== null && <Banner tone="problem">{problem}</Banner>}
       <div>
         <Button

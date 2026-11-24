@@ -27,7 +27,7 @@ export function OfficeLogoSettings() {
   return (
     <Section title={LOGO_TEXT.title}>
       <div className="grid gap-4">
-        <p className="text-ink-2">{LOGO_TEXT.help}</p>
+        <p className="text-small text-ink-2">{LOGO_TEXT.help}</p>
         <Panel isPadded>
           <div className="grid gap-5">
             <div

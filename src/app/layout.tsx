@@ -4,6 +4,7 @@ import { Public_Sans } from "next/font/google";
 import { ProductNameProvider } from "@/components/features/brand/ProductName";
 import { TAB_ICON } from "@/constants/tabIcon";
 import { getProductName } from "@/lib/brand/productName";
+import { KEEP_TITLE_SCRIPT } from "@/lib/keptTitle";
 
 import "./globals.css";
 
@@ -27,6 +28,10 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const productName = await getProductName();
   return (
     <html lang="en" className={`h-full ${publicSans.variable}`}>
+      <head>
+        {/* The page's own tab title from the start of a reload (list tidy-ups 30). */}
+        <script dangerouslySetInnerHTML={{ __html: KEEP_TITLE_SCRIPT }} />
+      </head>
       <body className="min-h-full">
         <ProductNameProvider name={productName}>{children}</ProductNameProvider>
       </body>

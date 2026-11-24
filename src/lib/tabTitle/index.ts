@@ -1,1 +1,1 @@
-export { tabTitle } from "./tabTitle";
+export { platformTabTitle, tabTitle } from "./tabTitle";

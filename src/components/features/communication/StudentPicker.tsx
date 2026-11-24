@@ -9,10 +9,9 @@ import { IconButton } from "@/components/ui/IconButton";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { COMMUNICATION_TEXT as TEXT } from "@/constants/communication";
 import { LABELS } from "@/constants/messages";
-import { STAGE_LABELS, Stage } from "@/constants/stages";
+import { STAGE_LABELS } from "@/constants/stages";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { fetchStudents, type StudentRow } from "@/lib/api";
-import { NO_STUDENT_FILTERS } from "@/lib/students";
+import { fetchStudentsByName, type StudentRow } from "@/lib/api";
 
 import type { EmailRecipient } from "./recipients";
 
@@ -49,9 +48,13 @@ export function StudentPicker({ mode, chosen, note, onPick, onClose }: StudentPi
     <Dialog
       isOpen
       isWide
+      hasSmallText
       title={WORDS[mode].title}
       onClose={onClose}
-      footer={<PickerFooter isMany={isMany} ticked={ticked} onPick={onPick} onClose={onClose} />}
+      // One Student: the × closes it. Many: Cancel and Next stay at the top (list tidy-ups 28).
+      headerAside={
+        isMany ? <PickerActions ticked={ticked} onPick={onPick} onClose={onClose} /> : undefined
+      }
     >
       <p className="text-secondary text-ink-2">{WORDS[mode].hint}</p>
       {note !== null && <Banner tone="info">{note}</Banner>}
@@ -93,43 +96,40 @@ const WORDS = {
   many: { title: TEXT.emailManyStudents, hint: TEXT.pickManyHint },
 } as const;
 
-type PickerFooterProps = {
-  isMany: boolean;
+type PickerActionsProps = {
   ticked: readonly EmailRecipient[];
   onPick: (recipients: readonly EmailRecipient[]) => void;
   onClose: () => void;
 };
 
-/** Cancel, and for many "Next: write the email" once someone is ticked. */
-function PickerFooter({ isMany, ticked, onPick, onClose }: PickerFooterProps) {
+/** Cancel, and "Next: write the email" once someone is ticked. */
+function PickerActions({ ticked, onPick, onClose }: PickerActionsProps) {
   return (
-    <>
+    <div className="max-phone:*:flex-1 flex flex-wrap gap-3">
       <Button onClick={onClose}>{LABELS.cancel}</Button>
-      {isMany && (
-        <Button
-          variant="primary"
-          icon="right"
-          isDisabled={ticked.length === 0}
-          onClick={() => {
-            onPick(ticked);
-          }}
-        >
-          {TEXT.nextWrite}
-        </Button>
-      )}
-    </>
+      <Button
+        variant="primary"
+        icon="right"
+        isDisabled={ticked.length === 0}
+        onClick={() => {
+          onPick(ticked);
+        }}
+      >
+        {TEXT.nextWrite}
+      </Button>
+    </div>
   );
 }
 
 type FoundState =
   { status: "loading" } | { status: "loaded"; students: StudentRow[] } | { status: "failed" };
 
-/** The first page of Students matching `search` (everyone, by name, when it is empty). */
+/** The first page of Students matching `search` (everyone when it is empty), A to Z. */
 function useFound(search: string): FoundState {
   const [state, setState] = useState<FoundState>({ status: "loading" });
   useEffect(() => {
     let isCancelled = false;
-    fetchStudents({ ...NO_STUDENT_FILTERS, search }, 1).then(
+    fetchStudentsByName(search).then(
       (page) => {
         if (!isCancelled) setState({ status: "loaded", students: page.students });
       },
@@ -144,12 +144,13 @@ function useFound(search: string): FoundState {
   return state;
 }
 
+/** Anyone with an address; Lost Students too, to ask whether they want to carry on (34). */
 function isChoosable(student: StudentRow): boolean {
-  return student.email !== "" && student.stage !== Stage.Lost;
+  return student.email !== "";
 }
 
-function recipientOf({ id, name, email }: StudentRow): EmailRecipient {
-  return { id, name, email };
+function recipientOf({ id, name, email, stage }: StudentRow): EmailRecipient {
+  return { id, name, email, stage };
 }
 
 type ChosenProps = {
@@ -161,7 +162,7 @@ type ChosenProps = {
 /** How many are chosen, each with a way to take them out, and Clear. */
 function Chosen({ ticked, onRemove, onClear }: ChosenProps) {
   return (
-    <div className="bg-fill rounded-control grid gap-3 px-4 py-3">
+    <div className="bg-fill rounded-control grid gap-2 px-3 py-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-secondary font-semibold" aria-live="polite">
           {ticked.length === 0 ? TEXT.nobodyChosen : TEXT.chosenCount(ticked.length)}
@@ -177,12 +178,13 @@ function Chosen({ ticked, onRemove, onClear }: ChosenProps) {
           {ticked.map((student) => (
             <li
               key={student.id}
-              className="bg-paper rounded-control text-secondary flex min-w-0 items-center gap-1 py-0.5 pr-0.5 pl-3"
+              className="bg-paper rounded-control text-small flex min-w-0 items-center gap-1 pl-2.5"
             >
               <span className="min-w-0 truncate">{student.name}</span>
               <IconButton
                 icon="x"
                 label={TEXT.remove(student.name)}
+                iconSize="sm"
                 onClick={() => {
                   onRemove(student);
                 }}
@@ -209,7 +211,11 @@ function Found({ found, search, isMany, ticked, onPick, onToggle }: FoundProps) 
   if (found.status === "failed") return <Banner tone="problem">{TEXT.searchFailed}</Banner>;
   if (found.students.length === 0) return <p className="text-ink-2">{TEXT.noMatch(search)}</p>;
   return (
-    <ul className="border-rule divide-rule grid divide-y border-y">
+    // Only the list scrolls; the search and the chosen names stay put (list tidy-ups 28).
+    <ul
+      aria-label={TEXT.studentsList}
+      className="border-rule divide-rule max-h-picker-list grid divide-y overflow-y-auto overscroll-contain border-y"
+    >
       {found.students.map((student) => (
         <li key={student.id}>
           {isMany ? (
@@ -265,7 +271,7 @@ function StudentLine({ student }: { student: StudentRow }) {
   return (
     <span className="grid min-w-0 flex-1 gap-0.5">
       <span className="text-ink truncate font-semibold">{student.name}</span>
-      <span className="text-small text-ink-2 truncate">
+      <span className="text-tiny text-ink-2 truncate">
         {student.email === "" ? TEXT.noEmail : student.email} · {STAGE_LABELS[student.stage]}
       </span>
     </span>

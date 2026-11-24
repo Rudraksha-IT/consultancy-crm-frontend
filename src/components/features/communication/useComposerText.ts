@@ -221,7 +221,10 @@ function useDraft(
   return failed;
 }
 
-/** The email asked for if it can be used, else the first that can (Plain email last of all). */
+/**
+ * The email asked for if it can be used, else the first that can (Plain email last of all).
+ * Checking in is only ever asked for: for Lost Students (list tidy-ups 34).
+ */
 function firstChoice(
   entries: readonly ReadyMadeEntry[],
   startWith: StartWith | undefined,
@@ -244,7 +247,7 @@ function firstUsable(
   const usable = entries.filter((entry) => entry.unavailable === null);
   return (
     usable.find((entry) => entry.kind === wanted) ??
-    usable.find((entry) => entry.kind !== "plain") ??
+    usable.find((entry) => entry.kind !== "plain" && entry.kind !== "checking_in") ??
     usable.find((entry) => entry.kind === "plain")
   );
 }

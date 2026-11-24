@@ -1,13 +1,9 @@
 "use client";
 
-import type { RecordId } from "@/lib/recordId";
 import { useState, type ReactNode } from "react";
 
 import { counsellorWords } from "@/components/features/exports/counsellorWords";
 import { ExportButton } from "@/components/features/exports/ExportButton";
-import { SelectAllStrip } from "@/components/features/exports/SelectionCells";
-import { SelectionBar } from "@/components/features/exports/SelectionBar";
-import { useRowSelection, type RowSelection } from "@/components/features/exports/useRowSelection";
 import { EmailFlow } from "@/components/features/communication/EmailFlow";
 import { canMessageStudents } from "@/components/features/communication/canMessage";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
@@ -17,6 +13,7 @@ import { ButtonLink } from "@/components/ui/ButtonLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
+import { Loading } from "@/components/ui/Loading";
 import { COMMUNICATION_TEXT } from "@/constants/communication";
 import { EXPORT_TEXT } from "@/constants/exports";
 import { LABELS, MESSAGES } from "@/constants/messages";
@@ -118,7 +115,6 @@ function StudentList({
   const counsellors = useCounsellorChoices();
   const applied = { ...filters, search: settledSearch };
   const list = useStudentList(applied, page, version);
-  const selection = useRowSelection(studentIds(list));
 
   function change(next: Partial<StudentFilters>): void {
     setFilters((current) => ({ ...current, ...next }));
@@ -178,7 +174,6 @@ function StudentList({
           isFiltered={hasAnyFilter(applied)}
           addButton={addButton}
           onPage={setPage}
-          selection={selection}
         />
       </Panel>
       {isMessaging && (
@@ -211,11 +206,10 @@ type ListContentProps = {
   isFiltered: boolean;
   addButton: ReactNode;
   onPage: (page: number) => void;
-  selection: RowSelection;
 };
 
-function ListContent({ list, isFiltered, addButton, onPage, selection }: ListContentProps) {
-  if (list.status === "loading") return <p className="text-ink-2 p-6">{MESSAGES.loading}</p>;
+function ListContent({ list, isFiltered, addButton, onPage }: ListContentProps) {
+  if (list.status === "loading") return <Loading />;
   if (list.status === "failed") {
     return (
       <div className="p-6">
@@ -233,25 +227,10 @@ function ListContent({ list, isFiltered, addButton, onPage, selection }: ListCon
   }
   return (
     <>
-      <SelectionBar
-        selected={students
-          .filter((student) => selection.isSelected(student.id))
-          .map((student) => ({
-            studentId: student.id,
-            email: student.email,
-            phone: student.phone,
-          }))}
-        onClear={selection.clear}
-      />
-      <SelectAllStrip selection={selection} />
-      <StudentTable students={students} selection={selection} />
+      <StudentTable students={students} />
       <StudentPager count={count} page={page} pageSize={pageSize} onPage={onPage} />
     </>
   );
-}
-
-function studentIds(list: StudentListState): RecordId[] {
-  return list.status === "loaded" ? list.page.students.map((student) => student.id) : [];
 }
 
 type StudentsExportProps = {

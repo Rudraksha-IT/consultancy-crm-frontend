@@ -26,8 +26,8 @@ import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { SelectField } from "@/components/ui/SelectField";
+import { Loading } from "@/components/ui/Loading";
 import { COMMISSION_TEXT } from "@/constants/commission";
-import { MESSAGES } from "@/constants/messages";
 import { EXPORT_TEXT } from "@/constants/exports";
 import { FEE_TYPE_TEXT } from "@/constants/feeTypes";
 import { ACCOUNTS_TEXT, PAYMENT_TEXT } from "@/constants/payments";
@@ -266,7 +266,7 @@ type PaymentsProps = {
 };
 
 function Payments({ state, onPage, onChanged }: PaymentsProps) {
-  if (state.status === "loading") return <p className="text-ink-2 px-6 py-5">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "refused") return null;
   if (state.status === "failed") {
     return (

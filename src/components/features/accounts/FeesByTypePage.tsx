@@ -13,8 +13,8 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
 import { TileGrid } from "@/components/ui/TileGrid";
+import { Loading } from "@/components/ui/Loading";
 import { FEES_BY_TYPE_TEXT as TEXT } from "@/constants/feesByType";
-import { MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { fetchFeesByType, type FeesByType } from "@/lib/api";
 import { formatNpr } from "@/lib/money";
@@ -52,7 +52,7 @@ function FeesByTypeBody() {
         subtitle={TEXT.intro}
         crumbs={<BackLink href={ROUTES.home}>{TEXT.home}</BackLink>}
       />
-      {state.status === "loading" && <p className="text-ink-2">{MESSAGES.loading}</p>}
+      {state.status === "loading" && <Loading />}
       {state.status === "failed" && <Banner tone="problem">{TEXT.failed}</Banner>}
       {state.status === "loaded" && <Figures found={state.data} />}
     </div>

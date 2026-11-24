@@ -56,12 +56,14 @@ const MENU = {
     { kind: "offer_received", record: "offer", records: [], unavailable: "No offer letters yet" },
     { kind: "visa_result", record: "visa", records: [], unavailable: "No visa result yet" },
     { kind: "class_details", record: "batch", records: CLASSES, unavailable: null },
+    { kind: "checking_in", record: null, records: [], unavailable: "Only for Lost Students" },
     { kind: "plain", record: null, records: [], unavailable: null },
   ],
 };
 const BULK_MENU = {
   kinds: [
     { kind: "class_details", record: "batch", records: CLASSES, unavailable: null },
+    { kind: "checking_in", record: null, records: [], unavailable: null },
     { kind: "plain", record: null, records: [], unavailable: null },
   ],
 };
@@ -84,6 +86,12 @@ const PAID_9 = {
 const CLASS = {
   subject: "Your class: IELTS Morning",
   body: "Dear Student,\n\nClass: IELTS Morning\n\nKind regards,\nBikash Thapa\nAcme Education",
+  attachments: [],
+};
+
+const CHECKING_IN = {
+  subject: "Checking in from Acme Education",
+  body: "Dear Student,\n\nWe haven't heard from you in a while.\n\nKind regards,\nBikash Thapa",
   attachments: [],
 };
 
@@ -140,12 +148,12 @@ describe("Ready-made emails to one Student", () => {
     });
     expect(kind()).toHaveValue("welcome");
     expect(message()).toHaveValue(WELCOME.body);
-    expect(screen.getByText(/Greets them by name and names their counsellor\./)).toHaveTextContent(
-      "Choosing another email replaces the subject line and message.",
-    );
+    // No note under the choice (list tidy-ups 32).
+    expect(screen.queryByText(/Choosing another email replaces/)).toBeNull();
+    expect(screen.queryByText(/Greets them by name/)).toBeNull();
   });
 
-  it("offers all eight, greying out those that can't be used with the reason", async () => {
+  it("offers all nine, greying out those that can't be used with the reason", async () => {
     oneStudentBackend();
     const { kind, subject } = renderComposer();
     await waitFor(() => {
@@ -161,6 +169,7 @@ describe("Ready-made emails to one Student", () => {
       "Offer received (no offer letters yet)",
       "Visa result (no visa result yet)",
       "Class details",
+      "Checking in (only for lost students)",
       "Plain email",
     ]);
     expect(within(kind()).getByRole("option", { name: /^Offer received/ })).toBeDisabled();
@@ -387,8 +396,51 @@ describe("Ready-made emails to many Students", () => {
       within(kind())
         .getAllByRole("option")
         .map((o) => o.textContent),
-    ).toEqual(["Class details", "Plain email"]);
+    ).toEqual(["Class details", "Checking in", "Plain email"]);
     expect(within(dialog).getByRole("combobox", { name: "Class" })).toHaveValue(uid(3));
+  });
+
+  it("opens on Checking in when every Student chosen is Lost (list tidy-ups 34)", async () => {
+    backend(
+      on("GET", BULK_MENU_PATH, BULK_MENU),
+      on("GET", draftPath(BULK_DRAFT_PATH, "checking_in"), CHECKING_IN),
+    );
+    const { kind, subject } = renderComposer({
+      recipients: [
+        { ...SITA, stage: "lost" },
+        { ...HARI, stage: "lost" },
+      ],
+      isBulk: true,
+    });
+
+    await waitFor(() => {
+      expect(subject()).toHaveValue(CHECKING_IN.subject);
+    });
+    expect(kind()).toHaveValue("checking_in");
+  });
+
+  it("never opens on Checking in when someone chosen isn't Lost, even with no class", async () => {
+    const plain = { subject: "", body: "Dear Student,\n\n\n\nKind regards", attachments: [] };
+    const noClass = {
+      kinds: BULK_MENU.kinds.map((entry) =>
+        entry.kind === "class_details"
+          ? { ...entry, records: [], unavailable: "No classes yet" }
+          : entry,
+      ),
+    };
+    backend(
+      on("GET", BULK_MENU_PATH, noClass),
+      on("GET", draftPath(BULK_DRAFT_PATH, "plain"), plain),
+    );
+    const { kind, message } = renderComposer({
+      recipients: [{ ...SITA, stage: "lost" }, HARI],
+      isBulk: true,
+    });
+
+    await waitFor(() => {
+      expect(message()).toHaveValue(plain.body);
+    });
+    expect(kind()).toHaveValue("plain");
   });
 
   it("asks the backend for the Plain email when it is chosen", async () => {

@@ -57,4 +57,19 @@ describe("StudentProfileRoute", () => {
 
     expect(fetchFn).toHaveBeenCalledWith(`/api/students/${uid(7)}/`, expect.anything());
   });
+
+  it("shows the page loader in the middle of the screen while the Student loads (list tidy-ups 21)", () => {
+    vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockReturnValue(new Promise(() => undefined)));
+
+    render(
+      <StaffContextContext value={ADMIN}>
+        <ToastProvider>
+          <StudentProfileRoute idText={uid(7)} />
+        </ToastProvider>
+      </StaffContextContext>,
+    );
+
+    const loader = document.querySelector('[role="status"] svg.logo-loader');
+    expect(loader).toHaveAttribute("data-size", "page");
+  });
 });

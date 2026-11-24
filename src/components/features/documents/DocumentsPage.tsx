@@ -9,9 +9,11 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FigureTile } from "@/components/ui/FigureTile";
 import { TileGrid } from "@/components/ui/TileGrid";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { TabsRow } from "@/components/ui/TabsRow";
 import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Loading } from "@/components/ui/Loading";
 import { BIN_TEXT, DOCUMENT_TEXT, PaperworkScope } from "@/constants/documents";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
@@ -90,7 +92,7 @@ function AdminDocuments({ initialTab, onlyWaiting }: AdminDocumentsProps) {
   return (
     <div className="grid gap-8">
       <PageHeader title={DOCUMENT_TEXT.pageTitle} subtitle={DOCUMENT_TEXT.pageIntro} />
-      {tabs}
+      <TabsRow tabs={tabs} note={BIN_TEXT.binIntro} />
       <BinTab
         state={bin}
         onPage={setBinPage}
@@ -175,7 +177,7 @@ type PaperworkContentProps = {
 };
 
 function PaperworkContent({ state, showsCounsellor, onOpen, onPage }: PaperworkContentProps) {
-  if (state.status === "loading") return <p className="text-ink-2">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{DOCUMENT_TEXT.pageFailed}</Banner>;
   const { page } = state;
   return (

@@ -11,6 +11,7 @@ import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { RowList } from "@/components/ui/RowList";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
+import { Loading } from "@/components/ui/Loading";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
@@ -95,7 +96,7 @@ type BoxBodyProps = {
 };
 
 function BoxBody({ state, box, onPage, onChanged }: BoxBodyProps) {
-  if (state.status === "loading") return <p className="text-ink-2 px-6 py-5">{MESSAGES.loading}</p>;
+  if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{TRANSFER_TEXT.loadFailed}</Banner>;
   const { page } = state;
   if (page.requests.length === 0) return <EmptyState>{TRANSFER_TEXT.empty[box]}</EmptyState>;

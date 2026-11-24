@@ -5,6 +5,8 @@ type SectionProps = {
   title: string;
   /** Short context or actions shown to the right of the title. */
   aside?: ReactNode;
+  /** One small control right after the title, on its left (Home's eye, list tidy-ups 13). */
+  titleAside?: ReactNode;
   /** Stretch to the height of the row it sits in, the panel growing (boxes side by side). */
   fills?: boolean;
   children: ReactNode;
@@ -22,7 +24,7 @@ function sectionClasses(fills: boolean | undefined): string {
 const IsPartContext = createContext(false);
 
 /** A titled part of a page. The title sits above the panel, never inside it. */
-export function Section({ title, aside, fills, children }: SectionProps) {
+export function Section({ title, aside, titleAside, fills, children }: SectionProps) {
   const titleId = useId();
   const isPart = use(IsPartContext);
   const Heading = isPart ? "h3" : "h2";
@@ -30,9 +32,12 @@ export function Section({ title, aside, fills, children }: SectionProps) {
   return (
     <section aria-labelledby={titleId} className={sectionClasses(fills)}>
       <div className="min-h-control flex flex-wrap items-center justify-between gap-4">
-        <Heading id={titleId} className={clsx(isPart ? "text-card-title" : "text-section-title")}>
-          {title}
-        </Heading>
+        <div className="flex min-w-0 items-center gap-1">
+          <Heading id={titleId} className={clsx(isPart ? "text-card-title" : "text-section-title")}>
+            {title}
+          </Heading>
+          {titleAside}
+        </div>
         {aside !== undefined && (
           <div className="text-secondary text-ink-2 flex flex-wrap items-center gap-4">{aside}</div>
         )}
