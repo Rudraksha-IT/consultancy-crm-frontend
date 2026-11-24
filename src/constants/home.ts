@@ -24,7 +24,8 @@ export const HOME_TEXT = {
   seeAllStudents: "See all Students",
   showingFurthest: (shown: number, count: number) =>
     `Showing the ${String(shown)} furthest along out of ${String(count)}.`,
-  noStudents: "No Students yet.",
+  // Finished Students (Visa granted) are left out, so "yet" would be wrong (list tidy-ups 14).
+  noStudents: "No Students on their way right now.",
   noCounsellorYet: "no counsellor yet",
   next: (step: string) => `Next: ${step}`,
   done: (step: string) => `Done: ${step}`,
