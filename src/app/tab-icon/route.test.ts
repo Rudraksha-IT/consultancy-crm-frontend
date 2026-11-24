@@ -65,6 +65,8 @@ describe("the app's own logo (first live fixes, ticket 07)", () => {
     expect(file).not.toMatch(/8B0A1A|F49AA3/i);
     // Thick enough to show at a tab's 16 px (list tidy-ups 29).
     expect(file).toMatch(/stroke-width="8"[^>]*d="M18 0L117 0/);
+    // All 8 lines, the top ones too.
+    expect((/stroke-width="8" d="([^"]*)"/.exec(file))?.[1]?.match(/M/g)).toHaveLength(8);
   });
 });
 
