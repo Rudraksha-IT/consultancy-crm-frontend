@@ -287,6 +287,22 @@ describe("EmailComposer to one Student", () => {
     expect(within(dialog).getByRole("textbox", { name: "Subject" })).toHaveValue("Kept");
   });
 
+  it("shows writing or the preview, one at a time at every width (list tidy-ups 32)", async () => {
+    backend();
+    const { dialog } = renderComposer();
+    const show = within(dialog).getByRole("group", { name: "Show" });
+    const form = within(dialog).getByRole("textbox", { name: "Subject" }).closest("form");
+    const preview = within(dialog).getByRole("region", { name: "Preview" });
+
+    expect(show.parentElement).not.toHaveClass("tablet:hidden");
+    expect(preview).toHaveClass("hidden");
+    expect(form).not.toHaveClass("hidden");
+    await userEvent.click(within(show).getByRole("button", { name: "Preview" }));
+
+    expect(form).toHaveClass("hidden");
+    expect(preview).not.toHaveClass("hidden");
+  });
+
   it("closes with Escape", async () => {
     backend();
     const { onClose } = renderComposer();
@@ -836,11 +852,11 @@ describe("Pre-ticked from a list or a class", () => {
 });
 
 describe("the email writer keeps its size (list tidy-ups 28)", () => {
-  it("keeps the writer at its first size: 73.75rem wide, the screen's height less 2rem", () => {
+  it("keeps the writer 73.75rem wide, a little shorter than the screen (list tidy-ups 32)", () => {
     const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
     expect(css).toMatch(/--container-composer: 73.75rem;/);
-    expect(css).toMatch(/--spacing-composer: calc\(100dvh - 2rem\);/);
+    expect(css).toMatch(/--spacing-composer: calc\(100dvh - 6rem\);/);
   });
 });
 

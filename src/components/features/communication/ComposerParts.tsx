@@ -17,10 +17,10 @@ const PANES = [
   { value: "preview", label: TEXT.preview },
 ] as const;
 
-/** Write / Preview, only below tablet width (wider, both show side by side). */
+/** Write / Preview: one shows at a time, at every width (list tidy-ups 32). */
 export function PaneToggle({ pane, onPane }: { pane: Pane; onPane: (pane: Pane) => void }) {
   return (
-    <div className="tablet:hidden">
+    <div>
       <SegmentedControl label={TEXT.show} options={PANES} value={pane} onChange={onPane} />
     </div>
   );

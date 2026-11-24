@@ -47,25 +47,16 @@ export const READY_MADE_KINDS = [
 ] as const;
 export type ReadyMadeKind = (typeof READY_MADE_KINDS)[number];
 
-/** Each ready-made email's name and what it says (prototype: the composer's Email row). */
-export const READY_MADE: Record<ReadyMadeKind, { name: string; what: string }> = {
-  welcome: { name: "Welcome", what: "Greets them by name and names their counsellor" },
-  documents_needed: {
-    name: "Documents needed",
-    what: "The documents still missing from their checklist",
-  },
-  payment_received: {
-    name: "Payment received",
-    what: "Amount, Fee Type, date and method",
-  },
-  fee_reminder: { name: "Fee reminder", what: "Their fees, what they paid and what is left" },
-  offer_received: {
-    name: "Offer received",
-    what: "The University, Course and Intake of an offer",
-  },
-  visa_result: { name: "Visa result", what: "Granted or Refused, in the right tone" },
-  class_details: { name: "Class details", what: "A class's days, time and start date" },
-  plain: { name: "Plain email", what: "Only the greeting and sign-off" },
+/** Each ready-made email's name (prototype: the composer's Email row). */
+export const READY_MADE: Record<ReadyMadeKind, { name: string }> = {
+  welcome: { name: "Welcome" },
+  documents_needed: { name: "Documents needed" },
+  payment_received: { name: "Payment received" },
+  fee_reminder: { name: "Fee reminder" },
+  offer_received: { name: "Offer received" },
+  visa_result: { name: "Visa result" },
+  class_details: { name: "Class details" },
+  plain: { name: "Plain email" },
 };
 
 /** What a ready-made email is about, picked beside it; values match the API. */
@@ -149,8 +140,6 @@ export const COMMUNICATION_TEXT = {
   readyMade: "Email",
   readyMadeOption: (name: string, unavailable: string | null) =>
     unavailable === null ? name : `${name} (${unavailable.toLowerCase()})`,
-  readyMadeHint: (what: string) =>
-    `${what}. Choosing another email replaces the subject line and message.`,
   startAgain: "Start again",
   readyMadeFailed:
     "The ready-made emails couldn't be loaded. You can still write the email yourself.",

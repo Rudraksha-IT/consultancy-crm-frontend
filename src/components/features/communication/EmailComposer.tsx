@@ -116,14 +116,14 @@ function Composer({
           />
         }
       >
-        <div className="tablet:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] grid h-full min-h-0">
+        <div className="grid h-full min-h-0">
           <form
             id={formId}
             noValidate
             onSubmit={handleSubmit}
             className={clsx(
               "phone:px-8 grid min-h-0 content-start gap-5 overflow-y-auto overscroll-contain px-4 py-6",
-              draft.pane === "preview" && "max-tablet:hidden",
+              draft.pane === "preview" && "hidden",
             )}
           >
             <ContactEmailBanner />

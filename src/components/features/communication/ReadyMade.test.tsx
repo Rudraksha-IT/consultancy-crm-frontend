@@ -140,9 +140,9 @@ describe("Ready-made emails to one Student", () => {
     });
     expect(kind()).toHaveValue("welcome");
     expect(message()).toHaveValue(WELCOME.body);
-    expect(screen.getByText(/Greets them by name and names their counsellor\./)).toHaveTextContent(
-      "Choosing another email replaces the subject line and message.",
-    );
+    // No note under the choice (list tidy-ups 32).
+    expect(screen.queryByText(/Choosing another email replaces/)).toBeNull();
+    expect(screen.queryByText(/Greets them by name/)).toBeNull();
   });
 
   it("offers all eight, greying out those that can't be used with the reason", async () => {
