@@ -1,6 +1,7 @@
 import clsx from "clsx";
 
 import { Icon } from "@/components/ui/Icon";
+import { LogoLoader } from "@/components/ui/LogoLoader";
 import { GESTURE_TEXT } from "@/constants/gestures";
 import type { PageEdge, PullHint } from "@/lib/gestures";
 import type { NavItem } from "@/lib/navigation";
@@ -12,15 +13,13 @@ type PullGapProps = {
   isLeaving: boolean;
 };
 
-const PERCENT = 100;
-
 /** Up at the top (to the previous page), down at the bottom (to the next). */
 const ARROWS = { top: "arrowUp", bottom: "arrowDown" } as const;
 
 /**
  * The gap a pull opens at the top or bottom of the page (issue 90). A little darker than the page,
- * it says where letting go will go, with a bar that fills and turns green when it is ready; the
- * words change too, so the colour never stands alone. It grows and closes smoothly with the page
+ * it says where letting go will go. The product's logo turns with the pull and opens fully once
+ * letting go will change the page (list tidy-ups 20); the words change too. It grows and closes smoothly with the page
  * (the same easing), so it never jumps with each scroll step or vanishes on letting go.
  */
 export function PullGap({ edge, hint, isLeaving }: PullGapProps) {
@@ -38,7 +37,7 @@ export function PullGap({ edge, hint, isLeaving }: PullGapProps) {
         <Icon name={ARROWS[edge]} size="sm" />
         {hintText(shown)}
       </p>
-      <PullBar isReady={shown.isReady} progress={shown.progress} />
+      <LogoLoader size="pull" pull={shown.progress} />
     </div>
   );
 }
@@ -66,19 +65,4 @@ function gapClasses(edge: PageEdge, isPulled: boolean): string {
 
 function hintText({ isReady, page }: PullHint<NavItem>): string {
   return isReady ? GESTURE_TEXT.release(page.label) : GESTURE_TEXT.keepPulling(page.label);
-}
-
-/** Fills as the pull grows; green once letting go will change the page. */
-function PullBar({ isReady, progress }: { isReady: boolean; progress: number }) {
-  return (
-    <span aria-hidden="true" className="bg-fill-2 rounded-pill block h-1 w-36 overflow-hidden">
-      <span
-        className={clsx(
-          "block h-full transition-[width,background-color] duration-150 ease-out",
-          isReady ? "bg-good" : "bg-ink-3",
-        )}
-        style={{ width: `${String(progress * PERCENT)}%` }}
-      />
-    </span>
-  );
 }
