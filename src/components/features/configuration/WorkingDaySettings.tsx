@@ -45,7 +45,7 @@ export function WorkingDaySettings() {
   return (
     <Section title={TEXT.workingDay}>
       <div className="grid gap-4">
-        <p className="text-ink-2">{TEXT.workingDayHelp}</p>
+        <p className="text-small text-ink-2">{TEXT.workingDayHelp}</p>
         <div className="grid min-w-0 content-start gap-4">
           {state.status === "loading" && <p className="text-ink-2">{TEXT.monthLoading}</p>}
           {state.status === "failed" && <Banner tone="problem">{TEXT.workingDayLoadFailed}</Banner>}

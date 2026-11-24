@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { FigureTile } from "@/components/ui/FigureTile";
 import { TileGrid } from "@/components/ui/TileGrid";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { TabsRow } from "@/components/ui/TabsRow";
 import { Pager } from "@/components/ui/Pager";
 import { Panel } from "@/components/ui/Panel";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
@@ -91,7 +92,7 @@ function AdminDocuments({ initialTab, onlyWaiting }: AdminDocumentsProps) {
   return (
     <div className="grid gap-8">
       <PageHeader title={DOCUMENT_TEXT.pageTitle} subtitle={DOCUMENT_TEXT.pageIntro} />
-      {tabs}
+      <TabsRow tabs={tabs} note={BIN_TEXT.binIntro} />
       <BinTab
         state={bin}
         onPage={setBinPage}

@@ -104,6 +104,20 @@ afterEach(() => {
 });
 
 describe("the Bin tab (Admins, issue 79)", () => {
+  it("says what the Bin is in small words beside the tabs, not on a line of its own (list tidy-ups 23)", async () => {
+    backend(
+      on("GET", BIN_PATH, BIN),
+      on("GET", "/api/documents/students/?scope=everyone&page=1", PAPERWORK),
+    );
+    renderPage("admin");
+
+    const note = await screen.findByText(/Nothing is emptied automatically\./);
+    expect(note).toHaveClass("text-small", "text-ink-3");
+    const tabs = screen.getByRole("group", { name: "Documents view" });
+    expect(note.parentElement).toBe(tabs.parentElement);
+    expect(note.parentElement).toHaveAttribute("data-tabs-row");
+  });
+
   it("lists each item with its Student, files, who, when and why", async () => {
     backend(
       on("GET", BIN_PATH, BIN),

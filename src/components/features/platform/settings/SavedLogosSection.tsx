@@ -30,7 +30,7 @@ type SavedLogosSectionProps = { logos: ReturnType<typeof useSavedLogos> };
 export function SavedLogosSection({ logos }: SavedLogosSectionProps) {
   return (
     <Section title={TEXT.title}>
-      <p className="text-ink-2">{TEXT.help}</p>
+      <p className="text-small text-ink-2">{TEXT.help}</p>
       <Panel isPadded>
         <div className="grid gap-4">
           {logos.isLoadFailed && <Banner tone="problem">{TEXT.loadFailed}</Banner>}

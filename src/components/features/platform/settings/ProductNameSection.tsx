@@ -19,7 +19,7 @@ import { InvalidFieldsError, saveProductName } from "@/lib/api";
 export function ProductNameSection() {
   return (
     <Section title={TEXT.title}>
-      <p className="text-ink-2">{TEXT.help}</p>
+      <p className="text-small text-ink-2">{TEXT.help}</p>
       <Panel isPadded>
         <ProductNameForm />
       </Panel>

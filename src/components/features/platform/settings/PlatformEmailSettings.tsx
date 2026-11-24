@@ -34,7 +34,7 @@ export function PlatformEmailSettings() {
 
   return (
     <Section title={TEXT.title}>
-      <p className="text-ink-2">{TEXT.help}</p>
+      <p className="text-small text-ink-2">{TEXT.help}</p>
       <Panel isPadded>
         <div className="grid min-w-0 gap-5">
           {email === null ? (

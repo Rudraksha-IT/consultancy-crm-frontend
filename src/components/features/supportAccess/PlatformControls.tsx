@@ -44,7 +44,7 @@ export function PlatformControls({
           <Icon name="shield" className="text-warn" />
           {SUPPORT_TEXT.controlsTitle}
         </h2>
-        <p className="text-ink-2">{SUPPORT_TEXT.controlsIntro}</p>
+        <p className="text-small text-ink-2">{SUPPORT_TEXT.controlsIntro}</p>
       </div>
       <Panel isPadded>
         <div className="grid gap-5">

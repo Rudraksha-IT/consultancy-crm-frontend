@@ -16,7 +16,10 @@ describe("PageHeader", () => {
     );
 
     expect(screen.getByRole("heading", { level: 1, name: "Consultancies" })).toBeInTheDocument();
-    expect(screen.getByText("Each client, and the extra features they have.")).toBeInTheDocument();
+    // Descriptions are small, app-wide (list tidy-ups 23).
+    expect(screen.getByText("Each client, and the extra features they have.")).toHaveClass(
+      "text-small",
+    );
     expect(screen.getByRole("button", { name: "New consultancy" })).toBeInTheDocument();
   });
 

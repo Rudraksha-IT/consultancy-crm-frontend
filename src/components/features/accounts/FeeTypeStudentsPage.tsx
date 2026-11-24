@@ -248,7 +248,7 @@ function LostPart({ state, onPage }: LostPartProps) {
   const { page } = state.data;
   return (
     <Section title={TEXT.lostTitle}>
-      <p className="text-ink-2 max-w-prose">{TEXT.lostIntro}</p>
+      <p className="text-small text-ink-2 max-w-prose">{TEXT.lostIntro}</p>
       <Panel>
         <DataTable phone="list" label={TEXT.lostTitle}>
           <thead>

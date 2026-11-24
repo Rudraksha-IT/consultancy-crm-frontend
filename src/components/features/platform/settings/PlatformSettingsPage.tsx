@@ -72,7 +72,7 @@ function ProductLogoParts() {
     <div className="grid min-w-0 gap-8">
       <Section title={TEXT.logoTitle}>
         {" "}
-        <p className="text-ink-2">{TEXT.logoHelp}</p>
+        <p className="text-small text-ink-2">{TEXT.logoHelp}</p>
         <Panel isPadded>
           <div className="grid gap-5">
             <div

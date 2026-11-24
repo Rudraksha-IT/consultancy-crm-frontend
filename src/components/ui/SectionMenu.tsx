@@ -294,7 +294,9 @@ function MenuSectionBody({ section }: { section: MenuSection }) {
         <h2 id={titleId} className="text-section-title">
           {section.title}
         </h2>
-        {section.description !== undefined && <p className="text-ink-2">{section.description}</p>}
+        {section.description !== undefined && (
+          <p className="text-small text-ink-2">{section.description}</p>
+        )}
       </div>
       {section.content}
     </section>
