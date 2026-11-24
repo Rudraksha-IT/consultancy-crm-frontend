@@ -836,7 +836,7 @@ describe("Pre-ticked from a list or a class", () => {
 });
 
 describe("the email windows are wide (list tidy-ups 28)", () => {
-  it("makes the writer and the picker as wide as the screen, the writer 46rem tall at most", () => {
+  it("makes the writer and the picker as wide as the screen, the writer 38rem tall at most", () => {
     const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
     // As wide as the screen, less its 1rem edges.

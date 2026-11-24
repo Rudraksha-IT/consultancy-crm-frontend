@@ -242,7 +242,7 @@
   /* the tallest a bottom sheet grows on a phone, leaving the page peeking above it */
   --spacing-sheet: 92dvh;
   /* the email composer's height above 640 px: the window less a margin, so it never scrolls */
-  --spacing-composer: min(46rem, calc(100dvh - 2rem));
+  --spacing-composer: min(38rem, calc(100dvh - 2rem));
   --spacing-grab-h: 0.3125rem;
   --spacing-sidebar: 18.75rem;
   --spacing-drawer: 20rem;
