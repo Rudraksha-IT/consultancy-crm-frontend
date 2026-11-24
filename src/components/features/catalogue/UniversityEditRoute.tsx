@@ -99,7 +99,7 @@ function useFreshUniversity(id: RecordId): Loaded {
 
 function UniversityEditLoader({ id }: { id: RecordId }) {
   const loaded = useFreshUniversity(id);
-  if (loaded.status === "loading") return <Loading />;
+  if (loaded.status === "loading") return <Loading size="page" />;
   if (loaded.status === "failed")
     return <Banner tone="problem">{CATALOGUE_TEXT.loadFailed}</Banner>;
   if (loaded.status === "notFound") return <NotFound />;

@@ -49,6 +49,19 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
     expect(page?.querySelector("svg")).toHaveAttribute("data-size", "page");
   });
 
+  it("puts a whole page's loader in the middle of the screen (list tidy-ups 21)", () => {
+    render(
+      <>
+        <Loading />
+        <Loading size="page" />
+      </>,
+    );
+
+    const [panel, page] = screen.getAllByRole("status");
+    expect(page).toHaveClass("fixed", "inset-0", "place-items-center", "pointer-events-none");
+    expect(panel).not.toHaveClass("fixed");
+  });
+
   it("shows the small logo in a button that is working, beside its word", () => {
     render(
       <Button isLoading loadingLabel="Saving…">

@@ -64,7 +64,7 @@ function LoadedClass({ batchId }: { batchId: RecordId }) {
   const reload = () => {
     setVersion((current) => current + 1);
   };
-  if (state.status === "loading") return <Loading />;
+  if (state.status === "loading") return <Loading size="page" />;
   if (state.status === "missing") {
     return (
       <Panel>

@@ -5,7 +5,10 @@ import { MESSAGES } from "@/constants/messages";
 import { LogoLoader } from "./LogoLoader";
 
 type LoadingProps = {
-  /** "page" while a whole page loads, centred; "panel" inside a box or list. */
+  /**
+   * "page" while a whole page loads: in the middle of the screen, whatever the page's height
+   * (list tidy-ups 21). "panel" inside a box or list, in the middle of that box.
+   */
   size?: "page" | "panel";
   className?: string;
 };
@@ -16,8 +19,9 @@ export function Loading({ size = "panel", className }: LoadingProps) {
     <div
       role="status"
       className={clsx(
-        "flex items-center justify-center",
-        size === "page" ? "min-h-[60vh] p-6" : "py-8",
+        size === "page"
+          ? "pointer-events-none fixed inset-0 grid place-items-center"
+          : "flex items-center justify-center py-8",
         className,
       )}
     >

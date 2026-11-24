@@ -107,7 +107,7 @@ type LoadedProfileProps = { studentId: RecordId; role: Role; startTab: Tab };
 
 function LoadedProfile({ studentId, role, startTab }: LoadedProfileProps) {
   const { state, replace, update, refresh } = useStudentProfile(studentId);
-  if (state.status === "loading") return <Loading />;
+  if (state.status === "loading") return <Loading size="page" />;
   if (state.status === "failed") return <Banner tone="problem">{MESSAGES.studentFailed}</Banner>;
   if (state.status === "notFound") {
     return (

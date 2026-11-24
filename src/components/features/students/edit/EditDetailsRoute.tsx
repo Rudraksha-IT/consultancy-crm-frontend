@@ -87,7 +87,7 @@ function useFreshProfile(studentId: RecordId): Loaded {
 
 function EditDetailsLoader({ studentId }: { studentId: RecordId }) {
   const loaded = useFreshProfile(studentId);
-  if (loaded.status === "loading") return <Loading />;
+  if (loaded.status === "loading") return <Loading size="page" />;
   if (loaded.status === "failed") return <Banner tone="problem">{MESSAGES.studentFailed}</Banner>;
   if (loaded.status === "notFound") return <NotFound />;
   if (!loaded.profile.canEditDetails) return <NotAllowed profile={loaded.profile} />;
