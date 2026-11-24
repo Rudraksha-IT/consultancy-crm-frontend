@@ -21,6 +21,8 @@ type DialogProps = {
   footer?: ReactNode;
   /** Wider, for a list such as a Student's document checklist. */
   isWide?: boolean;
+  /** As wide as the email composer, its height following its content (list tidy-ups 28). */
+  isWidest?: boolean;
   /** Printing the page prints only this dialog's body, e.g. a receipt. */
   isPrintable?: boolean;
   /**
@@ -43,7 +45,8 @@ export function Dialog(props: DialogProps) {
 }
 
 function OpenDialog(props: DialogProps) {
-  const { title, onClose, children, footer, isWide, isPrintable, isFull, headerAside } = props;
+  const { title, onClose, children, footer, isPrintable, isFull, headerAside } = props;
+  const width = widthOf(props);
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -92,7 +95,7 @@ function OpenDialog(props: DialogProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className={panelClasses(isWide, isFull)}
+        className={panelClasses(width, isFull)}
       >
         <div
           aria-hidden="true"
@@ -149,15 +152,24 @@ function printMark(isPrintable: boolean | undefined): { "data-print"?: "" } {
   return isPrintable === true ? { "data-print": "" } : {};
 }
 
-function panelClasses(isWide: boolean | undefined, isFull: boolean | undefined): string {
+function widthOf({ isWide, isWidest }: DialogProps): keyof typeof WIDTHS {
+  if (isWidest === true) return "widest";
+  return isWide === true ? "wide" : "normal";
+}
+
+const WIDTHS = {
+  normal: "max-w-dialog",
+  wide: "max-w-dialog-wide",
+  widest: "max-w-composer",
+} as const;
+
+function panelClasses(width: keyof typeof WIDTHS, isFull: boolean | undefined): string {
   return clsx(
     "rounded-dialog bg-paper shadow-lift max-h-full w-full overflow-auto",
     "max-phone:max-w-none max-phone:max-h-sheet max-phone:rounded-t-sheet max-phone:rounded-b-none max-phone:animate-sheet-up max-phone:flex max-phone:flex-col max-phone:overflow-hidden",
     "print:max-h-none print:max-w-none print:overflow-visible print:shadow-none",
     isFull === true
       ? "max-w-composer h-composer max-phone:h-sheet flex flex-col overflow-hidden"
-      : isWide === true
-        ? "max-w-dialog-wide"
-        : "max-w-dialog",
+      : WIDTHS[width],
   );
 }

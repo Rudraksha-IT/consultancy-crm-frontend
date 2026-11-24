@@ -474,6 +474,38 @@ describe("The Email page", () => {
     expect(again).toHaveTextContent("2 Students chosen");
   });
 
+  it("picks one Student in a wider box closed by its ×, with no Cancel below (list tidy-ups 28)", async () => {
+    backend(list([]), students);
+    renderIn(COUNSELLOR, <MessagesPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Email a Student" }));
+    const picker = screen.getByRole("dialog", { name: "Email a Student" });
+
+    expect(picker).toHaveClass("max-w-composer");
+    expect(within(picker).queryByRole("button", { name: "Cancel" })).toBeNull();
+    expect(picker.querySelector("footer")).toBeNull();
+    expect(within(picker).getByRole("button", { name: "Close" })).toBeInTheDocument();
+  });
+
+  it("puts Cancel and Next at the top when picking many, the chosen names small (list tidy-ups 28)", async () => {
+    backend(list([]), students);
+    renderIn(COUNSELLOR, <MessagesPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Email many Students" }));
+    const picker = screen.getByRole("dialog", { name: "Email many Students" });
+    await userEvent.click(await within(picker).findByRole("checkbox", { name: /Sita Gurung/ }));
+
+    expect(picker).toHaveClass("max-w-composer");
+    expect(picker.querySelector("footer")).toBeNull();
+    const header = picker.querySelector("header");
+    expect(within(header ?? picker).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(
+      within(header ?? picker).getByRole("button", { name: "Next: write the email" }),
+    ).toBeEnabled();
+    const chosen = within(picker).getByRole("list", { name: "1 Student chosen" });
+    expect(within(chosen).getByText("Sita Gurung").closest("li")).toHaveClass("text-small");
+  });
+
   it("removes a chosen Student from the summary, and Clear removes them all", async () => {
     backend(list([]), students);
     renderIn(COUNSELLOR, <MessagesPage />);

@@ -48,10 +48,13 @@ export function StudentPicker({ mode, chosen, note, onPick, onClose }: StudentPi
   return (
     <Dialog
       isOpen
-      isWide
+      isWidest
       title={WORDS[mode].title}
       onClose={onClose}
-      footer={<PickerFooter isMany={isMany} ticked={ticked} onPick={onPick} onClose={onClose} />}
+      // One Student: the × closes it. Many: Cancel and Next stay at the top (list tidy-ups 28).
+      headerAside={
+        isMany ? <PickerActions ticked={ticked} onPick={onPick} onClose={onClose} /> : undefined
+      }
     >
       <p className="text-secondary text-ink-2">{WORDS[mode].hint}</p>
       {note !== null && <Banner tone="info">{note}</Banner>}
@@ -93,31 +96,28 @@ const WORDS = {
   many: { title: TEXT.emailManyStudents, hint: TEXT.pickManyHint },
 } as const;
 
-type PickerFooterProps = {
-  isMany: boolean;
+type PickerActionsProps = {
   ticked: readonly EmailRecipient[];
   onPick: (recipients: readonly EmailRecipient[]) => void;
   onClose: () => void;
 };
 
-/** Cancel, and for many "Next: write the email" once someone is ticked. */
-function PickerFooter({ isMany, ticked, onPick, onClose }: PickerFooterProps) {
+/** Cancel, and "Next: write the email" once someone is ticked. */
+function PickerActions({ ticked, onPick, onClose }: PickerActionsProps) {
   return (
-    <>
+    <div className="max-phone:*:flex-1 flex flex-wrap gap-3">
       <Button onClick={onClose}>{LABELS.cancel}</Button>
-      {isMany && (
-        <Button
-          variant="primary"
-          icon="right"
-          isDisabled={ticked.length === 0}
-          onClick={() => {
-            onPick(ticked);
-          }}
-        >
-          {TEXT.nextWrite}
-        </Button>
-      )}
-    </>
+      <Button
+        variant="primary"
+        icon="right"
+        isDisabled={ticked.length === 0}
+        onClick={() => {
+          onPick(ticked);
+        }}
+      >
+        {TEXT.nextWrite}
+      </Button>
+    </div>
   );
 }
 
@@ -161,7 +161,7 @@ type ChosenProps = {
 /** How many are chosen, each with a way to take them out, and Clear. */
 function Chosen({ ticked, onRemove, onClear }: ChosenProps) {
   return (
-    <div className="bg-fill rounded-control grid gap-3 px-4 py-3">
+    <div className="bg-fill rounded-control grid gap-2 px-3 py-2">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-secondary font-semibold" aria-live="polite">
           {ticked.length === 0 ? TEXT.nobodyChosen : TEXT.chosenCount(ticked.length)}
@@ -177,12 +177,13 @@ function Chosen({ ticked, onRemove, onClear }: ChosenProps) {
           {ticked.map((student) => (
             <li
               key={student.id}
-              className="bg-paper rounded-control text-secondary flex min-w-0 items-center gap-1 py-0.5 pr-0.5 pl-3"
+              className="bg-paper rounded-control text-small flex min-w-0 items-center gap-1 pl-2.5"
             >
               <span className="min-w-0 truncate">{student.name}</span>
               <IconButton
                 icon="x"
                 label={TEXT.remove(student.name)}
+                iconSize="sm"
                 onClick={() => {
                   onRemove(student);
                 }}
