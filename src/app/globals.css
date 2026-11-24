@@ -294,7 +294,7 @@
   --container-dialog: 37.5rem;
   --container-dialog-wide: 52.5rem;
   /* the email composer (issue 04): near full screen, writing beside the preview */
-  --container-composer: 73.75rem;
+  --container-composer: 90rem;
   --container-prose: 64ch;
   /* how wide an office logo may be (issue 39): in the sidebar, on the login screens, collapsed */
   --container-logo: 10.5rem;

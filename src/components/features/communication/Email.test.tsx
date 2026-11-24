@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import type { RecordId } from "@/lib/recordId";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -829,5 +832,13 @@ describe("Pre-ticked from a list or a class", () => {
 
     await screen.findByRole("heading", { level: 1, name: "IELTS Morning" });
     expect(screen.queryByRole("button", { name: "Email the class" })).not.toBeInTheDocument();
+  });
+});
+
+describe("the email windows are wide (list tidy-ups 28)", () => {
+  it("makes the writer and the picker 90rem wide at most, still inside the screen", () => {
+    const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+
+    expect(css).toMatch(/--container-composer: 90rem;/);
   });
 });
