@@ -97,6 +97,25 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
     expect(rules).not.toMatch(/opacity/);
   });
 
+  it("keeps every loader on one clock, so a handover or overlap never jumps (list tidy-ups 27)", () => {
+    vi.spyOn(performance, "now").mockReturnValue(12_345);
+    render(
+      <>
+        <Loading />
+        <Loading size="page" />
+      </>,
+    );
+
+    const marks = screen.getAllByRole("status").map((one) => one.querySelector("svg"));
+    expect(marks.map((mark) => mark?.style.getPropertyValue("--loader-sync"))).toEqual([
+      "-345ms",
+      "-345ms",
+    ]);
+    const rules = loaderRules();
+    expect(rules).toMatch(/\.logo-loader-turn \{[^}]*animation-delay: var\(--loader-sync, 0s\)/);
+    expect(rules).toMatch(/\.logo-loader-breathe \{[^}]*animation-delay: var\(--loader-sync, 0s\)/);
+  });
+
   it("turns in place around the logo's centre, not rolling like a wheel", () => {
     const rules = loaderRules();
 

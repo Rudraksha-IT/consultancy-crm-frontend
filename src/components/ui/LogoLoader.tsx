@@ -1,3 +1,7 @@
+"use client";
+
+import { useLayoutEffect, useRef } from "react";
+
 /** The 8 petals of the product's logo, each drawn alone so it can move on its own. */
 const PETALS = [
   "M137.51 7.61A49 49 0 0 1 102.61 91.85",
@@ -20,6 +24,8 @@ export type LoaderSize = "page" | "panel" | "button" | "pull";
 // Petals and lines at rest in a pull: closed to the breath's smallest, open at the full pull.
 const PULL_SMALLEST = 0.49;
 const FULL_TURN = 360;
+/** One clock for every loader: 6 s holds whole turns of the 2 s and the reduced-motion 6 s animations. */
+const CLOCK_MS = 6000;
 
 /**
  * The product's logo as the loading animation (list tidy-ups 06, 19): it turns at one steady speed
@@ -28,8 +34,17 @@ const FULL_TURN = 360;
  * Decoration only; whoever shows it says "Loading…" in words.
  */
 export function LogoLoader({ size, pull }: { size: LoaderSize; pull?: number }) {
+  const mark = useRef<SVGSVGElement>(null);
+  useLayoutEffect(() => {
+    // Start where the shared clock is, before the first paint (list tidy-ups 27).
+    mark.current?.style.setProperty(
+      "--loader-sync",
+      `-${String(Math.round(performance.now() % CLOCK_MS))}ms`,
+    );
+  }, []);
   return (
     <svg
+      ref={mark}
       aria-hidden="true"
       focusable="false"
       viewBox="-175 -175 350 350"
