@@ -2,6 +2,8 @@
 
 import { useLayoutEffect } from "react";
 
+import { savedTitleKey } from "@/lib/keptTitle";
+
 /**
  * Keep the browser tab's title on `title` (null while it isn't known). On every page change
  * Next.js puts the product name back as the title; it is put straight back, before the browser
@@ -10,6 +12,7 @@ import { useLayoutEffect } from "react";
 export function useKeptTitle(title: string | null): void {
   useLayoutEffect(() => {
     if (title === null) return undefined;
+    remember(title);
     const keep = () => {
       if (document.title !== title) document.title = title;
     };
@@ -20,4 +23,13 @@ export function useKeptTitle(title: string | null): void {
       watcher.disconnect();
     };
   }, [title]);
+}
+
+/** Remember the title for the next reload of this page (the early script puts it back). */
+function remember(title: string): void {
+  try {
+    localStorage.setItem(savedTitleKey(location.pathname), title);
+  } catch {
+    // No storage (a private window): a reload shows the product name for a moment.
+  }
 }
