@@ -397,6 +397,20 @@ describe("ApplicationsPage More filters (list tidy-ups 03)", () => {
     }
     expect(screen.queryByRole("button", { name: "More filters" })).not.toBeInTheDocument();
   });
+
+  it("closes on a press below, the button counting what is set there (list tidy-ups 18)", async () => {
+    const user = userEvent.setup();
+    backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Country" }), "australia");
+    await user.click(screen.getByRole("heading", { level: 1, name: "Applications" }));
+
+    expect(screen.queryByRole("combobox", { name: "Country" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More filters · 1" })).toBeInTheDocument();
+  });
 });
 
 describe("ApplicationsPage selection and export (issue 51)", () => {

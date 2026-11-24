@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { FilterBar, MoreFiltersButton } from "@/components/ui/FilterBar";
 import { FilterSelect } from "@/components/ui/FilterSelect";
@@ -51,9 +51,14 @@ type StudentFilterBarProps = {
  */
 export function StudentFilterBar(props: StudentFilterBarProps) {
   const { filters, onChange } = props;
-  const [isMoreOpen, setIsMoreOpen] = useState(
-    `${filters.source}${filters.country}${filters.targetLevel}` !== "",
-  );
+  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  // Closes on a press outside the filters or Esc; the button then counts what is set there.
+  const closeMore = useCallback(() => {
+    setIsMoreOpen(false);
+  }, []);
+  const moreSet = [filters.source, filters.country, filters.targetLevel].filter(
+    (value) => value !== "",
+  ).length;
 
   return (
     <FilterBar
@@ -67,6 +72,7 @@ export function StudentFilterBar(props: StudentFilterBarProps) {
         />
       }
       more={isMoreOpen ? <MoreFilters {...props} /> : undefined}
+      onMoreClose={closeMore}
     >
       <FilterSelect
         label={LABELS.stage}
@@ -98,6 +104,7 @@ export function StudentFilterBar(props: StudentFilterBarProps) {
       />
       {!isMoreOpen && (
         <MoreFiltersButton
+          setCount={moreSet}
           onClick={() => {
             setIsMoreOpen(true);
           }}

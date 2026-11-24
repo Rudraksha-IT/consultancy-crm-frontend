@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 
 import { buttonClasses } from "./buttonStyles";
 
@@ -31,6 +31,8 @@ type FilterBarProps = {
   children: ReactNode;
   /** "More filters", once opened: a second row of pills, read as one box with the first. */
   more?: ReactNode;
+  /** Closes "More filters": a press outside the filters, or Esc in them (list tidy-ups 18). */
+  onMoreClose?: () => void;
 };
 
 /**
@@ -38,9 +40,19 @@ type FilterBarProps = {
  * phone the search sits on its own line and the filters are pills in one row that slides
  * sideways and never wraps.
  */
-export function FilterBar({ label, search, children, more }: FilterBarProps) {
+export function FilterBar({ label, search, children, more, onMoreClose }: FilterBarProps) {
+  const bar = useRef<HTMLDivElement>(null);
+  useCloseOutside(bar, more === undefined ? undefined : onMoreClose);
   return (
-    <div role="group" aria-label={label} className="border-rule border-b">
+    <div
+      ref={bar}
+      role="group"
+      aria-label={label}
+      className="border-rule border-b"
+      onKeyDown={(event) => {
+        if (event.key === "Escape" && more !== undefined) onMoreClose?.();
+      }}
+    >
       <div className="max-phone:grid max-phone:gap-2 max-phone:p-3 max-phone:pb-1 flex flex-wrap items-center gap-3 px-6 py-5">
         {search}
         <FilterRow storeKey={`${label}|0`} className="contents">
@@ -57,6 +69,21 @@ export function FilterBar({ label, search, children, more }: FilterBarProps) {
       )}
     </div>
   );
+}
+
+/** While `onClose` is given, a press anywhere outside `area` calls it. */
+function useCloseOutside(area: RefObject<HTMLElement | null>, onClose: (() => void) | undefined) {
+  useEffect(() => {
+    if (onClose === undefined) return undefined;
+    const close = onClose;
+    function onPress(event: PointerEvent) {
+      if (event.target instanceof Node && area.current?.contains(event.target) !== true) close();
+    }
+    document.addEventListener("pointerdown", onPress);
+    return () => {
+      document.removeEventListener("pointerdown", onPress);
+    };
+  }, [area, onClose]);
 }
 
 type FilterRowProps = { storeKey: string; className: string; children: ReactNode };
@@ -83,10 +110,15 @@ function FilterRow({ storeKey, className, children }: FilterRowProps) {
   );
 }
 
-type MoreFiltersButtonProps = { onClick: () => void; children: ReactNode };
+type MoreFiltersButtonProps = {
+  onClick: () => void;
+  children: ReactNode;
+  /** How many of the other filters are set, shown while they are closed ("More filters · 2"). */
+  setCount?: number;
+};
 
 /** Opens a list's other filters: a quiet button, and a dashed pill on a phone. */
-export function MoreFiltersButton({ onClick, children }: MoreFiltersButtonProps) {
+export function MoreFiltersButton({ onClick, children, setCount = 0 }: MoreFiltersButtonProps) {
   return (
     <button
       type="button"
@@ -97,6 +129,7 @@ export function MoreFiltersButton({ onClick, children }: MoreFiltersButtonProps)
       )}
     >
       {children}
+      {setCount > 0 && ` · ${String(setCount)}`}
     </button>
   );
 }

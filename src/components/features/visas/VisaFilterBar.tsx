@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { FilterBar, MoreFiltersButton } from "@/components/ui/FilterBar";
 import { FilterSelect } from "@/components/ui/FilterSelect";
@@ -59,6 +59,11 @@ const SORT_OPTIONS: SelectOption[] = VISA_SORTS.map((sort) => ({
 export function VisaFilterBar(props: VisaFilterBarProps) {
   const { filters, onChange, choices } = props;
   const [isMoreOpen, setIsMoreOpen] = useState(false);
+  // Closes on a press outside the filters or Esc; the button then counts what is set there.
+  const closeMore = useCallback(() => {
+    setIsMoreOpen(false);
+  }, []);
+  const moreSet = [filters.country, filters.intake].filter((value) => value !== "").length;
   const more = (
     <>
       <FilterSelect
@@ -97,7 +102,7 @@ export function VisaFilterBar(props: VisaFilterBarProps) {
     </>
   );
   return (
-    <FilterBar label={TEXT.filters} more={isMoreOpen ? more : undefined}>
+    <FilterBar label={TEXT.filters} more={isMoreOpen ? more : undefined} onMoreClose={closeMore}>
       <FilterSelect
         label={TEXT.status}
         value={filters.status}
@@ -128,6 +133,7 @@ export function VisaFilterBar(props: VisaFilterBarProps) {
       />
       {!isMoreOpen && (
         <MoreFiltersButton
+          setCount={moreSet}
           onClick={() => {
             setIsMoreOpen(true);
           }}
