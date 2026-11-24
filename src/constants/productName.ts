@@ -17,7 +17,7 @@ export const PRODUCT_NAME = {
 
 export const PRODUCT_NAME_TEXT = {
   title: "Product name",
-  help: "Shown in every browser tab, on the login screens, at the top of the Platform and in its emails. Offices see a change within about a minute.",
+  help: "Shown in every browser tab, on the login screens, at the top of the Platform and in its emails. Offices see a change on their next page.",
   label: "Product name",
   hint: "At most 40 characters: letters, numbers, spaces and . - & ' ( ) +",
   save: "Save name",

@@ -113,6 +113,22 @@ describe("one Settings on the Platform (list tidy-ups 04)", () => {
   });
 });
 
+describe("Settings parts read like every settings page (list tidy-ups 12)", () => {
+  it.each(["Product name", "Product logo", "Email"])(
+    "shows %s's title, then its description, then its box, one under the other",
+    (section) => {
+      backend(on("GET", BRAND_PATH, { logo: null }), ...savedLogos([]));
+      renderPage(undefined, section);
+
+      const region = screen.getByRole("region", { name: section });
+      expect(region.querySelector('[class*="settings-label"]')).toBeNull();
+      const [title, help] = [...region.children];
+      expect(title).toHaveTextContent(section);
+      expect(help?.tagName).toBe("P");
+    },
+  );
+});
+
 describe("PlatformSettingsPage: the product logo (issue 65)", () => {
   it("offers to upload a logo while there is none", async () => {
     backend(on("GET", BRAND_PATH, { logo: null }), ...savedLogos([]));

@@ -30,16 +30,14 @@ type SavedLogosSectionProps = { logos: ReturnType<typeof useSavedLogos> };
 export function SavedLogosSection({ logos }: SavedLogosSectionProps) {
   return (
     <Section title={TEXT.title}>
-      <div className="wide:grid-cols-[minmax(0,var(--spacing-settings-label))_minmax(0,1fr)] grid gap-x-12 gap-y-6">
-        <p className="text-ink-2">{TEXT.help}</p>
-        <Panel isPadded>
-          <div className="grid gap-4">
-            {logos.isLoadFailed && <Banner tone="problem">{TEXT.loadFailed}</Banner>}
-            {logos.saved !== null && <SavedLogoList logos={logos} saved={logos.saved} />}
-            {logos.problem !== null && <Banner tone="problem">{logos.problem}</Banner>}
-          </div>
-        </Panel>
-      </div>
+      <p className="text-ink-2">{TEXT.help}</p>
+      <Panel isPadded>
+        <div className="grid gap-4">
+          {logos.isLoadFailed && <Banner tone="problem">{TEXT.loadFailed}</Banner>}
+          {logos.saved !== null && <SavedLogoList logos={logos} saved={logos.saved} />}
+          {logos.problem !== null && <Banner tone="problem">{logos.problem}</Banner>}
+        </div>
+      </Panel>
     </Section>
   );
 }

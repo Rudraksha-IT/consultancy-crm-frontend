@@ -72,45 +72,43 @@ function ProductLogoParts() {
     <div className="grid min-w-0 gap-8">
       <Section title={TEXT.logoTitle}>
         {" "}
-        <div className="wide:grid-cols-[minmax(0,var(--spacing-settings-label))_minmax(0,1fr)] grid gap-x-12 gap-y-6">
-          <p className="text-ink-2">{TEXT.logoHelp}</p>
-          <Panel isPadded>
-            <div className="grid gap-5">
-              <div
-                data-testid="logo-preview"
-                className="bg-fill rounded-panel flex min-h-18 min-w-0 items-center gap-3 p-4"
-              >
-                <BrandMark name={productName} logo={mark} />
-                <b className="text-body truncate font-bold">{productName}</b>
-              </div>
-              <div className="flex flex-wrap items-center gap-3">
-                <label
-                  className={clsx(
-                    buttonClasses("secondary", "md"),
-                    "has-focus-visible:outline-accent has-focus-visible:outline-3 has-focus-visible:outline-offset-2",
-                    changes.isBusy && "pointer-events-none opacity-50",
-                  )}
-                >
-                  <Icon name="upload" />
-                  {logo === null ? LOGO_TEXT.upload : LOGO_TEXT.change}
-                  <input
-                    type="file"
-                    accept={LOGO_ACCEPT}
-                    disabled={changes.isBusy}
-                    className="sr-only"
-                    onChange={(event) => {
-                      const file = event.target.files?.item(0);
-                      // The same file can be chosen again after a refusal.
-                      event.target.value = "";
-                      if (file) void changes.upload(file);
-                    }}
-                  />
-                </label>
-              </div>
-              {changes.problem !== null && <Banner tone="problem">{changes.problem}</Banner>}
+        <p className="text-ink-2">{TEXT.logoHelp}</p>
+        <Panel isPadded>
+          <div className="grid gap-5">
+            <div
+              data-testid="logo-preview"
+              className="bg-fill rounded-panel flex min-h-18 min-w-0 items-center gap-3 p-4"
+            >
+              <BrandMark name={productName} logo={mark} />
+              <b className="text-body truncate font-bold">{productName}</b>
             </div>
-          </Panel>
-        </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <label
+                className={clsx(
+                  buttonClasses("secondary", "md"),
+                  "has-focus-visible:outline-accent has-focus-visible:outline-3 has-focus-visible:outline-offset-2",
+                  changes.isBusy && "pointer-events-none opacity-50",
+                )}
+              >
+                <Icon name="upload" />
+                {logo === null ? LOGO_TEXT.upload : LOGO_TEXT.change}
+                <input
+                  type="file"
+                  accept={LOGO_ACCEPT}
+                  disabled={changes.isBusy}
+                  className="sr-only"
+                  onChange={(event) => {
+                    const file = event.target.files?.item(0);
+                    // The same file can be chosen again after a refusal.
+                    event.target.value = "";
+                    if (file) void changes.upload(file);
+                  }}
+                />
+              </label>
+            </div>
+            {changes.problem !== null && <Banner tone="problem">{changes.problem}</Banner>}
+          </div>
+        </Panel>
       </Section>
       <SavedLogosSection logos={savedLogos} />
     </div>

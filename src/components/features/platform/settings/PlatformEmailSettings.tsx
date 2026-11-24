@@ -34,35 +34,33 @@ export function PlatformEmailSettings() {
 
   return (
     <Section title={TEXT.title}>
-      <div className="wide:grid-cols-[minmax(0,var(--spacing-settings-label))_minmax(0,1fr)] grid gap-x-12 gap-y-6">
-        <p className="text-ink-2">{TEXT.help}</p>
-        <Panel isPadded>
-          <div className="grid min-w-0 gap-5">
-            {email === null ? (
-              isLoadFailed && <Banner tone="warning">{TEXT.loadFailed}</Banner>
-            ) : (
-              <EmailDetails email={email} />
+      <p className="text-ink-2">{TEXT.help}</p>
+      <Panel isPadded>
+        <div className="grid min-w-0 gap-5">
+          {email === null ? (
+            isLoadFailed && <Banner tone="warning">{TEXT.loadFailed}</Banner>
+          ) : (
+            <EmailDetails email={email} />
+          )}
+          <div ref={actions} className="flex min-w-0 flex-wrap items-center gap-3">
+            <Button
+              variant="primary"
+              icon="send"
+              isLoading={isSending}
+              loadingLabel={TEXT.sending}
+              onClick={() => void sendTest()}
+            >
+              {TEXT.send}
+            </Button>
+            {email !== null && (
+              <span className="text-small text-ink-2 min-w-0 break-words">
+                {TEXT.goesTo(email.sentTo)}
+              </span>
             )}
-            <div ref={actions} className="flex min-w-0 flex-wrap items-center gap-3">
-              <Button
-                variant="primary"
-                icon="send"
-                isLoading={isSending}
-                loadingLabel={TEXT.sending}
-                onClick={() => void sendTest()}
-              >
-                {TEXT.send}
-              </Button>
-              {email !== null && (
-                <span className="text-small text-ink-2 min-w-0 break-words">
-                  {TEXT.goesTo(email.sentTo)}
-                </span>
-              )}
-            </div>
-            {problem !== null && <Banner tone="problem">{problem}</Banner>}
           </div>
-        </Panel>
-      </div>
+          {problem !== null && <Banner tone="problem">{problem}</Banner>}
+        </div>
+      </Panel>
     </Section>
   );
 }
