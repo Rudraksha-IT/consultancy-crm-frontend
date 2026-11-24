@@ -60,6 +60,13 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
     );
   });
 
+  it("turns in place around the logo's centre, not rolling like a wheel", () => {
+    const rules = loaderRules();
+
+    expect(rules).toMatch(/\.logo-loader-turn,[^{]*\{[^}]*transform-origin: 0 0/);
+    expect(rules).not.toMatch(/transform-origin: 50% 50%/);
+  });
+
   it("draws in the logo's own red, a lighter one in dark mode", () => {
     expect(GLOBALS_CSS).toMatch(/:root \{[^}]*--mark: #8b0a1a/);
     expect(GLOBALS_CSS).toMatch(/:root\[data-theme="dark"\] \{[^}]*--mark: #f49aa3/);
