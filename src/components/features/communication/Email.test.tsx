@@ -415,7 +415,8 @@ describe("EmailComposer to many Students", () => {
 
 describe("The Email page", () => {
   const list = (results: unknown[]) => on("GET", "/api/messages/?page=1", page(results));
-  const students = on("GET", "/api/students/", LIST);
+  // The picker lists Students A to Z (list tidy-ups 34).
+  const students = on("GET", "/api/students/?order=name", LIST);
 
   it("lists every email with its subject line, status in words and reason, and past SMS", async () => {
     backend(list([SENT, FAILED, OLD_SMS]));
@@ -470,17 +471,22 @@ describe("The Email page", () => {
     const fetchFn = backend(
       list([]),
       students,
-      on("GET", "/api/students/?q=sita", page([row(uid(7), "Sita Gurung", "sita@example.test")])),
+      on(
+        "GET",
+        "/api/students/?q=sita&order=name",
+        page([row(uid(7), "Sita Gurung", "sita@example.test")]),
+      ),
     );
     renderIn(COUNSELLOR, <MessagesPage />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Email a Student" }));
     const picker = screen.getByRole("dialog", { name: "Email a Student" });
     expect(await within(picker).findByRole("button", { name: /Maya Lama/ })).toBeDisabled();
-    expect(within(picker).getByRole("button", { name: /Lila Shrestha/ })).toBeDisabled();
+    // A Lost Student can be emailed, to ask whether they want to carry on (list tidy-ups 34).
+    expect(within(picker).getByRole("button", { name: /Lila Shrestha/ })).toBeEnabled();
     await userEvent.type(within(picker).getByRole("searchbox", { name: "Find a Student" }), "sita");
     await waitFor(() => {
-      expect(callsTo(fetchFn, "GET", "/api/students/?q=sita")).toHaveLength(1);
+      expect(callsTo(fetchFn, "GET", "/api/students/?q=sita&order=name")).toHaveLength(1);
     });
     await userEvent.click(await within(picker).findByRole("button", { name: /Sita Gurung/ }));
 
@@ -510,6 +516,39 @@ describe("The Email page", () => {
     const again = await screen.findByRole("dialog", { name: "Email many Students" });
     expect(await within(again).findByRole("checkbox", { name: /Sita Gurung/ })).toBeChecked();
     expect(again).toHaveTextContent("2 Students chosen");
+  });
+
+  it("emails a Lost Student, opening on Checking in (list tidy-ups 34)", async () => {
+    backend(
+      list([]),
+      students,
+      on("GET", `/api/students/${uid(11)}/emails/ready-made/`, {
+        kinds: [
+          { kind: "welcome", record: null, records: [], unavailable: null },
+          { kind: "checking_in", record: null, records: [], unavailable: null },
+          { kind: "plain", record: null, records: [], unavailable: null },
+        ],
+      }),
+      on("GET", `/api/students/${uid(11)}/emails/draft/?kind=checking_in`, {
+        subject: "Checking in from Acme Education",
+        body: "Dear Lila,\n\nWe haven't heard from you in a while.",
+        attachments: [],
+      }),
+    );
+    renderIn(COUNSELLOR, <MessagesPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Email a Student" }));
+    const picker = screen.getByRole("dialog", { name: "Email a Student" });
+    expect(picker).not.toHaveTextContent(/Lost Students/);
+    await userEvent.click(await within(picker).findByRole("button", { name: /Lila Shrestha/ }));
+
+    const composer = screen.getByRole("dialog", { name: "New email" });
+    await waitFor(() => {
+      expect(within(composer).getByRole("textbox", { name: "Subject" })).toHaveValue(
+        "Checking in from Acme Education",
+      );
+    });
+    expect(within(composer).getByRole("combobox", { name: "Email" })).toHaveValue("checking_in");
   });
 
   it("picks one Student in a box closed by its ×, with no Cancel below (list tidy-ups 28)", async () => {
@@ -607,6 +646,7 @@ describe("When things go wrong", () => {
           ? new Response(JSON.stringify(page(sent)), { status: 200 })
           : undefined,
       on("GET", "/api/students/", LIST),
+      on("GET", "/api/students/?order=name", LIST),
       (path, init) => {
         if (path !== SEND_PATH || init?.method !== "POST") return undefined;
         sent = [SENT];
@@ -684,6 +724,7 @@ describe("When things go wrong", () => {
         students: [],
       }),
       on("GET", "/api/students/", LIST),
+      on("GET", "/api/students/?order=name", LIST),
     );
     renderIn(COUNSELLOR, <BatchPage batchId={uid(1)} />);
 
@@ -795,6 +836,7 @@ describe("Pre-ticked from a list or a class", () => {
       COUNSELLORS,
       on("GET", `${BULK}?counsellor=me`, choosable),
       on("GET", "/api/students/", LIST),
+      on("GET", "/api/students/?order=name", LIST),
     );
     renderIn(COUNSELLOR, <StudentsPage initialSearch="" />);
 
@@ -811,6 +853,7 @@ describe("Pre-ticked from a list or a class", () => {
       CLASS,
       on("GET", `${BULK}?batch=${uid(1)}`, { ...choosable, count: 3, max: 2 }),
       on("GET", "/api/students/", LIST),
+      on("GET", "/api/students/?order=name", LIST),
     );
     renderIn(COUNSELLOR, <BatchPage batchId={uid(1)} />);
 
@@ -835,6 +878,7 @@ describe("Pre-ticked from a list or a class", () => {
       CLASS,
       on("GET", `${BULK}?batch=${uid(1)}`, choosable),
       on("GET", "/api/students/", LIST),
+      on("GET", "/api/students/?order=name", LIST),
       on("GET", "/api/messages/bulk/ready-made/", {
         kinds: [
           { kind: "class_details", record: "batch", records: classes, unavailable: null },
@@ -881,7 +925,10 @@ describe("the email writer keeps its size (list tidy-ups 28)", () => {
 
 describe("the email windows use smaller text (list tidy-ups 31)", () => {
   it("marks the picker and the writer for small text", async () => {
-    backend(on("GET", "/api/messages/?page=1", page([])), on("GET", "/api/students/", LIST));
+    backend(
+      on("GET", "/api/messages/?page=1", page([])),
+      on("GET", "/api/students/?order=name", LIST),
+    );
     renderIn(COUNSELLOR, <MessagesPage />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Email a Student" }));

@@ -9,10 +9,9 @@ import { IconButton } from "@/components/ui/IconButton";
 import { SearchBox } from "@/components/ui/SearchBox";
 import { COMMUNICATION_TEXT as TEXT } from "@/constants/communication";
 import { LABELS } from "@/constants/messages";
-import { STAGE_LABELS, Stage } from "@/constants/stages";
+import { STAGE_LABELS } from "@/constants/stages";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { fetchStudents, type StudentRow } from "@/lib/api";
-import { NO_STUDENT_FILTERS } from "@/lib/students";
+import { fetchStudentsByName, type StudentRow } from "@/lib/api";
 
 import type { EmailRecipient } from "./recipients";
 
@@ -125,12 +124,12 @@ function PickerActions({ ticked, onPick, onClose }: PickerActionsProps) {
 type FoundState =
   { status: "loading" } | { status: "loaded"; students: StudentRow[] } | { status: "failed" };
 
-/** The first page of Students matching `search` (everyone, by name, when it is empty). */
+/** The first page of Students matching `search` (everyone when it is empty), A to Z. */
 function useFound(search: string): FoundState {
   const [state, setState] = useState<FoundState>({ status: "loading" });
   useEffect(() => {
     let isCancelled = false;
-    fetchStudents({ ...NO_STUDENT_FILTERS, search }, 1).then(
+    fetchStudentsByName(search).then(
       (page) => {
         if (!isCancelled) setState({ status: "loaded", students: page.students });
       },
@@ -145,12 +144,13 @@ function useFound(search: string): FoundState {
   return state;
 }
 
+/** Anyone with an address; Lost Students too, to ask whether they want to carry on (34). */
 function isChoosable(student: StudentRow): boolean {
-  return student.email !== "" && student.stage !== Stage.Lost;
+  return student.email !== "";
 }
 
-function recipientOf({ id, name, email }: StudentRow): EmailRecipient {
-  return { id, name, email };
+function recipientOf({ id, name, email, stage }: StudentRow): EmailRecipient {
+  return { id, name, email, stage };
 }
 
 type ChosenProps = {

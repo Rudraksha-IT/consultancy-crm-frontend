@@ -91,7 +91,7 @@ function usePreTick(
     fetchChoosable(first).then(
       ({ students, count, max }) => {
         if (isCancelled) return;
-        const chosen = students.map(({ id, name, email }) => ({ id, name, email }));
+        const chosen = students.map(({ id, name, email, stage }) => ({ id, name, email, stage }));
         handOver(chosen, count > chosen.length ? TEXT.moreThanMax(count, max) : null);
       },
       () => {

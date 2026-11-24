@@ -16,6 +16,7 @@ import {
   plainEmailText,
 } from "@/constants/communication";
 import { LABELS } from "@/constants/messages";
+import { Stage } from "@/constants/stages";
 import { refsOf, type Attachable, type BulkResult, type ReadyMadeTarget } from "@/lib/api";
 
 import { AttachmentsArea } from "./AttachmentsArea";
@@ -83,7 +84,7 @@ function Composer({
   const attachments = useAttachments(target, filesOf(startWith));
   const draft = useComposerText({
     target,
-    startWith,
+    startWith: startFor(startWith, recipients),
     firstBody: plainEmailText(wording.greetingName, staff.name, consultancy.name),
     onSuggested: attachments.suggest,
   });
@@ -171,6 +172,17 @@ function filesOf(startWith: StartWith | undefined): readonly Attachable[] {
 }
 
 /** The one Student's name when they have no email address, else null. */
+/** The email asked for; else, for Lost Students, Checking in (list tidy-ups 34). */
+function startFor(
+  startWith: StartWith | undefined,
+  recipients: readonly EmailRecipient[],
+): StartWith | undefined {
+  if (startWith !== undefined) return startWith;
+  const isAllLost =
+    recipients.length > 0 && recipients.every((recipient) => recipient.stage === Stage.Lost);
+  return isAllLost ? { kind: "checking_in" } : undefined;
+}
+
 function addressMissingFor(only: EmailRecipient | null): string | null {
   return only !== null && only.email === "" ? only.name : null;
 }
