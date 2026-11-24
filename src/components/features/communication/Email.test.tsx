@@ -477,14 +477,14 @@ describe("The Email page", () => {
     expect(again).toHaveTextContent("2 Students chosen");
   });
 
-  it("picks one Student in a wider box closed by its ×, with no Cancel below (list tidy-ups 28)", async () => {
+  it("picks one Student in a box closed by its ×, with no Cancel below (list tidy-ups 28)", async () => {
     backend(list([]), students);
     renderIn(COUNSELLOR, <MessagesPage />);
 
     await userEvent.click(await screen.findByRole("button", { name: "Email a Student" }));
     const picker = screen.getByRole("dialog", { name: "Email a Student" });
 
-    expect(picker).toHaveClass("max-w-composer");
+    expect(picker).toHaveClass("max-w-dialog-wide");
     expect(within(picker).queryByRole("button", { name: "Cancel" })).toBeNull();
     expect(picker.querySelector("footer")).toBeNull();
     expect(within(picker).getByRole("button", { name: "Close" })).toBeInTheDocument();
@@ -498,7 +498,7 @@ describe("The Email page", () => {
     const picker = screen.getByRole("dialog", { name: "Email many Students" });
     await userEvent.click(await within(picker).findByRole("checkbox", { name: /Sita Gurung/ }));
 
-    expect(picker).toHaveClass("max-w-composer");
+    expect(picker).toHaveClass("max-w-dialog-wide");
     expect(picker.querySelector("footer")).toBeNull();
     const header = picker.querySelector("header");
     expect(within(header ?? picker).getByRole("button", { name: "Cancel" })).toBeInTheDocument();
@@ -835,12 +835,12 @@ describe("Pre-ticked from a list or a class", () => {
   });
 });
 
-describe("the email windows are wide (list tidy-ups 28)", () => {
-  it("makes the writer and the picker 100rem wide at most, the writer 38rem tall at most", () => {
+describe("the email writer keeps its size (list tidy-ups 28)", () => {
+  it("keeps the writer at its first size: 73.75rem wide, the screen's height less 2rem", () => {
     const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
-    expect(css).toMatch(/--container-composer: 100rem;/);
-    expect(css).toMatch(/--spacing-composer: min\(38rem, calc\(100dvh - 2rem\)\);/);
+    expect(css).toMatch(/--container-composer: 73.75rem;/);
+    expect(css).toMatch(/--spacing-composer: calc\(100dvh - 2rem\);/);
   });
 });
 

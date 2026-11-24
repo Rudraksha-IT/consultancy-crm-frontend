@@ -21,8 +21,6 @@ type DialogProps = {
   footer?: ReactNode;
   /** Wider, for a list such as a Student's document checklist. */
   isWide?: boolean;
-  /** As wide as the email composer, its height following its content (list tidy-ups 28). */
-  isWidest?: boolean;
   /** Printing the page prints only this dialog's body, e.g. a receipt. */
   isPrintable?: boolean;
   /**
@@ -160,15 +158,13 @@ function smallText(hasSmallText: boolean | undefined): { "data-small-text"?: "" 
   return hasSmallText === true ? { "data-small-text": "" } : {};
 }
 
-function widthOf({ isWide, isWidest }: DialogProps): keyof typeof WIDTHS {
-  if (isWidest === true) return "widest";
+function widthOf({ isWide }: DialogProps): keyof typeof WIDTHS {
   return isWide === true ? "wide" : "normal";
 }
 
 const WIDTHS = {
   normal: "max-w-dialog",
   wide: "max-w-dialog-wide",
-  widest: "max-w-composer",
 } as const;
 
 function panelClasses(width: keyof typeof WIDTHS, isFull: boolean | undefined): string {

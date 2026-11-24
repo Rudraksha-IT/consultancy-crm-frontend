@@ -48,7 +48,7 @@ export function StudentPicker({ mode, chosen, note, onPick, onClose }: StudentPi
   return (
     <Dialog
       isOpen
-      isWidest
+      isWide
       hasSmallText
       title={WORDS[mode].title}
       onClose={onClose}
