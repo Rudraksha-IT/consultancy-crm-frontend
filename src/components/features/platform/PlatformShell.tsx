@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { LogoutButton } from "@/components/features/shell/LogoutButton";
@@ -56,7 +55,6 @@ type PlatformFrameProps = {
 };
 
 function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
-  const pathname = usePathname();
   const [admin, setAdmin] = useState(loaded);
   const current = useMemo(() => ({ admin, setAdmin }), [admin]);
   const colourMode = useColourMode(`platform-${admin.id}`);
@@ -92,7 +90,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
           <div className="max-w-content mx-auto grid grid-cols-1 gap-8">
             {/* In the page, above its content, like every other page's tabs (ticket 16). */}
             <PlatformTabs />
-            <PageLoadProvider page={pathname}>{children}</PageLoadProvider>
+            <PageLoadProvider>{children}</PageLoadProvider>
           </div>
         </main>
       </div>

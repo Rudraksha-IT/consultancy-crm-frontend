@@ -5,7 +5,6 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -13,7 +12,7 @@ import {
 } from "react";
 
 type PageLoad = {
-  /** True until everything the page first asked for has loaded. */
+  /** True after a reload until the first box has its data. */
   isFirstLoad: boolean;
   /** A loader is shown; call the result when it goes. */
   showing: () => () => void;
@@ -21,50 +20,29 @@ type PageLoad = {
 
 const PageLoadContext = createContext<PageLoad | null>(null);
 
-type PageLoadProviderProps = {
-  /** The page's address: a new page starts a new first load. */
-  page: string | null;
-  children: ReactNode;
-};
-
 /**
- * Tracks a page's first load (list tidy-ups 27). While the page first loads, every box's loader
- * shows as the one loader in the middle of the screen; once nothing is loading, a box's loader
- * shows in its box (switching tabs, say). Loaders that follow straight after (a section loading
- * once its page has) still count as the first load.
+ * After a full reload, every box's loader shows as the one loader in the middle of the screen,
+ * until the first box has its data or nothing is loading; from then on (moving between pages,
+ * say) each box shows its own (list tidy-ups 27). It lives in the shell, so moving between pages
+ * keeps it.
  */
-export function PageLoadProvider({ page, children }: PageLoadProviderProps) {
-  const [loadedPage, setLoadedPage] = useState<string | null | undefined>(undefined);
+export function PageLoadProvider({ children }: { children: ReactNode }) {
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
   const shown = useRef(0);
-  const current = useRef(page);
-  useLayoutEffect(() => {
-    current.current = page;
-  }, [page]);
-
-  const settleSoon = useCallback(() => {
-    setTimeout(() => {
-      if (shown.current === 0) {
-        setLoadedPage(current.current);
-      }
-    }, 0);
-  }, []);
 
   useEffect(() => {
-    settleSoon();
-  }, [page, settleSoon]);
+    if (shown.current === 0) setIsFirstLoad(false);
+  }, []);
 
   const showing = useCallback(() => {
     shown.current += 1;
     return () => {
       shown.current -= 1;
-      settleSoon();
+      setIsFirstLoad(false);
     };
-  }, [settleSoon]);
+  }, []);
 
-  const value = useMemo(
-    () => ({ isFirstLoad: loadedPage !== page, showing }),
-    [loadedPage, page, showing],
-  );
+  const value = useMemo(() => ({ isFirstLoad, showing }), [isFirstLoad, showing]);
   return <PageLoadContext value={value}>{children}</PageLoadContext>;
 }
 

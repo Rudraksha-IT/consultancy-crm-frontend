@@ -166,7 +166,7 @@ function PulledPage({ pull, children }: { pull: PagePullView; children: ReactNod
   );
 }
 
-/** The page's first load shows one loader in the middle (list tidy-ups 27). */
+/** A reload shows one loader in the middle (list tidy-ups 27). */
 function ThisPageLoad({ children }: { children: ReactNode }) {
-  return <PageLoadProvider page={usePathname()}>{children}</PageLoadProvider>;
+  return <PageLoadProvider>{children}</PageLoadProvider>;
 }

@@ -111,53 +111,52 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
   });
 });
 
-describe("a page's first load shows one loader, in the middle (list tidy-ups 27)", () => {
-  function Page({ page, loading }: { page: string; loading: readonly string[] }) {
+describe("a reload shows one loader, in the middle, until the page has something (list tidy-ups 27)", () => {
+  function App({ page, loading }: { page: string; loading: readonly string[] }) {
     return (
-      <PageLoadProvider page={page}>
+      <PageLoadProvider>
         {loading.map((box) => (
-          <Loading key={box} />
+          <Loading key={`${page}-${box}`} />
         ))}
       </PageLoadProvider>
     );
   }
+  const sizes = () =>
+    screen.getAllByRole("status").map((one) => one.querySelector("svg")?.getAttribute("data-size"));
 
-  it("shows the boxes' loaders as the page's while the page first loads", () => {
-    render(<Page page="/students" loading={["list", "counts"]} />);
+  it("shows the boxes' loaders as the page's while nothing has loaded yet", () => {
+    render(<App page="/" loading={["progress", "money"]} />);
 
-    const shown = screen.getAllByRole("status");
-    expect(shown.map((one) => one.querySelector("svg")?.getAttribute("data-size"))).toEqual([
-      "page",
-      "page",
-    ]);
+    expect(sizes()).toEqual(["page", "page"]);
   });
 
-  it("shows a box's own loader once the page has loaded, as when switching tabs", async () => {
-    const { rerender } = render(<Page page="/students" loading={["list"]} />);
-    rerender(<Page page="/students" loading={[]} />);
+  it("puts the rest in their boxes once one box has its data", async () => {
+    const { rerender } = render(<App page="/" loading={["progress", "money"]} />);
+
+    rerender(<App page="/" loading={["money"]} />);
+
+    await waitFor(() => {
+      expect(sizes()).toEqual(["panel"]);
+    });
+  });
+
+  it("shows box loaders on the next page, as when moving between pages", async () => {
+    const { rerender } = render(<App page="/" loading={["progress"]} />);
+    rerender(<App page="/" loading={[]} />);
     await waitFor(() => {
       expect(screen.queryByRole("status")).not.toBeInTheDocument();
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    rerender(<Page page="/students" loading={["bin"]} />);
+    rerender(<App page="/students" loading={["list"]} />);
 
-    expect(screen.getByRole("status").querySelector("svg")).toHaveAttribute("data-size", "panel");
+    await waitFor(() => {
+      expect(sizes()).toEqual(["panel"]);
+    });
   });
 
-  it("goes back to the middle on another page", async () => {
-    const { rerender } = render(<Page page="/students" loading={["list"]} />);
-    rerender(<Page page="/students" loading={[]} />);
-    await new Promise((resolve) => setTimeout(resolve, 10));
-
-    rerender(<Page page="/visas" loading={["list"]} />);
-
-    expect(screen.getByRole("status").querySelector("svg")).toHaveAttribute("data-size", "page");
-  });
-
-  it("keeps box loaders in their boxes outside an app page", () => {
+  it("keeps box loaders in their boxes outside the app", () => {
     render(<Loading />);
 
-    expect(screen.getByRole("status").querySelector("svg")).toHaveAttribute("data-size", "panel");
+    expect(sizes()).toEqual(["panel"]);
   });
 });
