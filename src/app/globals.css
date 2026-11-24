@@ -827,14 +827,10 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
 
 .logo-loader-turn {
   animation: logo-loader-turn 2s linear infinite;
-  /* Every loader runs on one clock (set by LogoLoader), so when one hands over to another, or two
-     overlap in the middle of the screen, the logo never jumps (list tidy-ups 27). */
-  animation-delay: var(--loader-sync, 0s);
 }
 
 .logo-loader-breathe {
   animation: logo-loader-breathe 2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-  animation-delay: var(--loader-sync, 0s);
 }
 
 @keyframes logo-loader-turn {

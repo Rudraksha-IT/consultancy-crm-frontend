@@ -24,8 +24,25 @@ export type LoaderSize = "page" | "panel" | "button" | "pull";
 // Petals and lines at rest in a pull: closed to the breath's smallest, open at the full pull.
 const PULL_SMALLEST = 0.49;
 const FULL_TURN = 360;
-/** One clock for every loader: 6 s holds whole turns of the 2 s and the reduced-motion 6 s animations. */
-const CLOCK_MS = 6000;
+/**
+ * When the first loader's animations started. Every later loader starts at the same moment, so a
+ * handover or two loaders in the same place never jump; the first one is never moved
+ * (list tidy-ups 27).
+ */
+let clockStart: number | null = null;
+
+function joinTheClock(mark: Element): void {
+  // Older browsers (and the tests' page) have no Web Animations: each loader keeps its own timing.
+  if (!("getAnimations" in mark)) return;
+  for (const animation of mark.getAnimations({ subtree: true })) joinOne(animation);
+}
+
+function joinOne(animation: Animation): void {
+  if (clockStart === null && typeof animation.startTime === "number") {
+    clockStart = animation.startTime;
+  }
+  if (clockStart !== null) animation.startTime = clockStart;
+}
 
 /**
  * The product's logo as the loading animation (list tidy-ups 06, 19): it turns at one steady speed
@@ -36,11 +53,7 @@ const CLOCK_MS = 6000;
 export function LogoLoader({ size, pull }: { size: LoaderSize; pull?: number }) {
   const mark = useRef<SVGSVGElement>(null);
   useLayoutEffect(() => {
-    // Start where the shared clock is, before the first paint (list tidy-ups 27).
-    mark.current?.style.setProperty(
-      "--loader-sync",
-      `-${String(Math.round(performance.now() % CLOCK_MS))}ms`,
-    );
+    if (mark.current !== null) joinTheClock(mark.current);
   }, []);
   return (
     <svg

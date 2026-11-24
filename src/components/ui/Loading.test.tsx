@@ -97,23 +97,21 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
     expect(rules).not.toMatch(/opacity/);
   });
 
-  it("keeps every loader on one clock, so a handover or overlap never jumps (list tidy-ups 27)", () => {
-    vi.spyOn(performance, "now").mockReturnValue(12_345);
-    render(
-      <>
-        <Loading />
-        <Loading size="page" />
-      </>,
-    );
+  it("keeps every loader in step with the first one, which never moves (list tidy-ups 27)", () => {
+    const first: { startTime: number | null } = { startTime: 140 };
+    const later: { startTime: number | null } = { startTime: null };
+    const timings = [first, later];
+    Object.defineProperty(Element.prototype, "getAnimations", {
+      configurable: true,
+      value: vi.fn(() => [timings.shift()].filter(Boolean)),
+    });
 
-    const marks = screen.getAllByRole("status").map((one) => one.querySelector("svg"));
-    expect(marks.map((mark) => mark?.style.getPropertyValue("--loader-sync"))).toEqual([
-      "-345ms",
-      "-345ms",
-    ]);
-    const rules = loaderRules();
-    expect(rules).toMatch(/\.logo-loader-turn \{[^}]*animation-delay: var\(--loader-sync, 0s\)/);
-    expect(rules).toMatch(/\.logo-loader-breathe \{[^}]*animation-delay: var\(--loader-sync, 0s\)/);
+    render(<Loading size="page" />);
+    render(<Loading />);
+
+    expect(first.startTime).toBe(140);
+    expect(later.startTime).toBe(140);
+    Reflect.deleteProperty(Element.prototype, "getAnimations");
   });
 
   it("turns in place around the logo's centre, not rolling like a wheel", () => {
@@ -130,18 +128,26 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
   });
 });
 
-describe("a reload covers the app with one loader for at least 2 s (list tidy-ups 27)", () => {
-  function App({ loading }: { loading: readonly string[] }) {
+describe("one loader in the middle while a page loads (list tidy-ups 27)", () => {
+  function App({ page = "/", loading }: { page?: string; loading: readonly string[] }) {
     return (
-      <PageLoadProvider>
-        <h1>Home</h1>
+      <PageLoadProvider page={page}>
+        <h1>Page</h1>
         {loading.map((box) => (
-          <Loading key={box} />
+          <Loading key={`${page}-${box}`} />
         ))}
       </PageLoadProvider>
     );
   }
   const cover = () => document.querySelector("[data-reload-cover]");
+  const middle = () => document.querySelector("[data-page-loader]");
+  const boxMarks = () => [...document.querySelectorAll("svg[data-size=panel]")];
+  const shownBoxMarks = () => boxMarks().filter((mark) => !mark.closest(".invisible"));
+  const tick = (ms: number) => {
+    act(() => {
+      vi.advanceTimersByTime(ms);
+    });
+  };
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -152,51 +158,67 @@ describe("a reload covers the app with one loader for at least 2 s (list tidy-up
     vi.restoreAllMocks();
   });
 
-  it("covers the page with the loader while the page loads behind it", () => {
+  it("covers the app after a reload, the page loading behind it, its boxes showing no loader", () => {
     render(<App loading={["progress", "money"]} />);
 
     expect(cover()).toHaveClass("fixed", "inset-0", "bg-canvas");
     expect(cover()?.querySelector("svg")).toHaveAttribute("data-size", "page");
-    expect(screen.getByRole("heading", { name: "Home" })).toBeInTheDocument();
-    const boxes = document.querySelectorAll("svg[data-size=panel]");
-    expect(boxes).toHaveLength(2);
+    expect(screen.getByRole("heading", { name: "Page" })).toBeInTheDocument();
+    expect(boxMarks()).toHaveLength(2);
+    expect(shownBoxMarks()).toEqual([]);
   });
 
-  it("lifts the cover 2 s after the reload once the page has its data", () => {
-    const { rerender } = render(<App loading={["progress"]} />);
-    rerender(<App loading={[]} />);
-
-    act(() => {
-      vi.advanceTimersByTime(1_600);
-    });
-    expect(cover()).not.toBeNull();
-    act(() => {
-      vi.advanceTimersByTime(200);
-    });
-    expect(cover()).toBeNull();
-  });
-
-  it("keeps the cover after 2 s until the first box has its data", () => {
+  it("lifts the cover 2 s after the reload, the one loader staying while boxes still load", () => {
     const { rerender } = render(<App loading={["progress", "money"]} />);
-    act(() => {
-      vi.advanceTimersByTime(5_000);
-    });
+    tick(1_600);
     expect(cover()).not.toBeNull();
+    tick(200);
+
+    expect(cover()).toBeNull();
+    expect(middle()).not.toBeNull();
+    expect(shownBoxMarks()).toEqual([]);
 
     rerender(<App loading={["money"]} />);
-
-    expect(cover()).toBeNull();
-    expect(document.querySelector("svg[data-size=panel]")).not.toBeNull();
+    tick(0);
+    expect(middle()).not.toBeNull();
+    rerender(<App loading={[]} />);
+    tick(0);
+    expect(middle()).toBeNull();
   });
 
-  it("never covers again, as when moving between pages", () => {
+  it("shows one loader in the middle on another page only after 1 s, the boxes none", () => {
     const { rerender } = render(<App loading={[]} />);
-    act(() => {
-      vi.advanceTimersByTime(2_000);
-    });
+    tick(2_000);
 
-    rerender(<App loading={["list"]} />);
-
+    rerender(<App page="/students" loading={["list", "counts"]} />);
     expect(cover()).toBeNull();
+    expect(middle()).toBeNull();
+    tick(1_000);
+
+    expect(middle()).not.toBeNull();
+    expect(shownBoxMarks()).toEqual([]);
+  });
+
+  it("shows a box's own loader once its page has loaded, as for a tab inside the page", () => {
+    const { rerender } = render(<App page="/documents" loading={["list"]} />);
+    tick(2_000);
+    rerender(<App page="/documents" loading={[]} />);
+    tick(0);
+
+    rerender(<App page="/documents" loading={["bin"]} />);
+
+    expect(middle()).toBeNull();
+    expect(shownBoxMarks()).toHaveLength(1);
+  });
+
+  it("never keeps the middle loader more than 8 s", () => {
+    const { rerender } = render(<App loading={[]} />);
+    tick(2_000);
+    rerender(<App page="/students" loading={["stuck"]} />);
+
+    tick(8_000);
+
+    expect(middle()).toBeNull();
+    expect(shownBoxMarks()).toHaveLength(1);
   });
 });

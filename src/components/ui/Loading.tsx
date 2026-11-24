@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { MESSAGES } from "@/constants/messages";
 
 import { LogoLoader } from "./LogoLoader";
-import { useShowsLoading } from "./pageLoad";
+import { usePageLoading } from "./pageLoad";
 
 type LoadingProps = {
   /**
@@ -18,8 +18,8 @@ type LoadingProps = {
 
 /** Something is loading: the logo animation, with "Loading…" for screen readers (list tidy-ups 06). */
 export function Loading({ size = "panel", className }: LoadingProps) {
-  // The reload cover waits for the first box to have its data (list tidy-ups 27).
-  useShowsLoading();
+  // While its page loads, the one loader in the middle stands for the box's (list tidy-ups 27).
+  const isPageLoading = usePageLoading();
   return (
     <div
       role="status"
@@ -30,7 +30,9 @@ export function Loading({ size = "panel", className }: LoadingProps) {
         className,
       )}
     >
-      <LogoLoader size={size} />
+      <span className={clsx("contents", isPageLoading && size === "panel" && "invisible")}>
+        <LogoLoader size={size} />
+      </span>
       <span className="sr-only">{MESSAGES.loading}</span>
     </div>
   );
