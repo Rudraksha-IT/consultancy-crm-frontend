@@ -70,7 +70,7 @@ export function LogoLoader({ size, pull }: { size: LoaderSize; pull?: number }) 
           {PETALS.map((path) => (
             <path key={path} d={path} data-petal="" strokeWidth={10} />
           ))}
-          <path d={SPOKES} data-spokes="" strokeWidth={3.5} />
+          <path d={SPOKES} data-spokes="" strokeWidth={7.5} />
         </g>
       </g>
     </svg>

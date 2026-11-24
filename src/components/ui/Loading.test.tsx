@@ -35,6 +35,9 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
     expect([...petals].filter((petal) => petal.hasAttribute("style"))).toEqual([]);
     expect(lines).toHaveAttribute("d", expect.stringContaining("M18 0L117 0"));
     expect(lines?.getAttribute("d")?.split("M")).toHaveLength(9);
+    // The lines are 0.75 times the petals' width.
+    expect(lines).toHaveAttribute("stroke-width", "7.5");
+    expect(petals[0]).toHaveAttribute("stroke-width", "10");
   });
 
   it("comes in a page size and a panel size, panel by default", () => {
