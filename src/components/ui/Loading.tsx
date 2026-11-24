@@ -5,7 +5,7 @@ import clsx from "clsx";
 import { MESSAGES } from "@/constants/messages";
 
 import { LogoLoader } from "./LogoLoader";
-import { useIsFirstLoad } from "./pageLoad";
+import { useShowsLoading } from "./pageLoad";
 
 type LoadingProps = {
   /**
@@ -18,19 +18,19 @@ type LoadingProps = {
 
 /** Something is loading: the logo animation, with "Loading…" for screen readers (list tidy-ups 06). */
 export function Loading({ size = "panel", className }: LoadingProps) {
-  // While its page first loads, a box's loader is the page's, in the middle (list tidy-ups 27).
-  const shownSize = useIsFirstLoad() ? "page" : size;
+  // The reload cover waits for the first box to have its data (list tidy-ups 27).
+  useShowsLoading();
   return (
     <div
       role="status"
       className={clsx(
-        shownSize === "page"
+        size === "page"
           ? "pointer-events-none fixed inset-0 grid place-items-center"
           : "flex items-center justify-center py-8",
         className,
       )}
     >
-      <LogoLoader size={shownSize} />
+      <LogoLoader size={size} />
       <span className="sr-only">{MESSAGES.loading}</span>
     </div>
   );

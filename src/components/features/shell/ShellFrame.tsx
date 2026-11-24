@@ -57,55 +57,58 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
 
   return (
     <ShellThemeContext value={shellTheme}>
-      <div
-        className={clsx(
-          "grid min-h-full transition-[grid-template-columns]",
-          sidebar.isCollapsed
-            ? "wide:grid-cols-[var(--spacing-rail)_minmax(0,1fr)]"
-            : "wide:grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]",
-        )}
-      >
-        <a
-          href={`#${MAIN_ID}`}
-          className="rounded-control bg-paper sr-only z-50 focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:p-3"
+      {/* A reload covers the whole app with one loader (list tidy-ups 27). */}
+      <PageLoadProvider>
+        <div
+          className={clsx(
+            "grid min-h-full transition-[grid-template-columns]",
+            sidebar.isCollapsed
+              ? "wide:grid-cols-[var(--spacing-rail)_minmax(0,1fr)]"
+              : "wide:grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]",
+          )}
         >
-          {LABELS.skipToContent}
-        </a>
-        <Sidebar ref={menuRef} context={context} sidebar={sidebar} colourMode={colourMode} />
-        {sidebar.isDrawerOpen && (
-          <div
-            aria-hidden="true"
-            onClick={sidebar.closeDrawer}
-            className="bg-scrim wide:hidden fixed inset-0 z-39"
-          />
-        )}
-        <div className="flex min-w-0 flex-col">
-          {context.supportAccess !== null && (
-            <SupportAccessBanner
-              office={context.consultancy.name}
-              platformHost={context.supportAccess.platformHost}
+          <a
+            href={`#${MAIN_ID}`}
+            className="rounded-control bg-paper sr-only z-50 focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:p-3"
+          >
+            {LABELS.skipToContent}
+          </a>
+          <Sidebar ref={menuRef} context={context} sidebar={sidebar} colourMode={colourMode} />
+          {sidebar.isDrawerOpen && (
+            <div
+              aria-hidden="true"
+              onClick={sidebar.closeDrawer}
+              className="bg-scrim wide:hidden fixed inset-0 z-39"
             />
           )}
-          <TopBar
-            context={context}
-            colourMode={colourMode}
-            isDrawerOpen={sidebar.isDrawerOpen}
-            onOpenDrawer={sidebar.openDrawer}
+          <div className="flex min-w-0 flex-col">
+            {context.supportAccess !== null && (
+              <SupportAccessBanner
+                office={context.consultancy.name}
+                platformHost={context.supportAccess.platformHost}
+              />
+            )}
+            <TopBar
+              context={context}
+              colourMode={colourMode}
+              isDrawerOpen={sidebar.isDrawerOpen}
+              onOpenDrawer={sidebar.openDrawer}
+            />
+            <PulledPage pull={pull}>
+              <ConsultancyStatusBanner shown={context.consultancy} />
+              <UnexpectedErrorBanner />
+              {children}
+            </PulledPage>
+          </div>
+          <TabBar
+            role={context.staff.role}
+            modules={context.modules}
+            isMenuOpen={sidebar.isDrawerOpen}
+            onOpenMenu={sidebar.openDrawer}
           />
-          <PulledPage pull={pull}>
-            <ConsultancyStatusBanner shown={context.consultancy} />
-            <UnexpectedErrorBanner />
-            {children}
-          </PulledPage>
         </div>
-        <TabBar
-          role={context.staff.role}
-          modules={context.modules}
-          isMenuOpen={sidebar.isDrawerOpen}
-          onOpenMenu={sidebar.openDrawer}
-        />
-      </div>
-      <OfficeNetworkCheck context={context} />
+        <OfficeNetworkCheck context={context} />
+      </PageLoadProvider>
     </ShellThemeContext>
   );
 }
@@ -157,16 +160,9 @@ function PulledPage({ pull, children }: { pull: PagePullView; children: ReactNod
           "data-[pulled=top]:shadow-edge-top data-[pulled=bottom]:shadow-edge-bottom",
         )}
       >
-        <div className="max-w-content mx-auto grid grid-cols-1 gap-8">
-          <ThisPageLoad>{children}</ThisPageLoad>
-        </div>
+        <div className="max-w-content mx-auto grid grid-cols-1 gap-8">{children}</div>
       </main>
       <PullGap edge="bottom" hint={pull.hint} isLeaving={isLeaving} />
     </div>
   );
-}
-
-/** A reload shows one loader in the middle (list tidy-ups 27). */
-function ThisPageLoad({ children }: { children: ReactNode }) {
-  return <PageLoadProvider>{children}</PageLoadProvider>;
 }

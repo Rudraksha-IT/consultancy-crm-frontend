@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 
 import { Button } from "./Button";
 import { Loading } from "./Loading";
@@ -130,52 +130,73 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
   });
 });
 
-describe("a reload shows one loader, in the middle, until the page has something (list tidy-ups 27)", () => {
-  function App({ page, loading }: { page: string; loading: readonly string[] }) {
+describe("a reload covers the app with one loader for at least 2 s (list tidy-ups 27)", () => {
+  function App({ loading }: { loading: readonly string[] }) {
     return (
       <PageLoadProvider>
+        <h1>Home</h1>
         {loading.map((box) => (
-          <Loading key={`${page}-${box}`} />
+          <Loading key={box} />
         ))}
       </PageLoadProvider>
     );
   }
-  const sizes = () =>
-    screen.getAllByRole("status").map((one) => one.querySelector("svg")?.getAttribute("data-size"));
+  const cover = () => document.querySelector("[data-reload-cover]");
 
-  it("shows the boxes' loaders as the page's while nothing has loaded yet", () => {
-    render(<App page="/" loading={["progress", "money"]} />);
-
-    expect(sizes()).toEqual(["page", "page"]);
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(performance, "now").mockReturnValue(300);
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it("puts the rest in their boxes once one box has its data", async () => {
-    const { rerender } = render(<App page="/" loading={["progress", "money"]} />);
+  it("covers the page with the loader while the page loads behind it", () => {
+    render(<App loading={["progress", "money"]} />);
 
-    rerender(<App page="/" loading={["money"]} />);
-
-    await waitFor(() => {
-      expect(sizes()).toEqual(["panel"]);
-    });
+    expect(cover()).toHaveClass("fixed", "inset-0", "bg-canvas");
+    expect(cover()?.querySelector("svg")).toHaveAttribute("data-size", "page");
+    expect(screen.getByRole("heading", { name: "Home" })).toBeInTheDocument();
+    const boxes = document.querySelectorAll("svg[data-size=panel]");
+    expect(boxes).toHaveLength(2);
   });
 
-  it("shows box loaders on the next page, as when moving between pages", async () => {
-    const { rerender } = render(<App page="/" loading={["progress"]} />);
-    rerender(<App page="/" loading={[]} />);
-    await waitFor(() => {
-      expect(screen.queryByRole("status")).not.toBeInTheDocument();
-    });
+  it("lifts the cover 2 s after the reload once the page has its data", () => {
+    const { rerender } = render(<App loading={["progress"]} />);
+    rerender(<App loading={[]} />);
 
-    rerender(<App page="/students" loading={["list"]} />);
-
-    await waitFor(() => {
-      expect(sizes()).toEqual(["panel"]);
+    act(() => {
+      vi.advanceTimersByTime(1_600);
     });
+    expect(cover()).not.toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(cover()).toBeNull();
   });
 
-  it("keeps box loaders in their boxes outside the app", () => {
-    render(<Loading />);
+  it("keeps the cover after 2 s until the first box has its data", () => {
+    const { rerender } = render(<App loading={["progress", "money"]} />);
+    act(() => {
+      vi.advanceTimersByTime(5_000);
+    });
+    expect(cover()).not.toBeNull();
 
-    expect(sizes()).toEqual(["panel"]);
+    rerender(<App loading={["money"]} />);
+
+    expect(cover()).toBeNull();
+    expect(document.querySelector("svg[data-size=panel]")).not.toBeNull();
+  });
+
+  it("never covers again, as when moving between pages", () => {
+    const { rerender } = render(<App loading={[]} />);
+    act(() => {
+      vi.advanceTimersByTime(2_000);
+    });
+
+    rerender(<App loading={["list"]} />);
+
+    expect(cover()).toBeNull();
   });
 });

@@ -5,51 +5,79 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
 
-type PageLoad = {
-  /** True after a reload until the first box has its data. */
-  isFirstLoad: boolean;
-  /** A loader is shown; call the result when it goes. */
-  showing: () => () => void;
-};
+import { MESSAGES } from "@/constants/messages";
 
-const PageLoadContext = createContext<PageLoad | null>(null);
+import { LogoLoader } from "./LogoLoader";
+
+/** How long after a reload the cover stays at least: one turn of the loader (list tidy-ups 27). */
+const COVER_MS = 2000;
+
+/** Called when a box's loader shows; the result is called when it goes. */
+type Showing = () => () => void;
+
+const PageLoadContext = createContext<Showing | null>(null);
 
 /**
- * After a full reload, every box's loader shows as the one loader in the middle of the screen,
- * until the first box has its data or nothing is loading; from then on (moving between pages,
- * say) each box shows its own (list tidy-ups 27). It lives in the shell, so moving between pages
- * keeps it.
+ * After a full reload the app is covered by the one loader for at least 2 s from the reload, and
+ * until the first box has its data (or nothing is loading), while the page loads behind it. Then
+ * any box still loading shows its own. It lives in the shell, so moving between pages never covers
+ * again (list tidy-ups 27).
  */
 export function PageLoadProvider({ children }: { children: ReactNode }) {
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
+  const [hasWaited, setHasWaited] = useState(false);
+  const [hasData, setHasData] = useState(false);
   const shown = useRef(0);
 
   useEffect(() => {
-    if (shown.current === 0) setIsFirstLoad(false);
-  }, []);
-
-  const showing = useCallback(() => {
-    shown.current += 1;
+    if (shown.current === 0) setHasData(true);
+    const timer = setTimeout(
+      () => {
+        setHasWaited(true);
+      },
+      Math.max(0, COVER_MS - performance.now()),
+    );
     return () => {
-      shown.current -= 1;
-      setIsFirstLoad(false);
+      clearTimeout(timer);
     };
   }, []);
 
-  const value = useMemo(() => ({ isFirstLoad, showing }), [isFirstLoad, showing]);
-  return <PageLoadContext value={value}>{children}</PageLoadContext>;
+  const showing = useCallback<Showing>(() => {
+    shown.current += 1;
+    return () => {
+      shown.current -= 1;
+      setHasData(true);
+    };
+  }, []);
+
+  return (
+    <PageLoadContext value={showing}>
+      {children}
+      {!(hasWaited && hasData) && <ReloadCover />}
+    </PageLoadContext>
+  );
 }
 
-/** Whether a box's loader should stand in for the page's, and registers it while shown. */
-export function useIsFirstLoad(): boolean {
-  const load = useContext(PageLoadContext);
-  const showing = load?.showing;
+/** The whole screen, the page's colour, with the loader in the middle. */
+function ReloadCover() {
+  return (
+    <div
+      role="status"
+      data-reload-cover=""
+      className="bg-canvas fixed inset-0 z-50 grid place-items-center"
+    >
+      <LogoLoader size="page" />
+      <span className="sr-only">{MESSAGES.loading}</span>
+    </div>
+  );
+}
+
+/** Registers a box's loader while it is shown, so the cover knows when the page has data. */
+export function useShowsLoading(): void {
+  const showing = useContext(PageLoadContext);
   useEffect(() => showing?.(), [showing]);
-  return load?.isFirstLoad ?? false;
 }
