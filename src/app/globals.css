@@ -774,10 +774,10 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
 }
 /* End of tables fit their panel. */
 
-/* The logo loader (list tidy-ups 06): the product's logo turns while its 8 petals close one after
-   another into a small flower and open out again, the spokes shrinking and fading meanwhile. Each
-   petal starts 60 ms after the one before (set on the petal). In a button it takes the button's
-   own text colour. With reduced motion it only turns, slowly. */
+/* The logo loader (list tidy-ups 06, chosen in 19): the product's logo turns at one steady speed,
+   never stopping, while its petals and lines close together into a small flower and open out
+   again with a small bounce. Turn and breath are both 2 s. In a button it takes the button's own
+   text colour. With reduced motion it only turns, slowly. */
 .logo-loader {
   display: block;
   flex: none;
@@ -803,23 +803,18 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
 }
 
 .logo-loader-turn,
-.logo-loader [data-petal],
-.logo-loader [data-spokes] {
+.logo-loader-breathe {
   /* The logo's centre is the drawing's 0 0 (its viewBox is centred), so it turns in place on
-     its own axis and the petals close toward that same centre. */
+     its own axis and the petals and lines close toward that same centre. */
   transform-origin: 0 0;
 }
 
 .logo-loader-turn {
-  animation: logo-loader-turn 2.4s cubic-bezier(0.6, 0, 0.4, 1) infinite;
+  animation: logo-loader-turn 2s linear infinite;
 }
 
-.logo-loader [data-petal] {
-  animation: logo-loader-petals 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-}
-
-.logo-loader [data-spokes] {
-  animation: logo-loader-spokes 2.4s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+.logo-loader-breathe {
+  animation: logo-loader-breathe 2s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 
 @keyframes logo-loader-turn {
@@ -828,48 +823,28 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   }
 }
 
-@keyframes logo-loader-petals {
-  0%,
-  8% {
+/* A smooth breath with no rest at either end, so the motion never looks stuck. */
+@keyframes logo-loader-breathe {
+  0% {
     transform: scale(1);
   }
-  45%,
-  55% {
-    transform: scale(0.32);
+  50% {
+    transform: scale(0.49);
   }
-  85% {
-    transform: scale(1.06);
+  80% {
+    transform: scale(1.05);
   }
   100% {
     transform: scale(1);
-  }
-}
-
-@keyframes logo-loader-spokes {
-  0%,
-  8% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  45%,
-  55% {
-    transform: scale(0.15);
-    opacity: 0.2;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .logo-loader-turn {
     animation-duration: 6s;
-    animation-timing-function: linear;
   }
 
-  .logo-loader [data-petal],
-  .logo-loader [data-spokes] {
+  .logo-loader-breathe {
     animation: none;
   }
 }

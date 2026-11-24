@@ -25,6 +25,17 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
     expect(mark?.querySelector("[data-spokes]")).not.toBeNull();
   });
 
+  it("breathes petals and lines as one, the lines reaching near the petals (list tidy-ups 19)", () => {
+    render(<Loading />);
+
+    const petals = document.querySelectorAll("[data-breathe] > [data-petal]");
+    const lines = document.querySelector("[data-breathe] > [data-spokes]");
+    expect(petals).toHaveLength(8);
+    expect([...petals].filter((petal) => petal.hasAttribute("style"))).toEqual([]);
+    expect(lines).toHaveAttribute("d", expect.stringContaining("M18 0L117 0"));
+    expect(lines?.getAttribute("d")?.split("M")).toHaveLength(9);
+  });
+
   it("comes in a page size and a panel size, panel by default", () => {
     render(
       <>
@@ -54,16 +65,29 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
     const rules = loaderRules();
 
     expect(rules).toMatch(/@keyframes logo-loader-turn/);
-    expect(rules).toMatch(/@keyframes logo-loader-petals \{[\s\S]*?scale\(0\.32\)/);
     expect(rules).toMatch(
-      /prefers-reduced-motion: reduce[\s\S]*\[data-petal\][\s\S]*animation: none/,
+      /@keyframes logo-loader-breathe \{[\s\S]*?scale\(0\.49\)[\s\S]*?scale\(1\.05\)/,
     );
+    expect(rules).toMatch(
+      /prefers-reduced-motion: reduce[\s\S]*\.logo-loader-breathe[\s\S]*animation: none/,
+    );
+  });
+
+  it("turns at one steady speed, never stopping, and the lines never fade (list tidy-ups 19)", () => {
+    const rules = loaderRules();
+
+    expect(rules).toMatch(
+      /\.logo-loader-turn \{[^}]*animation: logo-loader-turn 2s linear infinite/,
+    );
+    expect(rules).toMatch(/\.logo-loader-breathe \{[^}]*animation: logo-loader-breathe 2s /);
+    expect(rules).not.toMatch(/opacity/);
   });
 
   it("turns in place around the logo's centre, not rolling like a wheel", () => {
     const rules = loaderRules();
 
     expect(rules).toMatch(/\.logo-loader-turn,[^{]*\{[^}]*transform-origin: 0 0/);
+    expect(rules).toMatch(/\.logo-loader-breathe[^{]*\{[^}]*transform-origin: 0 0/);
     expect(rules).not.toMatch(/transform-origin: 50% 50%/);
   });
 

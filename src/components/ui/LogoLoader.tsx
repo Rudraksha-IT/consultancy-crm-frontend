@@ -10,15 +10,17 @@ const PETALS = [
   "M102.61 -91.85A49 49 0 0 1 137.51 -7.61",
 ];
 
+// The 8 lines from the centre, reaching near the petals (85% of the way) without touching.
 const SPOKES =
-  "M18 0L108 0 M12.73 12.73L76.37 76.37 M0 18L0 108 M-12.73 12.73L-76.37 76.37 M-18 0L-108 0 " +
-  "M-12.73 -12.73L-76.37 -76.37 M0 -18L0 -108 M12.73 -12.73L76.37 -76.37";
+  "M18 0L117 0 M12.73 12.73L82.73 82.73 M0 18L0 117 M-12.73 12.73L-82.73 82.73 " +
+  "M-18 0L-117 0 M-12.73 -12.73L-82.73 -82.73 M0 -18L0 -117 M12.73 -12.73L82.73 -82.73";
 
 export type LoaderSize = "page" | "panel" | "button";
 
 /**
- * The product's logo as the loading animation (list tidy-ups 06): it turns, and its petals close
- * one after another into a small flower and open out again (globals.css, "The logo loader").
+ * The product's logo as the loading animation (list tidy-ups 06, 19): it turns at one steady speed
+ * while its petals and lines close together into a small flower and open out again (globals.css,
+ * "The logo loader").
  * Decoration only; whoever shows it says "Loading…" in words.
  */
 export function LogoLoader({ size }: { size: LoaderSize }) {
@@ -31,16 +33,12 @@ export function LogoLoader({ size }: { size: LoaderSize }) {
       className="logo-loader"
     >
       <g className="logo-loader-turn">
-        {PETALS.map((path, index) => (
-          <path
-            key={path}
-            d={path}
-            data-petal=""
-            strokeWidth={10}
-            style={{ animationDelay: `${String(index * 60)}ms` }}
-          />
-        ))}
-        <path d={SPOKES} data-spokes="" strokeWidth={3.5} />
+        <g className="logo-loader-breathe" data-breathe="">
+          {PETALS.map((path) => (
+            <path key={path} d={path} data-petal="" strokeWidth={10} />
+          ))}
+          <path d={SPOKES} data-spokes="" strokeWidth={3.5} />
+        </g>
       </g>
     </svg>
   );
