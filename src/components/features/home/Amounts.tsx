@@ -32,7 +32,8 @@ export function Amounts({ isShown, children }: AmountsProps): ReactNode {
 export function AmountsEye({ amounts }: { amounts: HomeAmounts }) {
   return (
     <IconButton
-      icon={amounts.isShown ? "eyeOff" : "eye"}
+      // The eye shows the current state: open while amounts are shown (list tidy-ups 16).
+      icon={amounts.isShown ? "eye" : "eyeOff"}
       iconSize="lg"
       label={amounts.isShown ? AMOUNTS_TEXT.hide : AMOUNTS_TEXT.show}
       isPressed={amounts.isShown}

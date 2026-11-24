@@ -764,6 +764,15 @@ describe("an eye on Home's money (ticket 13)", () => {
     expect(button.querySelector("svg")).toHaveClass("size-6");
   });
 
+  it("shows a crossed-out eye while hidden and an open eye while shown (list tidy-ups 16)", async () => {
+    onHomeMoney();
+    await openHome();
+
+    expect(eye("Show amounts").querySelector("svg")).toHaveAttribute("data-icon", "eyeOff");
+    await userEvent.click(eye("Show amounts"));
+    expect(eye("Hide amounts").querySelector("svg")).toHaveAttribute("data-icon", "eye");
+  });
+
   it("hides every amount at first, keeping names, counts and labels", async () => {
     onHomeMoney();
     const { glance, owes } = await openHome();
