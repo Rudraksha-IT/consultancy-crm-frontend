@@ -118,7 +118,7 @@ afterEach(() => {
 });
 
 describe("VisasPage", () => {
-  it("lists each Visa with its Student, where to, Intake, Status, next appointment, documents and counsellor", async () => {
+  it("lists each Visa with its Student, where to, Intake, Status, documents and counsellor", async () => {
     backend(listing(), choices, counsellors);
     renderPage();
 
@@ -132,9 +132,10 @@ describe("VisasPage", () => {
     expect(within(sita).getByText("University of Toronto, Master of IT")).toBeInTheDocument();
     expect(within(sita).getByText("Sep 2027")).toBeInTheDocument();
     expect(within(sita).getByText("Applied")).toBeInTheDocument();
-    expect(within(sita).getByText("Biometrics")).toBeInTheDocument();
-    expect(within(sita).getByText("20 Nov 2026")).toBeInTheDocument();
-    expect(within(sita).getByText("2:00 PM")).toBeInTheDocument();
+    // No Next appointment column (list tidy-ups 15).
+    expect(within(sita).queryByText("Biometrics")).toBeNull();
+    expect(within(sita).queryByText("20 Nov 2026")).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: "Next appointment" })).toBeNull();
     expect(
       within(sita).getByRole("button", {
         name: "Open the checklist for Sita Karki: 5 of 13 documents, 1 rejected, 2 waiting to check",
@@ -144,12 +145,11 @@ describe("VisasPage", () => {
     expect(screen.getByText("2 visas")).toBeInTheDocument();
   });
 
-  it("shows a dash when there's no appointment and Not assigned without a counsellor", async () => {
+  it("shows Not assigned without a counsellor", async () => {
     backend(listing(), choices, counsellors);
     renderPage();
 
     const gita = await rowFor("Gita Rai");
-    expect(within(gita).getByText("No appointment yet")).toBeInTheDocument();
     expect(within(gita).getByText("Not assigned")).toBeInTheDocument();
     expect(within(gita).getByText("Refused")).toBeInTheDocument();
   });

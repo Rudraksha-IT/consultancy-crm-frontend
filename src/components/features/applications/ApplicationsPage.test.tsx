@@ -136,7 +136,9 @@ describe("ApplicationsPage", () => {
     expect(within(sita).getAllByRole("cell")[4]).toHaveTextContent("Offer, conditional");
     expect(within(sita).getByText("Bikash Thapa")).toBeInTheDocument();
     expect(within(sita).getByText("2 Oct 2026")).toBeInTheDocument();
-    expect(within(sita).getByText("30 Sep 2026")).toBeInTheDocument();
+    // No Added column (list tidy-ups 15).
+    expect(within(sita).queryByText("30 Sep 2026")).toBeNull();
+    expect(screen.queryByRole("columnheader", { name: "Added" })).toBeNull();
     expect(screen.getByText("2 applications")).toBeInTheDocument();
     expect(
       screen.getByText("Applied is the day the application was added, recorded automatically."),

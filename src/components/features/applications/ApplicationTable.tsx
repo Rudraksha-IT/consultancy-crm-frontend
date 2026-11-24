@@ -20,7 +20,7 @@ type ApplicationTableProps = {
   selection: RowSelection;
 };
 
-// Narrow padding so all seven columns fit as a table (asked 2026-11-17).
+// Narrow padding so all six columns fit as a table (asked 2026-11-17).
 const HEAD = "text-small text-ink-2 bg-fill px-3 py-3 text-left font-semibold";
 const CELL = "px-3 py-4 align-middle max-tablet:p-0";
 const COLUMNS = [
@@ -30,12 +30,11 @@ const COLUMNS = [
   TEXT.status,
   TEXT.counsellor,
   TEXT.applied,
-  TEXT.added,
 ] as const;
 
 /**
  * Every listed Application with its Student, where to, Status, counsellor and days. Each row
- * opens the Student's page, which starts on their Applications. All seven columns fit as a table:
+ * opens the Student's page, which starts on their Applications. All six columns fit as a table:
  * the Student, university and counsellor are cut with …, and dates may wrap. Below tablet width each row
  * stacks into a card, so the page never scrolls sideways. On a phone a row is the Student, the
  * university and the Status, with an arrow.
@@ -117,9 +116,6 @@ function ApplicationRow({ application, selection }: ApplicationRowProps) {
         ) : (
           dates.date(appliedOn)
         )}
-      </DataCell>
-      <DataCell label={TEXT.added} className={`${CELL} tabular-nums`}>
-        {dates.date(application.addedOn)}
       </DataCell>
     </DataRow>
   );
