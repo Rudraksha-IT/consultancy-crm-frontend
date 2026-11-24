@@ -33,6 +33,7 @@ export function AmountsEye({ amounts }: { amounts: HomeAmounts }) {
   return (
     <IconButton
       icon={amounts.isShown ? "eyeOff" : "eye"}
+      iconSize="lg"
       label={amounts.isShown ? AMOUNTS_TEXT.hide : AMOUNTS_TEXT.show}
       isPressed={amounts.isShown}
       onClick={amounts.toggle}

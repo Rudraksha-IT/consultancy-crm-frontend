@@ -86,13 +86,11 @@ export function MonthAtAGlance({
   return (
     <Section
       title={FEE_TEXT.atAGlance}
+      titleAside={<AmountsEye amounts={amounts} />}
       aside={
-        <span className="flex items-center gap-3">
-          <AmountsEye amounts={amounts} />
-          <Link href={ROUTES.accounts} className={ACCOUNTS_LINK}>
-            {FEE_TEXT.openAccounts}
-          </Link>
-        </span>
+        <Link href={ROUTES.accounts} className={ACCOUNTS_LINK}>
+          {FEE_TEXT.openAccounts}
+        </Link>
       }
     >
       <GlanceBody owing={owing} month={month} isShown={amounts.isShown} />
