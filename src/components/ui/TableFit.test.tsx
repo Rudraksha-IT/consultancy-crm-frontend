@@ -109,6 +109,29 @@ describe("a table with many columns fits by sharing out its width", () => {
   });
 });
 
+describe("table text is small and stays on one line (list tidy-ups 26)", () => {
+  it("draws every table's text small, its column titles never split", () => {
+    render(
+      <DataTable label="Sample">
+        <thead>
+          <tr>
+            <th>Applied date</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>2 Oct 2026</td>
+          </tr>
+        </tbody>
+      </DataTable>,
+    );
+
+    const table = screen.getByRole("table", { name: "Sample" });
+    expect(table).toHaveClass("text-small", "[&_th]:whitespace-nowrap");
+    expect(table).not.toHaveClass("text-body");
+  });
+});
+
 describe("every table fits, not only the office lists", () => {
   it("lets a row's heading cell shrink too (Staff Progress names)", () => {
     expect(fitRules()).toMatch(/:is\(td, th\)\[data-shrinks="large"\][^{]*\{[^}]*width: 20%/);

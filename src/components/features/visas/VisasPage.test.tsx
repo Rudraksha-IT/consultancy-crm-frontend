@@ -118,6 +118,14 @@ afterEach(() => {
 });
 
 describe("VisasPage", () => {
+  it("keeps Intake, Visa status and documents on one line (list tidy-ups 26)", async () => {
+    backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    expect(screen.getByRole("table")).not.toHaveAttribute("data-wraps");
+  });
+
   it("gives the text columns fixed shares so nothing spills or scrolls sideways (list tidy-ups 17)", async () => {
     backend(listing(), choices, counsellors);
     renderPage();

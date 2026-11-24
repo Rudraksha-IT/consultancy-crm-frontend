@@ -55,7 +55,8 @@ export function DataTable({
         data-phone={phone}
         {...flag("data-stacks", stacksBelowTablet)}
         {...flag("data-wraps", wraps)}
-        className={clsx("text-body w-full border-collapse", className)}
+        // Small text, column titles on one line (list tidy-ups 26).
+        className={clsx("text-small w-full border-collapse [&_th]:whitespace-nowrap", className)}
       >
         {children}
       </table>

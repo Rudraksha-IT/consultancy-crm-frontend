@@ -39,7 +39,7 @@ const COLUMNS = [
  */
 export function VisaTable({ visas, onOpenDocuments }: VisaTableProps) {
   return (
-    <DataTable phone="list" stacksBelowTablet wraps>
+    <DataTable phone="list" stacksBelowTablet>
       <thead className="max-tablet:sr-only">
         <tr>
           {COLUMNS.map((column) => (
