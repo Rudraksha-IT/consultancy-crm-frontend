@@ -836,9 +836,11 @@ describe("Pre-ticked from a list or a class", () => {
 });
 
 describe("the email windows are wide (list tidy-ups 28)", () => {
-  it("makes the writer and the picker 90rem wide at most, still inside the screen", () => {
+  it("makes the writer and the picker 100rem wide at most, the writer 46rem tall, inside the screen", () => {
     const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
-    expect(css).toMatch(/--container-composer: 90rem;/);
+    expect(css).toMatch(/--container-composer: 100rem;/);
+    // The writer: wide but not as tall as the screen.
+    expect(css).toMatch(/--spacing-composer: min\(46rem, calc\(100dvh - 2rem\)\);/);
   });
 });
