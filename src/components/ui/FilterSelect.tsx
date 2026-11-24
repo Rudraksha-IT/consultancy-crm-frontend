@@ -20,7 +20,7 @@ export type FilterSelectProps = {
  * system: Phones, filters).
  */
 const SELECT_CLASSES =
-  "min-h-control w-full min-w-0 rounded-control border border-rule-2 bg-paper px-3.5 text-body text-ink focus:border-accent phone:w-auto max-phone:w-auto max-phone:rounded-pill max-phone:border-transparent max-phone:bg-transparent max-phone:pr-2 max-phone:pl-3.5 max-phone:text-small max-phone:font-semibold max-phone:text-ink max-phone:focus-visible:outline-none";
+  "min-h-control w-full min-w-0 rounded-control border border-rule-2 bg-paper text-body text-ink focus:border-accent phone:w-auto max-phone:w-auto max-phone:rounded-pill max-phone:border-transparent max-phone:bg-transparent max-phone:text-small max-phone:font-semibold max-phone:text-ink max-phone:focus-visible:outline-none";
 
 /**
  * A list filter: a select named by its label, or by its first option when the label is hidden.
@@ -37,6 +37,8 @@ export function FilterSelect({
   const select = (
     <select
       aria-label={isLabelShown ? undefined : label}
+      // Sized to the chosen text, the arrow drawn inside (globals.css, "Filter boxes fit").
+      data-filter=""
       value={value}
       onChange={(event: ChangeEvent<HTMLSelectElement>) => {
         onChange(event.target.value);

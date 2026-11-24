@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -112,5 +115,24 @@ describe("More filters", () => {
     expect(button).toHaveClass("min-h-control", "max-phone:before:border-dashed");
     await userEvent.click(button);
     expect(onOpen).toHaveBeenCalledOnce();
+  });
+});
+
+describe("filter boxes fit their choice, with room each side (list tidy-ups 10)", () => {
+  const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+  const start = css.indexOf("Filter boxes fit their choice");
+  const rules = css.slice(start, css.indexOf("End of filter boxes", start));
+
+  it("marks every filter's select", () => {
+    render(<Bar />);
+
+    expect(screen.getByRole("combobox", { name: "Stage" })).toHaveAttribute("data-filter");
+  });
+
+  it("sizes each box to the chosen text and draws the arrow inside, with even padding", () => {
+    expect(rules).toMatch(/select\[data-filter\][^{]*\{[^}]*field-sizing: content/);
+    expect(rules).toMatch(/select\[data-filter\][^{]*\{[^}]*appearance: none/);
+    expect(rules).toMatch(/select\[data-filter\][^{]*\{[^}]*padding-inline: 0\.875rem 2\.5rem/);
+    expect(rules).toMatch(/background-position: right 0\.875rem center/);
   });
 });

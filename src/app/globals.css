@@ -874,3 +874,23 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   }
 }
 /* End of the logo loader */
+
+/* Filter boxes fit their choice (list tidy-ups 10): a filter's select is as wide as the chosen
+   text, not its longest option, with the same room on the left as on the right of its arrow.
+   Browsers without field-sizing keep the longest option's width, still padded. */
+@layer components {
+  select[data-filter] {
+    appearance: none;
+    field-sizing: content;
+    padding-inline: 0.875rem 2.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23686867' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+    background-position: right 0.875rem center;
+    background-repeat: no-repeat;
+    background-size: 1rem;
+  }
+
+  :root[data-theme="dark"] select[data-filter] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a9a9b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+  }
+}
+/* End of filter boxes */
