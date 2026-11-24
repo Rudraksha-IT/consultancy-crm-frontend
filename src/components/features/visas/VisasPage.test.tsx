@@ -388,17 +388,13 @@ describe("VisasPage More filters (list tidy-ups 03)", () => {
   });
 });
 
-describe("VisasPage selection and export (issue 51)", () => {
-  it("copies the ticked Students' emails", async () => {
-    const user = userEvent.setup();
+describe("VisasPage export (issue 51)", () => {
+  it("shows no tick boxes: Download gives the whole filtered list (list tidy-ups 25)", async () => {
     backend(listing(), choices, counsellors);
     renderPage();
 
-    await user.click(await screen.findByRole("checkbox", { name: "Select Sita Karki" }));
-    await user.click(screen.getByRole("button", { name: "Copy emails" }));
-
-    expect(await navigator.clipboard.readText()).toBe("sita@gmail.test");
-    expect(await screen.findByText("1 email copied")).toBeInTheDocument();
+    await screen.findAllByText("Sita Karki");
+    expect(screen.queryAllByRole("checkbox")).toEqual([]);
   });
 
   it("shows the Export dialog with the Visas columns, for Admins only", async () => {

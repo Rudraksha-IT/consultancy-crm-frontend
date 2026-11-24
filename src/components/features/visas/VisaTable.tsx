@@ -7,8 +7,6 @@ import { OneLine } from "@/components/ui/OneLine";
 import { ROUTES } from "@/constants/routes";
 import { COUNTRY_LABELS } from "@/constants/students";
 import { VISA_LIST_TEXT as TEXT, VISA_STATUS_LABELS } from "@/constants/visas";
-import { SelectAllHeader, SelectRowCell } from "@/components/features/exports/SelectionCells";
-import type { RowSelection } from "@/components/features/exports/useRowSelection";
 import type { OfficeVisa } from "@/lib/api";
 import { formatIntake } from "@/lib/dates";
 
@@ -18,8 +16,6 @@ type VisaTableProps = {
   visas: readonly OfficeVisa[];
   /** Open the Student's document checklist. */
   onOpenDocuments: (visa: OfficeVisa) => void;
-  /** Ticks rows to copy their Students' emails or phones (spec 31a). */
-  selection: RowSelection;
 };
 
 // Narrow padding so all six columns fit as a table (asked 2026-11-17).
@@ -41,12 +37,11 @@ const COLUMNS = [
  * so the page never scrolls sideways. On a phone a row is the Student, where they are going and
  * the Visa status, with an arrow.
  */
-export function VisaTable({ visas, onOpenDocuments, selection }: VisaTableProps) {
+export function VisaTable({ visas, onOpenDocuments }: VisaTableProps) {
   return (
     <DataTable phone="list" stacksBelowTablet wraps>
       <thead className="max-tablet:sr-only">
         <tr>
-          <SelectAllHeader selection={selection} />
           {COLUMNS.map((column) => (
             <th key={column} scope="col" className={HEAD}>
               {column}
@@ -59,7 +54,6 @@ export function VisaTable({ visas, onOpenDocuments, selection }: VisaTableProps)
           <VisaRow
             key={visa.id}
             visa={visa}
-            selection={selection}
             onOpenDocuments={() => {
               onOpenDocuments(visa);
             }}
@@ -70,13 +64,12 @@ export function VisaTable({ visas, onOpenDocuments, selection }: VisaTableProps)
   );
 }
 
-type VisaRowProps = { visa: OfficeVisa; selection: RowSelection; onOpenDocuments: () => void };
+type VisaRowProps = { visa: OfficeVisa; onOpenDocuments: () => void };
 
-function VisaRow({ visa, selection, onOpenDocuments }: VisaRowProps) {
+function VisaRow({ visa, onOpenDocuments }: VisaRowProps) {
   const { student, university, course, assignedCounsellor } = visa;
   return (
     <DataRow opensPage className="hover:bg-fill max-tablet:grid max-tablet:gap-3 max-tablet:p-5">
-      <SelectRowCell selection={selection} id={visa.id} name={student.name} />
       <DataCell part="title" shrinks="large" className={CELL}>
         <Link
           href={ROUTES.student(student.id)}

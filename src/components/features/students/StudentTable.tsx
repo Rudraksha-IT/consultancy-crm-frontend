@@ -8,16 +8,12 @@ import { LABELS } from "@/constants/messages";
 import { Priority } from "@/constants/priority";
 import { ROUTES } from "@/constants/routes";
 import { COUNTRY_LABELS } from "@/constants/students";
-import { SelectAllHeader, SelectRowCell } from "@/components/features/exports/SelectionCells";
-import type { RowSelection } from "@/components/features/exports/useRowSelection";
 import type { StudentRow } from "@/lib/api";
 
 import { PriorityWord } from "./PriorityWord";
 
 type StudentTableProps = {
   students: readonly StudentRow[];
-  /** Ticks rows to copy their emails or phones (spec 31a). */
-  selection: RowSelection;
 };
 
 const HEAD = "text-small text-ink-2 bg-fill px-6 py-3 text-left font-semibold";
@@ -28,12 +24,11 @@ const CELL = "px-6 py-4 align-middle max-tablet:p-0";
  * each row stacks into a card, so the page never scrolls sideways. On a phone a row is the name,
  * where they want to go and the Stage, with an arrow to their page.
  */
-export function StudentTable({ students, selection }: StudentTableProps) {
+export function StudentTable({ students }: StudentTableProps) {
   return (
     <DataTable phone="list" stacksBelowTablet>
       <thead className="max-tablet:sr-only">
         <tr>
-          <SelectAllHeader selection={selection} />
           <th scope="col" className={HEAD}>
             {LABELS.student}
           </th>
@@ -53,17 +48,16 @@ export function StudentTable({ students, selection }: StudentTableProps) {
       </thead>
       <tbody className="divide-rule divide-y">
         {students.map((student) => (
-          <StudentTableRow key={student.id} student={student} selection={selection} />
+          <StudentTableRow key={student.id} student={student} />
         ))}
       </tbody>
     </DataTable>
   );
 }
 
-function StudentTableRow({ student, selection }: { student: StudentRow; selection: RowSelection }) {
+function StudentTableRow({ student }: { student: StudentRow }) {
   return (
     <DataRow opensPage className="hover:bg-fill max-tablet:grid max-tablet:gap-3 max-tablet:p-5">
-      <SelectRowCell selection={selection} id={student.id} name={student.name} />
       <DataCell part="title" shrinks="quarter" className={CELL}>
         <Link
           href={ROUTES.student(student.id)}

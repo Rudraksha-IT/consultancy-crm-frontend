@@ -7,8 +7,6 @@ import { OneLine } from "@/components/ui/OneLine";
 import { APPLICATION_LIST_TEXT as TEXT, applicationStatusText } from "@/constants/applications";
 import { ROUTES } from "@/constants/routes";
 import { COUNTRY_LABELS } from "@/constants/students";
-import { SelectAllHeader, SelectRowCell } from "@/components/features/exports/SelectionCells";
-import type { RowSelection } from "@/components/features/exports/useRowSelection";
 import type { OfficeApplication } from "@/lib/api";
 import { formatIntake } from "@/lib/dates";
 
@@ -16,8 +14,6 @@ import { APPLICATION_STATUS_TONES } from "./statusTones";
 
 type ApplicationTableProps = {
   applications: readonly OfficeApplication[];
-  /** Ticks rows to copy their Students' emails or phones (spec 31a). */
-  selection: RowSelection;
 };
 
 // Narrow padding so all six columns fit as a table (asked 2026-11-17).
@@ -39,12 +35,11 @@ const COLUMNS = [
  * stacks into a card, so the page never scrolls sideways. On a phone a row is the Student, the
  * university and the Status, with an arrow.
  */
-export function ApplicationTable({ applications, selection }: ApplicationTableProps) {
+export function ApplicationTable({ applications }: ApplicationTableProps) {
   return (
     <DataTable phone="list" stacksBelowTablet wraps>
       <thead className="max-tablet:sr-only">
         <tr>
-          <SelectAllHeader selection={selection} />
           {COLUMNS.map((column) => (
             <th key={column} scope="col" className={HEAD}>
               {column}
@@ -54,25 +49,20 @@ export function ApplicationTable({ applications, selection }: ApplicationTablePr
       </thead>
       <tbody className="divide-rule divide-y">
         {applications.map((application) => (
-          <ApplicationRow key={application.id} application={application} selection={selection} />
+          <ApplicationRow key={application.id} application={application} />
         ))}
       </tbody>
     </DataTable>
   );
 }
 
-type ApplicationRowProps = { application: OfficeApplication; selection: RowSelection };
+type ApplicationRowProps = { application: OfficeApplication };
 
-function ApplicationRow({ application, selection }: ApplicationRowProps) {
+function ApplicationRow({ application }: ApplicationRowProps) {
   const dates = useDates();
   const { student, university, course, assignedCounsellor, appliedOn } = application;
   return (
     <DataRow opensPage className="hover:bg-fill max-tablet:grid max-tablet:gap-3 max-tablet:p-5">
-      <SelectRowCell
-        selection={selection}
-        id={application.id}
-        name={TEXT.rowName(student.name, university.name)}
-      />
       <DataCell part="title" shrinks="large" className={CELL}>
         <Link
           href={ROUTES.student(student.id)}

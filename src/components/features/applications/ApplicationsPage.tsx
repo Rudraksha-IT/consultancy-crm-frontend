@@ -1,13 +1,9 @@
 "use client";
 
-import type { RecordId } from "@/lib/recordId";
 import { useState } from "react";
 
 import { counsellorWords } from "@/components/features/exports/counsellorWords";
 import { ExportButton } from "@/components/features/exports/ExportButton";
-import { SelectAllStrip } from "@/components/features/exports/SelectionCells";
-import { SelectionBar } from "@/components/features/exports/SelectionBar";
-import { useRowSelection, type RowSelection } from "@/components/features/exports/useRowSelection";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { canBeAssignedStudents } from "@/components/features/students/counsellorFilter";
 import { useCounsellorChoices } from "@/components/features/students/useCounsellorChoices";
@@ -65,7 +61,6 @@ function ApplicationList({ role }: { role: Role }) {
   const counsellors = useCounsellorChoices();
   const applied = { ...filters, search: settledSearch };
   const list = useApplicationList(applied, page);
-  const selection = useRowSelection(applicationIds(list));
 
   return (
     <>
@@ -92,12 +87,7 @@ function ApplicationList({ role }: { role: Role }) {
           counsellors={counsellors}
           canBeAssigned={canBeAssignedStudents(role)}
         />
-        <ListContent
-          list={list}
-          isFiltered={hasAnyApplicationFilter(applied)}
-          onPage={setPage}
-          selection={selection}
-        />
+        <ListContent list={list} isFiltered={hasAnyApplicationFilter(applied)} onPage={setPage} />
       </Panel>
     </>
   );
@@ -107,10 +97,9 @@ type ListContentProps = {
   list: ApplicationListState;
   isFiltered: boolean;
   onPage: (page: number) => void;
-  selection: RowSelection;
 };
 
-function ListContent({ list, isFiltered, onPage, selection }: ListContentProps) {
+function ListContent({ list, isFiltered, onPage }: ListContentProps) {
   if (list.status === "loading") return <p className="text-ink-2 p-6">{TEXT.loading}</p>;
   if (list.status === "failed") {
     return (
@@ -125,17 +114,6 @@ function ListContent({ list, isFiltered, onPage, selection }: ListContentProps) 
   }
   return (
     <>
-      <SelectionBar
-        selected={applications
-          .filter((application) => selection.isSelected(application.id))
-          .map(({ student }) => ({
-            studentId: student.id,
-            email: student.email,
-            phone: student.phone,
-          }))}
-        onClear={selection.clear}
-      />
-      <SelectAllStrip selection={selection} />
       {/* All seven columns fit: long names and courses are cut with … and dates may wrap
           (ui/DataTable `shrinks`, `wraps`). The box only scrolls as a last resort, never the page. `relative` keeps the hidden column labels
           inside it too. */}
@@ -145,7 +123,7 @@ function ListContent({ list, isFiltered, onPage, selection }: ListContentProps) 
         tabIndex={0}
         className="relative min-w-0 overflow-x-auto focus-visible:-outline-offset-4"
       >
-        <ApplicationTable applications={applications} selection={selection} />
+        <ApplicationTable applications={applications} />
       </div>
       <Pager
         summary={TEXT.count(count)}
@@ -157,12 +135,6 @@ function ListContent({ list, isFiltered, onPage, selection }: ListContentProps) 
       />
     </>
   );
-}
-
-function applicationIds(list: ApplicationListState): RecordId[] {
-  return list.status === "loaded"
-    ? list.page.applications.map((application) => application.id)
-    : [];
 }
 
 type ApplicationsExportProps = {

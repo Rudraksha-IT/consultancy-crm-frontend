@@ -67,35 +67,6 @@ export const EXPORT_COLUMNS: Record<ExportList, readonly string[]> = {
 const plural = (count: number, one: string, many: string): string =>
   `${count.toLocaleString("en-US")} ${count === 1 ? one : many}`;
 
-/** Row selection, Copy emails and Copy phones (spec 31a). */
-export const SELECTION_TEXT = {
-  selectAll: "Select every row on this page",
-  selectAllShown: "Select all on this page",
-  selectRow: (name: string) => `Select ${name}`,
-  selected: (count: number) => `${count.toLocaleString("en-US")} selected`,
-  barLabel: "Selected rows",
-  copyEmails: "Copy emails",
-  copyPhones: "Copy phones",
-  clear: "Clear",
-  copied: (count: number, kind: ContactKind, missing: number) =>
-    `${plural(count, CONTACT_NOUNS[kind].one, CONTACT_NOUNS[kind].many)} copied${
-      missing === 0 ? "" : `. ${plural(missing, "Student has", "Students have")} none`
-    }`,
-  noneToCopy: (kind: ContactKind) => `None of them has ${CONTACT_NOUNS[kind].any}.`,
-  copyTitle: (kind: ContactKind) => `Copy ${CONTACT_NOUNS[kind].many}`,
-  copyFallback: "Your browser didn't let us copy. The text is selected: press Ctrl+C.",
-  copyBox: (kind: ContactKind) => `The ${CONTACT_NOUNS[kind].many} to copy`,
-  done: "Done",
-} as const;
-
-export const ContactKind = { Email: "email", Phone: "phone" } as const;
-export type ContactKind = (typeof ContactKind)[keyof typeof ContactKind];
-
-const CONTACT_NOUNS: Record<ContactKind, { one: string; many: string; any: string }> = {
-  email: { one: "email", many: "emails", any: "an email" },
-  phone: { one: "phone number", many: "phone numbers", any: "a phone number" },
-};
-
 /** The Export button and dialog, and Configuration → Exports (spec 31b, 31c). */
 export const EXPORT_TEXT = {
   export: "Export",
