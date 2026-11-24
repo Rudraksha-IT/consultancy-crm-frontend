@@ -210,7 +210,11 @@ function Found({ found, search, isMany, ticked, onPick, onToggle }: FoundProps) 
   if (found.status === "failed") return <Banner tone="problem">{TEXT.searchFailed}</Banner>;
   if (found.students.length === 0) return <p className="text-ink-2">{TEXT.noMatch(search)}</p>;
   return (
-    <ul className="border-rule divide-rule grid divide-y border-y">
+    // Only the list scrolls; the search and the chosen names stay put (list tidy-ups 28).
+    <ul
+      aria-label={TEXT.studentsList}
+      className="border-rule divide-rule max-h-picker-list grid divide-y overflow-y-auto overscroll-contain border-y"
+    >
       {found.students.map((student) => (
         <li key={student.id}>
           {isMany ? (
@@ -266,7 +270,7 @@ function StudentLine({ student }: { student: StudentRow }) {
   return (
     <span className="grid min-w-0 flex-1 gap-0.5">
       <span className="text-ink truncate font-semibold">{student.name}</span>
-      <span className="text-small text-ink-2 truncate">
+      <span className="text-tiny text-ink-2 truncate">
         {student.email === "" ? TEXT.noEmail : student.email} · {STAGE_LABELS[student.stage]}
       </span>
     </span>

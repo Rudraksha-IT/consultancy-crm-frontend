@@ -173,6 +173,7 @@ export const COMMUNICATION_TEXT = {
   clear: "Clear",
   remove: (name: string) => `Remove ${name}`,
   nextWrite: "Next: write the email",
+  studentsList: "Students",
   noMatch: (search: string) => `No Student matches “${search}”.`,
   searchFailed: "The Students couldn't be loaded. Try again.",
   loadingStudents: "Loading Students…",

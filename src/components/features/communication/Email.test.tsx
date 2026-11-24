@@ -502,6 +502,9 @@ describe("The Email page", () => {
     expect(
       within(header ?? picker).getByRole("button", { name: "Next: write the email" }),
     ).toBeEnabled();
+    const found = within(picker).getByRole("list", { name: "Students" });
+    expect(found).toHaveClass("overflow-y-auto");
+    expect(within(found).getByText(/sita@/i)).toHaveClass("text-tiny");
     const chosen = within(picker).getByRole("list", { name: "1 Student chosen" });
     expect(within(chosen).getByText("Sita Gurung").closest("li")).toHaveClass("text-small");
   });

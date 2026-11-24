@@ -259,6 +259,8 @@
   --spacing-chart: 40rem;
   --spacing-popover: 26.25rem;
   --spacing-popover-list: 26.25rem;
+  /* The email Student picker's list: only it scrolls (list tidy-ups 28). */
+  --spacing-picker-list: min(28rem, 50dvh);
   --spacing-menu: 17.5rem;
   --spacing-field-label: 12.5rem;
   --spacing-settings-label: 20rem;
