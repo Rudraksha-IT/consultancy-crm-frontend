@@ -7,6 +7,7 @@ import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "r
 import { SupportAccessBanner } from "@/components/features/supportAccess/SupportAccessBanner";
 import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
 import { useSavedColourMode } from "@/components/features/theme/useSavedColourMode";
+import { PageLoadProvider } from "@/components/ui/pageLoad";
 import { LABELS } from "@/constants/messages";
 import { useTabTitle } from "@/hooks/useTabTitle";
 import { saveColourMode, type StaffContext } from "@/lib/api";
@@ -156,9 +157,16 @@ function PulledPage({ pull, children }: { pull: PagePullView; children: ReactNod
           "data-[pulled=top]:shadow-edge-top data-[pulled=bottom]:shadow-edge-bottom",
         )}
       >
-        <div className="max-w-content mx-auto grid grid-cols-1 gap-8">{children}</div>
+        <div className="max-w-content mx-auto grid grid-cols-1 gap-8">
+          <ThisPageLoad>{children}</ThisPageLoad>
+        </div>
       </main>
       <PullGap edge="bottom" hint={pull.hint} isLeaving={isLeaving} />
     </div>
   );
+}
+
+/** The page's first load shows one loader in the middle (list tidy-ups 27). */
+function ThisPageLoad({ children }: { children: ReactNode }) {
+  return <PageLoadProvider page={usePathname()}>{children}</PageLoadProvider>;
 }
