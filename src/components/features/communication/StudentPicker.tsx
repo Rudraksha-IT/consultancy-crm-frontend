@@ -49,6 +49,7 @@ export function StudentPicker({ mode, chosen, note, onPick, onClose }: StudentPi
     <Dialog
       isOpen
       isWidest
+      hasSmallText
       title={WORDS[mode].title}
       onClose={onClose}
       // One Student: the × closes it. Many: Cancel and Next stay at the top (list tidy-ups 28).

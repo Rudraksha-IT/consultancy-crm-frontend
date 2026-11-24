@@ -882,3 +882,25 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   }
 }
 /* End of filter boxes */
+
+/* Small text in a dialog (list tidy-ups 31): the email writer and the Student picker step every
+   size down one, set here as sizes (not each other) so they don't shrink twice. */
+[data-small-text] {
+  font-size: 0.875rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --size-secondary: 0.875rem;
+  --size-secondary-line: 1.25rem;
+  --size-small: 0.8125rem;
+  --size-small-line: 1.125rem;
+  --text-section-title: 1.125rem;
+  --text-section-title--line-height: 1.625rem;
+}
+
+/* Typing boxes too, above phone width: on phones they stay 16px so iPhones don't zoom in. */
+@media (width >= 40.0625rem) {
+  [data-small-text] :is(input, textarea, select) {
+    font-size: 0.875rem;
+  }
+}
+/* End of small text in a dialog */

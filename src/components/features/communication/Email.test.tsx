@@ -843,3 +843,28 @@ describe("the email windows are wide (list tidy-ups 28)", () => {
     expect(css).toMatch(/--spacing-composer: min\(38rem, calc\(100dvh - 2rem\)\);/);
   });
 });
+
+describe("the email windows use smaller text (list tidy-ups 31)", () => {
+  it("marks the picker and the writer for small text", async () => {
+    backend(on("GET", "/api/messages/?page=1", page([])), on("GET", "/api/students/", LIST));
+    renderIn(COUNSELLOR, <MessagesPage />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Email a Student" }));
+    const picker = screen.getByRole("dialog", { name: "Email a Student" });
+    expect(picker).toHaveAttribute("data-small-text");
+    await userEvent.click(await within(picker).findByRole("button", { name: /Sita Gurung/ }));
+
+    expect(screen.getByRole("dialog", { name: "New email" })).toHaveAttribute("data-small-text");
+  });
+
+  it("steps every text size down inside them, typing boxes too above phone width", () => {
+    const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+    const start = css.indexOf("Small text in a dialog");
+    const rules = css.slice(start, css.indexOf("End of small text in a dialog", start));
+
+    expect(rules).toMatch(/\[data-small-text\] \{[^}]*--text-body: 0\.875rem/);
+    expect(rules).toMatch(/\[data-small-text\] \{[^}]*--size-secondary: 0\.875rem/);
+    expect(rules).toMatch(/--size-small: 0\.8125rem/);
+    expect(rules).toMatch(/:is\(input, textarea, select\)[^{]*\{[^}]*font-size: 0\.875rem/);
+  });
+});

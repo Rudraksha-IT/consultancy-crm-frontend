@@ -30,6 +30,8 @@ type DialogProps = {
    * its children lay out and scroll their own areas.
    */
   isFull?: boolean;
+  /** Every text a size smaller, e.g. the email writer (list tidy-ups 31). */
+  hasSmallText?: boolean;
   /** Shown in the header between the title and the close button, e.g. Write / Preview. */
   headerAside?: ReactNode;
 };
@@ -95,6 +97,7 @@ function OpenDialog(props: DialogProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        {...smallText(props.hasSmallText)}
         className={panelClasses(width, isFull)}
       >
         <div
@@ -150,6 +153,11 @@ function firstFocusIn(panel: HTMLElement): HTMLElement | null {
 /** The attribute that makes printing show only this dialog (see globals.css). */
 function printMark(isPrintable: boolean | undefined): { "data-print"?: "" } {
   return isPrintable === true ? { "data-print": "" } : {};
+}
+
+/** Marks a dialog whose text is a size smaller (globals.css, "Small text in a dialog"). */
+function smallText(hasSmallText: boolean | undefined): { "data-small-text"?: "" } {
+  return hasSmallText === true ? { "data-small-text": "" } : {};
 }
 
 function widthOf({ isWide, isWidest }: DialogProps): keyof typeof WIDTHS {

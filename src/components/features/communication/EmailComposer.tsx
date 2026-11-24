@@ -102,6 +102,7 @@ function Composer({
       <Dialog
         isOpen
         isFull
+        hasSmallText
         title={wording.title}
         onClose={onClose}
         headerAside={<PaneToggle pane={draft.pane} onPane={draft.setPane} />}
