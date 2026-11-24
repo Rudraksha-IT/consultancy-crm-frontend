@@ -105,7 +105,7 @@ describe("loading shows the product's logo (list tidy-ups 06)", () => {
   });
 
   it("draws in the logo's own red, a lighter one in dark mode", () => {
-    expect(GLOBALS_CSS).toMatch(/:root \{[^}]*--mark: #8b0a1a/);
+    expect(GLOBALS_CSS).toMatch(/:root \{[^}]*--mark: #c8102e/);
     expect(GLOBALS_CSS).toMatch(/:root\[data-theme="dark"\] \{[^}]*--mark: #f49aa3/);
   });
 });

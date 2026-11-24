@@ -8,8 +8,8 @@
  * Consultancy's own tokens onto <html>. A test keeps these defaults equal to the function's output.
  */
 :root {
-  /* the product logo's own red, for the loading animation (list tidy-ups 06) */
-  --mark: #8b0a1a;
+  /* the product logo's own red, for the loading animation (list tidy-ups 06); brighter (24) */
+  --mark: #c8102e;
   /* themed: default, light */
   --paper: #ffffff;
   --canvas: #f1f2ef;
