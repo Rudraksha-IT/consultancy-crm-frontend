@@ -67,6 +67,13 @@ function browserHeaders(
 }
 
 let tokenNumber = 0;
+let addressNumber = 0;
+
+/** A browser address no other call used, for a login that must not count against another's. */
+function ownAddress(): { "cf-connecting-ip": string } {
+  addressNumber += 1;
+  return { "cf-connecting-ip": `198.51.100.${String(addressNumber)}` };
+}
 
 /** Fresh tokens per call, so the server's shared refreshes never mix between tests. */
 function newTokens(scope: AuthTokens["scope"] = "staff"): AuthTokens {
@@ -2378,7 +2385,8 @@ describe("the browser a login comes from (issue 71)", () => {
   }
 
   function logInFrom(headers: Record<string, string>, path = "/api/auth/login/"): Request {
-    return incoming(path, { method: "POST", body: "{}", headers });
+    // Each from its own address, so these logins never use up one address's tries (security 01).
+    return incoming(path, { method: "POST", body: "{}", headers: { ...ownAddress(), ...headers } });
   }
 
   function browserCookie(response: Response): string | undefined {
@@ -2578,5 +2586,24 @@ describe("a changed product name shows at once (list tidy-ups 05)", () => {
     await PUT(incoming("/api/platform/brand/in-use/", { method: "PUT", body: "{}", ...PLATFORM }));
 
     expect(revalidateTag).not.toHaveBeenCalled();
+  });
+});
+
+describe("password tries per browser address (security 01)", () => {
+  it("refuses the 31st password login from one address without calling Django", async () => {
+    const { sent } = fakeBackend(() => Response.json({ detail: "no" }, { status: 400 }));
+    const fromOffice = { "cf-connecting-ip": "203.0.113.31" };
+    const login = () =>
+      POST(incoming("/api/auth/login/", { method: "POST", body: "{}", headers: fromOffice }));
+    for (let i = 0; i < 30; i += 1) {
+      expect((await login()).status).toBe(400);
+    }
+
+    const refused = await login();
+
+    expect(refused.status).toBe(429);
+    expect(sent).toHaveLength(30);
+    await POST(incoming("/api/students/", { method: "POST", body: "{}", headers: fromOffice }));
+    expect(sent).toHaveLength(31);
   });
 });

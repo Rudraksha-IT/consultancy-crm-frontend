@@ -206,6 +206,14 @@ export const LOGIN_STEP_PATH = /^\/api\/(?:platform\/)?auth\/login\/next\/$/;
 export const LOGIN_STEP_TRIES_PER_ADDRESS = 60;
 export const LOGIN_STEP_WINDOW_MS = 15 * 60 * 1000;
 export const LOGIN_STEP_MAX_ADDRESSES = 10_000;
+/**
+ * The password step of the staff and Platform login (security 01): 30 tries per browser address
+ * in 15 minutes, as an office shares one address; Django also limits each email to 10.
+ */
+export const PASSWORD_LOGIN_PATH = /^\/api\/(?:platform\/)?auth\/login\/$/;
+export const PASSWORD_LOGIN_TRIES_PER_ADDRESS = 30;
+export const PASSWORD_LOGIN_WINDOW_MS = 15 * 60 * 1000;
+export const PASSWORD_LOGIN_MAX_ADDRESSES = 10_000;
 export const PLATFORM_RESET_WINDOW_MS = 15 * 60 * 1000;
 export const PLATFORM_RESET_MAX_ADDRESSES = 10_000;
 /** Cloudflare's header with the address the browser called from (ADR 0004). */

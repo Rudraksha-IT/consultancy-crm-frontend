@@ -16,6 +16,9 @@ export const MESSAGES = {
   tryAgain: "Try again",
   invalidCredentials: "Invalid email or password.",
   loginFailed: "We couldn't log you in. Please try again.",
+  /** Wrong passwords used up for this email or this address (security 01). */
+  tooManyWrongPasswords:
+    "Too many wrong passwords. Try again in 15 minutes, or reset your password.",
   logoutFailed: "We couldn't log you out. Please try again.",
   sessionFailed: "We couldn't load your account. Please refresh the page.",
   consultanciesFailed: "We couldn't load the Consultancies. Please refresh the page.",

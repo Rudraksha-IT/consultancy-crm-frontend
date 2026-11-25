@@ -5,6 +5,7 @@ import { PROXY_MESSAGES } from "@/constants/backend";
 import {
   forwardToBackend,
   limitLoginStep,
+  limitPasswordLogin,
   limitPlatformPasswordReset,
   methodNotAllowed,
   refusal,
@@ -19,8 +20,10 @@ import { getServerConfig, type ServerConfig } from "@/lib/config";
 async function forward(request: Request): Promise<Response> {
   const config = readConfig();
   if (config === null) return refusal(HTTP_STATUS.serverError, PROXY_MESSAGES.misconfigured);
-  // Limited per browser address too: the Platform's reset and Join (63, 65), the email step (66).
-  const limited = limitPlatformPasswordReset(request) ?? limitLoginStep(request);
+  // Limited per browser address too: the Platform's reset and Join (63, 65), the email step (66),
+  // the password step (security 01).
+  const limited =
+    limitPlatformPasswordReset(request) ?? limitLoginStep(request) ?? limitPasswordLogin(request);
   if (limited !== null) return limited;
   const answer = await forwardToBackend(request, { config });
   dropProductNameIfChanged(request, answer);

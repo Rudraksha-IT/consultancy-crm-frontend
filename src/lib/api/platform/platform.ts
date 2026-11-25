@@ -8,7 +8,6 @@ import type { ThemeConfig } from "@/lib/theme";
 import { getJson, postJson, postWithoutBody, putJson } from "../core/client";
 import {
   ApiRequestError,
-  InvalidCredentialsError,
   InvalidFieldsError,
   isNotLoggedInFailure,
   notLoggedInErrorOf,
@@ -24,6 +23,7 @@ import {
   type NewConsultancyField,
   type PlatformAdmin,
 } from "../core/types";
+import { loginErrorOf } from "../auth/auth";
 import { TwoFactorStepAnswerSchema, type TwoFactorStep } from "../auth/twoFactor";
 import type { RecordId } from "@/lib/recordId";
 
@@ -79,7 +79,7 @@ export async function logInToPlatform(
   try {
     return await postJson(API_PATHS.platformLogin, credentials, PlatformLoginAnswerSchema, fetchFn);
   } catch (error) {
-    throw isRefusedInput(error) ? new InvalidCredentialsError() : error;
+    throw loginErrorOf(error);
   }
 }
 

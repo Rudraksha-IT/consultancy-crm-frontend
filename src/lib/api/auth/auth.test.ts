@@ -1,7 +1,12 @@
 import { uid } from "@/test/ids";
 import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { fetchStaffContext, logIn, logOut } from "./auth";
-import { ApiRequestError, InvalidCredentialsError, NotLoggedInError } from "../core/errors";
+import {
+  ApiRequestError,
+  InvalidCredentialsError,
+  NotLoggedInError,
+  TooManyPasswordTriesError,
+} from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 import { NO_OFFICE_DETAILS } from "../core/types";
 
@@ -116,6 +121,14 @@ describe("logIn", () => {
 
     await expect(logIn({ email: "x@y.z", password: "bad" }, fetchFn)).rejects.toBeInstanceOf(
       InvalidCredentialsError,
+    );
+  });
+
+  it("rejects with TooManyPasswordTriesError once the wrong passwords are used up", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ detail: "x" }, 429));
+
+    await expect(logIn({ email: "x@y.z", password: "pw" }, fetchFn)).rejects.toBeInstanceOf(
+      TooManyPasswordTriesError,
     );
   });
 

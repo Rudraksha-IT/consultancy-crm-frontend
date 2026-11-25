@@ -6,6 +6,7 @@ import {
   InvalidCredentialsError,
   InvalidFieldsError,
   NotLoggedInError,
+  TooManyPasswordTriesError,
 } from "../core/errors";
 import {
   changeConsultancyStatus,
@@ -106,6 +107,14 @@ describe("logInToPlatform", () => {
     await expect(
       logInToPlatform({ email: "x@y.z", password: "bad" }, fetchFn),
     ).rejects.toBeInstanceOf(InvalidCredentialsError);
+  });
+
+  it("rejects with TooManyPasswordTriesError once the wrong passwords are used up", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ detail: "x" }, 429));
+
+    await expect(
+      logInToPlatform({ email: "x@y.z", password: "pw" }, fetchFn),
+    ).rejects.toBeInstanceOf(TooManyPasswordTriesError);
   });
 
   it("passes other failures through", async () => {

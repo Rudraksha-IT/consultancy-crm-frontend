@@ -12,6 +12,7 @@ import {
   isUpdatingError,
   logIn,
   restrictionOfError,
+  TooManyPasswordTriesError,
   type Credentials,
   type TwoFactorStep,
 } from "@/lib/api";
@@ -59,12 +60,19 @@ export function useLogin(
   return { isSubmitting, error, submit };
 }
 
+/** The login's own refusals: wrong credentials, or wrong passwords used up (security 01). */
+const REFUSAL_MESSAGES: readonly (readonly [new () => Error, string])[] = [
+  [InvalidCredentialsError, MESSAGES.invalidCredentials],
+  [TooManyPasswordTriesError, MESSAGES.tooManyWrongPasswords],
+];
+
 /**
  * Wrong credentials, the office's Status in the server's words (issue 42), the app being updated
  * (ticket 14), or a general failure.
  */
 function loginErrorMessage(error: unknown): string {
-  if (error instanceof InvalidCredentialsError) return MESSAGES.invalidCredentials;
+  const refused = REFUSAL_MESSAGES.find(([kind]) => error instanceof kind);
+  if (refused !== undefined) return refused[1];
   if (isUpdatingError(error)) return SESSION_TEXT.updating;
   return restrictionOfError(error)?.message ?? MESSAGES.loginFailed;
 }
