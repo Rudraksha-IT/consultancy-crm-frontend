@@ -1,5 +1,7 @@
 /** How the Next.js server forwards the browser's `/api/...` calls to Django (ADR 0002). */
 
+import { RELAYED_CONTENT_SECURITY_POLICY } from "./securityHeaders";
+
 export { SESSION_ENDED_HEADER } from "./session";
 
 /** The only methods the API answers; anything else is 405. */
@@ -18,11 +20,12 @@ export const RETURNED_RESPONSE_HEADERS = ["content-type"] as const;
 /**
  * Sent with every answer this server relays. The office logo (an SVG perhaps) can be opened on
  * its own: it is never sniffed as another type, and nothing in it may run, load or be framed.
- * JSON answers are read by `fetch`, which ignores both.
+ * JSON answers are read by `fetch`, which ignores both. `next.config.ts` sends the same policy on
+ * these paths, since Next.js replaces a route's own header with the config's.
  */
 export const RELAYED_RESPONSE_HEADERS = {
   "x-content-type-options": "nosniff",
-  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+  "content-security-policy": RELAYED_CONTENT_SECURITY_POLICY,
 } as const;
 
 /** Methods that change something: refused unless the browser's `Origin` is the page's own host. */
