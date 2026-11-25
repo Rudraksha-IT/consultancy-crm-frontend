@@ -208,7 +208,7 @@ function FilterForm({ filters, choices, fieldErrors, onShow }: FilterFormProps) 
       noValidate
       aria-label={ACCOUNTS_TEXT.filters}
       onSubmit={handleSubmit}
-      className="border-rule tablet:grid-cols-2 wide:grid-cols-3 grid items-end gap-4 border-b px-6 py-5"
+      className="border-rule tablet:grid-cols-2 wide:grid-cols-3 px-gutter grid items-end gap-4 border-b py-5"
     >
       <DateField
         label={ACCOUNTS_TEXT.from}
@@ -270,7 +270,7 @@ function Payments({ state, onPage, onChanged }: PaymentsProps) {
   if (state.status === "refused") return null;
   if (state.status === "failed") {
     return (
-      <div className="px-6 py-5">
+      <div className="px-gutter py-5">
         <Banner tone="problem">{PAYMENT_TEXT.listFailed}</Banner>
       </div>
     );

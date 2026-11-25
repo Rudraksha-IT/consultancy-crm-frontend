@@ -115,7 +115,7 @@ function DayCell({
   const label = dayLabel(day, dates.date(day.date));
   const content = (
     <>
-      <span aria-hidden="true" className="text-ink-3 font-bold">
+      <span aria-hidden="true" className="text-ink-3 font-semibold">
         {Number(day.date.slice(-2))}
       </span>
       <DayWords day={day} />
@@ -312,7 +312,7 @@ function Legend({ working }: { working: string }) {
   return (
     <ul
       aria-label={TEXT.legendLabel}
-      className="text-small text-ink-2 phone:px-6 flex flex-wrap gap-x-4.5 gap-y-2 px-3 pb-4.5"
+      className="text-small text-ink-2 phone:px-gutter px-gutter flex flex-wrap gap-x-4.5 gap-y-2 pb-4.5"
     >
       <li className="inline-flex items-center gap-1.5">
         <i aria-hidden="true" className={swatch} />
@@ -342,7 +342,7 @@ function Corrections({ month }: { month: ClockMonth }) {
   const dates = useDates();
   if (month.corrections.length === 0) return null;
   return (
-    <div className="border-rule bg-fill text-secondary text-ink-2 grid gap-2 border-t px-6 py-4">
+    <div className="border-rule text-secondary text-ink-2 px-gutter grid gap-2 border-t py-4">
       <b className="text-ink">{TEXT.corrections}</b>
       <ul className="grid gap-1">
         {month.corrections.map((change) => (

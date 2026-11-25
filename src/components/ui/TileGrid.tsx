@@ -9,7 +9,14 @@ type TileGridProps = {
   children: ReactNode;
 };
 
-const WIDE_COLUMNS = { 3: "wide:grid-cols-3", 4: "wide:grid-cols-4" } as const;
+/*
+ * Figures in a row with thin dividers, not cards (Ivory, ticket 03): a line above and below the
+ * row, and one between figures, never before the first of a row. Phones have no side lines.
+ */
+const WIDE_COLUMNS = {
+  3: "wide:grid-cols-3 wide:[&>:nth-child(3n+1)]:border-l-0 wide:[&>:nth-child(3n+1)]:pl-0",
+  4: "wide:grid-cols-4 wide:[&>:nth-child(4n+1)]:border-l-0 wide:[&>:nth-child(4n+1)]:pl-0",
+} as const;
 
 /**
  * Number tiles in a grid: two per row on tablets and phones, three or four on wide screens. On a
@@ -20,10 +27,12 @@ export function TileGrid({ label, columns = 3, children }: TileGridProps) {
     <div
       role={label === undefined ? undefined : "group"}
       aria-label={label}
+      data-tiles=""
       className={clsx(
-        "phone:grid-cols-2 grid gap-4",
+        "border-rule *:border-rule grid border-y *:border-l",
+        "phone:grid-cols-2 phone:max-wide:[&>:nth-child(odd)]:border-l-0 phone:max-wide:[&>:nth-child(odd)]:pl-0",
         WIDE_COLUMNS[columns],
-        "max-phone:grid-cols-2 max-phone:gap-2 max-phone:[&>:first-child:nth-last-child(odd)]:col-span-2",
+        "max-phone:grid-cols-2 max-phone:gap-x-4 max-phone:*:border-l-0 max-phone:[&>:first-child:nth-last-child(odd)]:col-span-2",
       )}
     >
       {children}

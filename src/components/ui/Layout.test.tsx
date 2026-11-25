@@ -82,8 +82,8 @@ describe("RowItem", () => {
     );
 
     const [marked, plain] = screen.getAllByRole("listitem");
-    expect(marked).toHaveClass("border-l-good", "border-l-4", "pl-5");
-    expect(plain).toHaveClass("pl-6");
-    expect(plain).not.toHaveClass("border-l-4");
+    expect(marked).toHaveClass("border-l-good", "border-l-3", "pl-2.25");
+    expect(plain).toHaveClass("pl-gutter");
+    expect(plain).not.toHaveClass("border-l-3");
   });
 });

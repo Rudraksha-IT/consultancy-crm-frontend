@@ -445,9 +445,9 @@ describe("A returning visitor", () => {
   });
 });
 
-describe.each(THEME_CASES)("The visitor desk in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("The visitor desk in the $name Theme", ({ mode }) => {
   it("shows the switch, the form and today's visitors", async () => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
     backend(today([NEW_VISIT]), COUNSELLORS);
     renderDesk();
 

@@ -16,7 +16,7 @@ type PagerProps = {
 export function Pager({ summary, note, count, page, pageSize, onPage }: PagerProps) {
   const pages = Math.max(1, Math.ceil(count / pageSize));
   return (
-    <div className="border-rule bg-fill text-secondary text-ink-2 flex flex-wrap items-center justify-between gap-3 border-t px-6 py-3">
+    <div className="border-rule text-secondary text-ink-2 px-gutter flex flex-wrap items-center justify-between gap-3 border-t py-3">
       <span>{summary}</span>
       {note !== undefined && <span>{note}</span>}
       {pages > 1 && (

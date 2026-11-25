@@ -41,6 +41,7 @@ export const THEME_TOKEN_NAMES = [
   "fill-2",
   "rule",
   "rule-2",
+  "rule-strong",
   "ink",
   "ink-2",
   "ink-3",

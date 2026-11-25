@@ -161,9 +161,9 @@ describe("PlatformEmailSettings: is email working? (spec 2026-11-18 stories 3-4)
   });
 });
 
-describe.each(THEME_CASES)("PlatformEmailSettings in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("PlatformEmailSettings in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
   afterEach(resetTheme);
 

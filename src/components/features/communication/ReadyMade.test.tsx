@@ -469,9 +469,9 @@ describe("Ready-made emails to many Students", () => {
   });
 });
 
-describe.each(THEME_CASES)("Ready-made emails in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Ready-made emails in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

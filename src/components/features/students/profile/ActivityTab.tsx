@@ -199,7 +199,7 @@ function ActivityContent({ story, state, isLoadingMore, onLoadOlder }: ActivityC
   const rows = timelineRows(story, merged, now);
   return (
     <>
-      <p className="text-ink-2 flex items-center gap-2.5 px-6 pt-4.5">
+      <p className="text-ink-2 px-gutter flex items-center gap-2.5 pt-4.5">
         <Icon name="clock" size="sm" />
         <span>
           <b className="text-ink">{durationText(story.createdAt, now)}</b>{" "}
@@ -211,7 +211,7 @@ function ActivityContent({ story, state, isLoadingMore, onLoadOlder }: ActivityC
         items={rows.map((row) => toTimelineEntry(row, story.createdAt, dates))}
       />
       {merged.hasOlder && (
-        <div className="border-rule border-t px-6 py-4">
+        <div className="border-rule px-gutter border-t py-4">
           <Button
             isLoading={isLoadingMore}
             loadingLabel={MESSAGES.loading}

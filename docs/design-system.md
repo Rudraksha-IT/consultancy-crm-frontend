@@ -1,6 +1,6 @@
 # Design system
 
-Status: draft, from the approved prototype (the product docs' `docs/prototype/crm-demo.html`). Revised 2026-11-14 from the prototype approved that day (tickets 67 to 69): sidebar width and swipes, swipe between pages, centred search, the confirm popup, the Activity timeline, money on number cards and the keyboard rule. Revised 2026-11-16 (tickets 94 to 97): the phone breakpoint is 640, and phones follow the new "Phones (640 and below)" section (tab bar, iOS / Material sizes, lean lists, pill filters, bottom sheets, settings pages one section at a time).
+Status: draft, from the approved prototype (the product docs' `docs/prototype/first/crm-demo.html`). Revised 2026-11-14 from the prototype approved that day (tickets 67 to 69): sidebar width and swipes, swipe between pages, centred search, the confirm popup, the Activity timeline, money on number cards and the keyboard rule. Revised 2026-11-16 (tickets 94 to 97): the phone breakpoint is 640, and phones follow the new "Phones (640 and below)" section (tab bar, iOS / Material sizes, lean lists, pill filters, bottom sheets, settings pages one section at a time). Revised 2026-11-25 (UI revamp, ticket 03) from the owner-approved prototype `docs/prototype/v2.0.0/journey/` (its `engine/looks.js`, `ivory`, and `engine/polish.css`): one look for every office, the Ivory theme in light and dark, no box around everything (lines and words instead), the Geist font, and a type scale for computers and a tighter one for phones. The office colour feature goes in ticket 04.
 Applies to the frontend repository. Terminology follows the glossary (`docs/GLOSSARY.md` in the workspace repository).
 
 The product is used all day by non-technical office staff, often with a Student sitting across the desk. Every rule below serves that: big, calm, one job per screen, and the same look and behaviour everywhere.
@@ -8,13 +8,14 @@ The product is used all day by non-technical office staff, often with a Student 
 ## Non-negotiable rules
 
 1. **Components use tokens only.** No hex, rgb or named colours, pixel sizes or shadows written inside a component. Everything comes from the tokens below. CI fails on a raw colour outside the token file.
-2. **One theme config per Consultancy.** A Consultancy's look is stored as three values and nothing else (see Theming). Every other colour is derived from them by one tested function.
-3. **Status colours are fixed.** Good (green), warning (amber) and problem (red) never change with the theme, so "Rejected" or "Overdue" means the same in every office.
-4. **Readable text is guaranteed, not hoped for.** The theme function enforces WCAG 2.2 AA (4.5:1) for text on the accent and for links. If a Consultancy picks a colour that is too light, the function darkens it for text use.
-5. **Dark mode has its own settings.** The background comes from a fixed list of near-black options (pure black, black, charcoal, graphite, soft dark, warm black, pine black, teal black). It is never a saturated dark blue or brown.
+2. **One theme for every office: Ivory**, light and dark (see Theming). Cream pages and burgundy actions, the colours of a rudraksha bead. Offices no longer choose colours; each person still chooses light or dark.
+3. **Status colours are fixed.** Good (green), warning (amber) and problem (red) have one light set and one dark set, so "Rejected" or "Overdue" means the same everywhere. Money and progress bars use the good green.
+4. **Readable text is guaranteed, not hoped for.** Every text token reaches WCAG 2.2 AA (4.5:1) on the panel and on the page itself (sections have no box, so most text sits on the page colour). A test checks it; the Ivory caption grey was darkened from the prototype's `#8f847c` to `#766c65` to pass.
+5. **Dark mode has its own values.** A warm near-black page (`#121110`) and panel (`#1a1817`), cream text and a soft burgundy accent. It is never a saturated dark blue or brown.
 6. **Colour is never the only signal.** Every status also has a word or an icon (for example a "Rejected" chip, an "Overdue" label).
 7. **Line icons from one set.** No emoji in the interface.
 8. **An action never moves the person.** Approving, saving, deleting, switching a tab, ticking a box or closing a dialog keeps the page where it was: same scroll position, and focus back on the control that was used (or, if it is gone, the nearest control for the same item). Update data in place (React Query cache, local state); never remount the page, reset scroll or navigate for an action that stays on the same page. The same holds inside dialogs and sheets: redrawing a dialog (switching its tabs, ticking, removing an item, coming back after "Are you sure?") keeps each scrolled area where it was. Only opening another page starts at the top. Component tests check that focus stays after the action (product owner, 2026-11-18).
+9. **No box around everything** (Ivory, 2026-11-24). One filled button per screen area, for the main action; every other button is words with an icon and no box. Sections are split by space and lines, not cards. Tabs and switches are words with an underline. A status is a dot and a word, never a filled badge. Boxes are only for popups, menus and the fields you type into.
 
 ## Tokens
 
@@ -27,14 +28,15 @@ All tokens are CSS custom properties set on `<html>`. Tailwind 4 maps them throu
 | `--paper`                                                                                                      | Panels, dialogs, inputs                                                                        |
 | `--canvas`                                                                                                     | Page background                                                                                |
 | `--fill`, `--fill-2`                                                                                           | Table headers, hovers, quiet backgrounds, empty progress tracks                                |
-| `--rule`, `--rule-2`                                                                                           | Dividers and borders; `rule-2` for inputs and buttons                                          |
-| `--ink`, `--ink-2`, `--ink-3`                                                                                  | Main text, secondary text, captions (each at least 4.5:1 on `--paper`)                         |
+| `--rule`, `--rule-2`                                                                                           | Lines between rows (ink 15% light, 17% dark); `rule-2` for inputs                              |
+| `--rule-strong`                                                                                                | The line under a section title (2px, ink 55%)                                                  |
+| `--ink`, `--ink-2`, `--ink-3`                                                                                  | Main text, secondary text, captions (each at least 4.5:1 on `--paper` and `--canvas`)          |
 | `--accent`, `--accent-hover`, `--accent-ink`, `--tint`                                                         | Primary buttons, links, progress, selected items; text on the accent; light accent backgrounds |
 | `--side-bg`, `--side-ink`, `--side-muted`, `--side-hover`, `--side-active`, `--side-active-ink`, `--side-rule` | Sidebar                                                                                        |
 
 ### Colour (fixed, not themed)
 
-`--good`, `--good-tint`, `--warn`, `--warn-tint`, `--bad`, `--bad-tint`, `--note`, `--note-rule`. These have one light set and one dark set.
+`--good`, `--good-tint`, `--warn`, `--warn-tint`, `--bad`, `--bad-tint`, `--note`, `--note-rule`, and `--gold` (a small mark of value, such as beside a high-priority Student). These have one light set and one dark set (Ivory: good `#3f6b3a` / `#8fbf85`, warning `#94570f` / `#e0a85c`, problem `#9b2226` / `#e88a85`).
 
 ### Colour (charts, fixed, not themed)
 
@@ -42,16 +44,24 @@ All tokens are CSS custom properties set on `<html>`. Tailwind 4 maps them throu
 
 ### Type
 
-One family: Public Sans (fallback: system UI). Figures use tabular numbers.
+One family: Geist (fallback: system UI). Figures use tabular numbers. Page titles, dialog titles and big figures use weight 500 with slightly tight letter spacing (-0.025em). Bold in the content is at most 600; a task's title is 500. Sizes come from `--size-*` tokens that take their phone values at 640 and below, so components never pick a size per width.
 
-| Role                 | Size / line height | Weight     |
-| -------------------- | ------------------ | ---------- |
-| Page title           | 28 / 36            | 700        |
-| Section title        | 20 / 28            | 600        |
-| Card or dialog title | 18 / 26            | 600        |
-| Body                 | 16 / 24            | 400        |
-| Secondary            | 15 / 22            | 400        |
-| Small, captions      | 14 / 20            | 400 to 600 |
+| Role                                   | Computers (above 640) | Phones (640 and below) | Weight |
+| -------------------------------------- | --------------------- | ---------------------- | ------ |
+| Page title                             | 28 / 34               | 24 / 30                | 500    |
+| Section title                          | 17 / 23               | 16.5 / 22              | 600    |
+| Dialog title                           | 23 / 29               | 23 / 29                | 500    |
+| Page text, table cells                 | 16 / 24               | 15 / 22                | 400    |
+| A name in a list (`text-name`)         | 17 / 24               | 16 / 22                | 600    |
+| The line under it, chips, small text   | 15 / 22               | 13.5 / 19              | 400    |
+| Column heads                           | 14.5 / 20             | 13 / 18                | 500    |
+| Buttons (small buttons)                | 15.5 (15)             | 14.5 (14)              | 500    |
+| Figures                                | 32 / 40               | 24 / 30                | 500    |
+| Email list: the Student's name         | 19                    | 17                     | 650    |
+| Configuration › Universities: the name | 21 / 28               | 16 / 22                | 600    |
+| Fields you type into (`text-input`)    | 16                    | 16 (iOS never zooms)   | 400    |
+
+Labels never look like their values: a field's label is 15 (13.5 on phones), weight 500, in `--ink-2`.
 
 Sentence case everywhere. No all-caps labels.
 
@@ -60,28 +70,36 @@ Sentence case everywhere. No all-caps labels.
 - **Spacing scale:** 4, 8, 12, 16, 20, 24, 32, 40, 48. Sections are 32 apart; items in a group are 16 apart.
 - **Control height:** 44 (buttons, inputs, selects, segmented controls). Small buttons are also 44 tall, with less padding and smaller text. Large primary actions 52. Sidebar items 48. Icon buttons (sidebar collapse, Log out, theme, notifications) are 44 square. A checkbox or radio may draw at 22, but the area that toggles it is at least 44 square (a row checkbox fills its table cell). Link buttons and breadcrumbs are 44 tall too.
 - **Table rows:** at least 56. List rows have 20 vertical padding.
-- **Radius:** 6 (chips), 10 (controls), 14 (panels), 18 (dialogs).
-- **Elevation:** `--raise` for panels, `--lift` for dialogs, menus and popovers only.
+- **Radius:** 6 (chips), 8 (controls), 12 (menus), 14 (dialogs).
+- **Elevation:** nothing is raised (`--raise` is none: sections have no box); `--lift` for dialogs, menus and popovers only.
+- **Row gutter:** rows and table cells have 12 inside (8 on phones), and a section's content is pulled out by the same, so the text lines up with the section title above and a hover shade or a marked row still has room (`--size-gutter`, classes `px-gutter`, `-mx-gutter`).
 - **Content width:** 1080 max. Line length under 75 characters for prose.
 - **Page margin:** 26 on each side of the page content, beside the sidebar and on tablets (was 40; reduced on 2026-11-14 when the sidebar grew to 300, so the content area keeps the same width). 16 on phones (see Phones). The safe area of a phone with a notch is added on top.
+
+### Lines
+
+- **Under a section title** (the top of its content, `ui/Panel`): 2px at ink 55% (`--rule-strong`), so the title and its rows read apart.
+- **Between rows:** 1px `--rule` (ink 15% light, 17% dark).
+- **No strong line** under mini tabs or a switch (Transfer requests; Tasks' To do / Given to others / Done), after a toolbar that holds tabs, after figure boxes (Accounts' table under its figures: no second line), or above the Home Pipeline. In code: a Panel right after a tab strip, a toolbar holding one, or a `TileGrid` drops its top line (`globals.css`, "Section lines"); `data-no-line` on a Panel drops it anywhere else.
+- **Settings** has no line under its title and no subtitle.
 
 ## Components
 
 Build each once in `src/components/ui`, with tests, and reuse them. Screens never restyle a component.
 
-- **Button:** primary (one per screen area), secondary, ghost, danger; sizes small, default and large; icon-left optional; disabled and loading states.
+- **Button:** primary (one per screen area, filled burgundy), secondary and ghost (words in `--ink-2` with an icon, no box, a soft fill on hover), danger (red words, no box); sizes small, default and large, all 44 tall; side padding 12 (16 for the main button, 10 small; 14 and 10 on phones); icon-left optional; disabled and loading states. A button in a table row stays in its cell, right-aligned, on computers (Accounts "Details", Employees "Manage", "Send the code again", "Cancel invite").
 - **Field:** label always visible, optional hint, error text below. Wraps text, email, tel, date, number, select and textarea.
-- **Segmented control:** two to five choices that switch a view (Light/Dark, New/Returning visitor, report picker). It is a tab strip: it never wraps onto a second line. On phones it fills the width and scrolls sideways (no scrollbar) when the choices don't fit. On every width, when the strip is drawn after a choice, it scrolls so the chosen one is in view, centred where possible, and never jumps back to the first; this happens once per drawing, so a later small update (the clock timer, typing) never moves a strip the person has swiped. Tabs and the settings section strip on tablets follow the same rule. A choice of one value (Attendance: Present / Absent / Late / Leave) fills the width with equal buttons on one line on phones.
-- **Tabs:** sections of one record (Student profile).
-- **Panel:** white box for lists and tables. A section title sits above the panel, not inside it.
-- **Row item:** title, secondary line, right-side actions or status. The standard list row.
-- **Chip:** status with a dot and a word. Colour comes from the status, never from the theme.
-- **Progress bar:** 12 high, with the percentage written next to it.
+- **Segmented control:** two to five choices that switch a view (Light/Dark, New/Returning visitor, report picker), drawn as words with an underline: the chosen one in `--ink` over a 2px accent line, the others in `--ink-3`, with a 1px line under the strip. It is a tab strip: it never wraps onto a second line. On phones it fills the width and scrolls sideways (no scrollbar) when the choices don't fit. On every width, when the strip is drawn after a choice, it scrolls so the chosen one is in view, centred where possible, and never jumps back to the first; this happens once per drawing, so a later small update (the clock timer, typing) never moves a strip the person has swiped. Tabs and the settings section strip on tablets follow the same rule. A choice of one value (Attendance: Present / Absent / Late / Leave) fills the width with equal buttons on one line on phones.
+- **Tabs:** sections of one record (Student profile), words with an underline like the segmented control; a count is a quiet number after the word, not a pill.
+- **Panel:** a section's content for lists, tables and forms, with no box: the strong title line on top (see Lines). A section title sits above the panel, not inside it.
+- **Row item:** title (a name, `text-name`), secondary line, right-side actions or status. The standard list row. A marked row (the Chosen Offer) has a 3px good line on its left and a faint good tint.
+- **Chip:** status with a 7px dot and a word in the status colour, no filled badge. Colour comes from the status, never from the theme.
+- **Progress bar:** 12 high, green (`--good`) whether done or not, with the percentage written next to it.
 - **Journey:** Lead → Counselling → Applying → Offer → Visa (Onboarded and Completed are gone). A Granted Visa ticks the last step ("Visa ✓ Granted"); there is no country or plane at the end of the bar. A Lost Student shows the Lost Stage with its reason. For a Student who was ever Lost, a small ⓘ button sits next to the Stage name: on hover, keyboard focus or tap it shows when they were Lost (with the reason) and when they came back. It is a real button (44 target), never hover-only. Across the panel above 640px (scrolling inside its panel if it must, never widening the page). At 640 and below it is a compact horizontal stepper: five dots in a row with the Stage names in 12 under them, never top to bottom. A Stage that can be clicked has a 44 tall target.
-- **Note:** fixed note colour, always at the top of a Student.
+- **Note:** fixed note colour with a 3px note line on its left, no outline, always at the top of a Student.
 - **Banner:** info, warning or problem message across the page.
-- **Figure tile:** label, big number, one-line footnote. Money: "NPR" is a small label in front of the amount on the same line (smaller, lighter, never wrapped onto its own line); a big number shrinks a little to fit a narrow card rather than touching its edge.
-- **Dialog:** title, body, footer with the actions on the right. Escape and the close button both close it. Focus goes to the first field. On phones it is a bottom sheet (see Phones).
+- **Figure tile:** label, big number, one-line footnote. No card: figures stand in a row (`TileGrid`) with a line above and below and thin lines between them, never before the first of a row; on phones no side lines. Money: "NPR" is a small label in front of the amount on the same line (smaller, lighter, never wrapped onto its own line); a big number shrinks a little to fit a narrow card rather than touching its edge.
+- **Dialog:** title (dialog title size), body, footer with the actions on the right (no fill or line above it). Escape and the close button both close it. Focus goes to the first field. On phones it is a bottom sheet (see Phones).
 - **Confirm dialog:** one shared dialog for every delete or remove in the app; nothing is removed without it. The title names the thing ("Remove the Grade 12 Transcript?"), the body says what will happen, and the footer has Cancel and a red button that names the action ("Remove", "Delete", "End session"), never "OK" or "Yes". Focus starts on Cancel; Escape cancels. Where a delete needs a reason (a Document put in the Bin), the reason is asked in the same dialog: quick picks plus "Other" with a text box. Removing a row on an edit page that saves later (Edit details, a University's edit page) needs no popup: the row is only marked, with Undo, until Save.
 - **Menu:** the "More" menu for rare actions. Destructive items sit last, in red.
 - **Activity timeline:** a vertical line, newest at the top. Each Stage change is a big dot on the line with the Stages in bold ("**Counselling → Lost**") and the reason, if any, on the line underneath. The line between two Stage dots carries the time spent there ("12 days in Counselling"); the top dot says "in Applying for 5 days so far"; one line above the timeline gives the total ("2 months 4 days since they became a Lead"). Other entries (Payments, Note edits, Visits, Emails) are small dots along the line with their time. Lost and Came back (Lost → Counselling) rows get a mild background (a soft red from `--bad`, a soft green from `--good`, a few per cent strength) and a small tag with the word ("Marked Lost", "Came back"), so the colour never stands alone. Screen readers hear the entries in order; reduced motion is respected.
@@ -122,7 +140,7 @@ Every screen is checked at 1440, 1024, 820 and 390 pixels wide.
 
 ## Phones (640 and below)
 
-Decided 2026-11-16, after the product owner reviewed the prototype on a phone ("the mobile version is not nice at all and not friendly"). Phones follow the common rules of Apple's Human Interface Guidelines and Google's Material 3, so the app feels native, not like the laptop layout shrunk down. The reference is the phone blocks at the end of the product docs' `docs/prototype/crm-demo/styles.css` and the product docs' `docs/prototype/crm-demo/mobile.js`. Nothing in this section changes anything above 640, apart from tab strips keeping the chosen tab in view.
+Decided 2026-11-16, after the product owner reviewed the prototype on a phone ("the mobile version is not nice at all and not friendly"). Phones follow the common rules of Apple's Human Interface Guidelines and Google's Material 3, so the app feels native, not like the laptop layout shrunk down. The reference is the phone blocks at the end of the product docs' `docs/prototype/first/crm-demo/styles.css` and the product docs' `docs/prototype/first/crm-demo/mobile.js`. Nothing in this section changes anything above 640, apart from tab strips keeping the chosen tab in view.
 
 ### Shell
 
@@ -133,9 +151,9 @@ Decided 2026-11-16, after the product owner reviewed the prototype on a phone ("
 ### Sizes and look
 
 - **Layout:** 16 side margins and an 8 spacing rhythm.
-- **Type scale:** page title 26, section title 19, row title 16, body 16, secondary 14, caption 13. Secondary text uses `--ink-2`.
+- **Type scale:** one step smaller than on computers (see Type): page text 15, names 16 (Email names 17), sub-lines, chips and small text 13.5, table cells 15, column heads 13, page titles 24, section titles 16.5, Note text 15 / 23, Settings rows 16, buttons 14.5 with 14 side padding (small 14 / 10), figures 24, Pipeline counts 21, a Student's name 22 with a 52 avatar. Fields stay 16. Secondary text uses `--ink-2`.
 - **Touch targets:** every tap target is at least 44 tall. Main page actions are 48. Fields are 48 tall with 16 text, so phones never zoom in on them.
-- **Cards:** flat, with 16 corners, a hairline border and no shadow.
+- **Sections:** no box, as on computers; the row gutter is 8.
 - **Feedback:** everything tappable has a pressed state (a `--fill` background on rows, a slight shrink on buttons).
 
 ### Page actions
@@ -159,7 +177,7 @@ Decided 2026-11-16, after the product owner reviewed the prototype on a phone ("
 - **Lists:** a row is the name, one short line under it, one key fact on the right, then an arrow (if the row opens a page) or the row's own button. Everything else is on the page the row opens. Rows are at least 64 tall; checkboxes stay on the left. Each list declares which columns are its line and its fact; nothing is guessed from column headings.
   - Students: Going to · Stage. Applications: the university · Status. Visas: Going to · Visa status. Employees: job title · Manage (two buttons go on their own line). Student fees: progress bar · Still to pay · Details. Payments: Student or what it was for · Amount, with Receipt and Edit on their own line.
 - **Every other table** keeps all its columns as cards (column name, then value), never scrolling sideways.
-- **Number tiles:** two per row, an odd first tile takes the whole row; the small grey line under the number is dropped; numbers shrink to fit. "Waiting on you" tiles are two per row, visa appointments full width.
+- **Number tiles:** two per row, an odd first tile takes the whole row, no side lines; the small grey line under the number is dropped; numbers shrink to fit. "Waiting on you" tiles are two per row, visa appointments full width.
 - **Busy boxes keep only what matters:** Documents (name, only the "to check" and "rejected" chips, "5 of 13", Open checklist); Transfer requests (who asked on one line, the reason on two); Email (name and status, time, the subject line on two lines); Tasks (the task, its Student, the date); Classes (name, time, how many Students, status, Who's in it); the Counsellor's Students' progress (name, Stage, next step, documents button); bar lists (name and amount on one line, the bar under them); Platform Consultancies (name, status, address, paid-until, buttons in a two-column grid); the clock-in card (status and calendar icon on top, Clock in/out full width under them, Work from home beside it).
 - **Student page:** the Stage journey is a compact horizontal stepper, the next-step hint is cut to two lines, and fees drop "Added by". **Inbox:** with a conversation open, "New message" is hidden.
 
@@ -169,52 +187,36 @@ Decided 2026-11-16, after the product owner reviewed the prototype on a phone ("
 
 ## Theming
 
-### What is stored
+### One theme: Ivory
 
-```json
-{
-  "page": "stone",
-  "sidebar": "#ffffff",
-  "accent": "#047857",
-  "dark": { "base": "soft", "sidebar": "darker", "accent": "#047857" }
-}
-```
+Every office shows the same theme, Ivory (owner, 2026-11-24): almost white, burgundy only where it matters, the menu part of the page. Each Staff member chooses light or dark for themselves (stored per person); nothing else about the colours is chosen. The office logo still shows in the menu and on the login screens.
 
-- The office **logo** is stored next to the theme (an image file, at most 1 MB, PNG/SVG/JPG/WebP), with a "show the office name next to the logo" switch. Without a logo, the initials are shown.
-- `page` is one of the named page backgrounds: ice, stone, white, fog, mist, sage, lilac or sky. It is a fixed list because page greys must keep text contrast.
-- `sidebar` and `accent` are any hex colour. Presets are offered in the picker.
-- `dark.base` is one of the named dark backgrounds. `dark.sidebar` is `darker`, `same`, `lighter`, `black` or `brand` (a deep version of the light-mode sidebar). `dark.accent` is `auto` (derived from the light accent) or any hex colour. If `dark` is missing, it falls back to `{ "base": "soft", "sidebar": "darker", "accent": "auto" }`.
-
-The config above is the default for new Consultancies ("Stone and emerald", chosen on 2026-10-28 in the product docs' `docs/prototype/compare-colours.html`): stone grey pages, white sidebar, emerald accent; in dark mode a soft dark background, a sidebar darker than the page, and emerald lightened for readability.
-
-### Where it lives
-
-- Stored per Consultancy in the public schema next to the Module switches.
-- Returned by `GET /api/context/` as a `theme` field.
-- Set by a Platform Admin when creating a Consultancy, and changed later only by a Platform Admin, from the Colours button on the Consultancy's row of the Platform list, with a live preview. The Consultancy's own Admins can't change it (decided 2026-11-04).
-- Optional features (test-prep classes, Email, accounts, reports and charts, Clock-in) are switched per Consultancy from a **Features** dialog on the Platform page, never with loose toggles in the list.
+| Token                           | Light                                                                                   | Dark                       |
+| ------------------------------- | --------------------------------------------------------------------------------------- | -------------------------- |
+| `canvas` (page)                 | `#faf8f4`                                                                               | `#121110`                  |
+| `paper` (panels)                | `#ffffff`                                                                               | `#1a1817`                  |
+| `fill`, `fill-2`                | `#f4f1eb`, `#ece7df`                                                                    | `#211f1d`, `#292624`       |
+| `ink`                           | `#1f1916`                                                                               | `#f1e8dd`                  |
+| `ink-2`                         | `#625750`                                                                               | `#bcae9f`                  |
+| `ink-3`                         | `#766c65`                                                                               | `#8f8174`                  |
+| `accent`, hover                 | `#6e1a26`, `#57141e`                                                                    | `#d98a8f`, `#e7a2a6`       |
+| `accent-ink`                    | `#ffffff`                                                                               | `#1d1012`                  |
+| `tint`                          | `#f3e6e3`                                                                               | `#3a1d1f`                  |
+| `rule`, `rule-2`, `rule-strong` | ink 15%, 26%, 55% into the panel                                                        | ink 17%, 27%, 55%          |
+| Menu (`side-*`)                 | the page colour, page text, `fill` hover, `fill-2` for the open page, no line beside it | the same from the dark set |
 
 ### How it becomes tokens
 
-A pure function `buildThemeTokens(config)` in `src/lib/theme` returns `{ light, dark }` token maps. It is unit-tested, test-first.
-
-- **Neutrals** come from the page colour mixed towards black: fill at 2.5%, fill-2 at 7%, rule at 7.5%, rule-2 at 18%, ink-3 at 57%, ink-2 at 68%, ink at 90%.
-- **Accent for light mode:** the chosen colour, darkened until white text on it reaches 4.5:1. Hover is 18% darker. Tint is 90% towards white.
-- **Accent for dark mode:** the chosen colour lightened 45%, then until it reaches 5.5:1 on the dark panel colour.
-- **Sidebar:** if the sidebar colour is light, it uses ink text and the accent for the selected item. If it is dark, it uses white text and translucent white for hover and selected states, with the muted text checked for 4.5:1.
-- **Dark mode neutrals:** from the chosen dark background mixed towards white: panel 5.5%, fill 8.5%, fill-2 12%, rule 13%, rule-2 20%, ink-3 55%, ink-2 70%, ink 92%. Secondary text is checked against the panel.
-- **Dark accent:** the chosen dark accent, or with `auto` the light accent lightened 45%. Either way it is lightened until it reaches 5:1 on the panel. Text on it is near-black if that reaches 4.5:1, otherwise white.
-
-The shell writes the tokens onto `<html>` when the context loads, and again when the person switches light or dark. The person's light/dark choice is a personal preference (stored per Staff member); the colours are the Consultancy's.
+A pure function `buildThemeTokens()` in `src/lib/theme` returns the `{ light, dark }` token maps (`ivory.ts` holds the values). It is unit-tested. The same values are written in `globals.css` for the first paint, and a test keeps the two equal. The shell writes the tokens onto `<html>` when it loads and again when the person switches light or dark. Until ticket 04 removes the office colour feature, `deriveOfficeTokens(config)` only feeds the Platform's colour editor preview; no screen uses an office's colours.
 
 ### Tests the function must pass
 
-- Every preset and a set of random colours, in light and dark: `accent-ink` on `accent` is at least 4.5:1; `ink-2` and `ink-3` on `paper` are at least 4.5:1; dark-mode accent on the dark panel is at least 4.5:1; sidebar muted text on the sidebar is at least 4.5:1.
-- An invalid hex falls back to the default instead of breaking the page.
-- Every dark background, sidebar and accent combination passes the same contrast checks (the prototype checks all 400).
+- The Ivory values, light and dark, as in the table above.
+- Every text token (`ink`, `ink-2`, `ink-3`, `accent`) at least 4.5:1 on `paper` and on `canvas`; `accent-ink` on `accent`, the menu text on the menu, at least 4.5:1.
+- Lines at the documented mixes; every token a six-digit hex, so nothing else can reach the page's CSS.
 
 ## Enforcement
 
 - A lint check (a custom ESLint rule or a CI grep) rejects hex/rgb/hsl literals and Tailwind arbitrary colour values outside `src/lib/theme` and `globals.css`.
-- A component test renders each `ui` component in light and dark with two contrasting themes.
+- A component test renders each `ui` component in Ivory light and Ivory dark.
 - New screens are reviewed against this page before merging.

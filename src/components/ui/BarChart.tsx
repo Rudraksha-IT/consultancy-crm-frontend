@@ -69,7 +69,7 @@ export function BarChart(props: BarChartProps) {
                   style={{ width: `${String((row.value / max) * PERCENT)}%` }}
                 />
               </span>
-              <span className="text-right font-bold">{format(row.value)}</span>
+              <span className="text-right font-semibold">{format(row.value)}</span>
             </button>
             {active === row.key && (
               <div

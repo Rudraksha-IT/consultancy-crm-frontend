@@ -2,7 +2,7 @@ import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { render, screen, waitFor } from "@testing-library/react";
 
 import { APP_LOGO_URL } from "@/lib/brand/appLogo";
-import { buildThemeTokens, normaliseThemeConfig } from "@/lib/theme";
+import { buildThemeTokens } from "@/lib/theme";
 import { resetTheme } from "@/test/themes";
 
 import { ConsultancyBrand } from "./ConsultancyBrand";
@@ -48,14 +48,14 @@ describe("ConsultancyBrand", () => {
     expect(image).toHaveClass("h-mark-lg");
   });
 
-  it("colours the page with the Consultancy's Theme, following the device's light or dark", async () => {
+  it("shows the Ivory theme whatever colours the office once had (one look for every office)", async () => {
     answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON })));
 
     render(<ConsultancyBrand />);
     await screen.findByRole("heading", { level: 2 });
 
-    const expected = buildThemeTokens(normaliseThemeConfig(CRIMSON)).light.accent;
-    // The Theme is applied in an effect after the name shows.
+    const expected = buildThemeTokens().light.accent;
+    // The theme is applied in an effect.
     await waitFor(() => {
       expect(document.documentElement.style.getPropertyValue("--accent")).toBe(expected);
     });

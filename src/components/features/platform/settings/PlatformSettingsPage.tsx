@@ -80,7 +80,7 @@ function ProductLogoParts() {
               className="bg-fill rounded-panel flex min-h-18 min-w-0 items-center gap-3 p-4"
             >
               <BrandMark name={productName} logo={mark} />
-              <b className="text-body truncate font-bold">{productName}</b>
+              <b className="text-body truncate font-semibold">{productName}</b>
             </div>
             <div className="flex flex-wrap items-center gap-3">
               <label

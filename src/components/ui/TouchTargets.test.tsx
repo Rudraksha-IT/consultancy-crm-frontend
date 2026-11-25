@@ -39,7 +39,7 @@ describe("touch targets", () => {
     render(<Button size="sm">Copy emails</Button>);
 
     const button = screen.getByRole("button", { name: "Copy emails" });
-    expect(button).toHaveClass("min-h-control-sm", "px-3.5", "text-small");
+    expect(button).toHaveClass("min-h-control-sm", "px-button-sm", "text-button-sm");
   });
 
   it("gives a small link button the same 44 px height", () => {
@@ -101,7 +101,7 @@ describe("touch targets", () => {
     );
 
     for (const tab of screen.getAllByRole("tab")) {
-      expect(tab).toHaveClass("min-h-control-lg");
+      expect(tab).toHaveClass("min-h-control");
     }
   });
 });

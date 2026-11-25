@@ -85,12 +85,7 @@ function RowProgress({ row, onOpen }: { row: PaperworkRow; onOpen: (row: Paperwo
     <>
       <div className="max-phone:w-auto grid w-36 gap-1">
         <div className="max-phone:hidden">
-          <ProgressBar
-            label={DOCUMENT_TEXT.progressLabel}
-            value={row.done}
-            max={row.total}
-            tone={row.total > 0 && row.done === row.total ? "good" : "accent"}
-          />
+          <ProgressBar label={DOCUMENT_TEXT.progressLabel} value={row.done} max={row.total} />
         </div>
         <span className="text-small text-ink-2 max-phone:text-secondary max-phone:whitespace-nowrap text-right">
           {DOCUMENT_TEXT.doneOf(row.done, row.total)}

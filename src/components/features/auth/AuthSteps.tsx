@@ -31,7 +31,7 @@ export function AuthSteps({ steps, current }: AuthStepsProps) {
 }
 
 function StepMark({ index, current }: { index: number; current: number }) {
-  const base = "rounded-pill grid size-6 place-items-center text-tiny font-bold";
+  const base = "rounded-pill grid size-6 place-items-center text-tiny font-semibold";
   if (index < current) {
     return (
       <span className={clsx(base, "bg-good-tint text-good")}>

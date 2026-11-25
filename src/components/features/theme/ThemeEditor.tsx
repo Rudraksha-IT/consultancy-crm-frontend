@@ -5,7 +5,7 @@ import { LABELS } from "@/constants/messages";
 import {
   ACCENT_PRESETS,
   AUTO_ACCENT,
-  buildThemeTokens,
+  deriveOfficeTokens,
   DARK_BASES,
   DARK_SIDEBAR_LABELS,
   DARK_SIDEBAR_MODES,
@@ -30,7 +30,7 @@ const PRESET_OPTIONS = [
 
 /** Pick a Theme: a ready-made one, or the page, sidebar and accent colours with dark-mode choices. */
 export function ThemeEditor({ value, onChange }: ThemeEditorProps) {
-  const isAccentAdjusted = buildThemeTokens(value).isAccentAdjusted;
+  const isAccentAdjusted = deriveOfficeTokens(value).isAccentAdjusted;
   // Every change goes through the same checks the saved Theme will, so the preview is honest.
   const change = (patch: Partial<ThemeConfig>): void => {
     onChange(normaliseThemeConfig({ ...value, ...patch }));

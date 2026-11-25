@@ -9,7 +9,7 @@ import { Loading } from "@/components/ui/Loading";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { useTabTitle } from "@/hooks/useTabTitle";
 import { APP_LOGO_URL } from "@/lib/brand/appLogo";
-import { DEFAULT_THEME, type ThemeConfig } from "@/lib/theme";
+import type { ThemeConfig } from "@/lib/theme";
 
 import { useCurrentConsultancy } from "./useCurrentConsultancy";
 
@@ -58,10 +58,10 @@ function LoadedBrand({ consultancy, isWelcome }: LoadedBrandProps) {
 
 type LoadedOffice = { name: string; theme: ThemeConfig };
 
-/** The office's colours on the page (the default until it loads), and its name in the tab. */
+/** The Ivory theme on the page (one look for every office), and the office's name in the tab. */
 function useOfficeLook(office: LoadedOffice | null): void {
   const { mode } = useColourMode(VISITOR);
-  useAppliedTheme(office === null ? DEFAULT_THEME : office.theme, mode);
+  useAppliedTheme(mode);
   useTabTitle(office === null ? null : office.name, null);
 }
 

@@ -1,4 +1,4 @@
-import { contrastRatio } from "./colour";
+import { contrastRatio, mixHex } from "./colour";
 import {
   ACCENT_PRESETS,
   DARK_BASES,
@@ -8,7 +8,7 @@ import {
   SIDEBAR_PRESETS,
   THEME_PRESETS,
 } from "./options";
-import { buildThemeTokens, normaliseThemeConfig } from "./theme";
+import { buildThemeTokens, deriveOfficeTokens, normaliseThemeConfig } from "./theme";
 import type { ThemeConfig, ThemeTokens } from "./types";
 
 const AA_TEXT = 4.5;
@@ -48,14 +48,78 @@ function expectReadable(tokens: ThemeTokens): void {
 }
 
 function expectReadableInBothModes(config: ThemeConfig): void {
-  const { light, dark } = buildThemeTokens(config);
+  const { light, dark } = deriveOfficeTokens(config);
   expectReadable(light);
   expectReadable(dark);
 }
 
-describe("buildThemeTokens", () => {
+describe("buildThemeTokens: the Ivory theme for every office", () => {
+  it("gives the Ivory light tokens: cream page, white panels, burgundy actions", () => {
+    const { light } = buildThemeTokens();
+
+    expect(light.canvas).toBe("#faf8f4");
+    expect(light.paper).toBe("#ffffff");
+    expect(light.ink).toBe("#1f1916");
+    expect(light["ink-2"]).toBe("#625750");
+    expect(light.accent).toBe("#6e1a26");
+    expect(light["accent-hover"]).toBe("#57141e");
+    expect(light["accent-ink"]).toBe("#ffffff");
+    expect(light.tint).toBe("#f3e6e3");
+  });
+
+  it("gives the Ivory dark tokens: warm near-black page, soft burgundy actions", () => {
+    const { dark } = buildThemeTokens();
+
+    expect(dark.canvas).toBe("#121110");
+    expect(dark.paper).toBe("#1a1817");
+    expect(dark.ink).toBe("#f1e8dd");
+    expect(dark.accent).toBe("#d98a8f");
+    expect(dark["accent-ink"]).toBe("#1d1012");
+  });
+
+  it("makes the menu part of the page", () => {
+    const { light, dark, isSidebarLight } = buildThemeTokens();
+
+    expect(isSidebarLight).toBe(true);
+    expect(light["side-bg"]).toBe(light.canvas);
+    expect(light["side-ink"]).toBe(light.ink);
+    expect(dark["side-bg"]).toBe(dark.canvas);
+  });
+
+  it("draws row lines at ink 15% (light) and 17% (dark), and the title line at ink 55%", () => {
+    const { light, dark } = buildThemeTokens();
+
+    expect(light.rule).toBe(mixHex(light.paper, light.ink, 0.15));
+    expect(dark.rule).toBe(mixHex(dark.paper, dark.ink, 0.17));
+    expect(light["rule-strong"]).toBe(mixHex(light.paper, light.ink, 0.55));
+    expect(dark["rule-strong"]).toBe(mixHex(dark.paper, dark.ink, 0.55));
+  });
+
+  it("keeps every text colour readable on the panels and on the page itself", () => {
+    const { light, dark } = buildThemeTokens();
+
+    for (const tokens of [light, dark]) {
+      expectReadable(tokens);
+      for (const text of [tokens.ink, tokens["ink-2"], tokens["ink-3"], tokens.accent]) {
+        expect(contrastRatio(text, tokens.canvas)).toBeGreaterThanOrEqual(AA_TEXT);
+      }
+    }
+  });
+
+  it("only ever produces six-digit hex tokens", () => {
+    const { light, dark } = buildThemeTokens();
+
+    expect(
+      [...Object.values(light), ...Object.values(dark)].every((token) =>
+        /^#[0-9a-f]{6}$/.test(token),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("deriveOfficeTokens (the colour editor's preview until ticket 04)", () => {
   it("derives the default Stone and emerald look", () => {
-    const { light, dark, isSidebarLight } = buildThemeTokens(DEFAULT_THEME);
+    const { light, dark, isSidebarLight } = deriveOfficeTokens(DEFAULT_THEME);
 
     expect(light.canvas).toBe("#f1f2ef");
     expect(light.paper).toBe("#ffffff");
@@ -67,7 +131,7 @@ describe("buildThemeTokens", () => {
   });
 
   it("darkens an accent that is too light for white text", () => {
-    const { light, isAccentAdjusted } = buildThemeTokens({ ...DEFAULT_THEME, accent: "#7dd3fc" });
+    const { light, isAccentAdjusted } = deriveOfficeTokens({ ...DEFAULT_THEME, accent: "#7dd3fc" });
 
     expect(isAccentAdjusted).toBe(true);
     expect(light.accent).not.toBe("#7dd3fc");
@@ -75,18 +139,18 @@ describe("buildThemeTokens", () => {
   });
 
   it("keeps an accent that is already readable", () => {
-    expect(buildThemeTokens(DEFAULT_THEME).isAccentAdjusted).toBe(false);
+    expect(deriveOfficeTokens(DEFAULT_THEME).isAccentAdjusted).toBe(false);
   });
 
   it("uses white text on a dark sidebar", () => {
-    const { light, isSidebarLight } = buildThemeTokens({ ...DEFAULT_THEME, sidebar: "#13294b" });
+    const { light, isSidebarLight } = deriveOfficeTokens({ ...DEFAULT_THEME, sidebar: "#13294b" });
 
     expect(isSidebarLight).toBe(false);
     expect(light["side-ink"]).toBe("#ffffff");
   });
 
   it("uses a dark background from the fixed near-black list", () => {
-    const { dark } = buildThemeTokens({
+    const { dark } = deriveOfficeTokens({
       ...DEFAULT_THEME,
       dark: { base: "pure", sidebar: "same", accent: "auto" },
     });
@@ -132,14 +196,14 @@ describe("buildThemeTokens", () => {
 
     expect(combinations).toHaveLength(520);
     for (const dark of combinations) {
-      expectReadable(buildThemeTokens({ ...DEFAULT_THEME, dark }).dark);
+      expectReadable(deriveOfficeTokens({ ...DEFAULT_THEME, dark }).dark);
     }
   });
 
   it("falls back to the default instead of breaking on an invalid colour", () => {
     const broken = { ...DEFAULT_THEME, sidebar: "white", accent: "#12345" };
 
-    expect(buildThemeTokens(broken)).toEqual(buildThemeTokens(DEFAULT_THEME));
+    expect(deriveOfficeTokens(broken)).toEqual(deriveOfficeTokens(DEFAULT_THEME));
   });
 });
 
@@ -198,7 +262,7 @@ describe("Theme values are safe to write into CSS", () => {
   });
 
   it.each(INJECTIONS)("only ever produces six-digit hex tokens, even from %o", (value) => {
-    const { light, dark } = buildThemeTokens({
+    const { light, dark } = deriveOfficeTokens({
       ...DEFAULT_THEME,
       sidebar: value,
       accent: value,

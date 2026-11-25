@@ -42,12 +42,14 @@ describe("more ui behaviour", () => {
   it("shows a finished progress bar and a large avatar", () => {
     const { container } = render(
       <>
-        <ProgressBar label="Documents" value={9} max={9} tone="good" />
+        <ProgressBar label="Documents" value={9} max={9} />
         <Avatar name="Ram" size="lg" />
       </>,
     );
 
     expect(screen.getByText("100%")).toBeInTheDocument();
+    // Money and progress bars are green, done or not (ticket 03).
+    expect(screen.getByRole("progressbar").firstElementChild).toHaveClass("bg-good");
     expect(container).toHaveTextContent("R");
   });
 

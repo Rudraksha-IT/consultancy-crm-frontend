@@ -191,7 +191,7 @@ function DayForm({ batch, day, initial, canMark, onSaved }: DayFormProps) {
             setMarks((current) => ({ ...current, [studentId]: mark }));
           }}
         />
-        <div className="border-rule bg-fill text-secondary text-ink-2 flex flex-wrap items-center justify-end gap-3 border-t px-6 py-4">
+        <div className="border-rule text-secondary text-ink-2 px-gutter flex flex-wrap items-center justify-end gap-3 border-t py-4">
           {canMark ? (
             <>
               <Button onClick={everyonePresent}>{BATCH_TEXT.everyonePresent}</Button>

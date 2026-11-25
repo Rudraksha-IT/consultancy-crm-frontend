@@ -65,7 +65,7 @@ function StudentLink({ student }: { student: Message["student"] }) {
   return (
     <Link
       href={ROUTES.student(student.id)}
-      className="text-accent min-h-control inline-flex items-center hover:underline"
+      className="text-email-name text-ink hover:text-accent min-h-control inline-flex items-center hover:underline"
     >
       {student.name}
     </Link>
@@ -86,7 +86,8 @@ const WORDS =
 /** An email's subject line in bold; a past SMS's words. */
 function MessageWords({ message }: { message: Message }) {
   if (message.channel === "email") {
-    return <p className={`${WORDS} font-semibold`}>{message.subject}</p>;
+    // The Student's name leads; the subject under it is lighter (owner, 2026-11-25).
+    return <p className={`${WORDS} font-medium`}>{message.subject}</p>;
   }
   return <p className={`${WORDS} whitespace-pre-line`}>{message.body}</p>;
 }

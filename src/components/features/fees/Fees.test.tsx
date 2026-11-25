@@ -921,9 +921,9 @@ describe("Fee changes in Activity", () => {
   });
 });
 
-describe.each(THEME_CASES)("Fees in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Fees in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

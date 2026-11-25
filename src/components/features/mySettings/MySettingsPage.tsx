@@ -45,7 +45,7 @@ function PlatformAdminSettings() {
   const { staff } = useCurrentStaff();
   return (
     <div className="grid gap-8">
-      <PageHeader title={MY_SETTINGS_TEXT.title} subtitle={MY_SETTINGS_TEXT.intro} />
+      <PageHeader title={MY_SETTINGS_TEXT.title} />
       <Panel>
         <div className="flex flex-wrap items-center gap-5 p-6">
           <span
@@ -83,7 +83,6 @@ function StaffSettings() {
     <div className="grid gap-8">
       <PageHeader
         title={MY_SETTINGS_TEXT.title}
-        subtitle={MY_SETTINGS_TEXT.intro}
         actions={
           <ButtonLink href={ROUTES.myProgress} icon="chart">
             {PROGRESS_TEXT.myProgress}

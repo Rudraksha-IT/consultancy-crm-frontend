@@ -122,7 +122,7 @@ const ROW_LOOK = {
 function TypeRow({ type, isExtra, onMove, onRemove, onExamples }: TypeRowProps) {
   const { moveLabel, moveVariant } = ROW_LOOK[isExtra ? "extra" : "always"];
   return (
-    <li className="flex min-h-15 flex-wrap items-center justify-between gap-3 px-6 py-3">
+    <li className="px-gutter flex min-h-15 flex-wrap items-center justify-between gap-3 py-3">
       <div className="grid min-w-0 gap-1">
         <span className="break-words">{type.name}</span>
         {isExtra && <span className="text-small text-ink-2">{usesWords(type.usedBy)}</span>}

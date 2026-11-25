@@ -17,10 +17,13 @@ export function NoteCard({ title, action, children }: NoteCardProps) {
   return (
     <section
       aria-labelledby={titleId}
-      className="rounded-panel border-note-rule bg-note grid gap-2.5 border px-6 py-5"
+      className="border-note-rule bg-note rounded-r-control grid gap-2.5 border-l-3 px-4.5 py-3.5"
     >
       <div className="flex items-center justify-between gap-2">
-        <h2 id={titleId} className="text-body text-warn inline-flex items-center gap-2 font-bold">
+        <h2
+          id={titleId}
+          className="text-body text-warn inline-flex items-center gap-2 font-semibold"
+        >
           <Icon name="pin" />
           {title}
         </h2>

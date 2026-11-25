@@ -235,9 +235,9 @@ describe("Who sees the Reports", () => {
   });
 });
 
-describe.each(THEME_CASES)("The Students report in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("The Students report in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   it("shows the totals, the monthly chart and what happened to them", async () => {
@@ -618,9 +618,9 @@ describe("Staff Progress", () => {
   });
 });
 
-describe.each(THEME_CASES)("The Classes report in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("The Classes report in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   it("shows the class bars", async () => {
@@ -693,9 +693,9 @@ describe("Classes", () => {
   });
 });
 
-describe.each(THEME_CASES)("The Money report in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("The Money report in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   it("shows the totals and the monthly chart", async () => {

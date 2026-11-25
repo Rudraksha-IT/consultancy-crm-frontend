@@ -54,7 +54,7 @@ export function TopBar({ context, colourMode, isDrawerOpen, onOpenDrawer }: TopB
         <span className="flex min-w-0 items-center gap-3 px-2">
           <BrandMark name={context.consultancy.name} logo={context.consultancy.logo} />
           {showsOfficeName(context.consultancy.logo) && (
-            <b className="text-body phone:block hidden truncate font-bold">
+            <b className="text-body phone:block hidden truncate font-semibold">
               {context.consultancy.name}
             </b>
           )}

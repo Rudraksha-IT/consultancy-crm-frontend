@@ -215,9 +215,9 @@ describe("Every Home", () => {
   });
 });
 
-describe.each(THEME_CASES)("The Homes in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("The Homes in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   it("gives an Admin the pipeline, everyone's progress, new visitors and tasks", async () => {

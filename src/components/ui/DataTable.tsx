@@ -55,8 +55,9 @@ export function DataTable({
         data-phone={phone}
         {...flag("data-stacks", stacksBelowTablet)}
         {...flag("data-wraps", wraps)}
-        // Small text, column titles on one line (list tidy-ups 26).
-        className={clsx("text-small w-full border-collapse [&_th]:whitespace-nowrap", className)}
+        // Cells in page text, column titles on one line (list tidy-ups 26); heads and gutters in
+        // globals.css ("Ivory tables").
+        className={clsx("text-body w-full border-collapse [&_th]:whitespace-nowrap", className)}
       >
         {children}
       </table>

@@ -44,7 +44,7 @@ function TaskRow({ task, showsStudent, onChanged }: TaskRowProps) {
   return (
     <li
       className={clsx(
-        "grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-2 pr-6 pl-3",
+        "pr-gutter grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-2 pl-0",
         "phone:grid-cols-[auto_minmax(0,1fr)_auto]",
         task.timing === TaskTiming.Overdue && "bg-bad-tint",
       )}
@@ -67,7 +67,8 @@ function TaskRow({ task, showsStudent, onChanged }: TaskRowProps) {
         <label
           htmlFor={checkboxId}
           className={clsx(
-            "text-body font-semibold break-words",
+            // Task titles a step lighter than other names (owner, 2026-11-25).
+            "text-name font-medium break-words",
             task.isDone && "text-ink-3 line-through",
           )}
         >

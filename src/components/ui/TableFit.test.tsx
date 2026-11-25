@@ -109,8 +109,8 @@ describe("a table with many columns fits by sharing out its width", () => {
   });
 });
 
-describe("table text is small and stays on one line (list tidy-ups 26)", () => {
-  it("draws every table's text small, its column titles never split", () => {
+describe("table text is page text and column titles stay on one line", () => {
+  it("draws every table in page text, its column titles never split", () => {
     render(
       <DataTable label="Sample">
         <thead>
@@ -127,8 +127,9 @@ describe("table text is small and stays on one line (list tidy-ups 26)", () => {
     );
 
     const table = screen.getByRole("table", { name: "Sample" });
-    expect(table).toHaveClass("text-small", "[&_th]:whitespace-nowrap");
-    expect(table).not.toHaveClass("text-body");
+    // Cells in page text (ticket 03: 16 on computers, 15 on phones).
+    expect(table).toHaveClass("text-body", "[&_th]:whitespace-nowrap");
+    expect(table).not.toHaveClass("text-small");
   });
 });
 

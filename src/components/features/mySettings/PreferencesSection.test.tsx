@@ -74,7 +74,7 @@ describe("Settings → Preferences: Swipe between pages, each person's own (aske
     expect(within(section).getByText(/an ordinary scroll never changes the page/)).toBeVisible();
     expect(within(section).getByText("Only for you, on every device you use.")).toBeVisible();
     const help = within(section).getByText(/an ordinary scroll never changes the page/);
-    expect(help.closest(".rounded-panel")).toContainElement(
+    expect(help.closest("[data-panel]")).toContainElement(
       within(section).getByRole("switch", { name: "Swipe between pages" }),
     );
     expect(help).toHaveClass("text-small");

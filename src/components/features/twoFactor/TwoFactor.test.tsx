@@ -258,9 +258,9 @@ describe("QrCode", () => {
   });
 });
 
-describe.each(THEME_CASES)("Two-step login in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Two-step login in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
   afterEach(resetTheme);
 
@@ -322,9 +322,9 @@ describe("Staff two-step login on the office's address (issue 62)", () => {
   });
 });
 
-describe.each(THEME_CASES)("Staff two-step login in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Staff two-step login in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
   afterEach(resetTheme);
 

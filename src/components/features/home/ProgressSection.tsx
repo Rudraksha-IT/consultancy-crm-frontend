@@ -92,7 +92,7 @@ function ProgressPanel({ list, showsCounsellor, onOpen }: ProgressPanelProps) {
         ))}
       </ul>
       {list.count > list.rows.length && (
-        <div className="border-rule bg-fill text-secondary text-ink-2 flex flex-wrap items-center justify-between gap-x-4 border-t px-6 py-2">
+        <div className="border-rule text-secondary text-ink-2 px-gutter flex flex-wrap items-center justify-between gap-x-4 border-t py-2">
           <span>{HOME_TEXT.showingFurthest(list.rows.length, list.count)}</span>
           <Link href={ROUTES.students} className="min-h-control inline-flex items-center">
             {HOME_TEXT.seeAllStudents}
@@ -121,7 +121,7 @@ type ProgressItemProps = {
  */
 function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
   return (
-    <li className="phone:grid-cols-[minmax(0,1fr)_auto] wide:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] max-phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-x-3 max-phone:gap-y-0.5 max-phone:px-4 max-phone:py-3.5 grid grid-cols-1 items-center gap-x-6 gap-y-3 px-6 py-5">
+    <li className="phone:grid-cols-[minmax(0,1fr)_auto] wide:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] max-phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-x-3 max-phone:gap-y-0.5 max-phone:px-4 max-phone:py-3.5 px-gutter grid grid-cols-1 items-center gap-x-6 gap-y-3 py-5">
       <div className="max-phone:col-start-1 max-phone:row-start-1 grid min-w-0 gap-1">
         <Link
           href={ROUTES.student(row.student.id)}

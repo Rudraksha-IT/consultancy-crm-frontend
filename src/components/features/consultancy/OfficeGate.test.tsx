@@ -85,9 +85,9 @@ describe("OfficeGate (issue 66)", () => {
   });
 });
 
-describe.each(THEME_CASES)("OfficeGate in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("OfficeGate in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
   afterEach(resetTheme);
 

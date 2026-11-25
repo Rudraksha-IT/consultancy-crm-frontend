@@ -404,27 +404,24 @@ describe("ForgotPassword on the Platform (issue 63)", () => {
   });
 });
 
-describe.each(THEME_CASES)(
-  "ForgotPassword on the Platform in the $name Theme",
-  ({ config, mode }) => {
-    beforeEach(() => {
-      applyThemeCase(config, mode);
-    });
-    afterEach(resetTheme);
+describe.each(THEME_CASES)("ForgotPassword on the Platform in the $name Theme", ({ mode }) => {
+  beforeEach(() => {
+    applyThemeCase(mode);
+  });
+  afterEach(resetTheme);
 
-    it("labels every field and shows the step it is on", async () => {
-      platformBackend();
-      render(<ForgotPassword side="platform" />);
-      expect(screen.getByLabelText("Email")).toBeVisible();
+  it("labels every field and shows the step it is on", async () => {
+    platformBackend();
+    render(<ForgotPassword side="platform" />);
+    expect(screen.getByLabelText("Email")).toBeVisible();
 
-      await sendCodeTo("ops@platform.test");
+    await sendCodeTo("ops@platform.test");
 
-      expect(screen.getByLabelText("Code")).toBeVisible();
-      expect(screen.getByRole("button", { name: "Send me a new code" })).toBeVisible();
-      expect(currentStep()).toBe("2Enter your code");
-    });
-  },
-);
+    expect(screen.getByLabelText("Code")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Send me a new code" })).toBeVisible();
+    expect(currentStep()).toBe("2Enter your code");
+  });
+});
 
 describe("ForgotPassword from the login's password step (issue 66)", () => {
   it("shows the email as text, not a field, with a way back to the login", async () => {

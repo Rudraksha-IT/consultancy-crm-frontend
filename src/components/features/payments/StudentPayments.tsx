@@ -40,7 +40,7 @@ export function StudentPayments({ studentId, onChanged, aside }: StudentPayments
           <Loaded page={state.page} onPage={setPage} onChanged={onChanged} />
         ) : (
           state.status !== "loading" && (
-            <div className="px-6 py-5">
+            <div className="px-gutter py-5">
               <Banner tone="problem">{PAYMENT_TEXT.listFailed}</Banner>
             </div>
           )

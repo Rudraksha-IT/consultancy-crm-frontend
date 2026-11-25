@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { buildThemeTokens, DEFAULT_THEME, THEME_TOKEN_NAMES } from ".";
+import { buildThemeTokens, THEME_TOKEN_NAMES } from ".";
 
 const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
@@ -21,14 +21,25 @@ function themedValues(block: Map<string, string>): Record<string, string | undef
 }
 
 describe("globals.css", () => {
-  const defaults = buildThemeTokens(DEFAULT_THEME);
+  const ivory = buildThemeTokens();
 
-  it("starts with the default Theme's light tokens", () => {
-    expect(themedValues(declarations(":root"))).toEqual(defaults.light);
+  it("starts with the Ivory light tokens", () => {
+    expect(themedValues(declarations(":root"))).toEqual(ivory.light);
   });
 
-  it("has the default Theme's dark tokens for a dark choice", () => {
-    expect(themedValues(declarations(':root[data-theme="dark"]'))).toEqual(defaults.dark);
+  it("has the Ivory dark tokens for a dark choice", () => {
+    expect(themedValues(declarations(':root[data-theme="dark"]'))).toEqual(ivory.dark);
+  });
+
+  it("has Ivory's own status colours, light and dark", () => {
+    expect(declarations(":root").get("good")).toBe("#3f6b3a");
+    expect(declarations(":root").get("bad")).toBe("#9b2226");
+    expect(declarations(':root[data-theme="dark"]').get("good")).toBe("#8fbf85");
+  });
+
+  it("uses one font, Geist", () => {
+    expect(css).toContain("--font-sans: var(--font-geist)");
+    expect(css).not.toContain("public-sans");
   });
 
   it("never follows a dark device: dark only by choice", () => {
@@ -42,7 +53,7 @@ describe("globals.css", () => {
       [...value.matchAll(/var\(--([\w-]+)\)/g)].map(([, name = ""]) => name),
     );
 
-    const missing = mapped.filter((name) => name !== "font-public-sans" && !defined.has(name));
+    const missing = mapped.filter((name) => name !== "font-geist" && !defined.has(name));
 
     expect(missing).toEqual([]);
   });

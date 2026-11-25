@@ -7,13 +7,20 @@ type PanelProps = {
   isPadded?: boolean;
 };
 
-/** The white box for lists, tables and forms. */
+/**
+ * A section's content under its title, with no box around it (Ivory, ticket 03): a strong line
+ * (2px, ink 55%) on top divides the title from the content, and light lines divide the rows. The
+ * panel is pulled out by the row gutter, so the text inside lines up with the title above. No
+ * strong line where mini tabs, a toolbar holding tabs or figure boxes already sit above it
+ * (globals.css, "Section lines").
+ */
 export function Panel({ children, isPadded = false }: PanelProps) {
   return (
     <div
+      data-panel=""
       className={clsx(
-        "rounded-panel border-rule bg-paper shadow-raise min-w-0 overflow-hidden border",
-        isPadded && "grid gap-5 p-6",
+        "border-rule-strong -mx-gutter min-w-0 border-t-2",
+        isPadded && "px-gutter grid gap-4 pt-4.5",
       )}
     >
       {children}

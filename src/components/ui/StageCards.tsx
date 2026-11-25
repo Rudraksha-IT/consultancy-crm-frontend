@@ -24,10 +24,11 @@ type StageCardsProps = {
 export function StageCards({ counts, hrefFor }: StageCardsProps) {
   const inProgress = JOURNEY_STAGES.reduce((total, stage) => total + counts[stage], 0);
   return (
-    <div className="rounded-panel border-rule bg-paper shadow-raise overflow-hidden border">
+    // The cards stand on their own: no box or line around them (Ivory, ticket 03).
+    <div>
       <ol
         aria-label={LABELS.studentsAtEachStage}
-        className="tablet:grid-cols-3 wide:grid-cols-6 grid grid-cols-2 gap-3 p-4"
+        className="tablet:grid-cols-3 wide:grid-cols-6 grid grid-cols-2 gap-3"
       >
         {JOURNEY_STAGES.map((stage, index) => (
           <li key={stage}>
@@ -45,7 +46,7 @@ export function StageCards({ counts, hrefFor }: StageCardsProps) {
           </li>
         ))}
       </ol>
-      <div className="border-rule bg-fill text-secondary text-ink-2 flex items-center justify-between gap-4 border-t px-6 py-1">
+      <div className="text-secondary text-ink-2 mt-1 flex items-center justify-between gap-4">
         <span>{LABELS.inProgress(inProgress)}</span>
         <Link
           href={hrefFor(Stage.Lost)}

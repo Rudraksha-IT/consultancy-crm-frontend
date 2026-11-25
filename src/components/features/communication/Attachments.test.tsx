@@ -391,9 +391,9 @@ function fileOf(file: typeof BROCHURE): Attachable {
   };
 }
 
-describe.each(THEME_CASES)("Attachments in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Attachments in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

@@ -271,9 +271,9 @@ describe("OfficeDetailsSettings", () => {
   });
 });
 
-describe.each(THEME_CASES)("OfficeDetailsSettings in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("OfficeDetailsSettings in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
   afterEach(resetTheme);
 

@@ -1,5 +1,5 @@
 import { TEST_COLOURS } from "@/lib/theme/testColours";
-import { buildThemeTokens, DEFAULT_THEME } from "@/lib/theme";
+import { buildThemeTokens, deriveOfficeTokens, DEFAULT_THEME } from "@/lib/theme";
 
 import { applyTheme } from "./applyTheme";
 
@@ -14,7 +14,7 @@ describe("applyTheme", () => {
 
   it("writes the light tokens, the mode and the sidebar kind onto the element", () => {
     const root = document.documentElement;
-    const built = buildThemeTokens(DEFAULT_THEME);
+    const built = buildThemeTokens();
 
     applyTheme(root, built, "light");
 
@@ -26,7 +26,7 @@ describe("applyTheme", () => {
 
   it("writes the dark tokens in dark mode, where the sidebar is never a colour", () => {
     const root = document.documentElement;
-    const built = buildThemeTokens(DEFAULT_THEME);
+    const built = buildThemeTokens();
 
     applyTheme(root, built, "dark");
 
@@ -35,10 +35,10 @@ describe("applyTheme", () => {
     expect(root.dataset.side).toBe("plain");
   });
 
-  it("marks a coloured light-mode sidebar", () => {
+  it("marks a coloured light-mode sidebar (the colour editor's preview, until ticket 04)", () => {
     const root = document.documentElement;
 
-    applyTheme(root, buildThemeTokens(NAVY_SIDEBAR), "light");
+    applyTheme(root, deriveOfficeTokens(NAVY_SIDEBAR), "light");
 
     expect(root.dataset.side).toBe("coloured");
   });

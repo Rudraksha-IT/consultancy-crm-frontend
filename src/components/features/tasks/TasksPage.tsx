@@ -138,7 +138,7 @@ export function TaskPanelBody({
   if (state.status === "loading") return <Loading />;
   if (state.status === "failed") {
     return (
-      <div className="px-6 py-5">
+      <div className="px-gutter py-5">
         <Banner tone="problem">{TASK_TEXT.listFailed}</Banner>
       </div>
     );

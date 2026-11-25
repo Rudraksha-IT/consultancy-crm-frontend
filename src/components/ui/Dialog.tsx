@@ -111,7 +111,7 @@ function OpenDialog(props: DialogProps) {
               : "pt-7 pb-1",
           )}
         >
-          <h2 id={titleId} className="text-section-title min-w-0 truncate">
+          <h2 id={titleId} className="text-dialog-title min-w-0 truncate">
             {title}
           </h2>
           {headerAside !== undefined && (
@@ -130,7 +130,7 @@ function OpenDialog(props: DialogProps) {
           {children}
         </div>
         {footer !== undefined && (
-          <footer className="border-rule bg-fill phone:px-8 max-phone:flex-none max-phone:gap-2 max-phone:px-4 max-phone:pt-3 max-phone:pb-sheet-safe max-phone:*:flex-1 flex flex-none flex-wrap justify-end gap-3 border-t px-5 py-5 print:hidden">
+          <footer className="phone:px-6 max-phone:flex-none max-phone:gap-2 max-phone:px-4 max-phone:pt-3 max-phone:pb-sheet-safe max-phone:*:flex-1 flex flex-none flex-wrap justify-end gap-1 px-5 pt-1 pb-5 print:hidden">
             {footer}
           </footer>
         )}

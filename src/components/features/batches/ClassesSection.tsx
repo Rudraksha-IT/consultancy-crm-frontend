@@ -98,7 +98,7 @@ function ClassButtons({ state, classes, onPeek }: ClassButtonsProps) {
     );
   }
   return (
-    <div className="tablet:grid-cols-2 wide:grid-cols-3 grid gap-4">
+    <div className="tablet:grid-cols-2 wide:grid-cols-3 -mx-gutter tablet:gap-x-4 grid">
       {classes.map((batch) => (
         <button
           key={batch.id}
@@ -106,7 +106,7 @@ function ClassButtons({ state, classes, onPeek }: ClassButtonsProps) {
           onClick={() => {
             onPeek(batch);
           }}
-          className="rounded-panel border-rule bg-paper shadow-raise hover:border-accent grid cursor-pointer gap-2 border p-5 text-left"
+          className="border-rule hover:bg-fill px-gutter grid cursor-pointer gap-2 border-t py-4 text-left"
         >
           <span className="text-card-title text-ink">{batch.name}</span>
           <span className="text-secondary text-ink-2 inline-flex items-center gap-2">

@@ -43,7 +43,7 @@ export function SegmentedControl<Value extends string>({
       role="group"
       aria-label={label}
       data-strip=""
-      className="rounded-control bg-fill-2 max-phone:flex max-phone:w-full max-phone:flex-nowrap max-phone:overflow-x-auto inline-flex flex-wrap gap-1 justify-self-start p-1"
+      className="border-rule max-phone:flex max-phone:w-full max-phone:flex-nowrap max-phone:overflow-x-auto inline-flex gap-4.5 justify-self-start border-b"
     >
       {options.map((option) => (
         <button
@@ -54,8 +54,8 @@ export function SegmentedControl<Value extends string>({
             onChange(option.value);
           }}
           className={clsx(
-            "rounded-control text-secondary text-ink-2 max-phone:grow max-phone:shrink-0 max-phone:px-3.5 cursor-pointer px-4.5 font-semibold whitespace-nowrap",
-            "aria-pressed:bg-paper aria-pressed:text-ink aria-pressed:shadow-raise",
+            "text-secondary text-ink-3 hover:text-ink max-phone:shrink-0 -mb-px cursor-pointer border-b-2 border-transparent font-medium whitespace-nowrap",
+            "aria-pressed:border-accent aria-pressed:text-ink",
             size === "lg" ? "min-h-control-lg" : "min-h-control",
           )}
         >
@@ -65,7 +65,7 @@ export function SegmentedControl<Value extends string>({
               <span className="sr-only">{`, ${String(option.count)}`}</span>
               <span
                 aria-hidden="true"
-                className="rounded-pill bg-fill-2 text-small ml-2 inline-block min-w-6 px-2 text-center leading-6 tabular-nums"
+                className="text-small text-ink-3 ml-1.5 inline-block tabular-nums"
               >
                 {option.count}
               </span>

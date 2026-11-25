@@ -75,14 +75,21 @@ describe("phone page actions", () => {
   });
 });
 
+/** The block of size tokens that applies above 640 px (the first `:root`). */
+function computerSizes(): string {
+  const start = GLOBALS_CSS.indexOf(":root {");
+  return GLOBALS_CSS.slice(start, GLOBALS_CSS.indexOf("\n}", start));
+}
+
 describe("phone sizes", () => {
-  it("make fields 48 tall with 16 px text, so phones never zoom in", () => {
+  it("make fields 48 tall with 16 px text on every width, so phones never zoom in", () => {
     render(<TextField label="Name" name="name" />);
 
     expect(screen.getByRole("textbox", { name: "Name" })).toHaveClass(
       "max-phone:min-h-field-phone",
-      "text-body",
+      "text-input",
     );
+    expect(GLOBALS_CSS).toContain("--text-input: 1rem;");
     expect(GLOBALS_CSS).toContain("--spacing-field-phone: 3rem;");
     expect(GLOBALS_CSS).toContain("--spacing-action-phone: 3rem;");
   });
@@ -93,29 +100,42 @@ describe("phone sizes", () => {
     expect(screen.getByRole("button", { name: "Save" })).toHaveClass("max-phone:active:scale-97");
   });
 
-  it("make cards flat, with 16 corners and a hairline border", () => {
+  it("show sections without a box: no border around them and nothing raised", () => {
     render(<Panel>list</Panel>);
 
-    expect(screen.getByText("list")).toHaveClass("rounded-panel", "border", "shadow-raise");
-    expect(phoneSizes()).toContain("--size-panel-corner: 1rem;");
-    expect(phoneSizes()).toContain("--raise: none;");
+    expect(screen.getByText("list")).not.toHaveClass("rounded-panel", "shadow-raise");
+    expect(GLOBALS_CSS).toMatch(/:root \{[^}]*--raise: none;/);
   });
 
-  it("follow the phone type scale and 16 margins", () => {
+  it("follow the phone type scale (ticket 03) and 16 margins", () => {
     const sizes = phoneSizes();
 
-    expect(sizes).toContain("--size-title-sm: 1.625rem;"); // page title 26
-    expect(sizes).toContain("--size-section-title: 1.1875rem;"); // section 19
-    expect(sizes).toContain("--size-secondary: 0.875rem;"); // secondary 14
-    expect(sizes).toContain("--size-small: 0.8125rem;"); // caption 13
+    expect(sizes).toContain("--size-body: 0.9375rem;"); // page text 15
+    expect(sizes).toContain("--size-name: 1rem;"); // names 16
+    expect(sizes).toContain("--size-secondary: 0.84375rem;"); // sub-lines and chips 13.5
+    expect(sizes).toContain("--size-head: 0.8125rem;"); // column heads 13
+    expect(sizes).toContain("--size-title: 1.5rem;"); // page title 24
+    expect(sizes).toContain("--size-section-title: 1.03125rem;"); // section 16.5
+    expect(sizes).toContain("--size-figure: 1.5rem;"); // figures 24
+    expect(sizes).toContain("--size-button: 0.90625rem;"); // buttons 14.5
+    expect(sizes).toContain("--size-button-pad: 0.875rem;"); // with 14 side padding
+    expect(sizes).toContain("--size-button-sm: 0.875rem;"); // small buttons 14
+    expect(sizes).toContain("--size-button-pad-sm: 0.625rem;"); // with 10
     expect(sizes).toContain("--size-page-margin: 1rem;"); // 16 side margins
     expect(sizes).toContain("--size-topbar: 3.75rem;"); // a 60 top bar
   });
 
-  it("keep the laptop and tablet sizes above 640", () => {
-    expect(GLOBALS_CSS).toContain("--size-page-margin: 1.625rem;");
-    expect(GLOBALS_CSS).toContain("--size-topbar: 4.5rem;");
-    expect(GLOBALS_CSS).toContain("--size-title-sm: 1.5rem;");
-    expect(GLOBALS_CSS).toContain("--size-panel-corner: 0.875rem;");
+  it("follow the computer type scale above 640 (ticket 03)", () => {
+    const sizes = computerSizes();
+
+    expect(sizes).toContain("--size-body: 1rem;"); // page text 16
+    expect(sizes).toContain("--size-name: 1.0625rem;"); // names in lists 17
+    expect(sizes).toContain("--size-secondary: 0.9375rem;"); // the line under them 15
+    expect(sizes).toContain("--size-head: 0.90625rem;"); // column heads 14.5
+    expect(sizes).toContain("--size-button: 0.96875rem;"); // buttons 15.5 (14.5 + 1)
+    expect(sizes).toContain("--size-title: 1.75rem;"); // page title 28
+    expect(sizes).toContain("--size-section-title: 1.0625rem;"); // section 17
+    expect(sizes).toContain("--size-page-margin: 1.625rem;");
+    expect(sizes).toContain("--size-topbar: 4.5rem;");
   });
 });

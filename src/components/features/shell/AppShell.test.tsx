@@ -4,7 +4,7 @@ import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { buildThemeTokens, normaliseThemeConfig } from "@/lib/theme";
+import { buildThemeTokens } from "@/lib/theme";
 import { resetTheme } from "@/test/themes";
 
 import { AppShell } from "./AppShell";
@@ -312,11 +312,11 @@ describe("AppShell", () => {
 });
 
 describe("AppShell's Theme", () => {
-  it("colours the page with the Consultancy's Theme", async () => {
+  it("shows the Ivory theme, not the office's own colours (one look for every office)", async () => {
     await renderShellFor(TEACHER_CONTEXT);
 
-    const expected = buildThemeTokens(normaliseThemeConfig(CRIMSON_THEME)).light;
-    // The shell applies the Theme in an effect after the page shows.
+    const expected = buildThemeTokens().light;
+    // The shell applies the theme in an effect after the page shows.
     await waitFor(() => {
       expect(document.documentElement.style.getPropertyValue("--accent")).toBe(expected.accent);
     });

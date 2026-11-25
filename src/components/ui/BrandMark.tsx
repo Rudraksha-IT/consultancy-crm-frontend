@@ -62,7 +62,7 @@ function Initials({ name, isLarge }: { name: string; isLarge: boolean }) {
     <span
       aria-hidden="true"
       className={clsx(
-        "bg-accent text-accent-ink grid flex-none place-items-center font-bold",
+        "bg-accent text-accent-ink grid flex-none place-items-center font-semibold",
         "in-data-[side=coloured]:bg-side-ink in-data-[side=coloured]:text-side-bg",
         isLarge
           ? "size-mark-lg rounded-dialog text-page-title"

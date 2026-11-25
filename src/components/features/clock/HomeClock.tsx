@@ -57,7 +57,7 @@ function ClockCard({ clock, sinceAnswerMs, onAnswer }: ClockCardProps) {
     <div
       role="region"
       aria-label={TEXT.region}
-      className="rounded-panel border-rule bg-paper shadow-raise max-phone:w-full max-phone:grid max-phone:grid-cols-[auto_minmax(0,1fr)_auto] max-phone:gap-x-3 max-phone:gap-y-2.5 max-phone:py-3 max-phone:pr-3 max-phone:pl-4 flex max-w-full flex-wrap items-center gap-3 border py-1.5 pr-1.5 pl-3.5"
+      className="rounded-pill border-rule max-phone:rounded-panel max-phone:w-full max-phone:grid max-phone:grid-cols-[auto_minmax(0,1fr)_auto] max-phone:gap-x-3 max-phone:gap-y-2.5 max-phone:py-3 max-phone:pr-3 max-phone:pl-4 flex max-w-full flex-wrap items-center gap-3 border py-1.5 pr-1.5 pl-3.5"
     >
       <span
         className={clsx(

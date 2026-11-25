@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 
 import { LABELS } from "@/constants/messages";
-import { buildThemeTokens, type ColourMode, type ThemeConfig } from "@/lib/theme";
+import { deriveOfficeTokens, type ColourMode, type ThemeConfig } from "@/lib/theme";
 
 import { applyTheme } from "./applyTheme";
 
@@ -13,7 +13,7 @@ type ThemePreviewProps = {
 
 /** The Theme in light and dark, side by side, before it is saved. */
 export function ThemePreview({ theme }: ThemePreviewProps) {
-  const built = useMemo(() => buildThemeTokens(theme), [theme]);
+  const built = useMemo(() => deriveOfficeTokens(theme), [theme]);
   return (
     <div className="tablet:grid-cols-2 grid gap-4">
       <PreviewScreen built={built} mode="light" />
@@ -23,7 +23,7 @@ export function ThemePreview({ theme }: ThemePreviewProps) {
 }
 
 type PreviewScreenProps = {
-  built: ReturnType<typeof buildThemeTokens>;
+  built: ReturnType<typeof deriveOfficeTokens>;
   mode: ColourMode;
 };
 

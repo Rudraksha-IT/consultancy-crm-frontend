@@ -33,7 +33,7 @@ const STOP_CLASSES: Record<StopState, string> = {
 
 const NAME_CLASSES: Record<StopState, string> = {
   done: "text-ink-2 font-medium",
-  current: "text-ink font-bold",
+  current: "text-ink font-semibold",
   next: "text-ink-3 font-medium",
 };
 

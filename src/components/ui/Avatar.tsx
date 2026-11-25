@@ -22,7 +22,7 @@ export function Avatar({ name, size = "md" }: AvatarProps) {
     <span
       aria-hidden="true"
       className={clsx(
-        "rounded-pill bg-tint text-accent grid flex-none place-items-center font-bold",
+        "rounded-pill bg-tint text-accent grid flex-none place-items-center font-semibold",
         size === "lg" ? "text-section-title size-16" : "size-mark text-secondary",
       )}
     >

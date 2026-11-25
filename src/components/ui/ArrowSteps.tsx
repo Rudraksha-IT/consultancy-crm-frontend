@@ -44,7 +44,7 @@ export function ArrowSteps({ stage, isDone = false }: ArrowStepsProps) {
           data-state={stateOf(index)}
           title={STAGE_LABELS[step]}
           className={clsx(
-            "text-tiny grid h-7.5 place-items-center overflow-hidden font-bold whitespace-nowrap",
+            "text-tiny grid h-7.5 place-items-center overflow-hidden font-semibold whitespace-nowrap",
             index === 0 ? "clip-chevron-first rounded-l-chip" : "clip-chevron",
             STATE_CLASSES[stateOf(index)],
           )}

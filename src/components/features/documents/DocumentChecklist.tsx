@@ -117,7 +117,7 @@ function ChecklistRow(props: ItemActionsProps) {
   const { document } = item;
   const typeName = item.documentType.name;
   return (
-    <li className="tablet:grid-cols-[auto_minmax(0,1fr)_auto] grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 px-6 py-5">
+    <li className="tablet:grid-cols-[auto_minmax(0,1fr)_auto] px-gutter grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 py-5">
       <Tick state={item.state} />
       <div className="grid min-w-0 gap-1">
         <ItemName item={item} />

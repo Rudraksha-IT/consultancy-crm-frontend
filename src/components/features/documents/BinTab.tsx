@@ -210,7 +210,7 @@ function BinRow({ item, onOpen, onRestore, onDelete }: BinRowProps) {
   const dates = useDates();
   const name = itemName(item);
   return (
-    <li className="tablet:grid-cols-[minmax(0,1fr)_auto] grid items-start gap-x-6 gap-y-4 px-6 py-5">
+    <li className="tablet:grid-cols-[minmax(0,1fr)_auto] px-gutter grid items-start gap-x-6 gap-y-4 py-5">
       <div className="grid min-w-0 gap-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="text-body text-ink font-semibold break-all">{name}</span>
@@ -260,7 +260,7 @@ function CourseFileRow({
   const dates = useDates();
   const { courseFile } = item;
   return (
-    <li className="tablet:grid-cols-[minmax(0,1fr)_auto] grid items-start gap-x-6 gap-y-4 px-6 py-5">
+    <li className="tablet:grid-cols-[minmax(0,1fr)_auto] px-gutter grid items-start gap-x-6 gap-y-4 py-5">
       <div className="grid min-w-0 gap-1">
         <span className="text-body text-ink font-semibold break-words">{courseFile.name}</span>
         <div className="text-secondary text-ink-2 min-h-control flex flex-wrap items-center gap-x-2">
@@ -298,7 +298,7 @@ function ExampleRow({
   const dates = useDates();
   const { example } = item;
   return (
-    <li className="tablet:grid-cols-[minmax(0,1fr)_auto] grid items-start gap-x-6 gap-y-4 px-6 py-5">
+    <li className="tablet:grid-cols-[minmax(0,1fr)_auto] px-gutter grid items-start gap-x-6 gap-y-4 py-5">
       <div className="grid min-w-0 gap-1">
         <span className="text-body text-ink font-semibold break-all">{example.fileName}</span>
         <div className="text-secondary text-ink-2 min-h-control flex flex-wrap items-center gap-x-2">

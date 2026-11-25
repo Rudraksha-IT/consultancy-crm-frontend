@@ -480,9 +480,9 @@ describe("Money out on the Admin's Home", () => {
   });
 });
 
-describe.each(THEME_CASES)("Money out in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Money out in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

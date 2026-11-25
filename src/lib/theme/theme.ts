@@ -1,4 +1,5 @@
 import { contrastRatio, isHexColour, mixHex, readableOn } from "./colour";
+import { IVORY_DARK, IVORY_LIGHT } from "./ivory";
 import {
   BLACK,
   DARK_BASES,
@@ -49,12 +50,24 @@ const DARK_MIX = {
 } as const;
 const DARK_SIDEBAR_MIX = { muted: 0.62, hover: 0.05, active: 0.1, rule: 0.07 } as const;
 const COLOURED_SIDEBAR_MIX = { muted: 0.66, hover: 0.07, active: 0.14, rule: 0.08 } as const;
+const STRONG_LINE_MIX = 0.55;
 const AA_TEXT = 4.5;
 const DARK_ACCENT_RATIO = 5;
 const DARK_INK_2_RATIO = 7;
 
-/** Turn a Consultancy's Theme into the light and dark token maps written onto `<html>`. */
-export function buildThemeTokens(input: ThemeConfig): BuiltTheme {
+/**
+ * The light and dark token maps written onto `<html>`: the Ivory theme, the same for every office
+ * (UI revamp, ticket 03). Each Staff member still picks light or dark.
+ */
+export function buildThemeTokens(): BuiltTheme {
+  return { light: IVORY_LIGHT, dark: IVORY_DARK, isSidebarLight: true, isAccentAdjusted: false };
+}
+
+/**
+ * An office's own colours turned into tokens. Only the Platform's colour editor still previews
+ * them; it and this function go with the office colour feature (ticket 04).
+ */
+export function deriveOfficeTokens(input: ThemeConfig): BuiltTheme {
   const config = normaliseThemeConfig(input);
   const accent = readableOn(config.accent, WHITE, BLACK, AA_TEXT);
   const isSidebarLight = takesDarkText(config.sidebar);
@@ -85,6 +98,7 @@ function lightTokens(config: ThemeConfig, accent: string, isSidebarLight: boolea
     "fill-2": towardsBlack(LIGHT_MIX.fill2),
     rule: towardsBlack(LIGHT_MIX.rule),
     "rule-2": towardsBlack(LIGHT_MIX.rule2),
+    "rule-strong": mixHex(WHITE, towardsBlack(LIGHT_MIX.ink), STRONG_LINE_MIX),
     ink: towardsBlack(LIGHT_MIX.ink),
     "ink-2": towardsBlack(LIGHT_MIX.ink2),
     "ink-3": towardsBlack(LIGHT_MIX.ink3),
@@ -157,6 +171,7 @@ function darkTokens(config: ThemeConfig, isSidebarLight: boolean): ThemeTokens {
     "fill-2": towardsWhite(DARK_MIX.fill2),
     rule: towardsWhite(DARK_MIX.rule),
     "rule-2": towardsWhite(DARK_MIX.rule2),
+    "rule-strong": mixHex(panel, towardsWhite(DARK_MIX.ink), STRONG_LINE_MIX),
     ink: towardsWhite(DARK_MIX.ink),
     "ink-2": readableOn(towardsWhite(DARK_MIX.ink2), panel, WHITE, DARK_INK_2_RATIO),
     "ink-3": readableOn(towardsWhite(DARK_MIX.ink3), panel, WHITE, AA_TEXT),

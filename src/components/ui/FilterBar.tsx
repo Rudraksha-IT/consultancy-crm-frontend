@@ -53,7 +53,7 @@ export function FilterBar({ label, search, children, more, onMoreClose }: Filter
         if (event.key === "Escape" && more !== undefined) onMoreClose?.();
       }}
     >
-      <div className="max-phone:grid max-phone:gap-2 max-phone:p-3 max-phone:pb-1 flex flex-wrap items-center gap-3 px-6 py-5">
+      <div className="max-phone:grid max-phone:gap-2 max-phone:p-3 max-phone:pb-1 px-gutter flex flex-wrap items-center gap-3 py-5">
         {search}
         <FilterRow storeKey={`${label}|0`} className="contents">
           {children}
@@ -62,7 +62,7 @@ export function FilterBar({ label, search, children, more, onMoreClose }: Filter
       {more !== undefined && (
         <FilterRow
           storeKey={`${label}|1`}
-          className="max-phone:mx-0 max-phone:pt-0 max-phone:pb-1 flex flex-wrap items-center gap-3 px-6 pb-5"
+          className="max-phone:mx-0 max-phone:pt-0 max-phone:pb-1 px-gutter flex flex-wrap items-center gap-3 pb-5"
         >
           {more}
         </FilterRow>

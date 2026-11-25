@@ -418,7 +418,7 @@ function ChecklistGroup({ title, help, items, ...actions }: ChecklistGroupProps)
 /** "Ask for another document", only for this Student (spec 63b). */
 function AskAnother({ onAsk }: { onAsk: () => void }) {
   return (
-    <div className="border-rule flex flex-wrap items-center gap-x-5 gap-y-3 border-t px-6 py-4">
+    <div className="border-rule px-gutter flex flex-wrap items-center gap-x-5 gap-y-3 border-t py-4">
       <Button icon="plus" onClick={onAsk}>
         {DOCUMENT_TEXT.askAnother}
       </Button>
@@ -430,12 +430,7 @@ function AskAnother({ onAsk }: { onAsk: () => void }) {
 function Progress({ done, total }: { done: number; total: number }) {
   return (
     <div className="w-40">
-      <ProgressBar
-        label={DOCUMENT_TEXT.progressLabel}
-        value={done}
-        max={total}
-        tone={total > 0 && done === total ? "good" : "accent"}
-      />
+      <ProgressBar label={DOCUMENT_TEXT.progressLabel} value={done} max={total} />
     </div>
   );
 }
@@ -443,7 +438,7 @@ function Progress({ done, total }: { done: number; total: number }) {
 /** Files are private; someone who can't upload is told who can. */
 function PanelFoot({ canChange }: { canChange: boolean }) {
   return (
-    <div className="border-rule bg-fill text-secondary text-ink-2 flex flex-wrap items-center justify-between gap-4 border-t px-6 py-4">
+    <div className="border-rule text-secondary text-ink-2 px-gutter flex flex-wrap items-center justify-between gap-4 border-t py-4">
       <span className="inline-flex items-center gap-2.5">
         <Icon name="lock" size="sm" />
         {DOCUMENT_TEXT.privateFiles}

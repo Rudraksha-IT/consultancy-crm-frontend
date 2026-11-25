@@ -11,7 +11,7 @@ export function BrandLockup({ name, logo = null }: BrandLockupProps) {
     <span className="flex min-w-0 items-center gap-3">
       <BrandMark name={name} logo={logo} />
       {showsOfficeName(logo) && (
-        <b className="text-body min-w-0 truncate leading-5 font-bold">{name}</b>
+        <b className="text-body min-w-0 truncate leading-5 font-semibold">{name}</b>
       )}
     </span>
   );

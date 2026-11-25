@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { PlatformBrand } from "@/components/features/platform/PlatformBrand";
-import { buildThemeTokens, DEFAULT_THEME } from "@/lib/theme";
+import { buildThemeTokens } from "@/lib/theme";
 import { resetTheme } from "@/test/themes";
 
 import { AuthLayout } from "./AuthLayout";
@@ -59,13 +59,13 @@ describe("PlatformBrand", () => {
     expect(screen.getByText(LABELS.staffLogin)).toBeInTheDocument();
   });
 
-  it("shows the product's name in the default Theme", () => {
+  it("shows the product's name in the Ivory theme", () => {
     render(<PlatformBrand />);
 
     expect(screen.getByRole("heading", { level: 2, name: LABELS.productName })).toBeInTheDocument();
     expect(screen.queryByText(LABELS.platform)).not.toBeInTheDocument();
     expect(document.documentElement.style.getPropertyValue("--accent")).toBe(
-      buildThemeTokens(DEFAULT_THEME).light.accent,
+      buildThemeTokens().light.accent,
     );
   });
 });

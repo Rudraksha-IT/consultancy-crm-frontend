@@ -7,11 +7,11 @@ import { Icon, type IconName } from "./Icon";
 export type ChipTone = "good" | "warn" | "bad" | "accent" | "muted";
 
 const TONE_CLASSES: Record<ChipTone, string> = {
-  good: "bg-good-tint text-good",
-  warn: "bg-warn-tint text-warn",
-  bad: "bg-bad-tint text-bad",
-  accent: "bg-tint text-accent",
-  muted: "bg-fill-2 text-ink-2",
+  good: "text-good",
+  warn: "text-warn",
+  bad: "text-bad",
+  accent: "text-accent",
+  muted: "text-ink-2",
 };
 
 type ChipProps = {
@@ -23,12 +23,15 @@ type ChipProps = {
   icon?: IconName;
 };
 
-/** A status: a dot and a word, coloured by the status. Never wider than its container. */
+/**
+ * A status: a dot and a word, coloured by the status, with no filled badge behind it (Ivory).
+ * Never wider than its container.
+ */
 export function Chip({ children, tone = "muted", hasDot = true, icon }: ChipProps) {
   return (
     <span
       className={clsx(
-        "rounded-pill text-small inline-flex max-w-full items-center gap-2 px-3 leading-7 font-semibold whitespace-nowrap",
+        "text-secondary inline-flex max-w-full items-center gap-1.75 leading-7 font-medium whitespace-nowrap",
         TONE_CLASSES[tone],
       )}
     >
@@ -43,5 +46,5 @@ export function Chip({ children, tone = "muted", hasDot = true, icon }: ChipProp
 function ChipMark({ icon, hasDot }: { icon: IconName | undefined; hasDot: boolean }) {
   if (icon !== undefined) return <Icon name={icon} size="sm" />;
   if (!hasDot) return null;
-  return <span aria-hidden="true" className="size-dot rounded-pill bg-current" />;
+  return <span aria-hidden="true" className="size-chip-dot rounded-pill flex-none bg-current" />;
 }

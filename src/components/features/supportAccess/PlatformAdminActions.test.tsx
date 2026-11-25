@@ -34,9 +34,9 @@ function renderActions(
   return { sendCode, signOut };
 }
 
-describe.each(THEME_CASES)("PlatformAdminActions in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("PlatformAdminActions in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

@@ -258,7 +258,7 @@ function GroupList({ group, country, rows, onMove, onRemove }: GroupListProps) {
           {rows.map((row) => (
             <li
               key={row.documentType.id}
-              className="flex min-h-15 flex-wrap items-center justify-between gap-3 px-6 py-3"
+              className="px-gutter flex min-h-15 flex-wrap items-center justify-between gap-3 py-3"
             >
               <span className="min-w-0 break-words">{row.documentType.name}</span>
               <div className="flex flex-wrap items-center gap-2">

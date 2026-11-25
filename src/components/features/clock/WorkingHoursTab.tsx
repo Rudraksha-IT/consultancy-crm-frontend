@@ -105,7 +105,7 @@ function TeamNowPanel({ team }: { team: TeamNow }) {
   ] as const;
   return (
     <Panel>
-      <div className="border-rule text-secondary text-ink-2 flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+      <div className="border-rule text-secondary text-ink-2 px-gutter flex flex-wrap items-center justify-between gap-3 border-b py-4">
         <span>
           <b className="text-ink">{TEXT.inNowCount(team.clockedInCount, team.people.length)}</b>
           {TEXT.areClockedIn}
@@ -140,7 +140,7 @@ function PeopleGroup({
 }) {
   const headingId = useId();
   return (
-    <div className="grid min-w-0 content-start gap-3 px-6 py-5">
+    <div className="px-gutter grid min-w-0 content-start gap-3 py-5">
       <h3 id={headingId} className="text-secondary flex items-center gap-2 font-semibold">
         <span
           aria-hidden="true"

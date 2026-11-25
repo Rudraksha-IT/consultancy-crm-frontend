@@ -37,7 +37,7 @@ type ShellFrameProps = {
 };
 
 /**
- * The logged-in layout in the Consultancy's Theme: sidebar, top bar and the page, with the tab bar
+ * The logged-in layout in the Ivory theme: sidebar, top bar and the page, with the tab bar
  * at the bottom on phones (design system: Phones).
  */
 export function ShellFrame({ context, children }: ShellFrameProps) {
@@ -53,7 +53,7 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
   const pull = useShellPagePull(context, sidebar.isDrawerOpen);
   const [theme, setTheme] = useState(context.theme);
   const shellTheme = useMemo(() => ({ theme, setTheme }), [theme]);
-  useAppliedTheme(theme, colourMode.mode);
+  useAppliedTheme(colourMode.mode);
 
   return (
     <ShellThemeContext value={shellTheme}>

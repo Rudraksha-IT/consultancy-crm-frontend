@@ -82,12 +82,12 @@ function HighBody({ state }: { state: Loaded<StudentPage> }) {
   );
 }
 
-/** One High Student as a slim box: the name, then their counsellor and Stage; it opens them. */
+/** One High Student beside a gold mark, not in a box: the name, then their counsellor and Stage. */
 function HighBox({ student }: { student: StudentRow }) {
   return (
     <Link
       href={ROUTES.student(student.id)}
-      className="rounded-control border-rule bg-paper shadow-raise hover:border-accent focus-visible:border-accent grid min-w-0 gap-0.5 border px-4 py-3 transition-colors"
+      className="border-gold hover:bg-fill grid min-w-0 gap-0.5 border-l-2 px-3.5 py-1.5 transition-colors"
     >
       <span className="text-ink flex min-w-0 items-center gap-2 font-semibold">
         <span aria-hidden="true" className="bg-bad size-2 shrink-0 rounded-full" />

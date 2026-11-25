@@ -54,7 +54,7 @@ export function MenuList({
       aria-label={label}
       onKeyDown={handleKeyDown}
       className={clsx(
-        "min-w-menu rounded-control border-rule bg-paper shadow-lift absolute top-full z-20 mt-2 grid gap-0.5 border p-2",
+        "min-w-menu rounded-menu border-rule bg-paper shadow-lift absolute top-full z-20 mt-2 grid gap-0.5 border p-2",
         align === "end" ? "right-0" : "left-0",
       )}
     >

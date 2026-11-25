@@ -157,8 +157,8 @@ describe("WorkingDaySettings", () => {
     expect(days[1]).toHaveTextContent("Open");
     expect(screen.getByText(/never count as not in or a short day/)).toBeInTheDocument();
     const hours = screen.getByRole("textbox", { name: "Hours in a working day" });
-    expect(hours.closest(".rounded-panel")).toContainElement(daysOff);
-    expect(document.querySelectorAll(".rounded-panel")).toHaveLength(1);
+    expect(hours.closest("[data-panel]")).toContainElement(daysOff);
+    expect(document.querySelectorAll("[data-panel]")).toHaveLength(1);
   });
 
   it.each([

@@ -15,7 +15,6 @@ import { PageLoadProvider } from "@/components/ui/pageLoad";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 
 import { PlatformTabs } from "./PlatformTabs";
 import { usePlatformTabTitle } from "@/hooks/usePlatformTabTitle";
@@ -59,7 +58,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
   const current = useMemo(() => ({ admin, setAdmin }), [admin]);
   const colourMode = useColourMode(`platform-${admin.id}`);
   const productLogo = useProductMark();
-  useAppliedTheme(DEFAULT_THEME, colourMode.mode);
+  useAppliedTheme(colourMode.mode);
   const productName = useProductName();
   usePlatformTabTitle();
 
@@ -72,7 +71,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             className="min-h-control flex min-w-0 items-center gap-3"
           >
             <BrandMark name={productName} logo={productLogo} />
-            <b className="text-body font-bold">{productName}</b>
+            <b className="text-body font-semibold">{productName}</b>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle mode={colourMode.mode} onToggle={colourMode.toggleMode} tone="sidebar" />

@@ -165,12 +165,12 @@ function Gallery() {
   );
 }
 
-describe.each(THEME_CASES)("ui components in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("ui components in the $name Theme", ({ mode }) => {
   afterEach(resetTheme);
 
   it("render with the Theme's tokens on the page", () => {
-    applyThemeCase(config, mode);
-    const tokens = buildThemeTokens(config)[mode];
+    applyThemeCase(mode);
+    const tokens = buildThemeTokens()[mode];
 
     render(<Gallery />);
 

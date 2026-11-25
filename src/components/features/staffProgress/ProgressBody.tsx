@@ -142,7 +142,7 @@ function Changes({ progress, dates, canOpenStudents }: ChangesProps) {
       ) : (
         <div className="divide-rule divide-y">
           {progress.days.map((day) => (
-            <div key={day.day} className="grid gap-2 px-6 py-4">
+            <div key={day.day} className="px-gutter grid gap-2 py-4">
               <h3 className="text-body flex flex-wrap items-baseline gap-x-3 font-semibold">
                 {dayHeading(day.day, dates)}
                 <span className="text-small text-ink-2 font-normal">

@@ -48,7 +48,7 @@ export function Tabs({ label, tabs, selected, onSelect, children }: TabsProps) {
         aria-label={label}
         data-strip=""
         onKeyDown={handleKeyDown}
-        className="border-rule flex gap-2 overflow-x-auto border-b-2"
+        className="border-rule flex gap-5.5 overflow-x-auto border-b"
       >
         {tabs.map((tab) => (
           <button
@@ -61,11 +61,11 @@ export function Tabs({ label, tabs, selected, onSelect, children }: TabsProps) {
             onClick={() => {
               onSelect(tab.id);
             }}
-            className="min-h-control-lg text-body text-ink-2 hover:text-ink max-phone:active:bg-fill aria-selected:border-accent aria-selected:text-accent -mb-0.5 inline-flex cursor-pointer items-center gap-2.5 border-b-3 border-transparent px-4 font-semibold whitespace-nowrap"
+            className="min-h-control text-secondary text-ink-3 hover:text-ink max-phone:active:bg-fill aria-selected:border-accent aria-selected:text-ink -mb-px inline-flex cursor-pointer items-center gap-1.5 border-b-2 border-transparent font-medium whitespace-nowrap"
           >
             {tab.count === undefined ? tab.label : `${tab.label} `}
             {tab.count !== undefined && (
-              <span className="rounded-pill bg-fill-2 text-small px-2">{tab.count}</span>
+              <span className="text-small text-ink-3 tabular-nums">{tab.count}</span>
             )}
           </button>
         ))}

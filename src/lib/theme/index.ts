@@ -1,4 +1,4 @@
-export { buildThemeTokens, normaliseThemeConfig } from "./theme";
+export { buildThemeTokens, deriveOfficeTokens, normaliseThemeConfig } from "./theme";
 export { contrastRatio, isHexColour } from "./colour";
 export {
   ACCENT_PRESETS,
