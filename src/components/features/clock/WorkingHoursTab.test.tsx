@@ -1,8 +1,11 @@
 import { uid } from "@/test/ids";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { EmployeesPage } from "@/components/features/staff/EmployeesPage";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
+import { CLOCK_VIEW_KEY } from "@/constants/clock";
+import { fakeMatchMedia } from "@/test/matchMedia";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
@@ -105,6 +108,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Unmount first: the month follows the screen's width, which needs the stubbed matchMedia.
+  cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
@@ -236,15 +241,117 @@ describe("Employees → Working hours", () => {
     expect(
       within(dialog).getByText(/Only days that are short of the 8 h working day/),
     ).toBeInTheDocument();
-    // On phones the same days are listed as full-size rows under the calendar.
-    const list = within(dialog).getByRole("list", { name: "Days that can be corrected" });
-    expect(within(list).getByRole("button", { name: "Correct 4 Nov 2026" })).toBeInTheDocument();
-    expect(within(list).getByText("No clock-out")).toBeInTheDocument();
-    expect(within(list).getByText("Short day, 4 h")).toBeInTheDocument();
-    await user.click(within(list).getByRole("button", { name: "Correct 1 Nov 2026" }));
+    // The days open from the Calendar itself; they are listed beside the List only.
+    expect(within(dialog).queryByRole("list", { name: "Days that can be corrected" })).toBeNull();
+    await user.click(
+      within(dialog).getByRole("button", { name: /^1 Nov 2026, not in\. Open to correct\.$/ }),
+    );
     expect(
       await screen.findByRole("dialog", { name: "Bikash Thapa, 1 Nov 2026" }),
     ).toBeInTheDocument();
+  });
+
+  it("shows a person's month as a Calendar or a List: the switch redraws the popup (UI revamp 16)", async () => {
+    const user = userEvent.setup();
+    backend(
+      on("GET", NOW_PATH, TEAM_NOW),
+      on("GET", TEAM_PATH, TEAM),
+      on("GET", BIKASH_MONTH, novemberMonth()),
+    );
+    renderPage();
+    const dialog = await openBikashsMonth(user);
+    await within(dialog).findByRole("group", { name: "Clock-ins, November 2026" });
+
+    await user.click(within(dialog).getByRole("button", { name: "List" }));
+
+    // The same popup, now with the List, and the cursor still on the switch.
+    expect(screen.getByRole("dialog", { name: "Bikash Thapa, November 2026" })).toBe(dialog);
+    expect(within(dialog).getByRole("table", { name: "Days of November 2026" })).toBeVisible();
+    expect(within(dialog).queryByRole("group", { name: "Clock-ins, November 2026" })).toBeNull();
+    expect(within(dialog).getByRole("button", { name: "List" })).toHaveFocus();
+    expect(within(dialog).getByRole("button", { name: "List" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(window.localStorage.getItem(CLOCK_VIEW_KEY)).toBe("list");
+    // Beside the List: the days that can be corrected, the date and the reason on two lines.
+    const list = within(dialog).getByRole("list", { name: "Days that can be corrected" });
+    const rows = within(list).getAllByRole("listitem");
+    expect(rows).toHaveLength(3);
+    const first = rows[0];
+    if (first === undefined) throw new Error("no day to correct");
+    const [date, reason] = [
+      within(first).getByText("1 Nov 2026"),
+      within(first).getByText("Not in"),
+    ];
+    expect(date).not.toBe(reason);
+    expect(date.contains(reason) || reason.contains(date)).toBe(false);
+    expect(within(list).getByText("No clock-out")).toBeInTheDocument();
+    expect(within(list).getByText("Short day, 4 h")).toBeInTheDocument();
+    expect(
+      within(dialog).getByText(/Only days that are short of the 8 h working day/),
+    ).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Calendar" }));
+
+    expect(within(dialog).getByRole("group", { name: "Clock-ins, November 2026" })).toBeVisible();
+    expect(within(dialog).queryByRole("table")).toBeNull();
+    expect(within(dialog).getByRole("button", { name: "Calendar" })).toHaveFocus();
+  });
+
+  it("pages a person's List inside the popup, and comes back to the same page after a day was opened", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(CLOCK_VIEW_KEY, "list");
+    backend(
+      on("GET", NOW_PATH, TEAM_NOW),
+      on("GET", TEAM_PATH, TEAM),
+      on("GET", BIKASH_MONTH, novemberMonth(undefined, {}, 25)),
+    );
+    renderPage();
+    const dialog = await openBikashsMonth(user);
+    const table = await within(dialog).findByRole("table", { name: "Days of November 2026" });
+    expect(within(table).getByText("25 Nov 2026")).toBeInTheDocument();
+    expect(within(dialog).getByText("Page 1 of 3")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Next page" }));
+
+    expect(screen.getByRole("dialog", { name: "Bikash Thapa, November 2026" })).toBe(dialog);
+    expect(within(dialog).getByText("Page 2 of 3")).toBeInTheDocument();
+    expect(within(table).getByText("15 Nov 2026")).toBeInTheDocument();
+    expect(within(table).queryByText("25 Nov 2026")).toBeNull();
+    expect(within(dialog).getByRole("button", { name: "Next page" })).toHaveFocus();
+
+    await user.click(within(dialog).getByRole("button", { name: "Correct 4 Nov 2026" }));
+    const day = await screen.findByRole("dialog", { name: "Bikash Thapa, 4 Nov 2026" });
+    await user.click(within(day).getByRole("button", { name: "Back to the month" }));
+
+    const month = await screen.findByRole("dialog", { name: "Bikash Thapa, November 2026" });
+    expect(within(month).getByText("Page 2 of 3")).toBeInTheDocument();
+  });
+
+  it("on a phone shows a person's month as the List only, with the days to correct", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    const user = userEvent.setup();
+    backend(
+      on("GET", NOW_PATH, TEAM_NOW),
+      on("GET", TEAM_PATH, TEAM),
+      on("GET", BIKASH_MONTH, novemberMonth()),
+    );
+    renderPage();
+    const dialog = await openBikashsMonth(user);
+
+    expect(
+      await within(dialog).findByRole("table", { name: "Days of November 2026" }),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByRole("group", { name: "Show the month as" })).toBeNull();
+    expect(within(dialog).queryByRole("group", { name: "Clock-ins, November 2026" })).toBeNull();
+    expect(within(dialog).getByRole("button", { name: "Correct 4 Nov 2026" })).toBeInTheDocument();
   });
 
   it("sets a forgotten clock-out with a reason, and the month is read again", async () => {

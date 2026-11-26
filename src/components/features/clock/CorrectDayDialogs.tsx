@@ -26,7 +26,7 @@ import {
 import { durationText, hoursText, officeHhMm, officeTime } from "@/lib/clock";
 import { formatMonth } from "@/lib/dates";
 
-import { MonthCalendar } from "./MonthCalendar";
+import { MonthView } from "./MonthView";
 import { useClockMonth, type ClockMonthState } from "./useClockMonth";
 
 type Open =
@@ -44,7 +44,7 @@ type StaffMonthDialogProps = {
 };
 
 /**
- * One person's month for an Admin (spec 107-108): the calendar, where only a past day that is
+ * One person's month for an Admin (spec 107-108): the month (a calendar or a list), where only a past day that is
  * short of the Working Day or missing a clock-out opens; then that day; then the correction.
  */
 export function StaffMonthDialog({
@@ -56,6 +56,8 @@ export function StaffMonthDialog({
 }: StaffMonthDialogProps) {
   const { state, reload } = useClockMonth(month, staffId);
   const [open, setOpen] = useState<Open>({ kind: "month" });
+  // Kept here, so the List is on the same page after a day was opened and closed (rule 8).
+  const [listPage, setListPage] = useState(1);
   const backToMonth = () => {
     setOpen({ kind: "month" });
   };
@@ -66,6 +68,8 @@ export function StaffMonthDialog({
       <MonthDialog
         title={TEXT.personMonth(name, formatMonth(month))}
         state={state}
+        listPage={listPage}
+        onListPage={setListPage}
         onOpenDay={(chosen) => {
           setOpen({ kind: "day", date: chosen.date });
         }}
@@ -119,11 +123,17 @@ function openDay(
 type MonthDialogProps = {
   title: string;
   state: ClockMonthState;
+  listPage: number;
+  onListPage: (page: number) => void;
   onOpenDay: (day: ClockDay) => void;
   onClose: () => void;
 };
 
-function MonthDialog({ title, state, onOpenDay, onClose }: MonthDialogProps) {
+/**
+ * The month in a popup, as a Calendar or a List: the switch and the List's pager redraw it in
+ * place, so the popup stays open and the cursor stays on what was pressed (UI revamp 16).
+ */
+function MonthDialog({ title, state, listPage, onListPage, onOpenDay, onClose }: MonthDialogProps) {
   return (
     <Dialog
       isOpen
@@ -138,7 +148,14 @@ function MonthDialog({ title, state, onOpenDay, onClose }: MonthDialogProps) {
     >
       {state.status === "loading" && <p className="text-ink-2">{TEXT.monthLoading}</p>}
       {state.status === "failed" && <Banner tone="problem">{TEXT.monthFailed}</Banner>}
-      {state.status === "loaded" && <MonthCalendar month={state.month} onOpenDay={onOpenDay} />}
+      {state.status === "loaded" && (
+        <MonthView
+          month={state.month}
+          listPage={listPage}
+          onListPage={onListPage}
+          onOpenDay={onOpenDay}
+        />
+      )}
     </Dialog>
   );
 }

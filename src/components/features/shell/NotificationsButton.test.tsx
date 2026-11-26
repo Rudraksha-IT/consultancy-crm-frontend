@@ -226,7 +226,10 @@ describe("The notification bell", () => {
     expect(approved).toHaveTextContent(
       "Anita Rai approved your work from home dates: 6 Nov 2026 to 12 Nov 2026",
     );
-    expect(within(approved).getByRole("link", { name: "Open" })).toHaveAttribute("href", "/clock");
+    expect(within(approved).getByRole("link", { name: "Open" })).toHaveAttribute(
+      "href",
+      "/clock?tab=wfh",
+    );
     expect(items[2]).toHaveTextContent(
       "Anita Rai declined your work from home dates: 6 Nov 2026 to 12 Nov 2026",
     );

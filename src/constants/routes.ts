@@ -50,6 +50,8 @@ export const ROUTES = {
   workingHours: "/staff?tab=hours",
   /** My working hours: my own month of clock-ins (issue 56). */
   clock: "/clock",
+  /** Working hours on its Work from home tab (UI revamp 16). */
+  clockWorkFromHome: "/clock?tab=wfh",
   configuration: "/configuration",
   /** A person's own Settings (issue 38). */
   mySettings: "/settings",

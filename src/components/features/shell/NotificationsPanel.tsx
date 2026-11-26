@@ -177,6 +177,6 @@ function targetOf(item: AppNotification): { href: string; label: string } | null
   const href =
     item.kind === NotificationKind.WorkFromHomeAsked
       ? ROUTES.employeeWorkFromHome(item.workFromHome.staffId)
-      : ROUTES.clock;
+      : ROUTES.clockWorkFromHome;
   return { href, label: NOTIFICATION_TEXT.open };
 }

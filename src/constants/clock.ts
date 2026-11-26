@@ -18,6 +18,49 @@ export const OFFICE_TIME_ZONE = "Asia/Kathmandu";
 
 export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
+/** A day's full name, Sunday first, as the month's list writes it ("Wednesday, today"). */
+export const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+/** The tabs of the Working hours page; the values are in the address (`/clock?tab=wfh`). */
+export const ClockTab = { Hours: "hours", WorkFromHome: "wfh" } as const;
+export type ClockTab = (typeof ClockTab)[keyof typeof ClockTab];
+
+/** The address's name for the tab (`?tab=`). */
+export const CLOCK_TAB_PARAM = "tab";
+
+/** Where the device remembers how a month is shown (UI revamp 16). */
+export const CLOCK_VIEW_KEY = "crm:clock-view";
+
+/** The two ways to see a month on a computer or tablet; a phone always shows the List. */
+export const ClockView = { Calendar: "calendar", List: "list" } as const;
+export type ClockView = (typeof ClockView)[keyof typeof ClockView];
+
+/** How many days one page of the month's list holds. */
+export const CLOCK_LIST_PAGE_SIZE = 10;
+
+/** What one day of the month's list says in its Status column. */
+export const DayStatus = {
+  FullDay: "full_day",
+  ShortDay: "short_day",
+  NoClockOut: "no_clock_out",
+  StillIn: "still_in",
+  NotInYet: "not_in_yet",
+  NotIn: "not_in",
+  DayOff: "day_off",
+  Holiday: "holiday",
+  /** Nothing to say: a day with no clock-in that was not a working day for this person. */
+  None: "none",
+} as const;
+export type DayStatus = (typeof DayStatus)[keyof typeof DayStatus];
+
 /** The office's weekly days off; values match the API (asked 2026-11-17). Saturday at first. */
 export const WEEKLY_OFF_CHOICES = ["saturday", "sunday", "both", "none"] as const;
 export type WeeklyOff = (typeof WEEKLY_OFF_CHOICES)[number];
@@ -52,8 +95,30 @@ export const CLOCK_TEXT = {
   nothingRecorded: "Nothing was recorded. Phones on mobile data can't clock in.",
   nothingRecordedShort: "Nothing was recorded.",
   ok: "OK",
-  // My working hours
+  // My working hours (the page is "Working hours"; "My working hours" opens it from your menu)
   myHoursTitle: "My working hours",
+  pageTitle: "Working hours",
+  tabsLabel: "Show",
+  hoursTab: "Working hours",
+  workFromHomeIntro: "Ask for dates to work from home. An Admin approves or declines them.",
+  // The month as a calendar or a list
+  showMonthAs: "Show the month as",
+  calendar: "Calendar",
+  list: "List",
+  listLabel: (month: string) => `Days of ${month}`,
+  day: "Day",
+  timeIn: "In",
+  timeOut: "Out",
+  status: "Status",
+  todayAfter: (weekday: string) => `${weekday}, today`,
+  fullDay: "Full day",
+  stillInStatus: "Still in",
+  notInYet: "Not in yet",
+  outIsMissing: "Missing",
+  timesLine: (start: string, end: string) => `${start} – ${end}`,
+  daysSoFar: (count: number, month: string) => `${plural(count, "day", "days")} so far in ${month}`,
+  daysIn: (count: number, month: string) => `${plural(count, "day", "days")} in ${month}`,
+  nothingYet: "Nothing yet this month.",
   home: "Home",
   myHoursIntro: (month: string) => `Your clock-ins for ${month}.`,
   everyonesHours: "Everyone's hours",

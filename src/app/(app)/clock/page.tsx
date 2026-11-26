@@ -1,5 +1,11 @@
-import { MyWorkingHoursPage } from "@/components/features/clock/MyWorkingHoursPage";
+import { Suspense } from "react";
 
-export default function MyWorkingHoursRoute() {
-  return <MyWorkingHoursPage />;
+import { MyWorkingHoursRoute } from "@/components/features/clock/MyWorkingHoursRoute";
+
+export default function MyWorkingHoursPageRoute() {
+  return (
+    <Suspense>
+      <MyWorkingHoursRoute />
+    </Suspense>
+  );
 }
