@@ -1,8 +1,10 @@
 "use client";
 
 import { FilterBar, type ListFilter } from "@/components/ui/FilterBar";
+import { SearchBox } from "@/components/ui/SearchBox";
 import { counsellorFilterOptions } from "@/components/features/students/counsellorFilter";
 import type { SelectOption } from "@/components/ui/SelectField";
+import { EXPORT_TEXT } from "@/constants/exports";
 import { COUNTRIES, COUNTRY_LABELS, type Country } from "@/constants/students";
 import {
   DEFAULT_VISA_SORT,
@@ -22,8 +24,11 @@ import { formatIntake } from "@/lib/dates";
 import type { VisaFilters } from "@/lib/visas";
 
 type VisaFilterBarProps = {
+  /** What is typed in the search box (the list follows it once typing settles). */
+  search: string;
+  onSearch: (search: string) => void;
   filters: VisaFilters;
-  onChange: (change: Partial<VisaFilters>) => void;
+  onChange: (change: Partial<Omit<VisaFilters, "search">>) => void;
   choices: VisaFilterChoices;
   counsellors: readonly CounsellorChoice[];
   /** Admins and Counsellors can be assigned Students, so "My Students" means something. */
@@ -50,9 +55,10 @@ const SORT_OPTIONS: SelectOption[] = VISA_SORTS.map((sort) => ({
 }));
 
 /**
- * Visa status, counsellor and appointment dates on one line; country, Intake and the order under
- * More filters, as on Students (spec 62b, list tidy-ups 03). The counsellor stays up front: a
- * Counsellor starts on My Students.
+ * Search, Visa status, counsellor and appointment dates on one line; country, Intake and the order
+ * under More filters, as on Students (spec 62b, list tidy-ups 03). The counsellor stays up front:
+ * a Counsellor starts on My Students. The search counts as a filter that is set (UI revamp
+ * ticket 24): a phone shows the words typed as a chip, and Clear filters empties the box.
  */
 export function VisaFilterBar(props: VisaFilterBarProps) {
   const { filters, onChange, choices } = props;
@@ -126,7 +132,28 @@ export function VisaFilterBar(props: VisaFilterBarProps) {
       isMore: true,
     },
   ];
-  return <FilterBar label={TEXT.filters} filters={listFilters} resultText={props.resultText} />;
+  return (
+    <FilterBar
+      label={TEXT.filters}
+      search={
+        <SearchBox
+          label={TEXT.search}
+          placeholder={TEXT.searchPlaceholder}
+          value={props.search}
+          onChange={props.onSearch}
+        />
+      }
+      searchFilter={{
+        label: EXPORT_TEXT.search,
+        value: props.search,
+        onClear: () => {
+          props.onSearch("");
+        },
+      }}
+      filters={listFilters}
+      resultText={props.resultText}
+    />
+  );
 }
 
 /** The choices, keeping the chosen one even before the choices have loaded. */

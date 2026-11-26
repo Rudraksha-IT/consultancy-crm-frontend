@@ -108,6 +108,90 @@ describe("which filters are set", () => {
   });
 });
 
+/** A list whose search counts as a filter that is set (ticket 24, the Visas page). */
+function SearchedList({ start = "" }: { start?: string }) {
+  const [search, setSearch] = useState(start);
+  const [stage, setStage] = useState("");
+  return (
+    <FilterBar
+      label="Filter visas"
+      search={<SearchBox label="Search visas" value={search} onChange={setSearch} />}
+      searchFilter={{
+        label: "Search",
+        value: search,
+        onClear: () => {
+          setSearch("");
+        },
+      }}
+      filters={[{ id: "stage", label: "Stage", value: stage, options: STAGES, onChange: setStage }]}
+    />
+  );
+}
+
+describe("a search that counts as a filter (ticket 24)", () => {
+  it("shows Clear filters once something is typed, and empties the box with it", async () => {
+    render(<SearchedList />);
+    const box = screen.getByRole("searchbox", { name: "Search visas" });
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+
+    await userEvent.type(box, "Deakin");
+    await userEvent.selectOptions(screen.getByRole("combobox", { name: "Stage" }), "Lead");
+    await userEvent.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    expect(box).toHaveValue("");
+    expect(screen.getByRole("combobox", { name: "Stage" })).toHaveValue("");
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+    expect(box).toHaveFocus();
+  });
+
+  it("does not count a search of only spaces", () => {
+    render(<SearchedList start="   " />);
+
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+  });
+
+  it("is not drawn as a choice of its own", () => {
+    render(<SearchedList start="Deakin" />);
+
+    expect(screen.getAllByRole("combobox")).toHaveLength(1);
+  });
+
+  describe("on a phone", () => {
+    beforeEach(onPhone);
+
+    it("counts on the filter button and shows the words typed as a chip", () => {
+      render(<SearchedList start=" Deakin Uni " />);
+
+      expect(screen.getByRole("button", { name: "Filters, 1 set" })).toBeInTheDocument();
+      const chips = screen.getByRole("group", { name: "Filters that are set" });
+      expect(
+        within(chips).getByRole("button", { name: "Deakin Uni, remove the Search filter" }),
+      ).toHaveTextContent("Deakin Uni");
+    });
+
+    it("empties the box when its chip is tapped", async () => {
+      render(<SearchedList start="Deakin" />);
+
+      await userEvent.click(screen.getByRole("button", { name: /^Deakin, remove/ }));
+
+      expect(screen.getByRole("searchbox", { name: "Search visas" })).toHaveValue("");
+      expect(screen.queryByRole("group", { name: "Filters that are set" })).toBeNull();
+      expect(screen.getByRole("button", { name: "Filters" })).toHaveFocus();
+    });
+
+    it("keeps the sheet to the choices, and its Clear all empties the search too", async () => {
+      render(<SearchedList start="Deakin" />);
+      await userEvent.click(screen.getByRole("button", { name: "Filters, 1 set" }));
+      const sheet = screen.getByRole("dialog", { name: "Filters" });
+      expect(within(sheet).getAllByRole("combobox")).toHaveLength(1);
+
+      await userEvent.click(within(sheet).getByRole("button", { name: "Clear all" }));
+
+      expect(screen.getByRole("searchbox", { name: "Search visas" })).toHaveValue("");
+    });
+  });
+});
+
 describe("filters on a phone", () => {
   beforeEach(onPhone);
 

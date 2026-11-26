@@ -19,6 +19,7 @@ import { LABELS, MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { COUNTRY_LABELS } from "@/constants/students";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import {
   APPOINTMENT_WHEN_LABELS,
   AppointmentWhen,
@@ -34,6 +35,8 @@ import { useVisaFilterChoices } from "./useVisaFilterChoices";
 import { useVisaList, type VisaListState } from "./useVisaList";
 import { VisaFilterBar } from "./VisaFilterBar";
 import { VisaTable } from "./VisaTable";
+
+const SEARCH_DELAY_MS = 300;
 
 type VisasPageProps = {
   /** When an appointment is: the Home's link starts on the next 7 days (issues 52, 75). */
@@ -62,13 +65,17 @@ function VisaList({ role, initialAppointment }: VisaListProps) {
     ...defaultVisaFilters(role),
     appointment: initialAppointment,
   }));
+  // What is typed; the list and the export follow it once typing settles (ticket 24).
+  const [search, setSearch] = useState("");
+  const settledSearch = useDebouncedValue(search, SEARCH_DELAY_MS);
   const [page, setPage] = useState(1);
   // Bumped when a checklist closes, so the document counts are read again.
   const [version, setVersion] = useState(0);
   const [checklistOf, setChecklistOf] = useState<OfficeVisa["student"] | null>(null);
   const choices = useVisaFilterChoices();
   const counsellors = useCounsellorChoices();
-  const list = useVisaList(filters, page, version);
+  const applied = { ...filters, search: settledSearch };
+  const list = useVisaList(applied, page, version);
 
   return (
     <>
@@ -77,11 +84,16 @@ function VisaList({ role, initialAppointment }: VisaListProps) {
         subtitle={TEXT.subtitle}
         isActionBesideTitle
         actions={
-          <VisasExport role={role} list={list} filters={filters} counsellors={counsellors} />
+          <VisasExport role={role} list={list} filters={applied} counsellors={counsellors} />
         }
       />
       <Panel>
         <VisaFilterBar
+          search={search}
+          onSearch={(value) => {
+            setSearch(value);
+            setPage(1);
+          }}
           filters={filters}
           onChange={(change) => {
             setFilters((current) => ({ ...current, ...change }));
@@ -94,7 +106,7 @@ function VisaList({ role, initialAppointment }: VisaListProps) {
         />
         <ListContent
           list={list}
-          isFiltered={hasAnyVisaFilter(filters)}
+          isFiltered={hasAnyVisaFilter(applied)}
           onPage={setPage}
           onOpenDocuments={(visa) => {
             setChecklistOf(visa.student);
@@ -182,6 +194,7 @@ function VisasExport({ role, list, filters, counsellors }: VisasExportProps) {
 function visaFiltersText(filters: VisaFilters, counsellors: readonly CounsellorChoice[]): string {
   return describeFilters(
     [
+      [EXPORT_TEXT.search, filters.search.trim()],
       [TEXT.status, filters.status === "" ? "" : VISA_STATUS_LABELS[filters.status]],
       [TEXT.country, filters.country === "" ? "" : COUNTRY_LABELS[filters.country]],
       [TEXT.intake, filters.intake === "" ? "" : formatIntake(filters.intake)],

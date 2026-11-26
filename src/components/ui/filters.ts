@@ -15,6 +15,29 @@ export type ListFilter = {
   isMore?: boolean;
 };
 
+/**
+ * A list's search where it counts as a filter that is set (the Visas page, ticket 24): its chip
+ * on a phone shows the words typed, and clearing the filters empties the box.
+ */
+export type SearchFilter = {
+  /** Names it on its chip for screen readers ("Search"). */
+  label: string;
+  /** What is typed in the box; only spaces is nothing. */
+  value: string;
+  onClear: () => void;
+};
+
+/** The search as a filter: set while anything is typed, cleared by emptying the box. */
+export function searchAsFilter(search: SearchFilter): ListFilter {
+  return {
+    id: "search",
+    label: search.label,
+    value: search.value.trim(),
+    options: [{ value: "", label: "" }],
+    onChange: search.onClear,
+  };
+}
+
 /** The value that means "any": the first choice. */
 function anyValue(filter: ListFilter): string {
   return filter.options[0]?.value ?? "";

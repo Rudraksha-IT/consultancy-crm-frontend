@@ -8,7 +8,14 @@ import { LABELS } from "@/constants/messages";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
 import { FilterField } from "./FilterField";
-import { chosenLabel, clearFilters, isFilterSet, type ListFilter } from "./filters";
+import {
+  chosenLabel,
+  clearFilters,
+  isFilterSet,
+  searchAsFilter,
+  type ListFilter,
+  type SearchFilter,
+} from "./filters";
 import { FilterSelect } from "./FilterSelect";
 import { Icon } from "./Icon";
 import { MoreFilters, SetCount } from "./MoreFilters";
@@ -22,6 +29,11 @@ type FilterBarProps = {
   label: string;
   /** The search box, first in the bar. */
   search?: ReactNode;
+  /**
+   * Given where the search counts as a filter that is set: it is counted, it has a chip on a
+   * phone, and clearing the filters empties it. It is never drawn as a choice.
+   */
+  searchFilter?: SearchFilter | undefined;
   /** Every filter of the list, in the order they are shown. */
   filters: readonly ListFilter[];
   /** What the list shows now, from its own count ("3 Students"); left out while it loads. */
@@ -53,9 +65,16 @@ function useClear(): (filters: readonly ListFilter[]) => void {
   };
 }
 
-function WideFilters({ search, filters }: FilterBarProps) {
+/** Everything that can be set and cleared: the search, where it counts, then the filters. */
+function countedFilters({ searchFilter, filters }: FilterBarProps): readonly ListFilter[] {
+  return searchFilter === undefined ? filters : [searchAsFilter(searchFilter), ...filters];
+}
+
+function WideFilters(props: FilterBarProps) {
+  const { search, filters } = props;
   const row = useRef<HTMLDivElement>(null);
   const clear = useClear();
+  const counted = countedFilters(props);
   const more = filters.filter((filter) => filter.isMore === true);
   return (
     <div ref={row} className="px-gutter flex flex-wrap items-center gap-3 py-5">
@@ -73,11 +92,11 @@ function WideFilters({ search, filters }: FilterBarProps) {
           />
         ))}
       {more.length > 0 && <MoreFilters filters={more} />}
-      {filters.some(isFilterSet) && (
+      {counted.some(isFilterSet) && (
         <button
           type="button"
           onClick={() => {
-            clear(filters);
+            clear(counted);
             // The button goes with the last filter, so the cursor moves to the bar's first control.
             row.current?.querySelector<HTMLElement>("input, select")?.focus();
           }}
@@ -91,11 +110,13 @@ function WideFilters({ search, filters }: FilterBarProps) {
   );
 }
 
-function PhoneFilters({ search, filters, resultText }: FilterBarProps) {
+function PhoneFilters(props: FilterBarProps) {
+  const { search, filters, resultText } = props;
   const [isOpen, setIsOpen] = useState(false);
   const button = useRef<HTMLButtonElement>(null);
   const clear = useClear();
-  const set = filters.filter(isFilterSet);
+  const counted = countedFilters(props);
+  const set = counted.filter(isFilterSet);
   const close = (): void => {
     setIsOpen(false);
   };
@@ -117,7 +138,7 @@ function PhoneFilters({ search, filters, resultText }: FilterBarProps) {
         <FilterChips
           set={set}
           onClear={() => {
-            clear(filters);
+            clear(counted);
           }}
           button={button}
         />
@@ -132,7 +153,7 @@ function PhoneFilters({ search, filters, resultText }: FilterBarProps) {
               variant="ghost"
               isDisabled={set.length === 0}
               onClick={() => {
-                clear(filters);
+                clear(counted);
               }}
             >
               {LABELS.clearAll}

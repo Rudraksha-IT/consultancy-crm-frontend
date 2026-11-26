@@ -144,6 +144,8 @@ export const APPOINTMENT_WHEN_LABELS: Record<AppointmentWhen, string> = {
 /** The words of the office-wide Visas page (prototype `#visas`, issues 48 and 75). */
 export const VISA_LIST_TEXT = {
   filters: "Filter the list",
+  search: "Search visas",
+  searchPlaceholder: "Search by Student or university",
   title: "Visas",
   subtitle: "Every visa, waiting or decided. Appointments coming up are at the top.",
   status: "Visa status",
