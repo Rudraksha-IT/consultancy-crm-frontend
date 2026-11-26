@@ -1,7 +1,7 @@
 "use client";
 
 import type { RecordId } from "@/lib/recordId";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 import { WorkingHoursTab } from "@/components/features/clock/WorkingHoursTab";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
@@ -17,20 +17,22 @@ import { Loading } from "@/components/ui/Loading";
 import { CLOCK_TEXT } from "@/constants/clock";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Module } from "@/constants/modules";
-import { Role } from "@/constants/roles";
+import { Role, ROLE_LABELS } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import { StaffStatus, type Employee } from "@/lib/api";
 
 import { AddEmployeeDialog } from "./AddEmployeeDialog";
-import { EmployeeTable } from "./EmployeeTable";
+import { inEmployeesOrder } from "./employeeOrder";
+import { EMPLOYEE_ACTIONS_ATTRIBUTE, EmployeeTable } from "./EmployeeTable";
 import { ManageEmployeeDialog } from "./ManageEmployeeDialog";
 import { useEmployees, type EmployeeListState } from "./useEmployees";
-import { useInviteActions } from "./useInviteActions";
+import { inviteFailureOf, useInviteActions } from "./useInviteActions";
 
 type OpenDialog =
   | { kind: "add" }
   | { kind: "manage"; employee: Employee }
   | { kind: "cancelInvite"; employee: Employee }
+  | { kind: "inviteBack"; employee: Employee }
   | null;
 
 /** Which part of Employees is open: the people, or (with Clock-in) their working hours. */
@@ -78,10 +80,21 @@ export function EmployeesPage({ initialTab = "people" }: { initialTab?: Employee
 
 function AdminEmployeesPage({ myId, tabs }: { myId: RecordId; tabs?: ReactNode }) {
   const employees = useEmployees();
-  const invites = useInviteActions(employees.remove);
+  const invites = useInviteActions(employees);
   const [dialog, setDialog] = useState<OpenDialog>(null);
+  const areaRef = useRef<HTMLDivElement>(null);
   const close = () => {
     setDialog(null);
+  };
+  // The button that was pressed is gone once the row changes, so the cursor goes to the first
+  // button now on that employee's row (design system rule 8).
+  const changeInvite = async (
+    employee: Employee,
+    change: (employee: Employee) => Promise<void>,
+  ) => {
+    await change(employee);
+    close();
+    focusRowActions(areaRef.current, employee.id);
   };
 
   return (
@@ -103,29 +116,35 @@ function AdminEmployeesPage({ myId, tabs }: { myId: RecordId; tabs?: ReactNode }
       />
       {tabs}
       {invites.error !== null && <Banner tone="problem">{invites.error}</Banner>}
-      <ListContent
-        list={employees.list}
-        render={(list) => (
-          <EmployeeTable
-            employees={list}
-            myId={myId}
-            busyId={invites.busyId}
-            onManage={(employee) => {
-              setDialog({ kind: "manage", employee });
-            }}
-            onResend={(employee) => void invites.resend(employee)}
-            onCancelInvite={(employee) => {
-              setDialog({ kind: "cancelInvite", employee });
-            }}
-          />
-        )}
-      />
+      <div ref={areaRef}>
+        <ListContent
+          list={employees.list}
+          render={(list) => (
+            <EmployeeTable
+              employees={inEmployeesOrder(list)}
+              myId={myId}
+              busyId={invites.busyId}
+              onManage={(employee) => {
+                setDialog({ kind: "manage", employee });
+              }}
+              onResend={(employee) => void invites.resend(employee)}
+              onCancelInvite={(employee) => {
+                setDialog({ kind: "cancelInvite", employee });
+              }}
+              onInviteBack={(employee) => {
+                setDialog({ kind: "inviteBack", employee });
+              }}
+            />
+          )}
+        />
+      </div>
       <EmployeeDialog
         dialog={dialog}
         onClose={close}
         onAdded={employees.add}
         onSaved={employees.replace}
-        onCancelInvite={invites.cancel}
+        onCancelInvite={(employee) => changeInvite(employee, invites.cancel)}
+        onInviteBack={(employee) => changeInvite(employee, invites.inviteBack)}
       />
     </>
   );
@@ -136,13 +155,24 @@ type EmployeeDialogProps = {
   onClose: () => void;
   onAdded: (employee: Employee) => void;
   onSaved: (employee: Employee) => void;
-  /** Rejects when it failed. */
+  /** Does it and closes the popup. Rejects when it failed. */
   onCancelInvite: (employee: Employee) => Promise<void>;
+  /** Does it and closes the popup. Rejects when it failed. */
+  onInviteBack: (employee: Employee) => Promise<void>;
 };
+
+/** After a dialog has given focus back to its opener, which may be gone by then. */
+function focusRowActions(area: HTMLElement | null, id: RecordId): void {
+  window.setTimeout(() => {
+    area
+      ?.querySelector<HTMLElement>(`[${EMPLOYEE_ACTIONS_ATTRIBUTE}="${id}"] button`)
+      ?.focus({ preventScroll: true });
+  }, 0);
+}
 
 /** The open dialog, if any; each closes itself once its change is saved. */
 function EmployeeDialog(props: EmployeeDialogProps) {
-  const { dialog, onClose, onAdded, onSaved, onCancelInvite } = props;
+  const { dialog, onClose, onAdded, onSaved, onCancelInvite, onInviteBack } = props;
   if (dialog === null) return null;
   if (dialog.kind === "cancelInvite") {
     const { employee } = dialog;
@@ -151,13 +181,25 @@ function EmployeeDialog(props: EmployeeDialogProps) {
         title={MESSAGES.cancelInviteTitle(employee.name)}
         actionLabel={LABELS.cancelInvite}
         onClose={onClose}
-        onConfirm={async () => {
-          await onCancelInvite(employee);
-          onClose();
-        }}
+        onConfirm={() => onCancelInvite(employee)}
         failureOf={() => MESSAGES.employeeChangeFailed}
       >
         {MESSAGES.cancelInviteBody}
+      </ConfirmDialog>
+    );
+  }
+  if (dialog.kind === "inviteBack") {
+    const { employee } = dialog;
+    return (
+      <ConfirmDialog
+        title={MESSAGES.inviteBackTitle(employee.name)}
+        actionLabel={LABELS.sendTheCode}
+        actionVariant="primary"
+        onClose={onClose}
+        onConfirm={() => onInviteBack(employee)}
+        failureOf={inviteFailureOf}
+      >
+        {MESSAGES.inviteBackBody(employee.email, ROLE_LABELS[employee.role])}
       </ConfirmDialog>
     );
   }

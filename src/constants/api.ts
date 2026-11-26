@@ -29,6 +29,7 @@ export const API_PATHS = {
   staffProgress: (id: RecordId) => `/api/staff/${id}/progress/`,
   employeeDeactivate: (id: RecordId) => `/api/staff/${id}/deactivate/`,
   employeeInvite: (id: RecordId) => `/api/staff/${id}/invite/`,
+  employeeInviteBack: (id: RecordId) => `/api/staff/${id}/invite-back/`,
   employeeAssignedStudents: (id: RecordId) => `/api/staff/${id}/assigned-students/`,
   /** An Admin switches someone's two-step login on or off, or resets it (issue 62). */
   employeeTwoFactor: (id: RecordId) => `/api/staff/${id}/two-factor/`,

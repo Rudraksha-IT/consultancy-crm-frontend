@@ -18,6 +18,7 @@ const ADMIN: Employee = {
   role: "admin",
   joinedOn: "2026-01-01",
   status: "active",
+  invitedBack: false,
   twoFactorRequired: false,
   twoFactorSetUp: false,
 };

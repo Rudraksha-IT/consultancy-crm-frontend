@@ -341,11 +341,13 @@ export {
 } from "./core/restriction";
 export {
   cancelInvite,
+  cancelInviteBack,
   changeEmployeeRole,
   deactivateEmployee,
   fetchAssignedStudents,
   fetchCounsellorChoices,
   fetchEmployees,
+  inviteBack,
   inviteEmployee,
   resendInvite,
   resetEmployeeTwoFactor,

@@ -75,6 +75,10 @@ export const MESSAGES = {
   cancelInviteTitle: (name: string) => `Cancel the invite for ${name}?`,
   cancelInviteBody: "The code they were sent stops working.",
   inviteCancelled: (name: string) => `Invite for ${name} cancelled. The code no longer works.`,
+  inviteBackTitle: (name: string) => `Invite ${name} back?`,
+  inviteBackBody: (email: string, role: string) =>
+    `A new code goes to ${email}. They join again as ${role}, and their past History stays as it is. You can change their Role after they join.`,
+  invitedBack: (name: string, email: string) => `${name} is invited back. Code sent to ${email}.`,
   roleHint: "The role decides what they can see and do.",
   roleChanged: (name: string, role: string) => `${name} is now ${role}`,
   deactivateExplained: (firstName: string) =>
@@ -195,6 +199,8 @@ export const LABELS = {
   hasLeft: "Has left",
   sendCodeAgain: "Send the code again",
   cancelInvite: "Cancel invite",
+  inviteBack: "Invite back",
+  inviteBackNamed: (name: string) => `Invite ${name} back`,
   manage: "Manage",
   manageEmployee: (name: string) => `Manage ${name}`,
   twoStepOnSetUp: "On, set up",

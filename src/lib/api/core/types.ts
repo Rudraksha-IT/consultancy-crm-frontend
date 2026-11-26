@@ -274,17 +274,22 @@ export const EmployeeSchema = z
     role: z.enum(ROLES),
     joined_on: z.iso.date(),
     status: z.enum(StaffStatus),
+    // Someone who left and was invited back: cancelling their invite keeps them (ticket 18).
+    invited_back: z.boolean(),
     // Two-step login (issue 62): on or off, and whether their app is set up; never the secret.
     two_factor_required: z.boolean(),
     two_factor_set_up: z.boolean(),
   })
-  .transform(({ job_title, joined_on, two_factor_required, two_factor_set_up, ...rest }) => ({
-    ...rest,
-    jobTitle: job_title,
-    joinedOn: joined_on,
-    twoFactorRequired: two_factor_required,
-    twoFactorSetUp: two_factor_set_up,
-  }));
+  .transform(
+    ({ job_title, joined_on, invited_back, two_factor_required, two_factor_set_up, ...rest }) => ({
+      ...rest,
+      jobTitle: job_title,
+      joinedOn: joined_on,
+      invitedBack: invited_back,
+      twoFactorRequired: two_factor_required,
+      twoFactorSetUp: two_factor_set_up,
+    }),
+  );
 
 export type Employee = z.infer<typeof EmployeeSchema>;
 

@@ -1,5 +1,6 @@
 import type { RecordId } from "@/lib/recordId";
 
+import clsx from "clsx";
 import Link from "next/link";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -23,7 +24,14 @@ type EmployeeTableProps = {
   onManage: (employee: Employee) => void;
   onResend: (employee: Employee) => void;
   onCancelInvite: (employee: Employee) => void;
+  onInviteBack: (employee: Employee) => void;
 };
+
+/** Marks the buttons of one employee's row, so the cursor can be put back on them (rule 8). */
+export const EMPLOYEE_ACTIONS_ATTRIBUTE = "data-employee-actions";
+/** Someone who has left is greyed: their picture, name and phone (ticket 18). */
+const LEFT = { "data-left": "", className: "opacity-60" } as const;
+const NOT_LEFT: { className?: string } = {};
 
 const HEAD = "text-small text-ink-2 bg-fill px-5 py-3 text-left font-semibold";
 const CELL = "px-5 py-4 align-middle max-tablet:p-0";
@@ -68,24 +76,29 @@ type EmployeeRowProps = Omit<EmployeeTableProps, "employees"> & { employee: Empl
 
 function EmployeeRow({ employee, ...props }: EmployeeRowProps) {
   const dates = useDates();
+  const left = employee.status === StaffStatus.Deactivated ? LEFT : NOT_LEFT;
   return (
     <DataRow className="max-tablet:grid max-tablet:gap-3 max-tablet:p-5">
       <DataCell part="title" shrinks className={CELL}>
         <div className="flex items-center gap-3.5">
-          <Avatar name={employee.name} />
+          <span {...left}>
+            <Avatar name={employee.name} />
+          </span>
           <div className="min-w-0">
-            {employee.status === StaffStatus.Invited ? (
-              <OneLine block className="font-semibold">
-                {employee.name}
-              </OneLine>
-            ) : (
-              <Link
-                href={ROUTES.employee(employee.id)}
-                className="text-ink hover:text-accent min-h-control inline-flex max-w-full items-center font-semibold underline-offset-4 hover:underline"
-              >
-                <OneLine>{employee.name}</OneLine>
-              </Link>
-            )}
+            <div {...left}>
+              {employee.status === StaffStatus.Invited ? (
+                <OneLine block className="font-semibold">
+                  {employee.name}
+                </OneLine>
+              ) : (
+                <Link
+                  href={ROUTES.employee(employee.id)}
+                  className="text-ink hover:text-accent min-h-control inline-flex max-w-full items-center font-semibold underline-offset-4 hover:underline"
+                >
+                  <OneLine>{employee.name}</OneLine>
+                </Link>
+              )}
+            </div>
             <OneLine block className="text-secondary text-ink-2">
               {employee.jobTitle}
             </OneLine>
@@ -93,7 +106,9 @@ function EmployeeRow({ employee, ...props }: EmployeeRowProps) {
         </div>
       </DataCell>
       <DataCell shrinks className={CELL}>
-        <div className="tabular-nums">{employee.mobile}</div>
+        <div {...left} className={clsx("tabular-nums", left.className)}>
+          {employee.mobile}
+        </div>
         <OneLine block className="text-secondary text-ink-2">
           {employee.email}
         </OneLine>
@@ -112,7 +127,9 @@ function EmployeeRow({ employee, ...props }: EmployeeRowProps) {
         part={employee.status === StaffStatus.Invited ? "actions" : "action"}
         className={`${CELL} tablet:text-right`}
       >
-        <RowActions employee={employee} {...props} />
+        <span {...{ [EMPLOYEE_ACTIONS_ATTRIBUTE]: employee.id }}>
+          <RowActions employee={employee} {...props} />
+        </span>
       </DataCell>
     </DataRow>
   );
@@ -138,6 +155,7 @@ function RowActions({
   onManage,
   onResend,
   onCancelInvite,
+  onInviteBack,
 }: EmployeeRowProps) {
   const isBusy = busyId === employee.id;
   if (employee.status === StaffStatus.Invited) {
@@ -167,7 +185,20 @@ function RowActions({
       </span>
     );
   }
-  if (employee.status === StaffStatus.Deactivated || employee.id === myId) return null;
+  if (employee.status === StaffStatus.Deactivated) {
+    return (
+      <Button
+        isDisabled={isBusy}
+        onClick={() => {
+          onInviteBack(employee);
+        }}
+      >
+        <span aria-hidden="true">{LABELS.inviteBack}</span>
+        <span className="sr-only">{LABELS.inviteBackNamed(employee.name)}</span>
+      </Button>
+    );
+  }
+  if (employee.id === myId) return null;
   return (
     <Button
       onClick={() => {

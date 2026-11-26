@@ -15,6 +15,7 @@ const RAM: Employee = {
   role: "counsellor",
   joinedOn: "2026-01-01",
   status: "active",
+  invitedBack: false,
   twoFactorRequired: true,
   twoFactorSetUp: false,
 };
