@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 
 import { BarList } from "./BarList";
 import { ColumnChart } from "./ColumnChart";
-import { StageCards } from "./StageCards";
+import { PipelineThread } from "./PipelineThread";
 import { Thread } from "./Thread";
 
 describe("Thread", () => {
@@ -30,7 +30,7 @@ describe("Thread", () => {
   });
 });
 
-describe("StageCards", () => {
+describe("PipelineThread", () => {
   const COUNTS = {
     lead: 6,
     counselling: 4,
@@ -41,21 +41,28 @@ describe("StageCards", () => {
   };
 
   it("shows each Stage's count and share, linking to the Students at that Stage", () => {
-    render(<StageCards counts={COUNTS} hrefFor={(stage) => `/students?stage=${stage}`} />);
+    render(<PipelineThread counts={COUNTS} hrefFor={(stage) => `/students?stage=${stage}`} />);
 
     const lead = screen.getByRole("link", { name: "Lead: 6 Students" });
     expect(lead).toHaveAttribute("href", "/students?stage=lead");
-    expect(lead).toHaveTextContent("30% of Students");
+    expect(lead).toHaveTextContent("Lead630%");
   });
 
-  it("counts the Students in progress and links to the Lost ones apart", () => {
-    render(<StageCards counts={COUNTS} hrefFor={(stage) => `/students?stage=${stage}`} />);
+  it("is five beads, Lead to Visa, with Lost left off the thread", () => {
+    render(<PipelineThread counts={COUNTS} hrefFor={(stage) => `/students?stage=${stage}`} />);
 
-    expect(screen.getByText("20 Students in progress")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "2 Lost" })).toHaveAttribute(
-      "href",
-      "/students?stage=lost",
+    const beads = within(screen.getByRole("list", { name: "Students at each Stage" })).getAllByRole(
+      "listitem",
     );
+    expect(beads.map((bead) => bead.dataset.bead)).toEqual(["1", "2", "3", "4", "5"]);
+    expect(screen.queryByText(/Lost/)).toBeNull();
+  });
+
+  it("shows 0% everywhere when nobody is in progress", () => {
+    const none = { lead: 0, counselling: 0, applying: 0, offer: 0, visa: 0, lost: 3 };
+    render(<PipelineThread counts={none} hrefFor={(stage) => `/students?stage=${stage}`} />);
+
+    expect(screen.getByRole("link", { name: "Lead: 0 Students" })).toHaveTextContent("Lead00%");
   });
 });
 

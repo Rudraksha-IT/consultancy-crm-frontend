@@ -8,12 +8,10 @@ import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Icon, type IconName } from "@/components/ui/Icon";
-import { IconLink } from "@/components/ui/IconLink";
 import { useToast } from "@/components/ui/useToast";
 import { HTTP_STATUS } from "@/constants/api";
 import { CLOCK_TEXT as TEXT } from "@/constants/clock";
 import { Role } from "@/constants/roles";
-import { ROUTES } from "@/constants/routes";
 import { WORK_FROM_HOME_TEXT as WFH } from "@/constants/workFromHome";
 import { ClockRefusedError, clockIn, clockOut, type MyClock, updatingOr } from "@/lib/api";
 import { durationText, elapsedMinutes, officeTime } from "@/lib/clock";
@@ -25,9 +23,9 @@ type Refusal = { message: string; isNoNetwork: boolean };
 
 /**
  * The small clock on the right of the Home greeting (spec 103): whether I'm clocked in and for
- * how long, whether I'm on the office network, Clock in or Clock out, and a link to my month.
- * Every time shown comes from the server. Shown for every Role while Clock-in is on. Everyone but
- * an Admin can ask for Work From Home dates from here (issue 87).
+ * how long, whether I'm on the office network, and Clock in or Clock out. Nothing else (UI revamp
+ * 07): my month and asking for Work From Home open from My working hours, in your menu. Every time
+ * shown comes from the server. Shown for every Role while Clock-in is on.
  */
 export function HomeClock() {
   const { state, show, sinceAnswerMs } = useMyClock();
@@ -43,8 +41,8 @@ type ClockCardProps = {
 };
 
 /**
- * What's going on, Clock in or out, my month and Work from home. On a phone: the status and the
- * calendar icon on top, Clock in/out full width under them, with Work from home beside it.
+ * What's going on, then Clock in or out. On a phone it is a rounded box: the status on top and a
+ * compact button under the words, never a bar across the screen.
  */
 function ClockCard({ clock, sinceAnswerMs, onAnswer }: ClockCardProps) {
   const dates = useDates();
@@ -52,12 +50,11 @@ function ClockCard({ clock, sinceAnswerMs, onAnswer }: ClockCardProps) {
   const { isSending, refusal, act, closeRefusal } = useClockAction(clock, onAnswer);
   const look = lookOf(clock, sinceAnswerMs, dates.date);
   const action = actionOf(clock);
-  const canAsk = staff.role !== Role.Admin;
   return (
     <div
       role="region"
       aria-label={TEXT.region}
-      className="rounded-pill border-rule max-phone:rounded-panel max-phone:w-full max-phone:grid max-phone:grid-cols-[auto_minmax(0,1fr)_auto] max-phone:gap-x-3 max-phone:gap-y-2.5 max-phone:py-3 max-phone:pr-3 max-phone:pl-4 flex max-w-full flex-wrap items-center gap-3 border py-1.5 pr-1.5 pl-3.5"
+      className="rounded-pill border-rule max-phone:rounded-clock max-phone:bg-paper max-phone:w-full max-phone:grid max-phone:grid-cols-[auto_minmax(0,1fr)] max-phone:gap-x-3 max-phone:gap-y-2 max-phone:px-3 max-phone:py-2.5 flex max-w-full flex-wrap items-center gap-3 border py-1.5 pr-1.5 pl-3.5"
     >
       <span
         className={clsx(
@@ -67,17 +64,14 @@ function ClockCard({ clock, sinceAnswerMs, onAnswer }: ClockCardProps) {
       >
         <Icon name="clock" size="lg" />
       </span>
-      <div className="text-small text-ink-2 max-phone:col-start-2 max-phone:row-start-1 grid min-w-0 flex-1 basis-48 gap-px">
+      <div className="text-small text-ink-2 max-phone:col-start-2 max-phone:row-start-1 grid min-w-0 flex-1 basis-auto gap-px">
         <b className={TITLE_CLASSES[look.tone]}>{look.title}</b>
         <span>{look.line}</span>
         <NetworkLine clock={clock} />
       </div>
       <span
         data-clock-action=""
-        className={clsx(
-          "max-phone:row-start-2 max-phone:grid contents",
-          canAsk ? "max-phone:col-span-2" : "max-phone:col-span-full",
-        )}
+        className="max-phone:col-start-2 max-phone:row-start-2 max-phone:block max-phone:justify-self-start max-phone:*:rounded-pill max-phone:*:px-4 contents"
       >
         <Button
           size="sm"
@@ -89,19 +83,20 @@ function ClockCard({ clock, sinceAnswerMs, onAnswer }: ClockCardProps) {
           {action.label}
         </Button>
       </span>
-      <span className="max-phone:col-start-3 max-phone:row-start-1 max-phone:block contents">
-        <IconLink href={ROUTES.clock} icon="batches" label={TEXT.myMonth} />
-      </span>
-      <AskAndRefusal canAsk={canAsk} refusal={refusal} onCloseRefusal={closeRefusal} />
+      <RefusalDialogs
+        canAsk={staff.role !== Role.Admin}
+        refusal={refusal}
+        onCloseRefusal={closeRefusal}
+      />
     </div>
   );
 }
 
 /**
- * Work from home beside the clock, and the dialog when clocking was refused. Anyone but an Admin
- * may ask for dates, from the button or from a refusal off the office network.
+ * The dialog when clocking was refused. Off the office network, anyone but an Admin may ask for
+ * Work From Home dates from it.
  */
-function AskAndRefusal({
+function RefusalDialogs({
   canAsk,
   refusal,
   onCloseRefusal,
@@ -120,16 +115,6 @@ function AskAndRefusal({
   };
   return (
     <>
-      {canAsk && (
-        <span
-          data-wfh=""
-          className="max-phone:col-start-3 max-phone:row-start-2 max-phone:grid contents"
-        >
-          <Button size="sm" variant="ghost" icon="home" onClick={ask}>
-            {WFH.askOnClock}
-          </Button>
-        </span>
-      )}
       <RefusedDialog refusal={refusal} onClose={onCloseRefusal} onAsk={canAsk ? ask : null} />
       {isAsking && <AskWorkFromHomeDialog onClose={close} onSent={close} />}
     </>

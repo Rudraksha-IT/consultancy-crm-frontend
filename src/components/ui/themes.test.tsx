@@ -33,7 +33,7 @@ import { Section } from "./Section";
 import { SegmentedChoice } from "./SegmentedChoice";
 import { SegmentedControl } from "./SegmentedControl";
 import { SelectField } from "./SelectField";
-import { StageCards } from "./StageCards";
+import { PipelineThread } from "./PipelineThread";
 import { StageMeter } from "./StageMeter";
 import { Switch } from "./Switch";
 import { Tabs } from "./Tabs";
@@ -110,7 +110,7 @@ function Gallery() {
         <Avatar name="Sita Sharma" />
         <Thread stage="visa" />
         <StageMeter stage="lost" />
-        <StageCards counts={COUNTS} hrefFor={(stage) => `/${stage}`} />
+        <PipelineThread counts={COUNTS} hrefFor={(stage) => `/${stage}`} />
         <RowList>
           <RowItem title="Row" />
         </RowList>

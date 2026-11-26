@@ -159,7 +159,6 @@ export const BIN_TEXT = {
   deleteForGoodTitle: (name: string) => `Delete ${name} for good?`,
   deleteForGoodBody: "The file is removed from storage. This can't be undone.",
   deletedForGood: (name: string) => `${name} deleted for good`,
-  waitingOnHome: "Documents in the Bin",
 } as const;
 
 /** Each Verification as a linked Document shows it, in the checklist's words. */

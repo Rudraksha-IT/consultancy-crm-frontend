@@ -41,13 +41,31 @@ export function HomePage() {
 }
 
 /**
- * The Admin's Home in the order they work (ticket 12): what's waiting, High priority Students,
- * the pipeline, this month's money (with the Accounts Module), everyone's progress, who owes
- * beside new visitors (the visitors alone without Accounts), then tasks due soon, full width.
+ * Home as a desk (UI revamp 07). From 1280: the work on the left, what waits for this person on
+ * the right, and what is wide by nature (money) across both, underneath. Below 1280 it is one
+ * column in the order written here, so the waiting parts come first. Each part shows a fixed
+ * most, so the two columns stay about as tall as each other on a quiet day and a busy one.
+ */
+function Desk({ side, main, under }: { side: ReactNode; main: ReactNode; under?: ReactNode }) {
+  return (
+    <>
+      <div className="desk:grid-cols-[minmax(0,1fr)_var(--spacing-desk-side)] desk:items-start grid min-w-0 gap-8">
+        <div className="desk:order-2 desk:gap-7 grid min-w-0 content-start gap-8">{side}</div>
+        <div className="grid min-w-0 content-start gap-8">{main}</div>
+      </div>
+      {under}
+    </>
+  );
+}
+
+/**
+ * The Admin's Home: what's waiting; then the desk, with High priority Students, tasks due soon
+ * and new visitors to assign beside the Pipeline and everyone's progress; then this month's money
+ * and who still owes, full width (with the Accounts Module).
  */
 function AdminHome() {
   const { modules } = useCurrentStaff();
-  return modules.includes(Module.Accounts) ? <AdminHomeWithMoney /> : <AdminHomeSections />;
+  return modules.includes(Module.Accounts) ? <AdminHomeWithMoney /> : <AdminDesk />;
 }
 
 /** With the Accounts Module: one load of who owes and one eye (ticket 13) serve both money sections. */
@@ -55,59 +73,74 @@ function AdminHomeWithMoney() {
   const owing = useLoaded(loadOwing, 0);
   const amounts = useHomeAmounts();
   return (
-    <AdminHomeSections
-      glance={<MonthAtAGlance owing={owing} amounts={amounts} />}
-      owes={<WhoStillOwes owing={owing} isShown={amounts.isShown} />}
+    <AdminDesk
+      money={
+        <>
+          <MonthAtAGlance owing={owing} amounts={amounts} />
+          <WhoStillOwes owing={owing} isShown={amounts.isShown} />
+        </>
+      }
     />
   );
 }
 
-type AdminHomeSectionsProps = { glance?: ReactNode; owes?: ReactNode };
-
-function AdminHomeSections({ glance, owes }: AdminHomeSectionsProps) {
+function AdminDesk({ money }: { money?: ReactNode }) {
   return (
     <>
       <WaitingRow />
-      <HighPriorityStudents mine={false} />
-      <PipelineSection />
-      {glance}
-      <ProgressSection
-        title={HOME_TEXT.everyonesProgress}
-        mine={false}
-        limit={ADMIN_PROGRESS_LIMIT}
-        showsCounsellor
+      <Desk
+        side={
+          <>
+            <HighPriorityStudents mine={false} />
+            <TasksDueSoon isGrouped={false} />
+            <UnassignedVisitors />
+          </>
+        }
+        main={
+          <>
+            <PipelineSection />
+            <ProgressSection
+              title={HOME_TEXT.everyonesProgress}
+              mine={false}
+              limit={ADMIN_PROGRESS_LIMIT}
+              showsCounsellor
+            />
+          </>
+        }
+        under={money}
       />
-      {owes === undefined ? (
-        <UnassignedVisitors />
-      ) : (
-        <div className="wide:grid-cols-2 grid gap-8">
-          {owes}
-          <UnassignedVisitors />
-        </div>
-      )}
-      <TasksDueSoon isGrouped={false} />
     </>
   );
 }
 
 /**
- * What's waiting, my High priority Students, my Students' progress, my classes (with the
- * test-prep Module) and my tasks due soon (ticket 12).
+ * The Counsellor's Home: what's waiting; then the desk, with my High priority Students and my
+ * tasks due soon beside my Students' progress and my classes (with the test-prep Module).
  */
 function CounsellorHome() {
   const context = useCurrentStaff();
   return (
     <>
       <WaitingRow />
-      <HighPriorityStudents mine />
-      <ProgressSection
-        title={HOME_TEXT.yourProgress}
-        mine
-        limit={COUNSELLOR_PROGRESS_LIMIT}
-        showsCounsellor={false}
+      <Desk
+        side={
+          <>
+            <HighPriorityStudents mine />
+            <TasksDueSoon isGrouped={false} />
+          </>
+        }
+        main={
+          <>
+            <ProgressSection
+              title={HOME_TEXT.yourProgress}
+              mine
+              limit={COUNSELLOR_PROGRESS_LIMIT}
+              showsCounsellor={false}
+            />
+            {canManageClasses(context) && <ClassesSection />}
+          </>
+        }
       />
-      {canManageClasses(context) && <ClassesSection />}
-      <TasksDueSoon isGrouped={false} />
     </>
   );
 }

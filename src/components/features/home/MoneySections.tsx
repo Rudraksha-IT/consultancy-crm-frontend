@@ -9,8 +9,6 @@ import { FigureTile } from "@/components/ui/FigureTile";
 import { TileGrid } from "@/components/ui/TileGrid";
 import { Panel } from "@/components/ui/Panel";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { RowItem } from "@/components/ui/RowItem";
-import { RowList } from "@/components/ui/RowList";
 import { Section } from "@/components/ui/Section";
 import { Loading } from "@/components/ui/Loading";
 import { COMMISSION_TEXT } from "@/constants/commission";
@@ -159,10 +157,19 @@ function GlanceFigures({ owing, month, isShown }: GlanceFiguresProps) {
   );
 }
 
-/** The Students who owe most, each with a paid-so-far bar (spec 22a). */
+/**
+ * The 3 Students who owe most, each with a paid-so-far bar (spec 22a), across the full width under
+ * Home's desk: side by side from 900, one under another below it. "See all (N)" sits beside the
+ * title (UI revamp 07).
+ */
 export function WhoStillOwes({ owing, isShown }: { owing: Loaded<OwingPage>; isShown: boolean }) {
+  const hasAny = owing.status === "loaded" && owing.data.rows.length > 0;
   return (
-    <Section title={FEE_TEXT.whoStillOwes} fills>
+    <Section
+      title={FEE_TEXT.whoStillOwes}
+      keepsAsideOnLine
+      {...(hasAny && { aside: <SeeAllLink href={ROUTES.accounts} count={owing.data.count} /> })}
+    >
       <OwingBody owing={owing} isShown={isShown} />
     </Section>
   );
@@ -181,48 +188,44 @@ function OwingBody({ owing, isShown }: OwingProps) {
     );
   }
   return (
-    <div className="grid grid-rows-[1fr_auto] gap-3">
-      <Panel>
-        <OwingRows owing={owing.data} isShown={isShown} />
-      </Panel>
-      <SeeAllLink href={ROUTES.accounts} count={owing.data.count} />
-    </div>
+    <Panel>
+      <OwingRows owing={owing.data} isShown={isShown} />
+    </Panel>
   );
 }
 
 function OwingRows({ owing, isShown }: { owing: OwingPage; isShown: boolean }) {
   return (
-    <RowList label={FEE_TEXT.whoStillOwes}>
+    <ul
+      aria-label={FEE_TEXT.whoStillOwes}
+      className="divide-rule mid:grid mid:grid-cols-3 mid:divide-x mid:divide-y-0 divide-y *:min-w-0"
+    >
       {owing.rows.slice(0, OWING_ON_HOME).map((row) => {
         const percent = paidShare(row.fees, row.paid);
         return (
-          <RowItem
-            key={row.student.id}
-            title={
+          <li key={row.student.id} className="px-gutter grid content-start gap-2 py-3.5">
+            <div className="flex min-w-0 items-center justify-between gap-3">
               <Link
                 href={ROUTES.student(row.student.id)}
-                className="text-ink hover:text-accent min-h-control inline-flex items-center break-words underline-offset-4 hover:underline"
+                className="text-name text-ink hover:text-accent min-h-control inline-flex min-w-0 items-center font-semibold underline-offset-4 hover:underline"
               >
-                {row.student.name}
+                <span className="truncate">{row.student.name}</span>
               </Link>
-            }
-            right={
-              <span className="text-warn font-semibold whitespace-nowrap tabular-nums">
+              <span className="text-warn flex-none font-semibold whitespace-nowrap tabular-nums">
                 <Amounts isShown={isShown}>
                   {(money) => FEE_TEXT.left(money(row.stillToPay))}
                 </Amounts>
               </span>
-            }
-          >
+            </div>
             <ProgressBar label={FEE_TEXT.paidShareOf(row.student.name)} value={percent} />
             <span className="text-small text-ink-2">
               <Amounts isShown={isShown}>
                 {(money) => FEE_TEXT.paidOf(money(row.paid), money(row.fees), percent)}
               </Amounts>
             </span>
-          </RowItem>
+          </li>
         );
       })}
-    </RowList>
+    </ul>
   );
 }

@@ -116,7 +116,8 @@ type ProgressItemProps = {
 
 /**
  * Name and country, then the Stage on the thread with the next step, then the documents. On a
- * phone: the name, the Stage and the next step, with the documents button on the right.
+ * phone: the name and the next step (one line), with the documents button on the right; the
+ * thread is on the page the name opens (UI revamp 07).
  */
 function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
   return (
@@ -132,13 +133,15 @@ function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
           {whoLine(row, showsCounsellor)}
         </span>
       </div>
-      <div className="wide:order-none wide:col-span-1 phone:col-span-2 max-phone:col-start-1 max-phone:row-start-2 max-phone:gap-1 order-last grid min-w-0 gap-1.5">
-        <Thread stage={row.student.stage} isDone={row.isDone} />
+      <div className="wide:order-none wide:col-span-1 phone:col-span-2 max-phone:col-span-2 max-phone:col-start-1 max-phone:row-start-2 max-phone:gap-1 order-last grid min-w-0 gap-1.5">
+        <span data-progress-stage="" className="max-phone:hidden grid min-w-0">
+          <Thread stage={row.student.stage} isDone={row.isDone} />
+        </span>
         <span className="text-secondary text-ink-2 max-phone:truncate">
           {row.isDone ? HOME_TEXT.done(row.nextStep) : HOME_TEXT.next(row.nextStep)}
         </span>
       </div>
-      <div className="phone:justify-self-end max-phone:col-start-2 max-phone:row-span-2 max-phone:row-start-1 max-phone:justify-self-end justify-self-start">
+      <div className="phone:justify-self-end max-phone:col-start-2 max-phone:row-start-1 max-phone:justify-self-end justify-self-start">
         <DocumentsButton
           studentName={row.student.name}
           documents={row.documents}

@@ -112,6 +112,11 @@
   --size-button-sm: 0.9375rem;
   --size-figure: 2rem;
   --size-figure-line: 2.5rem;
+  /* Home: the count on a "Waiting for you" card, and at each Stage of the Pipeline (UI revamp 07) */
+  --size-todo-count: 1.5rem;
+  --size-todo-count-line: 1.875rem;
+  --size-stage-count: 2rem;
+  --size-stage-count-line: 2.5rem;
   /* Configuration > Universities: the university's name above its courses */
   --size-uni-name: 1.25rem;
   --size-uni-name-line: 1.75rem;
@@ -163,6 +168,10 @@
     --size-button-sm: 0.875rem;
     --size-figure: 1.5rem;
     --size-figure-line: 1.875rem;
+    --size-todo-count: 1.25rem;
+    --size-todo-count-line: 1.625rem;
+    --size-stage-count: 1.25rem;
+    --size-stage-count-line: 1.625rem;
     --size-uni-name: 1rem;
     --size-uni-name-line: 1.375rem;
     --size-email-name: 1.125rem;
@@ -313,6 +322,10 @@
   --text-figure-phone: min(1.5rem, 13cqi);
   --text-figure-phone--line-height: 1.875rem;
   --text-figure-phone--font-weight: 500;
+  --text-todo-count: var(--size-todo-count);
+  --text-todo-count--line-height: var(--size-todo-count-line);
+  --text-todo-count--font-weight: 500;
+  --text-todo-count--letter-spacing: -0.025em;
   --text-body: var(--size-body);
   --text-body--line-height: var(--size-body-line);
   /* a name in a list (a Student, a task): one step above the page text */
@@ -415,6 +428,17 @@
   --spacing-inbox: 32.5rem;
   --spacing-conversations-list: 40rem;
   --spacing-thread: 28.75rem;
+  /* Home (UI revamp 07): a "Waiting for you" card is at least this wide and this tall (a row of
+     the phone sheet is 60); its icon's round; the desk's right column; an empty part of it */
+  --spacing-todo: 15.625rem;
+  --spacing-todo-card: 4.25rem;
+  --spacing-todo-row: 3.75rem;
+  --spacing-todo-icon: 2.5rem;
+  --spacing-todo-icon-sm: 2.25rem;
+  --spacing-desk-side: 23.75rem;
+  --spacing-desk-empty: 10.5rem;
+  /* the pill drawn inside a 44 tall button on phones (Assign on Home) */
+  --spacing-pill: 2rem;
   --container-content: var(--size-content);
   /* the top bar's search box above 1024px, centred over the page content (issue 88) */
   --container-search: 32rem;
@@ -435,6 +459,8 @@
   --radius-chip: 0.375rem;
   --radius-control: 0.5rem;
   --radius-panel: var(--size-panel-corner);
+  /* Home's clock card on phones (UI revamp 07) */
+  --radius-clock: 1rem;
   /* a bottom sheet's top corners on phones */
   --radius-sheet: 1.25rem;
   --radius-dialog: 0.875rem;
@@ -453,7 +479,10 @@
   --breakpoint-*: initial;
   --breakpoint-phone: 40.0625rem;
   --breakpoint-tablet: 47.5625rem;
+  --breakpoint-mid: 56.25rem;
   --breakpoint-wide: 64.0625rem;
+  /* Home becomes a desk: the work on the left, what waits on the right (UI revamp 07) */
+  --breakpoint-desk: 80rem;
 }
 
 @layer base {
@@ -1128,6 +1157,159 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   }
 }
 /* End of the thread. */
+
+/*
+ * Home's Pipeline (UI revamp 07, `ui/PipelineThread`): the office's Students on the same thread,
+ * five beads from Lead to Visa, each with its Stage, its count and its share. Each Stage is
+ * centred in its fifth of the sheet, so the thread starts and ends the same distance from the
+ * sheet's sides. On phones the thread runs top to bottom, a row per Stage.
+ */
+[data-pipe-thread] {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 1.5rem 0.75rem 1rem;
+  list-style: none;
+}
+
+[data-pipe-thread] > li {
+  position: relative;
+  min-width: 0;
+}
+
+[data-pipe-thread] > li[data-bead="1"] {
+  --bead: var(--bead-1);
+  --bead-after: var(--bead-2);
+}
+
+[data-pipe-thread] > li[data-bead="2"] {
+  --bead: var(--bead-2);
+  --bead-after: var(--bead-3);
+}
+
+[data-pipe-thread] > li[data-bead="3"] {
+  --bead: var(--bead-3);
+  --bead-after: var(--bead-4);
+}
+
+[data-pipe-thread] > li[data-bead="4"] {
+  --bead: var(--bead-4);
+  --bead-after: var(--bead-5);
+}
+
+[data-pipe-thread] > li[data-bead="5"] {
+  --bead: var(--bead-5);
+}
+
+/* the string to the next Stage, deepening on its way */
+[data-pipe-thread] > li::before {
+  content: "";
+  position: absolute;
+  top: 0.625rem;
+  right: -50%;
+  left: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--bead), var(--bead-after));
+}
+
+[data-pipe-thread] > li:last-child::before {
+  display: none;
+}
+
+[data-pipe-thread] a {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding: 0 0.5rem 0.625rem;
+  border-radius: var(--radius-menu);
+  color: var(--ink);
+  text-align: center;
+  text-decoration: none;
+}
+
+[data-pipe-bead] {
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-bottom: 0.875rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, white 30%, var(--bead)),
+    var(--bead) 70%
+  );
+  box-shadow: 0 0 0 5px var(--paper);
+}
+
+[data-pipe-thread] a:is(:hover, :focus-visible) [data-pipe-bead] {
+  box-shadow:
+    0 0 0 5px var(--paper),
+    0 0 0 8px color-mix(in srgb, var(--bead) 40%, var(--paper));
+}
+
+[data-pipe-name] {
+  color: var(--ink-2);
+  font-weight: 500;
+  font-size: var(--size-secondary);
+  line-height: var(--size-secondary-line);
+}
+
+[data-pipe-thread] a:hover [data-pipe-name] {
+  color: var(--accent);
+}
+
+[data-pipe-count] {
+  font-weight: 500;
+  font-size: var(--size-stage-count);
+  line-height: var(--size-stage-count-line);
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-pipe-share] {
+  color: var(--ink-3);
+  font-size: var(--size-small);
+  line-height: var(--size-small-line);
+}
+
+@media (width < 40.0625rem) {
+  [data-pipe-thread] {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.375rem var(--size-gutter);
+  }
+
+  [data-pipe-thread] > li::before {
+    top: 1.5rem;
+    right: auto;
+    bottom: -1.5rem;
+    left: 0.625rem;
+    width: 2px;
+    height: auto;
+    background: linear-gradient(180deg, var(--bead), var(--bead-after));
+  }
+
+  [data-pipe-thread] a {
+    grid-template-columns: 1.375rem minmax(0, 1fr) auto 2.75rem;
+    align-items: center;
+    justify-items: start;
+    gap: 0.75rem;
+    min-height: 3rem;
+    padding: 0;
+    text-align: start;
+  }
+
+  [data-pipe-bead] {
+    margin: 0;
+    box-shadow: 0 0 0 4px var(--paper);
+  }
+
+  [data-pipe-name] {
+    color: var(--ink);
+  }
+
+  [data-pipe-share] {
+    justify-self: end;
+  }
+}
+/* End of Home's Pipeline. */
 
 /* The logo loader (list tidy-ups 06, chosen in 19): the product's logo turns at one steady speed,
    never stopping, while its petals and lines close together into a small flower and open out

@@ -40,7 +40,6 @@ export const CLOCK_TEXT = {
   onNetwork: "Office network",
   offNetwork: "Not a saved office network",
   noNetwork: "No office network set up",
-  myMonth: "My working hours this month",
   loadFailed: "The clock couldn't be loaded.",
   clockedIn: (time: string) => `Clocked in at ${time}.`,
   markedNotOut: (day: string) =>
