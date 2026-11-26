@@ -6,7 +6,6 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import type { BlankTab } from "@/lib/documents";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 import { CHECKLIST } from "@/test/documents";
@@ -26,7 +25,6 @@ function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
     dateDisplay: "AD",
     colourMode: "light",
     supportAccess: null,
-    theme: DEFAULT_THEME,
   };
 }
 

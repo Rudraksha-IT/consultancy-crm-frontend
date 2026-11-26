@@ -6,11 +6,9 @@ import { SetPageSwipeContext } from "@/components/features/shell/pageSwipe";
 import { SetDateDisplayContext } from "@/components/features/shell/dateDisplay";
 import { SetOfficeDetailsContext } from "@/components/features/shell/officeDetails";
 import { SetOfficeLogoContext } from "@/components/features/shell/officeLogo";
-import { ShellThemeContext } from "@/components/features/shell/shellTheme";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME, type ThemeConfig } from "@/lib/theme";
 import { backend, on } from "@/test/backend";
 
 import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
@@ -27,32 +25,24 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
-function renderPage(
-  context: StaffContext,
-  setTheme = vi.fn<(theme: ThemeConfig) => void>(),
-  startSection?: string,
-) {
+function renderPage(context: StaffContext, startSection?: string) {
   render(
     <StaffContextContext value={context}>
       <SetDateDisplayContext value={vi.fn()}>
-        <ShellThemeContext value={{ theme: context.theme, setTheme }}>
-          <SetOfficeLogoContext value={vi.fn()}>
-            <SetOfficeDetailsContext value={vi.fn()}>
-              <SetPageSwipeContext value={vi.fn()}>
-                <ToastProvider>
-                  <ConfigurationPage startSection={startSection} />
-                </ToastProvider>
-              </SetPageSwipeContext>
-            </SetOfficeDetailsContext>
-          </SetOfficeLogoContext>
-        </ShellThemeContext>
+        <SetOfficeLogoContext value={vi.fn()}>
+          <SetOfficeDetailsContext value={vi.fn()}>
+            <SetPageSwipeContext value={vi.fn()}>
+              <ToastProvider>
+                <ConfigurationPage startSection={startSection} />
+              </ToastProvider>
+            </SetPageSwipeContext>
+          </SetOfficeDetailsContext>
+        </SetOfficeLogoContext>
       </SetDateDisplayContext>
     </StaffContextContext>,
   );
-  return setTheme;
 }
 
 const TYPES_PATH = "/api/configuration/document-types/";
@@ -200,7 +190,7 @@ describe("ConfigurationPage", () => {
       on("GET", TYPES_PATH, NO_TYPES),
       on("GET", "/api/catalogue/universities/", { count: 0, page: 1, page_size: 25, results: [] }),
     );
-    renderPage(ADMIN, undefined, "universities");
+    renderPage(ADMIN, "universities");
 
     const section = screen.getByRole("region", { name: "Universities" });
     expect(await within(section).findByRole("button", { name: /Add university/ })).toBeVisible();
@@ -209,7 +199,7 @@ describe("ConfigurationPage", () => {
 
   it("opens on General when the link names no known section", () => {
     backend(on("GET", TYPES_PATH, NO_TYPES));
-    renderPage(ADMIN, undefined, "<script>");
+    renderPage(ADMIN, "<script>");
 
     expect(screen.getByRole("region", { name: "General" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Universities" })).not.toBeInTheDocument();

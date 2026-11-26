@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
@@ -18,7 +17,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const SIX_MONTHS = "/api/reports/students/?months=6";

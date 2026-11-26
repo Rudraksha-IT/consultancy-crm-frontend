@@ -9,7 +9,6 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { DateDisplay } from "@/constants/dates";
 import type { StaffContext } from "@/lib/api";
 import { formatAdDate, formatBsDate, todayIso } from "@/lib/dates";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, on } from "@/test/backend";
 
 import { DatesSettings } from "./DatesSettings";
@@ -22,7 +21,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const DATES_PATH = "/api/configuration/dates/";

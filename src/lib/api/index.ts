@@ -305,7 +305,6 @@ export {
   fetchPlatformAdmin,
   logInToPlatform,
   logOutOfPlatform,
-  updateConsultancyTheme,
   updateModules,
 } from "./platform/platform";
 export type { PlatformLoginOutcome, StatusChange, StatusChangeField } from "./platform/platform";

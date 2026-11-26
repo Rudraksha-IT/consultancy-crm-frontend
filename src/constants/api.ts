@@ -247,8 +247,6 @@ export const API_PATHS = {
   platformConsultancyModules: (id: RecordId) => `/api/platform/consultancies/${id}/modules/`,
   /** Try again: set up an office whose setup failed (issue 60). */
   platformConsultancyRetrySetup: (id: RecordId) => `/api/platform/consultancies/${id}/retry-setup/`,
-  /** An office's colours: only a Platform Admin chooses them, only here. */
-  platformConsultancyTheme: (id: RecordId) => `/api/platform/consultancies/${id}/theme/`,
   /** Open a Consultancy as Platform Admin (issue 27), and the Platform record of every visit. */
   platformSupportVisitStart: (id: RecordId) => `/api/platform/consultancies/${id}/support-visits/`,
   platformSupportVisits: "/api/platform/support-visits/",

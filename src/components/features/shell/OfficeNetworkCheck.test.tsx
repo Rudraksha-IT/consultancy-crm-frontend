@@ -1,5 +1,4 @@
 import { uid } from "@/test/ids";
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -38,12 +37,6 @@ const ADMIN_CONTEXT = {
   modules: ["students", "tasks", "configuration", "clock_in"],
   date_display: "AD",
   support_access: null,
-  theme: {
-    page: "stone",
-    sidebar: TEST_COLOURS.white,
-    accent: TEST_COLOURS.emerald,
-    dark: { base: "soft", sidebar: "darker", accent: "auto" },
-  },
 };
 
 type Current = { address: string | null; suggested_network: string | null; covered: boolean };

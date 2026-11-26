@@ -6,7 +6,6 @@ import { StudentProfilePage } from "@/components/features/students/profile/Stude
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import type { RecordId } from "@/lib/recordId";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend as backendOnly, callsTo, on, type Answer } from "@/test/backend";
 import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
@@ -25,7 +24,6 @@ const FRONT_DESK: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const ADMIN: StaffContext = {

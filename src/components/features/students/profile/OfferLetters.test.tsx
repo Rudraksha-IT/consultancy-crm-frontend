@@ -5,7 +5,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
 import { PROFILE } from "@/test/studentProfile";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
@@ -22,7 +21,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const LETTER = { id: uid(31), files: [{ id: uid(51), file_name: "deakin-offer.pdf" }] };

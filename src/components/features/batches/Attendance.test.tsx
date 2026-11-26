@@ -7,7 +7,6 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { StudentClassSchema } from "@/lib/api/classes/attendance";
 import { formatOtherCalendar } from "@/lib/dates";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 
 import { BatchPage } from "./BatchPage";
@@ -23,7 +22,6 @@ const TEACHER: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const COUNSELLOR: StaffContext = {

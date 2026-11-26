@@ -1,5 +1,4 @@
 import { uid } from "@/test/ids";
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -22,13 +21,6 @@ vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => 
 const navigate = vi.hoisted(() => vi.fn<(path: string) => void>());
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 
-const CRIMSON_THEME = {
-  page: "ice",
-  sidebar: TEST_COLOURS.navy,
-  accent: TEST_COLOURS.crimson,
-  dark: { base: "pure", sidebar: "brand", accent: "auto" },
-};
-
 const TEACHER_CONTEXT = {
   staff: {
     id: uid(7),
@@ -41,7 +33,6 @@ const TEACHER_CONTEXT = {
   modules: ["students", "tasks", "batches"],
   date_display: "AD",
   support_access: null,
-  theme: CRIMSON_THEME,
 };
 
 const ADMIN_CONTEXT = {
@@ -312,8 +303,8 @@ describe("AppShell", () => {
 });
 
 describe("AppShell's Theme", () => {
-  it("shows the Ivory theme, not the office's own colours (one look for every office)", async () => {
-    await renderShellFor(TEACHER_CONTEXT);
+  it("shows the Ivory theme even when an old answer still carries office colours", async () => {
+    await renderShellFor({ ...TEACHER_CONTEXT, theme: { page: "ice", accent: "red" } });
 
     const expected = buildThemeTokens().light;
     // The shell applies the theme in an effect after the page shows.

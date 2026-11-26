@@ -3,7 +3,6 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME, THEME_PRESETS } from "@/lib/theme";
 
 import { NewConsultancyForm } from "./NewConsultancyForm";
 import { testHost } from "@/test/hosts";
@@ -69,7 +68,6 @@ describe("NewConsultancyForm", () => {
           subdomain: "acme",
           contact_email: "info@acme.com",
           status: "evaluation",
-          theme: DEFAULT_THEME,
         }),
       }),
     );
@@ -254,23 +252,18 @@ describe("NewConsultancyForm", () => {
     expect(screen.getByRole("button", { name: "Creating…" })).toBeDisabled();
   });
 
-  it("starts the Consultancy in the colours the Platform Admin picks", async () => {
+  it("has no Colours part: every office shows the one theme (ticket 04)", async () => {
     const fetchFn = backendAnswering(() => Promise.resolve(jsonResponse(CREATED, 202)));
     render(<NewConsultancyForm />);
 
-    await userEvent.selectOptions(screen.getByLabelText(/Ready-made colours/), "Glacier");
+    expect(screen.queryByRole("heading", { name: "Colours" })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Ready-made colours/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("img", { name: /Preview in/ })).not.toBeInTheDocument();
+
     await fillAndSubmit();
 
-    const glacier = THEME_PRESETS.find((preset) => preset.name === "Glacier")?.config;
     const sent = createCalls(fetchFn).at(-1)?.[1]?.body;
     const body: unknown = JSON.parse(typeof sent === "string" ? sent : "null");
-    expect(body).toMatchObject({ theme: glacier });
-  });
-
-  it("shows a live preview of the colours in light and dark", () => {
-    render(<NewConsultancyForm />);
-
-    expect(screen.getByRole("img", { name: "Preview in light mode" })).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Preview in dark mode" })).toBeInTheDocument();
+    expect(body).not.toHaveProperty("theme");
   });
 });

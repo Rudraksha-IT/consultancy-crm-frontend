@@ -7,7 +7,6 @@ import { useState } from "react";
 import { InboxCheckContext, type InboxCheckState } from "@/components/features/shell/inboxCheck";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { INBOX_TEXT } from "@/constants/inbox";
 import { consultancySummary } from "@/test/consultancy";
@@ -24,7 +23,6 @@ const SITA: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const PLATFORM_VISIT: StaffContext = {

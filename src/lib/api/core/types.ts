@@ -29,14 +29,10 @@ import {
 } from "@/constants/students";
 import { PASSWORD_RULE_IDS, type PasswordRuleId } from "@/lib/password";
 import { RecordIdSchema, type RecordId } from "@/lib/recordId";
-import { normaliseThemeConfig, type ThemeConfig } from "@/lib/theme";
 
 import { CourseFileSchema } from "../catalogue/courseFileTypes";
 import { LinkedDocumentSchema, NamedFileSchema } from "../documents/documentsTypes";
 import { TransferRequestSchema } from "../students/transferRequestTypes";
-
-/** A Consultancy's Theme. A missing or damaged value falls back on the defaults, never failing. */
-export const ThemeSchema = z.unknown().optional().transform(normaliseThemeConfig);
 
 /** Where the office logo is served from: only ever our own logo address (issue 39). */
 const LOGO_URL = /^\/api\/consultancy\/logo\/[0-9]{1,10}\/$/;
@@ -96,7 +92,6 @@ export const HostSchema = z
 export const ConsultancySchema = z
   .object({
     name: z.string().min(1),
-    theme: ThemeSchema,
     logo: OptionalLogoSchema,
     status: ShownStatusSchema,
     status_message: StatusMessageSchema,
@@ -139,7 +134,6 @@ export const StaffContextSchema = z
     date_display: z.enum(DATE_DISPLAYS),
     // Swipe between pages (asked 2026-11-16): off unless the server clearly says it is on.
     page_swipe: z.boolean().catch(false),
-    theme: ThemeSchema,
     // Set while a Platform Admin is inside the office as themselves (issue 27); null for Staff.
     support_access: z
       .object({ platform_admin_name: z.string().min(1), platform_host: HostSchema })
@@ -215,7 +209,6 @@ export const ConsultancyOverviewSchema = z
     evaluation_ends_at: MomentSchema.nullable(),
     paid_until: z.iso.date().nullable(),
     modules: z.array(z.enum(MODULES)),
-    theme: ThemeSchema,
     setup_state: z.enum(SETUP_STATES),
   })
   .transform(({ status_reason, evaluation_ends_at, paid_until, setup_state, ...rest }) => ({
@@ -238,13 +231,12 @@ export type NewConsultancy = {
   subdomain: string;
   /** Where replies to the office's emails go (spec 119); required. */
   contactEmail: string;
-  theme: ThemeConfig;
   /** Evaluation (14 days), or Active paid up to `paidUntil` ("YYYY-MM-DD"). */
   status: typeof ConsultancyStatus.Evaluation | typeof ConsultancyStatus.Active;
   paidUntil: string;
 };
 
-export type NewConsultancyField = Exclude<keyof NewConsultancy, "theme">;
+export type NewConsultancyField = keyof NewConsultancy;
 
 /** The API's field names for each `NewConsultancy` field. */
 export const NEW_CONSULTANCY_API_FIELDS = {

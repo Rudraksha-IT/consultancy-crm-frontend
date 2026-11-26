@@ -8,7 +8,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 import { NO_OFFICE_DETAILS, type OfficeDetails, type StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 import { fakeMatchMedia } from "@/test/matchMedia";
@@ -39,7 +38,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 /** The section inside a shell whose details really change, as the AppShell's do. */

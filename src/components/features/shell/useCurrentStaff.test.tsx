@@ -3,7 +3,6 @@ import { renderHook } from "@testing-library/react";
 import type { ReactNode } from "react";
 
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 
 import { StaffContextContext } from "./staffContext";
 import { useCurrentStaff } from "./useCurrentStaff";
@@ -16,7 +15,6 @@ const CONTEXT: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 describe("useCurrentStaff", () => {

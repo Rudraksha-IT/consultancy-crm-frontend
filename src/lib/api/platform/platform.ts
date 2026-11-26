@@ -3,7 +3,6 @@ import { z } from "zod";
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import { ConsultancyStatus } from "@/constants/consultancyStatus";
 import type { SwitchableModule } from "@/constants/modules";
-import type { ThemeConfig } from "@/lib/theme";
 
 import { getJson, postJson, postWithoutBody, putJson } from "../core/client";
 import {
@@ -171,15 +170,6 @@ export function updateModules(
   );
 }
 
-/** Choose an office's colours (its Theme); only a Platform Admin can. */
-export function updateConsultancyTheme(
-  id: RecordId,
-  theme: ThemeConfig,
-  fetchFn: typeof fetch = fetch,
-): Promise<ConsultancyOverview> {
-  return putJson(API_PATHS.platformConsultancyTheme(id), theme, ConsultancyOverviewSchema, fetchFn);
-}
-
 function isRefusedInput(error: unknown): error is ApiRequestError {
   return error instanceof ApiRequestError && error.status === HTTP_STATUS.badRequest;
 }
@@ -189,12 +179,9 @@ function toApiFields(consultancy: NewConsultancy): Record<string, unknown> {
   const sent = NEW_CONSULTANCY_FIELDS.filter(
     (field) => field !== "paidUntil" || consultancy.status === ConsultancyStatus.Active,
   );
-  return {
-    ...Object.fromEntries(
-      sent.map((field) => [NEW_CONSULTANCY_API_FIELDS[field], consultancy[field]]),
-    ),
-    theme: consultancy.theme,
-  };
+  return Object.fromEntries(
+    sent.map((field) => [NEW_CONSULTANCY_API_FIELDS[field], consultancy[field]]),
+  );
 }
 
 /** The change in API naming, with only the date its Status needs, and never an empty one. */

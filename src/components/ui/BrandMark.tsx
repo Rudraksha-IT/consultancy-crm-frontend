@@ -31,8 +31,7 @@ const LOGO_SIZES = {
 } as const;
 
 /**
- * The office's mark: its logo, or its initials on the accent (on the sidebar's own colours when a
- * coloured sidebar is in use). Decorative while the name is written beside it; a logo shown alone
+ * The office's mark: its logo, or its initials on the accent. Decorative while the name is written beside it; a logo shown alone
  * carries the office's name for screen readers.
  */
 export function BrandMark({ name, logo = null, size = "md" }: BrandMarkProps) {
@@ -63,7 +62,6 @@ function Initials({ name, isLarge }: { name: string; isLarge: boolean }) {
       aria-hidden="true"
       className={clsx(
         "bg-accent text-accent-ink grid flex-none place-items-center font-semibold",
-        "in-data-[side=coloured]:bg-side-ink in-data-[side=coloured]:text-side-bg",
         isLarge
           ? "size-mark-lg rounded-dialog text-page-title"
           : "size-mark rounded-control text-secondary",

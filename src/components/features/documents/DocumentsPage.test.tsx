@@ -5,7 +5,6 @@ import userEvent from "@testing-library/user-event";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { CHECKLIST } from "@/test/documents";
 
@@ -21,7 +20,6 @@ function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
     dateDisplay: "AD",
     colourMode: "light",
     supportAccess: null,
-    theme: DEFAULT_THEME,
   };
 }
 

@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 
 import { SupportAccessBanner } from "@/components/features/supportAccess/SupportAccessBanner";
 import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
@@ -16,7 +16,6 @@ import { buildNavigation } from "@/lib/navigation";
 import { ConsultancyStatusBanner } from "./ConsultancyStatusBanner";
 import { OfficeNetworkCheck } from "./OfficeNetworkCheck";
 import { PullGap } from "./PullGap";
-import { ShellThemeContext } from "./shellTheme";
 import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
 import { TopBar } from "./TopBar";
@@ -51,12 +50,10 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
   const menuRef = useRef<HTMLElement>(null);
   useSidebarSwipe(sidebar, menuRef);
   const pull = useShellPagePull(context, sidebar.isDrawerOpen);
-  const [theme, setTheme] = useState(context.theme);
-  const shellTheme = useMemo(() => ({ theme, setTheme }), [theme]);
   useAppliedTheme(colourMode.mode);
 
   return (
-    <ShellThemeContext value={shellTheme}>
+    <>
       {/* A reload covers the whole app with one loader (list tidy-ups 27). */}
       <PageLoadProvider>
         <div
@@ -109,7 +106,7 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
         </div>
         <OfficeNetworkCheck context={context} />
       </PageLoadProvider>
-    </ShellThemeContext>
+    </>
   );
 }
 

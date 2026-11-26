@@ -17,7 +17,7 @@ Decided 2026-11-18, before the first deploy. Changes ADR 0016 (`PROVIDER_SECRETS
 
 - **Every email** the product sends, to Staff, to Platform Admins and to Students, goes through **one SMTP account**, set only in the backend's environment values (`EMAIL_HOST` and the others, `DEFAULT_FROM_EMAIL`). Nothing about SMTP is typed into or stored by the app. The Platform's Settings tab shows whether email works and can send a test email.
 - An office's email is sent **from a no-reply address**, with the office's name as the sender name, and **Reply-To set to the office's contact email**. Its footer also says not to reply and gives that address. Staff cannot email Students until an Admin has set the contact email.
-- Every email is **HTML from one set of templates** with a plain-text copy: a fixed frame (office logo, name, Theme colour, contact details) around a subject line and message. Anything Staff type is escaped, never treated as markup. Platform emails use the product's own logo and colour.
+- Every email is **HTML from one set of templates** with a plain-text copy: a fixed frame (office logo, name, contact details) around a subject line and message. Anything Staff type is escaped, never treated as markup. Platform emails use the product's own logo. Every email is in the product's burgundy: office colours were removed on 2026-11-26 (ADR 0022).
 - **No SMS.** SMS sending, the SMS provider code and the office email and SMS settings are removed.
 
 ## Consequences

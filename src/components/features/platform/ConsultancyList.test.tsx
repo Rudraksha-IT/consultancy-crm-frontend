@@ -5,7 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { backend, callsTo, on, type Answer as Answer2 } from "@/test/backend";
-import { applyThemeCase, CONTRASTING_THEME, resetTheme, THEME_CASES } from "@/test/themes";
+import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { ConsultancyList } from "./ConsultancyList";
 import { testHost } from "@/test/hosts";
@@ -56,17 +56,15 @@ type Answers = {
   list: Answer | (() => Answer);
   status?: Response;
   features?: Response;
-  colours?: Response;
   retry?: Answer;
 };
 
-function answerWith({ list, status, features, colours, retry }: Answers): typeof fetch {
+function answerWith({ list, status, features, retry }: Answers): typeof fetch {
   const answers: Record<string, () => Answer> = {
     "/api/platform/consultancies/": typeof list === "function" ? list : () => list,
     [`/api/platform/consultancies/${uid(3)}/retry-setup/`]: () => retry ?? jsonResponse({}, 500),
     "/api/platform/support-visits/": () => jsonResponse([]),
     [`/api/platform/consultancies/${uid(3)}/modules/`]: () => features ?? jsonResponse({}, 500),
-    [`/api/platform/consultancies/${uid(3)}/theme/`]: () => colours ?? jsonResponse({}, 500),
   };
   const fetchFn = vi.fn<typeof fetch>().mockImplementation((path) => {
     const answer = typeof path === "string" ? answers[path] : undefined;
@@ -95,7 +93,7 @@ function buttonsOf(name: string): string[] {
 /** Open a Consultancy's Configuration (ticket 16), on one of its parts. */
 async function openConfiguration(
   name = "Acme Education",
-  part: "Features" | "Colours" | "Admins" = "Features",
+  part: "Features" | "Admins" = "Features",
 ): Promise<HTMLElement> {
   await userEvent.click(within(await findRow(name)).getByRole("button", { name: "Configuration" }));
   const dialog = screen.getByRole("dialog", { name: `Configuration for ${name}` });
@@ -164,66 +162,20 @@ describe("ConsultancyList", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  describe("Configuration: Colours (ticket 16)", () => {
-    async function openColours(answers: Partial<Answers> = {}): Promise<typeof fetch> {
-      const fetchFn = answerWith({ list: jsonResponse([ACME]), ...answers });
-      renderList();
-      await openConfiguration("Acme Education", "Colours");
-      return fetchFn;
-    }
+  it("has no Colours part in Configuration: every office shows the one theme (ticket 04)", async () => {
+    const fetchFn = answerWith({ list: jsonResponse([ACME]) });
+    renderList();
 
-    it("shows the office's colours with a live preview in light and dark", async () => {
-      await openColours();
+    const dialog = within(await openConfiguration());
 
-      const dialog = within(
-        screen.getByRole("dialog", { name: "Configuration for Acme Education" }),
-      );
-      expect(dialog.getByRole("img", { name: "Preview in light mode" })).toBeInTheDocument();
-      expect(dialog.getByRole("img", { name: "Preview in dark mode" })).toBeInTheDocument();
-    });
-
-    it("saves the colours for that office and confirms", async () => {
-      const fetchFn = await openColours({
-        colours: jsonResponse({ ...ACME, theme: CONTRASTING_THEME }),
-      });
-
-      await userEvent.selectOptions(screen.getByLabelText("Accent"), "Crimson");
-      await userEvent.click(screen.getByRole("button", { name: "Save colours" }));
-
-      expect(await screen.findByText("Colours saved for Acme Education")).toBeInTheDocument();
-      // The popup stays open on its part, for the next change.
-      expect(screen.getByRole("tab", { name: "Colours" })).toHaveAttribute("aria-selected", "true");
-      const call = vi
+    expect(dialog.queryByRole("tab", { name: "Colours" })).not.toBeInTheDocument();
+    expect(dialog.queryByRole("button", { name: "Save colours" })).not.toBeInTheDocument();
+    expect(dialog.queryByRole("img", { name: /Preview in/ })).not.toBeInTheDocument();
+    expect(
+      vi
         .mocked(fetchFn)
-        .mock.calls.find(([path]) => path === `/api/platform/consultancies/${uid(3)}/theme/`);
-      expect(call?.[1]?.method).toBe("PUT");
-    });
-
-    it("keeps the dialog open and says so when saving fails", async () => {
-      await openColours({ colours: jsonResponse({ page: ["Bad"] }, 400) });
-
-      await userEvent.click(screen.getByRole("button", { name: "Save colours" }));
-
-      expect(await screen.findByRole("alert")).toHaveTextContent(
-        "We couldn't save the colours. Please try again.",
-      );
-      expect(
-        screen.getByRole("dialog", { name: "Configuration for Acme Education" }),
-      ).toBeVisible();
-    });
-
-    it("closes with Escape without saving", async () => {
-      const fetchFn = await openColours();
-
-      await userEvent.keyboard("{Escape}");
-
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-      expect(
-        vi
-          .mocked(fetchFn)
-          .mock.calls.some(([path]) => path === `/api/platform/consultancies/${uid(3)}/theme/`),
-      ).toBe(false);
-    });
+        .mock.calls.some(([path]) => typeof path === "string" && path.endsWith("/theme/")),
+    ).toBe(false);
   });
 
   it("lists the visits by Platform Admins under the offices", async () => {
@@ -292,7 +244,7 @@ describe("ConsultancyList", () => {
       return fetchFn;
     }
 
-    it("opens on Features, with its three parts as tabs", async () => {
+    it("opens on Features, with its two parts as tabs", async () => {
       await openFeatures();
 
       const dialog = within(
@@ -300,7 +252,6 @@ describe("ConsultancyList", () => {
       );
       expect(dialog.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
         "Features",
-        "Colours",
         "Admins",
       ]);
       expect(dialog.getByRole("tab", { name: "Features" })).toHaveAttribute(
@@ -788,7 +739,7 @@ describe("Offices being set up (issue 60)", () => {
     expect(chip?.querySelector("svg")).not.toBeNull();
     expect(row.queryByText("Active")).not.toBeInTheDocument();
     expect(
-      row.getByText("Its features, colours and status can be changed once it is set up."),
+      row.getByText("Its features and status can be changed once it is set up."),
     ).toBeVisible();
     for (const name of ROW_BUTTONS) {
       expect(row.getByRole("button", { name })).toBeDisabled();

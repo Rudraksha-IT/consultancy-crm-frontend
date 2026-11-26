@@ -6,7 +6,6 @@ import type { FeatureSwitches } from "@/components/features/platform/useSaveFeat
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
@@ -23,7 +22,6 @@ const VISITOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: { platformAdminName: "Ramesh", platformHost: testHost("admin") },
-  theme: DEFAULT_THEME,
 };
 
 type Fakes = {

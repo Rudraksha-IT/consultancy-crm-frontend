@@ -5,7 +5,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 
 import { StudentsPage } from "./StudentsPage";
 import { consultancySummary } from "@/test/consultancy";
@@ -18,7 +17,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 function as(role: StaffContext["staff"]["role"]): StaffContext {

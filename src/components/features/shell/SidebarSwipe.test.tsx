@@ -5,7 +5,6 @@ import userEvent from "@testing-library/user-event";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { NARROW_SCREEN_QUERY } from "@/lib/gestures";
 import { fakeMatchMedia } from "@/test/matchMedia";
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { resetTheme } from "@/test/themes";
 
 import { AppShell } from "./AppShell";
@@ -29,12 +28,6 @@ const CONTEXT = {
   modules: ["students", "tasks", "batches"],
   date_display: "AD",
   support_access: null,
-  theme: {
-    page: "stone",
-    sidebar: TEST_COLOURS.white,
-    accent: TEST_COLOURS.emerald,
-    dark: { base: "soft", sidebar: "darker", accent: "auto" },
-  },
 };
 
 const NO_NOTIFICATIONS = { count: 0, page: 1, page_size: 20, unread_count: 0, results: [] };

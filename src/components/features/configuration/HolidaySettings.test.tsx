@@ -8,7 +8,6 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { formatAdDate, monthGrid, monthOf } from "@/lib/dates";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 
@@ -21,7 +20,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 const PATH = "/api/clock/holidays/";
 const DASHAIN = { id: uid(4), date: "2026-10-21", name: "Dashain" };

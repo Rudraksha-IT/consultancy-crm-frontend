@@ -8,7 +8,6 @@ import { StudentProfilePage } from "@/components/features/students/profile/Stude
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { HOME_AMOUNTS_KEY } from "@/constants/home";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend as backendOnly, callsTo, on, onEach, type Answer } from "@/test/backend";
 import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
@@ -36,7 +35,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const COUNSELLOR: StaffContext = {

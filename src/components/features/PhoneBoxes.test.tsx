@@ -11,7 +11,6 @@ import { Stage } from "@/constants/stages";
 import { Country } from "@/constants/students";
 import { BatchSchema } from "@/lib/api/classes/batches";
 import type { Message, PaperworkRow, StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
@@ -22,7 +21,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 function inOffice(node: React.ReactNode) {

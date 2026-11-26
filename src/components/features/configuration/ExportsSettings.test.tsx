@@ -6,7 +6,6 @@ import userEvent from "@testing-library/user-event";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import type { StaffContext } from "@/lib/api";
 import { formatAdDateTime } from "@/lib/dates";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, on } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 
@@ -19,7 +18,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const AT = "2026-10-24T10:55:00+00:00";

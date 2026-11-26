@@ -7,7 +7,6 @@ import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { todayIso } from "@/lib/dates";
 import { ageOn } from "@/lib/students";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
 import { PROFILE } from "@/test/studentProfile";
 
@@ -21,7 +20,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const EMPTY_ADDRESS = { province: "", district: "", municipality: "", ward: null, street: "" };
