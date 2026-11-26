@@ -39,6 +39,8 @@ export const ROUTES = {
   reports: "/reports",
   /** Configuration opened on Universities, the Catalogue and its Course Files (ticket 10). */
   universities: "/configuration?section=universities",
+  /** Configuration opened on Working hours, where an Admin changes the holidays (UI revamp 17). */
+  configurationWorkingHours: "/configuration?section=workingHours",
   /** One University's edit page: it and every Course, saved at once (issue 92). */
   universityEdit: (id: RecordId) => `/configuration/universities/${id}/edit`,
   staff: "/staff",

@@ -12,7 +12,7 @@ import { Icon } from "@/components/ui/Icon";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { Tabs } from "@/components/ui/Tabs";
-import { CLOCK_TAB_PARAM, CLOCK_TEXT as TEXT, ClockTab } from "@/constants/clock";
+import { CLOCK_TAB_PARAM, CLOCK_TEXT as TEXT, ClockTab, HOLIDAY_TEXT } from "@/constants/clock";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { Module } from "@/constants/modules";
 import { Role } from "@/constants/roles";
@@ -23,6 +23,7 @@ import { formatMonth, todayIso } from "@/lib/dates";
 
 import { MonthPicker } from "./MonthPicker";
 import { MonthView } from "./MonthView";
+import { MyHolidays } from "./MyHolidays";
 import { MyWorkFromHome } from "./MyWorkFromHome";
 import { useClockMonth } from "./useClockMonth";
 
@@ -31,6 +32,7 @@ const MONTH_LENGTH = 7;
 const TAB_LABELS: Record<ClockTab, string> = {
   [ClockTab.Hours]: TEXT.hoursTab,
   [ClockTab.WorkFromHome]: WORK_FROM_HOME_TEXT.tab,
+  [ClockTab.Holidays]: HOLIDAY_TEXT.tab,
 };
 
 type MyWorkingHoursPageProps = {
@@ -42,7 +44,7 @@ type MyWorkingHoursPageProps = {
  * Working hours (spec 106, 132; UI revamp 16), opened from My working hours in your menu, for
  * every Role while Clock-in is on: my own month as a calendar or a list, and (everyone but
  * Admins, who clock in from any network and never ask) my Work From Home dates on a tab of their
- * own. A Platform Admin is not Staff, so has no month of their own: they see everyone's in
+ * own, and the office's holidays for everyone (UI revamp 17). A Platform Admin is not Staff, so has no month of their own: they see everyone's in
  * Employees.
  */
 export function MyWorkingHoursPage({ askedTab = null }: MyWorkingHoursPageProps) {
@@ -70,8 +72,8 @@ export function MyWorkingHoursPage({ askedTab = null }: MyWorkingHoursPageProps)
   return <MyPage askedTab={askedTab} />;
 }
 
-const STAFF_TABS = [ClockTab.Hours, ClockTab.WorkFromHome] as const;
-const ADMIN_TABS = [ClockTab.Hours] as const;
+const STAFF_TABS = [ClockTab.Hours, ClockTab.WorkFromHome, ClockTab.Holidays] as const;
+const ADMIN_TABS = [ClockTab.Hours, ClockTab.Holidays] as const;
 
 function MyPage({ askedTab }: { askedTab: string | null }) {
   const { staff } = useCurrentStaff();
@@ -81,52 +83,72 @@ function MyPage({ askedTab }: { askedTab: string | null }) {
   const [month, setMonth] = useState(() => todayIso().slice(0, MONTH_LENGTH));
   const [listPage, setListPage] = useState(1);
   const [isAsking, setIsAsking] = useState(false);
-  const isHours = tab === ClockTab.Hours;
-
-  const body = isHours ? (
-    <MyMonth month={month} listPage={listPage} onListPage={setListPage} />
-  ) : (
-    <MyWorkFromHome
-      isAsking={isAsking}
-      onAskingDone={() => {
-        setIsAsking(false);
-      }}
-    />
-  );
+  const onAskingDone = (): void => {
+    setIsAsking(false);
+  };
 
   return (
     <div className="grid gap-6">
       <PageHeader
         title={TEXT.pageTitle}
-        subtitle={isHours ? TEXT.myHoursIntro(formatMonth(month)) : TEXT.workFromHomeIntro}
+        subtitle={subtitleOf(tab, month)}
         crumbs={<CrumbHome />}
         actions={
-          isHours ? (
-            <HoursActions
-              month={month}
-              isAdmin={isAdmin}
-              onMonth={(next) => {
-                setMonth(next);
-                setListPage(1);
-              }}
-            />
-          ) : (
-            <Button
-              variant="primary"
-              icon="plus"
-              onClick={() => {
-                setIsAsking(true);
-              }}
-            >
-              {WORK_FROM_HOME_TEXT.askForDates}
-            </Button>
-          )
+          <TabActions
+            tab={tab}
+            month={month}
+            isAdmin={isAdmin}
+            onMonth={(next) => {
+              setMonth(next);
+              setListPage(1);
+            }}
+            onAsk={() => {
+              setIsAsking(true);
+            }}
+          />
         }
       />
       <TabStrip tabs={tabs} tab={tab} onSelect={setTab}>
-        {body}
+        {tab === ClockTab.Hours && (
+          <MyMonth month={month} listPage={listPage} onListPage={setListPage} />
+        )}
+        {tab === ClockTab.WorkFromHome && (
+          <MyWorkFromHome isAsking={isAsking} onAskingDone={onAskingDone} />
+        )}
+        {tab === ClockTab.Holidays && <MyHolidays />}
       </TabStrip>
     </div>
+  );
+}
+
+/** The small line under the title says what the open tab shows. */
+function subtitleOf(tab: ClockTab, month: string): string {
+  if (tab === ClockTab.Hours) return TEXT.myHoursIntro(formatMonth(month));
+  return tab === ClockTab.WorkFromHome ? TEXT.workFromHomeIntro : HOLIDAY_TEXT.intro;
+}
+
+type TabActionsProps = HoursActionsProps & { tab: ClockTab; onAsk: () => void };
+
+/**
+ * Beside the title: the month on my hours, "Ask for dates" on Work from home, and on Holidays
+ * the Admin's way to change them (Configuration → Working hours); other Roles only read them.
+ */
+function TabActions({ tab, month, isAdmin, onMonth, onAsk }: TabActionsProps) {
+  if (tab === ClockTab.Hours) {
+    return <HoursActions month={month} isAdmin={isAdmin} onMonth={onMonth} />;
+  }
+  if (tab === ClockTab.WorkFromHome) {
+    return (
+      <Button variant="primary" icon="plus" onClick={onAsk}>
+        {WORK_FROM_HOME_TEXT.askForDates}
+      </Button>
+    );
+  }
+  if (!isAdmin) return null;
+  return (
+    <ButtonLink href={ROUTES.configurationWorkingHours} icon="edit">
+      {HOLIDAY_TEXT.change}
+    </ButtonLink>
   );
 }
 

@@ -8,7 +8,7 @@ export {
 } from "./applications/applications";
 export { fetchStaffContext, logIn, logOut } from "./auth/auth";
 export {
-  addHoliday,
+  addHolidays,
   addMissedTime,
   ClockRefusedError,
   clockIn,
@@ -19,7 +19,7 @@ export {
   fetchTeamMonth,
   fetchTeamNow,
   fetchWorkingDay,
-  removeHoliday,
+  removeHolidays,
   saveWeeklyOff,
   saveWorkingDay,
   setMissingClockOut,

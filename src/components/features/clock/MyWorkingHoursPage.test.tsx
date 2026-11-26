@@ -30,6 +30,19 @@ const ADMIN: StaffContext = {
 const MONTH = "/api/clock/month/?month=2026-11";
 const MINE = "/api/clock/work-from-home/";
 const NO_DATES = { can_ask: true, results: [] };
+const HOLIDAYS = "/api/clock/holidays/";
+/** Today is 5 Nov 2026: Dashain and Constitution Day are over, Tihar (with a gap) is coming. */
+const OFFICE_HOLIDAYS = {
+  holidays: [
+    { id: uid(40), date: "2026-09-19", name: "Constitution Day" },
+    { id: uid(41), date: "2026-10-21", name: "Dashain" },
+    { id: uid(42), date: "2026-11-08", name: "Tihar" },
+    { id: uid(43), date: "2026-11-09", name: "Tihar" },
+    { id: uid(44), date: "2026-11-10", name: "Tihar" },
+    { id: uid(45), date: "2026-11-12", name: "Tihar" },
+    { id: uid(46), date: "2026-12-25", name: "Christmas" },
+  ],
+};
 
 function page(context: StaffContext, askedTab: string | null) {
   return (
@@ -231,19 +244,24 @@ describe("Working hours: the tabs (UI revamp 16)", () => {
     window.history.replaceState(null, "", "/");
   });
 
-  it("has Working hours and Work from home, opening on my hours", async () => {
+  it("has Working hours, Work from home and Holidays, opening on my hours", async () => {
     const fetchFn = backend(on("GET", MONTH, novemberMonth()), on("GET", MINE, NO_DATES));
 
     renderPage();
 
     const tabs = within(screen.getByRole("tablist", { name: "Show" })).getAllByRole("tab");
-    expect(tabs.map((tab) => tab.textContent)).toEqual(["Working hours", "Work from home"]);
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      "Working hours",
+      "Work from home",
+      "Holidays",
+    ]);
     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
     expect(await screen.findByRole("group", { name: "Clock-ins, November 2026" })).toBeVisible();
     expect(screen.getByLabelText("Month")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ask for dates" })).toBeNull();
     // My dates are only read when their tab opens.
     expect(callsTo(fetchFn, "GET", MINE)).toHaveLength(0);
+    expect(callsTo(fetchFn, "GET", HOLIDAYS)).toHaveLength(0);
   });
 
   it("switches to Work from home in place: the cursor stays on the tab and the address notes it", async () => {
@@ -297,7 +315,7 @@ describe("Working hours: the tabs (UI revamp 16)", () => {
     expect(await screen.findByText("No work from home dates yet.")).toBeInTheDocument();
   });
 
-  it.each(["holidays", "WFH", "<script>alert(1)</script>", "../staff", ""])(
+  it.each(["holiday", "WFH", "<script>alert(1)</script>", "../staff", ""])(
     "opens on my hours for a tab that isn't one (%j)",
     async (asked) => {
       backend(on("GET", MONTH, novemberMonth()), on("GET", MINE, NO_DATES));
@@ -312,13 +330,14 @@ describe("Working hours: the tabs (UI revamp 16)", () => {
     },
   );
 
-  it("gives an Admin their hours only: no tabs, no Work from home, even when the address asks", async () => {
+  it("gives an Admin no Work from home tab, even when the address asks", async () => {
     const fetchFn = backend(on("GET", MONTH, novemberMonth()));
 
     renderPage(ADMIN, "wfh");
 
     expect(await screen.findByRole("group", { name: "Clock-ins, November 2026" })).toBeVisible();
-    expect(screen.queryByRole("tablist")).toBeNull();
+    const tabs = within(screen.getByRole("tablist", { name: "Show" })).getAllByRole("tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual(["Working hours", "Holidays"]);
     expect(screen.queryByText("Work from home")).toBeNull();
     expect(screen.queryByRole("button", { name: "Ask for dates" })).toBeNull();
     expect(callsTo(fetchFn, "GET", MINE)).toHaveLength(0);
@@ -541,5 +560,136 @@ describe("Working hours: the month as a Calendar or a List (UI revamp 16)", () =
     expect(screen.queryByRole("list", { name: "What the days show" })).toBeNull();
     // The remembered view is left alone for the computer.
     expect(window.localStorage.getItem(CLOCK_VIEW_KEY)).toBe("calendar");
+  });
+});
+
+describe("Working hours: Holidays, for everyone (UI revamp 17)", () => {
+  afterEach(() => {
+    window.history.replaceState(null, "", "/");
+  });
+
+  function cards(title: string): string[] {
+    return within(screen.getByRole("list", { name: title }))
+      .getAllByRole("listitem")
+      .map((card) => card.textContent);
+  }
+
+  it.each([
+    ["a Counsellor", COUNSELLOR],
+    ["Front Desk", { ...COUNSELLOR, staff: { ...COUNSELLOR.staff, role: "front_desk" as const } }],
+    ["a Teacher", { ...COUNSELLOR, staff: { ...COUNSELLOR.staff, role: "teacher" as const } }],
+  ])("shows %s Coming up and Past holidays as whole holidays, read only", async (_who, staff) => {
+    const user = userEvent.setup();
+    backend(on("GET", MONTH, novemberMonth()), on("GET", HOLIDAYS, OFFICE_HOLIDAYS));
+    renderPage(staff);
+
+    await user.click(screen.getByRole("tab", { name: "Holidays" }));
+
+    expect(await screen.findByRole("heading", { name: "Coming up" })).toBeVisible();
+    expect(cards("Coming up")).toEqual([
+      "Nov8–10, 12Tihar4 days8–10, 12 Nov 2026",
+      "Dec25ChristmasFriday25 Dec 2026",
+    ]);
+    expect(screen.getByText("2 holidays, 5 days")).toBeVisible();
+    // Past holidays, the newest first.
+    expect(screen.getByRole("heading", { name: "Past holidays" })).toBeVisible();
+    expect(cards("Past holidays")).toEqual([
+      "Oct21DashainWednesday21 Oct 2026",
+      "Sep19Constitution DaySaturday19 Sep 2026",
+    ]);
+    expect(screen.getByText("2 holidays, 2 days")).toBeVisible();
+    expect(
+      screen.getByText("Days the whole office is closed. Nobody needs to clock in."),
+    ).toBeVisible();
+    expect(screen.queryByRole("button", { name: /Remove/ })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Change holidays" })).toBeNull();
+    expect(screen.queryByLabelText("Month")).toBeNull();
+    expect(screen.getByRole("tab", { name: "Holidays" })).toHaveFocus();
+    expect(window.location.search).toBe("?tab=holidays");
+  });
+
+  it("opens on Holidays when the address asks for it", async () => {
+    backend(on("GET", HOLIDAYS, OFFICE_HOLIDAYS));
+
+    renderPage(COUNSELLOR, "holidays");
+
+    expect(await screen.findByRole("heading", { name: "Coming up" })).toBeVisible();
+    expect(screen.getByRole("tab", { name: "Holidays" })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("gives an Admin the same lists with no Remove, and Change holidays to Configuration", async () => {
+    backend(on("GET", HOLIDAYS, OFFICE_HOLIDAYS));
+
+    renderPage(ADMIN, "holidays");
+
+    expect(await screen.findByRole("heading", { name: "Past holidays" })).toBeVisible();
+    expect(screen.queryByRole("button", { name: /Remove/ })).toBeNull();
+    expect(screen.getByRole("link", { name: "Change holidays" })).toHaveAttribute(
+      "href",
+      "/configuration?section=workingHours",
+    );
+  });
+
+  it("says so when nothing is coming up, and leaves Past holidays out when there are none", async () => {
+    backend(
+      on("GET", HOLIDAYS, { holidays: [{ id: uid(41), date: "2026-10-21", name: "Dashain" }] }),
+    );
+    const { unmount } = renderPage(COUNSELLOR, "holidays");
+
+    expect(await screen.findByText("No holidays coming up.")).toBeVisible();
+    expect(cards("Past holidays")).toHaveLength(1);
+
+    unmount();
+    backend(
+      on("GET", HOLIDAYS, { holidays: [{ id: uid(46), date: "2026-12-25", name: "Christmas" }] }),
+    );
+    renderPage(COUNSELLOR, "holidays");
+
+    expect(await screen.findByRole("heading", { name: "Coming up" })).toBeVisible();
+    expect(screen.queryByRole("heading", { name: "Past holidays" })).toBeNull();
+  });
+
+  it("counts a holiday that ends today as coming up", async () => {
+    backend(
+      on("GET", HOLIDAYS, {
+        holidays: [
+          { id: uid(41), date: "2026-11-04", name: "Tihar" },
+          { id: uid(42), date: "2026-11-05", name: "Tihar" },
+        ],
+      }),
+    );
+
+    renderPage(COUNSELLOR, "holidays");
+
+    expect(await screen.findByRole("heading", { name: "Coming up" })).toBeVisible();
+    expect(cards("Coming up")).toEqual(["Nov4–5Tihar2 days, Wed to Thu4–5 Nov 2026"]);
+  });
+
+  it("says when the office has no holidays, and when they can't be loaded", async () => {
+    backend(on("GET", HOLIDAYS, { holidays: [] }));
+    const { unmount } = renderPage(COUNSELLOR, "holidays");
+
+    expect(await screen.findByText("No office holidays set yet.")).toBeVisible();
+
+    unmount();
+    backend();
+    renderPage(COUNSELLOR, "holidays");
+
+    expect(
+      await screen.findByText("The holidays couldn't be loaded. Try again later."),
+    ).toBeVisible();
+  });
+
+  it("shows a holiday's name as plain text", async () => {
+    backend(
+      on("GET", HOLIDAYS, {
+        holidays: [{ id: uid(46), date: "2026-12-25", name: "<img src=x onerror=alert(1)>" }],
+      }),
+    );
+
+    renderPage(COUNSELLOR, "holidays");
+
+    expect(await screen.findByText("<img src=x onerror=alert(1)>")).toBeVisible();
+    expect(document.querySelector("img[src=x]")).toBeNull();
   });
 });

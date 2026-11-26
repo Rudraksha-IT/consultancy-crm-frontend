@@ -198,9 +198,8 @@ export const API_PATHS = {
   clockTeamNow: "/api/clock/team/now/",
   clockWorkingDay: "/api/clock/working-day/",
   clockDaysOff: "/api/clock/days-off/",
-  /** The office's holidays (asked 2026-11-16): the list, and one to remove. */
+  /** The office's holidays (asked 2026-11-16): the list, a new one, and a group to remove. */
   clockHolidays: "/api/clock/holidays/",
-  clockHoliday: (id: RecordId) => `/api/clock/holidays/${id}/`,
   clockSetClockOut: (sessionId: RecordId) => `/api/clock/sessions/${sessionId}/clock-out/`,
   clockMissedTime: (staffId: RecordId) => `/api/clock/staff/${staffId}/missed-time/`,
   /** Work From Home dates (issue 87): mine, one person's (Admins), and changing one set. */

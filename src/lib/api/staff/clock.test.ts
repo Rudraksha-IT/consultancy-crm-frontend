@@ -1,6 +1,6 @@
 import { uid } from "@/test/ids";
 import {
-  addHoliday,
+  addHolidays,
   addMissedTime,
   ClockRefusedError,
   clockIn,
@@ -11,7 +11,7 @@ import {
   fetchTeamMonth,
   fetchTeamNow,
   fetchWorkingDay,
-  removeHoliday,
+  removeHolidays,
   saveWeeklyOff,
   saveWorkingDay,
   setMissingClockOut,
@@ -405,27 +405,63 @@ describe("holidays", () => {
     expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/clock/holidays/");
   });
 
-  it("POSTs a new one and names a refused field in frontend terms", async () => {
-    const fetchFn = answering(
-      jsonResponse({ date: ["There is already a holiday on that day."] }, 400),
+  it("POSTs a new one with all its days in one call and answers the days added", async () => {
+    const added = [
+      { id: uid(4), date: "2026-11-08", name: "Tihar" },
+      { id: uid(5), date: "2026-11-09", name: "Tihar" },
+    ];
+    const fetchFn = answering(jsonResponse({ holidays: added }, 201));
+
+    const holidays = await addHolidays(
+      { name: "Tihar", dates: ["2026-11-08", "2026-11-09"] },
+      fetchFn,
     );
 
-    const refused = addHoliday({ date: "2026-10-21", name: "Dashain" }, fetchFn);
-
-    await expect(refused).rejects.toMatchObject({
-      fieldErrors: { date: ["There is already a holiday on that day."] },
-    });
+    expect(holidays).toEqual(added);
+    expect(fetchFn).toHaveBeenCalledTimes(1);
     expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("POST");
-    expect(fetchFn.mock.calls[0]?.[1]?.body).toBe('{"date":"2026-10-21","name":"Dashain"}');
+    expect(fetchFn.mock.calls[0]?.[1]?.body).toBe(
+      '{"name":"Tihar","dates":["2026-11-08","2026-11-09"]}',
+    );
   });
 
-  it("DELETEs one", async () => {
+  it("names a refused field in frontend terms", async () => {
+    const fetchFn = answering(
+      jsonResponse({ dates: ["There is already a holiday on 9 Nov 2026."] }, 400),
+    );
+
+    const refused = addHolidays({ name: "Tihar", dates: ["2026-11-09"] }, fetchFn);
+
+    await expect(refused).rejects.toMatchObject({
+      fieldErrors: { dates: ["There is already a holiday on 9 Nov 2026."] },
+    });
+  });
+
+  it("refuses an answer to adding that it can't read", async () => {
+    const fetchFn = answering(jsonResponse({ holidays: [{ id: uid(4), date: "soon" }] }, 201));
+
+    await expect(addHolidays({ name: "Tihar", dates: ["2026-11-09"] }, fetchFn)).rejects.toThrow();
+  });
+
+  it("DELETEs a holiday's days in one call", async () => {
     const fetchFn = answering(new Response(null, { status: 204 }));
 
-    await removeHoliday(uid(4), fetchFn);
+    await removeHolidays([uid(4), uid(5)], fetchFn);
 
-    expect(fetchFn.mock.calls[0]?.[0]).toBe(`/api/clock/holidays/${uid(4)}/`);
-    expect(fetchFn.mock.calls[0]?.[1]?.method).toBe("DELETE");
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(fetchFn).toHaveBeenCalledWith(
+      "/api/clock/holidays/",
+      expect.objectContaining({
+        method: "DELETE",
+        body: JSON.stringify({ ids: [uid(4), uid(5)] }),
+      }),
+    );
+  });
+
+  it("says when removing was refused", async () => {
+    const fetchFn = answering(jsonResponse({ detail: "Not found." }, 404));
+
+    await expect(removeHolidays([uid(4)], fetchFn)).rejects.toThrow();
   });
 
   it("refuses a list it can't read", async () => {

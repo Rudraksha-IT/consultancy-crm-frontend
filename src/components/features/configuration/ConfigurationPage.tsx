@@ -36,7 +36,13 @@ import { WorkingDaySettings } from "./WorkingDaySettings";
  * (issue 27).
  */
 /** Sections a link may open, `/configuration?section=universities`. */
-const LINKABLE_SECTIONS: readonly string[] = ["general", "documents", "universities", "fees"];
+const LINKABLE_SECTIONS: readonly string[] = [
+  "general",
+  "documents",
+  "universities",
+  "fees",
+  "workingHours",
+];
 
 /** The section a link asked for, if it is one a link may open. */
 function linkedSection(asked: string | undefined): string | null {

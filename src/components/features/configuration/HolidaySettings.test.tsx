@@ -1,5 +1,5 @@
 import { uid } from "@/test/ids";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { z } from "zod";
 
@@ -23,10 +23,15 @@ const ADMIN: StaffContext = {
 };
 const PATH = "/api/clock/holidays/";
 const DASHAIN = { id: uid(4), date: "2026-10-21", name: "Dashain" };
-const TIHAR = { id: uid(5), date: "2026-11-09", name: "Tihar" };
+const TIHAR = [
+  { id: uid(5), date: "2026-11-08", name: "Tihar" },
+  { id: uid(6), date: "2026-11-09", name: "Tihar" },
+  { id: uid(7), date: "2026-11-10", name: "Tihar" },
+];
+const PAST = { id: uid(3), date: "2026-09-19", name: "Constitution Day" };
 
 const TODAY = "2026-10-15";
-const HolidayBody = z.object({ date: z.string(), name: z.string() });
+const HolidayBody = z.object({ name: z.string(), dates: z.array(z.string()) });
 
 function renderSection(staff: StaffContext = ADMIN) {
   render(
@@ -46,6 +51,39 @@ function day(iso: string): HTMLElement {
   return within(calendar()).getByRole("button", { name: new RegExp(`^${formatAdDate(iso)}`) });
 }
 
+function cards(): string[] {
+  return within(screen.getByRole("list", { name: "Coming up" }))
+    .getAllByRole("listitem")
+    .map((card) => card.textContent);
+}
+
+/** A backend that keeps the holidays: POST adds every day sent, DELETE removes every id sent. */
+function holidayBackend(start: readonly { id: string; date: string; name: string }[]) {
+  let holidays = [...start];
+  return backend(
+    onEach("GET", PATH, () => ({ holidays })),
+    (path, init) => {
+      if (path !== PATH || init?.method !== "POST") return undefined;
+      const sent = HolidayBody.parse(JSON.parse(typeof init.body === "string" ? init.body : "{}"));
+      const added = sent.dates.map((date, index) => ({
+        id: uid(50 + holidays.length + index),
+        date,
+        name: sent.name,
+      }));
+      holidays = [...holidays, ...added];
+      return jsonResponse({ holidays: added }, 201);
+    },
+    (path, init) => {
+      if (path !== PATH || init?.method !== "DELETE") return undefined;
+      const sent = z
+        .object({ ids: z.array(z.string()) })
+        .parse(JSON.parse(typeof init.body === "string" ? init.body : "{}"));
+      holidays = holidays.filter((holiday) => !sent.ids.includes(holiday.id));
+      return new Response(null, { status: 204 });
+    },
+  );
+}
+
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(new Date(`${TODAY}T06:00:00Z`));
@@ -56,61 +94,141 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe("HolidaySettings (asked 2026-11-16)", () => {
-  it("lists the holidays by day with their names", async () => {
-    backend(on("GET", PATH, { holidays: [DASHAIN, TIHAR] }));
+describe("HolidaySettings (asked 2026-11-16; UI revamp 17)", () => {
+  it("shows the coming holidays as whole holidays, and no past ones", async () => {
+    backend(on("GET", PATH, { holidays: [PAST, DASHAIN, ...TIHAR] }));
 
     renderSection();
 
-    const list = await screen.findByRole("list", { name: "Holidays" });
-    const rows = within(list).getAllByRole("listitem");
-    expect(rows[0]).toHaveTextContent("Dashain");
-    expect(rows[0]).toHaveTextContent(formatAdDate("2026-10-21"));
-    expect(rows[1]).toHaveTextContent("Tihar");
+    expect(await screen.findByRole("heading", { name: "Coming up" })).toBeVisible();
+    expect(cards()).toEqual([
+      "Oct21DashainWednesday21 Oct 2026Remove",
+      "Nov8–10Tihar3 days, Sun to Tue8–10 Nov 2026Remove",
+    ]);
+    expect(screen.getByText("2 holidays, 4 days")).toBeVisible();
+    expect(screen.queryByText("Constitution Day")).toBeNull();
+    expect(screen.queryByRole("heading", { name: "Past holidays" })).toBeNull();
     expect(
-      screen.getByText(/never count as a short day or as not in/, { exact: false }),
+      screen.getByText(/They count as days off, like the weekly days off/, { exact: false }),
     ).toBeInTheDocument();
   });
 
-  it("says when there are none", async () => {
+  it("says when there are none, and when none is coming up", async () => {
     backend(on("GET", PATH, { holidays: [] }));
-
     renderSection();
 
-    expect(await screen.findByText("No holidays yet.")).toBeInTheDocument();
+    expect(
+      await screen.findByText(
+        "No holidays yet. Add the days the office closes, like Dashain and Tihar.",
+      ),
+    ).toBeInTheDocument();
+
+    cleanup();
+    backend(on("GET", PATH, { holidays: [PAST] }));
+    renderSection();
+
+    expect(await screen.findByText("No holidays coming up.")).toBeInTheDocument();
+    expect(screen.queryByText("Constitution Day")).toBeNull();
   });
 
-  it("adds one with a day and a name, says so and lists it", async () => {
+  it("adds a holiday by tapping its days, in one call, and shows it as one holiday", async () => {
     const user = userEvent.setup();
-    let holidays: unknown[] = [];
-    const fetchFn = backend(
-      onEach("GET", PATH, () => ({ holidays })),
-      onEach("POST", PATH, () => {
-        holidays = [DASHAIN];
-        return DASHAIN;
-      }),
-    );
+    const fetchFn = holidayBackend([]);
     renderSection();
-    await screen.findByText("No holidays yet.");
+    await screen.findByText(/^No holidays yet\./);
+
+    await user.type(screen.getByLabelText("Name"), "Dashain");
+    await user.click(day("2026-10-22"));
+    await user.click(day("2026-10-23"));
+    await user.click(day("2026-10-26"));
+    expect(day("2026-10-23")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("3 days chosen.")).toBeVisible();
+    await user.click(screen.getByRole("button", { name: "Add holiday" }));
+
+    expect(await screen.findByText("Dashain added for 3 days")).toBeInTheDocument();
+    expect(callsTo(fetchFn, "POST", PATH).map((call) => call[1]?.body)).toEqual([
+      '{"name":"Dashain","dates":["2026-10-22","2026-10-23","2026-10-26"]}',
+    ]);
+    expect(cards()).toEqual(["Oct22–23, 26Dashain3 days22–23, 26 Oct 2026Remove"]);
+    // Shown from the answer: the list is not read again, so the page never reloads.
+    expect(callsTo(fetchFn, "GET", PATH)).toHaveLength(1);
+    expect(screen.getByLabelText("Name")).toHaveValue("");
+    expect(day("2026-10-22")).toBeDisabled();
+    expect(screen.queryByText(/chosen\.$/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Add holiday" })).toHaveFocus();
+  });
+
+  it("adds one day and says so without counting days", async () => {
+    const user = userEvent.setup();
+    holidayBackend([]);
+    renderSection();
+    await screen.findByText(/^No holidays yet\./);
 
     await user.click(day("2026-10-21"));
-    expect(day("2026-10-21")).toHaveAttribute("aria-pressed", "true");
-    await user.type(screen.getByLabelText("Name"), "Dashain");
+    expect(screen.getByText("1 day chosen.")).toBeVisible();
+    await user.type(screen.getByLabelText("Name"), "  Dashain ");
     await user.click(screen.getByRole("button", { name: "Add holiday" }));
 
     expect(await screen.findByText("Dashain added")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "POST", PATH)[0]?.[1]?.body).toBe(
-      '{"date":"2026-10-21","name":"Dashain"}',
-    );
-    expect(await screen.findByRole("list", { name: "Holidays" })).toHaveTextContent("Dashain");
-    expect(screen.getByLabelText("Name")).toHaveValue("");
+    expect(cards()).toEqual(["Oct21DashainWednesday21 Oct 2026Remove"]);
   });
 
-  it("asks for the day and the name before sending anything", async () => {
+  it("a second tap takes a day off, and days are sent in order whatever the taps", async () => {
+    const user = userEvent.setup();
+    const fetchFn = holidayBackend([]);
+    renderSection();
+    await screen.findByText(/^No holidays yet\./);
+
+    await user.click(day("2026-10-24"));
+    await user.click(day("2026-10-22"));
+    await user.click(day("2026-10-23"));
+    await user.click(day("2026-10-24"));
+    expect(day("2026-10-24")).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByText("2 days chosen.")).toBeVisible();
+    await user.type(screen.getByLabelText("Name"), "Dashain");
+    await user.click(screen.getByRole("button", { name: "Add holiday" }));
+
+    await screen.findByText("Dashain added for 2 days");
+    expect(callsTo(fetchFn, "POST", PATH)[0]?.[1]?.body).toBe(
+      '{"name":"Dashain","dates":["2026-10-22","2026-10-23"]}',
+    );
+  });
+
+  it("chooses days across months for one holiday", async () => {
+    const user = userEvent.setup();
+    const fetchFn = holidayBackend([]);
+    renderSection();
+    await screen.findByText(/^No holidays yet\./);
+
+    await user.click(day("2026-10-31"));
+    await user.click(within(calendar()).getByRole("button", { name: "Next month" }));
+    await user.click(day("2026-11-01"));
+    expect(screen.getByText("2 days chosen.")).toBeVisible();
+    await user.type(screen.getByLabelText("Name"), "Winter break");
+    await user.click(screen.getByRole("button", { name: "Add holiday" }));
+
+    await screen.findByText("Winter break added for 2 days");
+    expect(callsTo(fetchFn, "POST", PATH)).toHaveLength(1);
+    expect(cards()).toEqual(["Oct–Nov31–1Winter break2 days, Sat to Sun31 Oct–1 Nov 2026Remove"]);
+  });
+
+  it("has no Days / From – to choice", async () => {
+    backend(on("GET", PATH, { holidays: [] }));
+    renderSection();
+    await screen.findByText(/^No holidays yet\./);
+
+    expect(screen.queryByRole("group", { name: "How to choose" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "From – to" })).toBeNull();
+    expect(
+      screen.getByText("Tap each day the office is closed. Tap again to take one off."),
+    ).toBeVisible();
+  });
+
+  it("asks for the days and the name before sending anything", async () => {
     const user = userEvent.setup();
     const fetchFn = backend(on("GET", PATH, { holidays: [] }));
     renderSection();
-    await screen.findByText("No holidays yet.");
+    await screen.findByText(/^No holidays yet\./);
 
     await user.click(screen.getByRole("button", { name: "Add holiday" }));
 
@@ -119,30 +237,79 @@ describe("HolidaySettings (asked 2026-11-16)", () => {
     expect(callsTo(fetchFn, "POST", PATH)).toHaveLength(0);
   });
 
-  it("shows the server's refusal on its field", async () => {
+  it("sends no more than 31 days at once", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(on("GET", PATH, { holidays: [] }));
+    renderSection();
+    await screen.findByText(/^No holidays yet\./);
+
+    for (let date = 1; date <= 31; date += 1) {
+      await user.click(day(`2026-10-${String(date).padStart(2, "0")}`));
+    }
+    await user.click(within(calendar()).getByRole("button", { name: "Next month" }));
+    await user.click(day("2026-11-01"));
+    await user.type(screen.getByLabelText("Name"), "Long break");
+    await user.click(screen.getByRole("button", { name: "Add holiday" }));
+
+    expect(screen.getByText("Choose at most 31 days at once.")).toBeInTheDocument();
+    expect(callsTo(fetchFn, "POST", PATH)).toHaveLength(0);
+  });
+
+  it("shows the server's refusal under the calendar and keeps the days and the name", async () => {
     const user = userEvent.setup();
     backend(
       on("GET", PATH, { holidays: [DASHAIN] }),
-      on("POST", PATH, { date: ["There is already a holiday on that day."] }, 400),
+      on("POST", PATH, { dates: ["There is already a holiday on 22 Oct 2026."] }, 400),
     );
     renderSection();
-    await screen.findByRole("list", { name: "Holidays" });
+    await screen.findByRole("list", { name: "Coming up" });
 
     await user.click(day("2026-10-22"));
+    await user.click(day("2026-10-23"));
     await user.type(screen.getByLabelText("Name"), "Ghatasthapana");
     await user.click(screen.getByRole("button", { name: "Add holiday" }));
 
-    expect(await screen.findByText("There is already a holiday on that day.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("There is already a holiday on 22 Oct 2026."),
+    ).toBeInTheDocument();
+    expect(day("2026-10-22")).toHaveAttribute("aria-pressed", "true");
+    expect(day("2026-10-23")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText("Name")).toHaveValue("Ghatasthapana");
+    expect(cards()).toHaveLength(1);
+  });
+
+  it("shows the server's refusal of the name, and a failure that isn't about a field", async () => {
+    const user = userEvent.setup();
+    backend(
+      on("GET", PATH, { holidays: [] }),
+      on("POST", PATH, { name: ["Use letters, numbers and punctuation only."] }, 400),
+    );
+    renderSection();
+    await screen.findByText(/^No holidays yet\./);
+    await user.click(day("2026-10-22"));
+    await user.type(screen.getByLabelText("Name"), "Dashain");
+    await user.click(screen.getByRole("button", { name: "Add holiday" }));
+
+    expect(
+      await screen.findByText("Use letters, numbers and punctuation only."),
+    ).toBeInTheDocument();
+
+    backend(on("GET", PATH, { holidays: [] }));
+    await user.click(screen.getByRole("button", { name: "Add holiday" }));
+
+    expect(
+      await screen.findByText("The holiday couldn't be saved. Try again later."),
+    ).toBeInTheDocument();
+    expect(day("2026-10-22")).toHaveAttribute("aria-pressed", "true");
   });
 
   it("shows this month as a calendar with no dropdowns, the holidays marked, and moves by month", async () => {
     const user = userEvent.setup();
-    backend(on("GET", PATH, { holidays: [DASHAIN, TIHAR] }));
+    backend(on("GET", PATH, { holidays: [DASHAIN, ...TIHAR] }));
     renderSection();
-    await screen.findByRole("list", { name: "Holidays" });
+    await screen.findByRole("list", { name: "Coming up" });
 
     expect(within(calendar()).getByText("October 2026")).toBeVisible();
-    expect(within(calendar()).queryByRole("combobox")).toBeNull();
     expect(screen.queryByRole("combobox")).toBeNull();
     expect(within(calendar()).getAllByRole("button", { pressed: false }).length).toBeGreaterThan(
       28,
@@ -157,87 +324,24 @@ describe("HolidaySettings (asked 2026-11-16)", () => {
     await user.click(within(calendar()).getByRole("button", { name: "Previous month" }));
     await user.click(within(calendar()).getByRole("button", { name: "Previous month" }));
     expect(within(calendar()).getByText("September 2026")).toBeVisible();
+    // A past holiday is not listed here, but its day is still taken.
   });
 
-  it("adds several days with one name, e.g. all of Dashain, and a second tap un-chooses a day", async () => {
+  it("marks a past holiday's day as taken though it is not listed", async () => {
     const user = userEvent.setup();
-    let holidays: unknown[] = [];
-    const fetchFn = backend(
-      onEach("GET", PATH, () => ({ holidays })),
-      (path, init) => {
-        if (path !== PATH || init?.method !== "POST") return undefined;
-        const sent = HolidayBody.parse(
-          JSON.parse(typeof init.body === "string" ? init.body : "{}"),
-        );
-        const made = { id: uid(holidays.length + 10), ...sent };
-        holidays = [...holidays, made];
-        return jsonResponse(made, 201);
-      },
-    );
+    backend(on("GET", PATH, { holidays: [PAST, DASHAIN] }));
     renderSection();
-    await screen.findByText("No holidays yet.");
+    await screen.findByRole("list", { name: "Coming up" });
 
-    await user.click(day("2026-10-22"));
-    await user.click(day("2026-10-23"));
-    await user.click(day("2026-10-24"));
-    await user.click(day("2026-10-24"));
-    expect(day("2026-10-24")).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByText("2 days chosen")).toBeVisible();
-    await user.type(screen.getByLabelText("Name"), "Dashain");
-    await user.click(screen.getByRole("button", { name: "Add holiday" }));
-
-    expect(await screen.findByText("Dashain added on 2 days")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "POST", PATH).map((call) => call[1]?.body)).toEqual([
-      '{"date":"2026-10-22","name":"Dashain"}',
-      '{"date":"2026-10-23","name":"Dashain"}',
-    ]);
-    expect(await screen.findAllByText("Dashain")).toHaveLength(2);
-    expect(day("2026-10-22")).toBeDisabled();
-  });
-
-  it("chooses every day from one tap to the next in From – to, across months, skipping holidays", async () => {
-    const user = userEvent.setup();
-    backend(on("GET", PATH, { holidays: [DASHAIN] }));
-    renderSection();
-    await screen.findByRole("list", { name: "Holidays" });
-
-    await user.click(
-      within(screen.getByRole("group", { name: "How to choose" })).getByRole("button", {
-        name: "From – to",
-      }),
-    );
-    expect(screen.getByText("Tap the first day.")).toBeVisible();
-    await user.click(day("2026-10-19"));
-    expect(screen.getByText("Now tap the last day.")).toBeVisible();
-    await user.click(within(calendar()).getByRole("button", { name: "Next month" }));
-    await user.click(day("2026-11-02"));
-
-    // 19 Oct to 2 Nov is 15 days; 21 Oct is already Dashain.
-    expect(screen.getByText("14 days chosen")).toBeVisible();
-    expect(day("2026-11-01")).toHaveAttribute("aria-pressed", "true");
     await user.click(within(calendar()).getByRole("button", { name: "Previous month" }));
-    expect(day("2026-10-19")).toHaveAttribute("aria-pressed", "true");
-    expect(day("2026-10-18")).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByText("Tap the first day.")).toBeVisible();
-  });
 
-  it("takes From – to either way round", async () => {
-    const user = userEvent.setup();
-    backend(on("GET", PATH, { holidays: [] }));
-    renderSection();
-    await screen.findByText("No holidays yet.");
-
-    await user.click(screen.getByRole("button", { name: "From – to" }));
-    await user.click(day("2026-10-12"));
-    await user.click(day("2026-10-10"));
-
-    expect(screen.getByText("3 days chosen")).toBeVisible();
+    expect(day("2026-09-19")).toBeDisabled();
   });
 
   it("shows the office's calendar: BS months when the office uses BS", async () => {
     backend(on("GET", PATH, { holidays: [] }));
     renderSection({ ...ADMIN, dateDisplay: "BS" });
-    await screen.findByText("No holidays yet.");
+    await screen.findByText(/^No holidays yet\./);
 
     const month = monthOf(TODAY, "BS");
     const title = month === null ? "" : (monthGrid(month, "BS")?.title ?? "");
@@ -245,29 +349,79 @@ describe("HolidaySettings (asked 2026-11-16)", () => {
     expect(within(calendar()).getByText(title)).toBeVisible();
   });
 
-  it("removes one only after the shared confirm popup", async () => {
+  it("removes a whole holiday in one call, only after the shared confirm popup", async () => {
     const user = userEvent.setup();
-    let holidays: unknown[] = [DASHAIN];
-    const fetchFn = backend(
-      onEach("GET", PATH, () => ({ holidays })),
-      onEach("DELETE", `${PATH}${uid(4)}/`, () => {
-        holidays = [];
-        return null;
-      }),
-    );
+    const fetchFn = holidayBackend([DASHAIN, ...TIHAR]);
     renderSection();
 
-    await user.click(await screen.findByRole("button", { name: "Remove Dashain" }));
+    await user.click(await screen.findByRole("button", { name: "Remove Tihar, 8–10 Nov 2026" }));
+    const dialog = screen.getByRole("dialog", { name: "Remove Tihar?" });
+    expect(dialog).toHaveTextContent("Its 3 days will count as ordinary working days again.");
+    expect(callsTo(fetchFn, "DELETE", PATH)).toHaveLength(0);
+    await user.click(within(dialog).getByRole("button", { name: "Remove" }));
+
+    expect(await screen.findByText("Tihar removed")).toBeInTheDocument();
+    expect(callsTo(fetchFn, "DELETE", PATH).map((call) => call[1]?.body)).toEqual([
+      JSON.stringify({ ids: [uid(5), uid(6), uid(7)] }),
+    ]);
+    expect(cards()).toEqual(["Oct21DashainWednesday21 Oct 2026Remove"]);
+    expect(callsTo(fetchFn, "GET", PATH)).toHaveLength(1);
+  });
+
+  it("names the day when a one-day holiday is removed, and Cancel removes nothing", async () => {
+    const user = userEvent.setup();
+    const fetchFn = holidayBackend([DASHAIN]);
+    renderSection();
+
+    const remove = await screen.findByRole("button", { name: "Remove Dashain, 21 Oct 2026" });
+    await user.click(remove);
     const dialog = screen.getByRole("dialog", { name: "Remove Dashain?" });
     expect(dialog).toHaveTextContent(
       `${formatAdDate("2026-10-21")} will count as an ordinary working day again.`,
     );
-    expect(callsTo(fetchFn, "DELETE", `${PATH}${uid(4)}/`)).toHaveLength(0);
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+    expect(callsTo(fetchFn, "DELETE", PATH)).toHaveLength(0);
+    expect(cards()).toHaveLength(1);
+    expect(remove).toHaveFocus();
+  });
+
+  it("puts the cursor on the next Remove after a removal, or on the name when none is left", async () => {
+    const user = userEvent.setup();
+    holidayBackend([DASHAIN, ...TIHAR]);
+    renderSection();
+
+    await user.click(await screen.findByRole("button", { name: "Remove Dashain, 21 Oct 2026" }));
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Remove" }));
+    await screen.findByText("Dashain removed");
+
+    const tihar = screen.getByRole("button", { name: "Remove Tihar, 8–10 Nov 2026" });
+    await waitFor(() => {
+      expect(tihar).toHaveFocus();
+    });
+
+    await user.click(tihar);
+    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Remove" }));
+    await screen.findByText("Tihar removed");
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("Name")).toHaveFocus();
+    });
+  });
+
+  it("keeps the holiday and says so when removing fails", async () => {
+    const user = userEvent.setup();
+    backend(on("GET", PATH, { holidays: [DASHAIN] }));
+    renderSection();
+
+    await user.click(await screen.findByRole("button", { name: "Remove Dashain, 21 Oct 2026" }));
+    const dialog = screen.getByRole("dialog", { name: "Remove Dashain?" });
     await user.click(within(dialog).getByRole("button", { name: "Remove" }));
 
-    expect(await screen.findByText("Dashain removed")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "DELETE", `${PATH}${uid(4)}/`)).toHaveLength(1);
-    expect(await screen.findByText("No holidays yet.")).toBeInTheDocument();
+    expect(
+      await within(dialog).findByText("The holiday couldn't be removed. Try again later."),
+    ).toBeInTheDocument();
+    expect(cards()).toHaveLength(1);
   });
 
   it("says when the list can't be loaded", async () => {

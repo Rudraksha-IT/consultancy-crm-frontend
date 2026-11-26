@@ -197,6 +197,21 @@ describe("ConfigurationPage", () => {
     expect(screen.getByRole("button", { name: "All of Configuration" })).toBeVisible();
   });
 
+  it("opens on Working hours from the link (Change holidays, UI revamp 17)", async () => {
+    backend(on("GET", TYPES_PATH, NO_TYPES), on("GET", "/api/clock/holidays/", { holidays: [] }));
+    renderPage({ ...ADMIN, modules: ["configuration", "clock_in"] }, "workingHours");
+
+    const section = screen.getByRole("region", { name: "Working hours" });
+    expect(await within(section).findByText("Add a holiday")).toBeVisible();
+  });
+
+  it("opens on General from the Working hours link while Clock-in is off", () => {
+    backend(on("GET", TYPES_PATH, NO_TYPES));
+    renderPage(ADMIN, "workingHours");
+
+    expect(screen.getByRole("region", { name: "General" })).toBeInTheDocument();
+  });
+
   it("opens on General when the link names no known section", () => {
     backend(on("GET", TYPES_PATH, NO_TYPES));
     renderPage(ADMIN, "<script>");
