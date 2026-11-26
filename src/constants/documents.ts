@@ -107,7 +107,6 @@ export const BIN_REASON_MAX_LENGTH = 200;
 export const BIN_TEXT = {
   delete: "Delete",
   deleteFor: (name: string) => `Delete ${name}`,
-  deleteFile: (name: string) => `Delete ${name}`,
   deleteTitle: (name: string) => `Delete ${name}?`,
   binBody:
     "It goes to the Bin, and nobody can open or use it. An Admin will check it, then delete it for good or restore it. You can take it out until then.",
@@ -121,9 +120,13 @@ export const BIN_TEXT = {
   putInBinDone: "In the Bin. An Admin will delete it for good or restore it.",
   adminDocumentBody: (student: string) =>
     `This Document and all its files are removed from ${student}'s documents for good. As an Admin, it doesn't go to the Bin.`,
-  adminFileBody: (student: string) =>
-    `This file is removed from ${student}'s documents for good. As an Admin, it doesn't go to the Bin.`,
+  adminChosenBody: (student: string) =>
+    `The chosen files are removed from ${student}'s documents for good. As an Admin, it doesn't go to the Bin.`,
+  whichFiles: "Which files?",
+  whichFilesHint: "All of them deletes the whole Document. Untick the ones to keep.",
+  tickAFile: "Tick at least one file to delete.",
   deleted: (name: string) => `${name} deleted`,
+  filesDeleted: (count: number) => `${String(count)} files deleted`,
   inTheBin: "In the bin",
   inTheBinOf: (type: string) => `${type} in the Bin`,
   note: (reason: string, by: string, at: string) => `${reason}. ${by}, ${at}`,

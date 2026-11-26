@@ -15,6 +15,9 @@ export const STATUSES_BY_HAND = [ApplicationStatus.Applied, ApplicationStatus.Re
 
 export type StatusByHand = (typeof STATUSES_BY_HAND)[number];
 
+/** The Document Type an Offer Letter is kept as, in lower case (the server's own name for it). */
+export const OFFER_LETTER_TYPE_NAME = "offer letter";
+
 export const APPLICATION_STATUS_LABELS: Record<ApplicationStatus, string> = {
   applied: "Applied",
   offer: "Offer",

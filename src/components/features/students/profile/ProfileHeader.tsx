@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import { EmailComposer } from "@/components/features/communication/EmailComposer";
 import { TakePaymentDialog } from "@/components/features/payments/TakePaymentDialog";
@@ -32,14 +32,19 @@ type ProfileHeaderProps = {
   profile: StudentProfile;
   /** A change was saved; History may have a new entry. */
   onSaved: (profile: StudentProfile) => void;
-  /** "Edit details" opens the Profile tab, where each section is edited on its own. */
+  /** The Stage steps, on the same sheet under the name and the actions (UI revamp 11). */
+  children: ReactNode;
 };
 
 type OpenDialog = "assign" | "transfer" | "lost" | "payment" | "message" | null;
 
-/** The way back to the list, the Student's name and contact line, and the actions on them. */
-export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
+/**
+ * The way back to the list, then who and where as one sheet (UI revamp 11): the Student's name
+ * and contact line, the actions on them, and under a thin line the Stage steps.
+ */
+export function ProfileHeader({ profile, onSaved, children }: ProfileHeaderProps) {
   const [open, setOpen] = useState<OpenDialog>(null);
+  const nameId = useId();
 
   return (
     <div className="grid gap-4">
@@ -50,37 +55,43 @@ export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
         <Icon name="left" size="sm" />
         {LABELS.allStudents}
       </Link>
-      {/* Phones (UI revamp 06): the main action is a compact rounded button on the name's line;
-          Priority and the other actions follow on the next line. */}
-      <div className="max-phone:items-start max-phone:justify-start max-phone:gap-x-2 max-phone:gap-y-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-5">
-        <div className="max-phone:order-1 max-phone:flex-1 max-phone:gap-3 flex min-w-0 items-center gap-5">
-          <Avatar name={profile.name} size="lg" />
-          <div className="grid min-w-0 gap-1">
-            <h1 className="text-page-title-sm wide:text-page-title wrap-anywhere">
-              {profile.name}
-            </h1>
-            <div className="text-secondary text-ink-2 flex flex-wrap gap-x-5 gap-y-1">
-              <MetaItem icon="phone">
-                <span className="tabular-nums">{profile.phone}</span>
-              </MetaItem>
-              <MetaItem icon="plane">{COUNTRY_LABELS[profile.country]}</MetaItem>
-              <MetaItem icon="users">
-                {profile.assignedCounsellor?.name ?? LABELS.noCounsellorYet}
-              </MetaItem>
-              <PassportWarningChip profile={profile} />
+      <section
+        aria-labelledby={nameId}
+        className="rounded-panel border-sheet-rule bg-paper shadow-raise min-w-0 border"
+      >
+        {/* Phones (UI revamp 06): the main action is a compact rounded button on the name's line;
+            Priority and the other actions follow on the next line. */}
+        <div className="max-phone:px-gutter max-phone:py-4 max-phone:items-start max-phone:justify-start max-phone:gap-x-2 max-phone:gap-y-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-5 p-5">
+          <div className="max-phone:order-1 max-phone:flex-1 max-phone:gap-3 flex min-w-0 items-center gap-5">
+            <Avatar name={profile.name} size="lg" />
+            <div className="grid min-w-0 gap-1">
+              <h1 id={nameId} className="text-page-title-sm wide:text-page-title wrap-anywhere">
+                {profile.name}
+              </h1>
+              <div className="text-secondary text-ink-2 flex flex-wrap gap-x-5 gap-y-1">
+                <MetaItem icon="phone">
+                  <span className="tabular-nums">{profile.phone}</span>
+                </MetaItem>
+                <MetaItem icon="plane">{COUNTRY_LABELS[profile.country]}</MetaItem>
+                <MetaItem icon="users">
+                  {profile.assignedCounsellor?.name ?? LABELS.noCounsellorYet}
+                </MetaItem>
+                <PassportWarningChip profile={profile} />
+              </div>
             </div>
           </div>
+          <div
+            className={clsx(
+              "max-phone:contents max-phone:*:order-5 flex flex-wrap items-start gap-3",
+              PHONE_LINE_BREAK,
+            )}
+          >
+            <PriorityPicker profile={profile} onSaved={onSaved} />
+            <HeaderActions profile={profile} onOpen={setOpen} />
+          </div>
         </div>
-        <div
-          className={clsx(
-            "max-phone:contents max-phone:*:order-5 flex flex-wrap items-start gap-3",
-            PHONE_LINE_BREAK,
-          )}
-        >
-          <PriorityPicker profile={profile} onSaved={onSaved} />
-          <HeaderActions profile={profile} onOpen={setOpen} />
-        </div>
-      </div>
+        {children}
+      </section>
       {open === "message" && (
         <EmailComposer
           recipients={[profile]}

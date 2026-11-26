@@ -23,7 +23,17 @@ type JourneyProps = {
   isMoving?: boolean;
   /** Shown above the Stages, e.g. the ⓘ for a Student who was Lost before. */
   info?: ReactNode;
+  /**
+   * It is a part of a sheet that holds more (a Student's page, UI revamp 11), so it draws no
+   * sheet of its own.
+   */
+  isOnSheet?: boolean;
 };
+
+/** A sheet of its own, unless it sits on one. */
+function ownSheet(isOnSheet: boolean | undefined): string {
+  return isOnSheet === true ? "" : "rounded-panel border-sheet-rule bg-paper shadow-raise border";
+}
 
 /**
  * The steps are the thread's beads (ticket 21): each Stage a shade deeper, Lead to Visa. A done
@@ -81,7 +91,8 @@ const NAME_CLASSES: Record<StopState, string> = {
  * 640 at full size, scrolling inside its panel if it must; at 640 and below as a compact stepper,
  * five dots in a row with the names small under them (design system: Journey).
  */
-export function Journey({ stage, nextStep, isDone, onMoveTo, isMoving, info }: JourneyProps) {
+export function Journey(props: JourneyProps) {
+  const { stage, nextStep, isDone, onMoveTo, isMoving, info, isOnSheet } = props;
   const isLost = stage === Stage.Lost;
   const moveTo = MANUAL_STAGES.includes(stage) ? onMoveTo : undefined;
   const at = JOURNEY_STAGES.findIndex((step) => step === stage);
@@ -89,7 +100,10 @@ export function Journey({ stage, nextStep, isDone, onMoveTo, isMoving, info }: J
   return (
     <div
       data-lost={isLost}
-      className="rounded-panel border-sheet-rule bg-paper shadow-raise phone:px-6 phone:pt-7 phone:pb-6 max-phone:px-3 max-phone:pt-4 max-phone:pb-3.5 min-w-0 border p-5"
+      className={clsx(
+        "phone:px-6 phone:pt-7 phone:pb-6 max-phone:px-gutter max-phone:pt-4 max-phone:pb-3.5 min-w-0 p-5",
+        ownSheet(isOnSheet),
+      )}
     >
       {info !== undefined && <div className="-mt-2 mb-2 flex items-center gap-1.5">{info}</div>}
       <div className="phone:overflow-x-auto">

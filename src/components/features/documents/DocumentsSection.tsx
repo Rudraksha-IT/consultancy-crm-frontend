@@ -1,7 +1,7 @@
 "use client";
 
 import type { RecordId } from "@/lib/recordId";
-import { useState, type ComponentProps } from "react";
+import { useEffect, useState, type ComponentProps } from "react";
 
 import { firstNameOf, type EmailRecipient } from "@/components/features/communication/recipients";
 import { Banner } from "@/components/ui/Banner";
@@ -14,9 +14,6 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Section } from "@/components/ui/Section";
 import { useToast } from "@/components/ui/useToast";
 import {
-  BIN_REASON_MAX_LENGTH,
-  BIN_REASONS,
-  BIN_TEXT,
   DOCUMENT_GROUP_HELP,
   DOCUMENT_GROUP_LABELS,
   DOCUMENT_GROUPS,
@@ -31,12 +28,13 @@ import {
 } from "@/lib/api";
 
 import { AddFileDialog } from "./AddFileDialog";
-import { DocumentChecklist, type AddingTo, type Deleting } from "./DocumentChecklist";
+import { DeleteDocumentDialog } from "./DeleteDocumentDialog";
+import { DocumentChecklist, ROW_OF_TYPE, type AddingTo, type Deleting } from "./DocumentChecklist";
 import { DocumentPickerDialog } from "./DocumentPickerDialog";
 import { ExamplesComposer } from "./ExamplesComposer";
 import { RejectDocumentDialog } from "./RejectDocumentDialog";
 import { UploadDocumentDialog } from "./UploadDocumentDialog";
-import { binFailure, useBinActions } from "./useBinActions";
+import { useBinActions } from "./useBinActions";
 import { useChecklist } from "./useChecklist";
 import { useDocumentChecks } from "./useDocumentChecks";
 import { useDocumentLink } from "./useDocumentLink";
@@ -95,6 +93,7 @@ function LoadedSection(props: LoadedSectionProps) {
   const [isAsking, setIsAsking] = useState(false);
   const [notNeeded, setNotNeeded] = useState<ChecklistItem["documentType"] | null>(null);
   const [deleting, setDeleting] = useState<Deleting | null>(null);
+  const backToRow = useBackToRow();
   const bin = useBinActions(studentId, onChanged);
   const checks = useDocumentChecks(studentId, onChanged);
   const dropping = useNotNeeded(studentId, onChanged);
@@ -136,17 +135,17 @@ function LoadedSection(props: LoadedSectionProps) {
         emailExamples={examples.offer}
       />
       <ExamplesComposer item={examples.emailing} student={emailTo} onClose={examples.stop} />
-      <DeleteDialog
+      <DeleteDocumentDialog
         deleting={deleting}
+        checklist={checklist}
         studentName={studentName}
-        forGood={checklist.deletesForGood}
         onClose={() => {
           setDeleting(null);
         }}
-        onConfirm={async (reason) => {
-          if (deleting === null) return;
-          await bin.remove(deleting, reason, checklist.deletesForGood);
+        onConfirm={async (removal, reason) => {
+          await bin.remove(removal, reason, checklist.deletesForGood);
           setDeleting(null);
+          if (deleting !== null) backToRow(deleting.documentTypeId);
         }}
       />
       <NotNeededDialog
@@ -289,59 +288,22 @@ function NotNeededDialog({ documentType, studentName, onClose, onConfirm }: NotN
   );
 }
 
-/** The quick picks and "Other" for why something goes to the Bin. */
-const BIN_REASON = {
-  legend: BIN_TEXT.whyLegend,
-  picks: BIN_REASONS,
-  otherChoice: BIN_TEXT.other,
-  otherLabel: BIN_TEXT.otherLabel,
-  otherPlaceholder: BIN_TEXT.otherPlaceholder,
-  maxLength: BIN_REASON_MAX_LENGTH,
-  neededMessage: BIN_TEXT.reasonNeeded,
-  tooLongMessage: BIN_TEXT.reasonTooLong,
-};
-
-type DeleteDialogProps = {
-  /** What is being deleted; nothing shows while null. */
-  deleting: Deleting | null;
-  studentName: string;
-  /** An Admin's delete skips the Bin and asks no reason. */
-  forGood: boolean;
-  onClose: () => void;
-  onConfirm: (reason: string) => Promise<void>;
-};
-
-/** Asks before deleting: why, for the Bin; or, for an Admin, that it goes for good (issue 79). */
-function DeleteDialog({ deleting, studentName, forGood, onClose, onConfirm }: DeleteDialogProps) {
-  if (deleting === null) return null;
-  const words = forGood ? forGoodWords(deleting, studentName) : TO_THE_BIN;
-  return (
-    <ConfirmDialog
-      title={BIN_TEXT.deleteTitle(deleting.name)}
-      actionLabel={words.action}
-      reason={words.reason}
-      onClose={onClose}
-      onConfirm={onConfirm}
-      failureOf={binFailure}
-    >
-      {words.body}
-    </ConfirmDialog>
-  );
-}
-
-type DeleteWords = { action: string; body: string; reason: typeof BIN_REASON | undefined };
-
-const TO_THE_BIN: DeleteWords = {
-  action: BIN_TEXT.putInBin,
-  body: BIN_TEXT.binBody,
-  reason: BIN_REASON,
-};
-
-/** An Admin's own delete: no reason, and it says the Document or file goes for good. */
-function forGoodWords(deleting: Deleting, studentName: string): DeleteWords {
-  const body =
-    deleting.target.fileId === null ? BIN_TEXT.adminDocumentBody : BIN_TEXT.adminFileBody;
-  return { action: BIN_TEXT.delete, body: body(studentName), reason: undefined };
+/**
+ * After a delete (design-system rule 8): the cursor goes back to the Delete it was opened from,
+ * which the dialog does on closing. When that button is gone with its Document, it goes to the
+ * first button of the same row instead (Upload), so it is never lost at the top of the page.
+ */
+function useBackToRow(): (documentTypeId: RecordId) => void {
+  const [row, setRow] = useState<{ typeId: RecordId } | null>(null);
+  useEffect(() => {
+    if (row === null) return;
+    const rowElement = document.querySelector<HTMLElement>(`[${ROW_OF_TYPE}="${row.typeId}"]`);
+    if (rowElement === null || rowElement.contains(document.activeElement)) return;
+    rowElement.querySelector("button")?.focus();
+  }, [row]);
+  return (typeId) => {
+    setRow({ typeId });
+  };
 }
 
 /** The first of these problems that there is, if any. */

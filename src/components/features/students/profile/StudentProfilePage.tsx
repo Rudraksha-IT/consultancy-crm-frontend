@@ -130,6 +130,12 @@ function LoadedProfile({ studentId, role, startTab }: LoadedProfileProps) {
   );
 }
 
+const NOTE_BESIDE_WORK =
+  "desk:grid-cols-[minmax(0,1fr)_var(--spacing-note-side)] desk:items-start grid min-w-0 grid-cols-1 gap-7";
+/** A long Note scrolls inside its column, so its end is never out of reach while it is pinned. */
+const NOTE_SIDE =
+  "desk:sticky desk:top-21 desk:order-2 desk:max-h-note-room desk:overflow-y-auto min-w-0";
+
 type ProfileProps = {
   profile: StudentProfile;
   role: Role;
@@ -159,32 +165,41 @@ function Profile({ profile, role, startTab, onReplace, onUpdate, onRefresh }: Pr
 
   return (
     <div className="grid gap-8">
-      <ProfileHeader profile={profile} onSaved={replaceAndRecord} />
+      <ProfileHeader profile={profile} onSaved={replaceAndRecord}>
+        <StageSection profile={profile} onSaved={replaceAndRecord} />
+      </ProfileHeader>
       <WaitingRequest profile={profile} onChanged={reloadAfterRequest} />
       <ViewOnlyBanner profile={profile} role={role} onSent={reloadAfterRequest} />
-      <StageSection profile={profile} onSaved={replaceAndRecord} />
-      <NoteSection profile={profile} onSaved={replaceAndRecord} />
-      <Tabs
-        label={LABELS.sections}
-        tabs={profileTabs(profile, seesFees, classes.length > 0)}
-        selected={shownTab}
-        onSelect={(id) => {
-          setTab(TAB_IDS.find((known) => known === id) ?? TAB.applications);
-        }}
-      >
-        <TabContent
-          tab={shownTab}
-          profile={profile}
-          classes={classes}
-          historyVersion={historyVersion}
-          onSaved={replaceAndRecord}
-          onHistoryChanged={() => {
-            setHistoryVersion((current) => current + 1);
-          }}
-          onUpdate={onUpdate}
-          onRefresh={onRefresh}
-        />
-      </Tabs>
+      {/* The Note beside the work (UI revamp 11): from 1280 a column of its own on the right that
+          stays in view under the top bar while the page scrolls; below that, above the tabs. */}
+      <div className={NOTE_BESIDE_WORK}>
+        <div data-note-side="" className={NOTE_SIDE}>
+          <NoteSection profile={profile} onSaved={replaceAndRecord} />
+        </div>
+        <div className="grid min-w-0 content-start gap-8">
+          <Tabs
+            label={LABELS.sections}
+            tabs={profileTabs(profile, seesFees, classes.length > 0)}
+            selected={shownTab}
+            onSelect={(id) => {
+              setTab(TAB_IDS.find((known) => known === id) ?? TAB.applications);
+            }}
+          >
+            <TabContent
+              tab={shownTab}
+              profile={profile}
+              classes={classes}
+              historyVersion={historyVersion}
+              onSaved={replaceAndRecord}
+              onHistoryChanged={() => {
+                setHistoryVersion((current) => current + 1);
+              }}
+              onUpdate={onUpdate}
+              onRefresh={onRefresh}
+            />
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 }

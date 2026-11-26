@@ -453,6 +453,11 @@
   --spacing-todo-icon: 2.5rem;
   --spacing-todo-icon-sm: 2.25rem;
   --spacing-desk-side: 23.75rem;
+  /* a Student's page (UI revamp 11): the Note's own column from 1280, and the most it is tall
+     while pinned under the top bar (the screen less the bar, the gap under it and one above
+     the foot) */
+  --spacing-note-side: 21.25rem;
+  --spacing-note-room: calc(100dvh - 6.75rem);
   --spacing-desk-empty: 10.5rem;
   /* the pill drawn inside a 44 tall button on phones (Assign on Home) */
   --spacing-pill: 2rem;

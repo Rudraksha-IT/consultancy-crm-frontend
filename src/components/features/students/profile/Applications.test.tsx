@@ -268,10 +268,25 @@ describe("Documents linked to an Application", () => {
     files: [{ id: uid(61), file_name: "deakin-offer.pdf" }],
     verification: "verified",
   };
+  const TRANSCRIPT = {
+    id: uid(42),
+    document_type: { id: uid(8), name: "Transcript" },
+    files: [{ id: uid(62), file_name: "transcript.pdf" }],
+    verification: "verified",
+  };
+  const OFFERED = {
+    ...DEAKIN,
+    status: "offer",
+    offer_kind: "conditional",
+    offer_letter: { id: OFFER.id, files: OFFER.files },
+  };
 
   it("lists them under the Application with their state in words", async () => {
     backend(
-      profile({ ...WITH_APPLICATIONS, applications: [{ ...DEAKIN, documents: [OFFER] }, RMIT] }),
+      profile({
+        ...WITH_APPLICATIONS,
+        applications: [{ ...DEAKIN, documents: [TRANSCRIPT] }, RMIT],
+      }),
     );
     renderPage();
 
@@ -282,22 +297,72 @@ describe("Documents linked to an Application", () => {
     const linked = within(deakin ?? document.body).getByRole("list", {
       name: "Documents for Deakin University",
     });
-    expect(within(linked).getByText("Offer letter")).toBeVisible();
+    expect(within(linked).getByText("Transcript")).toBeVisible();
     expect(within(linked).getByText("Checked and correct")).toBeVisible();
-    expect(
-      within(linked).getByRole("button", { name: "Open deakin-offer.pdf" }),
-    ).toBeInTheDocument();
+    expect(within(linked).getByRole("button", { name: "Open transcript.pdf" })).toBeInTheDocument();
     expect(
       within(rmit ?? document.body).queryByRole("list", { name: /^Documents for/ }),
     ).not.toBeInTheDocument();
   });
 
+  it("never shows the Offer Letter under its university: Offer letters has it (UI revamp 11)", async () => {
+    backend(
+      profile({
+        ...WITH_APPLICATIONS,
+        stage: "offer",
+        applications: [{ ...OFFERED, documents: [OFFER, TRANSCRIPT] }, RMIT],
+      }),
+    );
+    renderPage();
+
+    const list = await applicationsList();
+    const linked = within(list).getByRole("list", { name: "Documents for Deakin University" });
+    expect(within(linked).getByText("Transcript")).toBeVisible();
+    expect(within(list).queryByText("Offer letter")).toBeNull();
+    expect(within(list).queryByRole("button", { name: "Open deakin-offer.pdf" })).toBeNull();
+    const offers = screen.getByRole("list", { name: "Offer letters" });
+    expect(within(offers).getByRole("button", { name: "Open deakin-offer.pdf" })).toBeVisible();
+  });
+
+  it("shows no list under an Application whose only Document is its Offer Letter", async () => {
+    backend(
+      profile({
+        ...WITH_APPLICATIONS,
+        stage: "offer",
+        applications: [{ ...OFFERED, documents: [OFFER] }, RMIT],
+      }),
+    );
+    renderPage();
+
+    const list = await applicationsList();
+    expect(within(list).queryByRole("list", { name: /^Documents for/ })).toBeNull();
+  });
+
+  it("leaves out an earlier Offer Letter too", async () => {
+    const earlier = {
+      ...OFFER,
+      id: uid(43),
+      files: [{ id: uid(64), file_name: "first-offer.pdf" }],
+    };
+    backend(
+      profile({
+        ...WITH_APPLICATIONS,
+        stage: "offer",
+        applications: [{ ...OFFERED, documents: [earlier, OFFER] }, RMIT],
+      }),
+    );
+    renderPage();
+
+    const list = await applicationsList();
+    expect(within(list).queryByRole("button", { name: "Open first-offer.pdf" })).toBeNull();
+  });
+
   it("shows every file of a linked Document (issue 78)", async () => {
     const twoPages = {
-      ...OFFER,
+      ...TRANSCRIPT,
       files: [
-        { id: uid(61), file_name: "offer-page-1.pdf" },
-        { id: uid(63), file_name: "offer-page-2.pdf" },
+        { id: uid(62), file_name: "page-1.pdf" },
+        { id: uid(63), file_name: "page-2.pdf" },
       ],
     };
     backend(
@@ -306,22 +371,25 @@ describe("Documents linked to an Application", () => {
     renderPage();
 
     const linked = await screen.findByRole("list", { name: "Documents for Deakin University" });
-    expect(within(linked).getByRole("button", { name: "Open offer-page-1.pdf" })).toBeVisible();
-    expect(within(linked).getByRole("button", { name: "Open offer-page-2.pdf" })).toBeVisible();
+    expect(within(linked).getByRole("button", { name: "Open page-1.pdf" })).toBeVisible();
+    expect(within(linked).getByRole("button", { name: "Open page-2.pdf" })).toBeVisible();
   });
 
   it("opens a linked file through a short-lived link", async () => {
-    const url = `https://files.test/abc/documents/${uid(7)}/offer.pdf?sig=1`;
+    const url = `https://files.test/abc/documents/${uid(7)}/transcript.pdf?sig=1`;
     backend(
-      profile({ ...WITH_APPLICATIONS, applications: [{ ...DEAKIN, documents: [OFFER] }, RMIT] }),
-      on("GET", `/api/students/${uid(7)}/documents/${uid(41)}/files/${uid(61)}/link/?action=open`, {
+      profile({
+        ...WITH_APPLICATIONS,
+        applications: [{ ...DEAKIN, documents: [TRANSCRIPT] }, RMIT],
+      }),
+      on("GET", `/api/students/${uid(7)}/documents/${uid(42)}/files/${uid(62)}/link/?action=open`, {
         url,
         expires_in: 300,
       }),
     );
     renderPage();
 
-    await userEvent.click(await screen.findByRole("button", { name: "Open deakin-offer.pdf" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Open transcript.pdf" }));
 
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith(url);
