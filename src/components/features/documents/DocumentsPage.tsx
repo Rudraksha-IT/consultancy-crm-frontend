@@ -22,6 +22,7 @@ import type { PaperworkCounts, PaperworkPage, PaperworkRow } from "@/lib/api";
 
 import { BinTab } from "./BinTab";
 import { ChecklistDialog } from "./ChecklistDialog";
+import { DocumentPillKey } from "./DocumentPill";
 import { PaperworkList } from "./PaperworkList";
 import { useBin } from "./useBin";
 import { usePaperwork } from "./usePaperwork";
@@ -183,6 +184,7 @@ function PaperworkContent({ state, showsCounsellor, onOpen, onPage }: PaperworkC
   return (
     <>
       <Tiles totals={page.totals} />
+      {page.rows.length > 0 && <DocumentPillKey />}
       <Panel>
         {page.rows.length === 0 ? (
           <EmptyState>{DOCUMENT_TEXT.noStudents}</EmptyState>

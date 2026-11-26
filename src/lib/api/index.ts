@@ -229,6 +229,7 @@ export type {
   DocumentFile,
   NamedDocumentType,
   PaperworkCounts,
+  PaperworkItem,
   PaperworkPage,
   PaperworkRow,
   StoredDocument,

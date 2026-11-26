@@ -94,6 +94,12 @@ const PAPERWORK = {
       waiting: 0,
       missing: 2,
       verified: 5,
+      items: [
+        { name: "Passport", state: "rejected" },
+        { name: "Citizenship", state: "verified" },
+        { name: "Bank Statement", state: "missing" },
+        { name: "Sponsor Letter", state: "waiting" },
+      ],
     },
   ],
 };
@@ -446,6 +452,34 @@ describe("fetchPaperwork", () => {
     expect(page.pageSize).toBe(25);
     expect(page.totals).toEqual({ rejected: 1, waiting: 0, missing: 2, verified: 5 });
     expect(page.rows[0]?.student.assignedCounsellor).toEqual({ id: uid(5), name: "Bikash Thapa" });
+  });
+
+  it("returns each Student's checklist documents by name and state, in the order sent", async () => {
+    const page = await fetchPaperwork(
+      { scope: "mine", page: 1, onlyWaiting: false },
+      answering(jsonResponse(PAPERWORK)),
+    );
+
+    expect(page.rows[0]?.items).toEqual([
+      { name: "Passport", state: "rejected" },
+      { name: "Citizenship", state: "verified" },
+      { name: "Bank Statement", state: "missing" },
+      { name: "Sponsor Letter", state: "waiting" },
+    ]);
+  });
+
+  it.each([
+    ["no items", undefined],
+    ["a state it doesn't know", [{ name: "Passport", state: "not_received" }]],
+    ["a document with no name", [{ state: "missing" }]],
+    ["a name that isn't text", [{ name: 7, state: "missing" }]],
+  ])("refuses an answer with %s", async (_what, items) => {
+    const [row] = PAPERWORK.results;
+    const fetchFn = answering(jsonResponse({ ...PAPERWORK, results: [{ ...row, items }] }));
+
+    await expect(
+      fetchPaperwork({ scope: "mine", page: 1, onlyWaiting: false }, fetchFn),
+    ).rejects.toThrow();
   });
 
   it("asks only for Students with documents waiting to be checked", async () => {

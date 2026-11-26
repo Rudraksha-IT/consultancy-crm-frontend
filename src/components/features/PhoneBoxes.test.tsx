@@ -50,6 +50,7 @@ function paperworkRow(counts: Partial<PaperworkRow>): PaperworkRow {
     waiting: 0,
     missing: 0,
     verified: 0,
+    items: [],
     ...counts,
   };
 }
@@ -59,26 +60,34 @@ describe("Documents on a phone", () => {
     render(<PaperworkList rows={[paperworkRow(counts)]} showsCounsellor onOpen={vi.fn()} />);
   }
 
-  it("keep only the to check and rejected chips", () => {
+  it("keep the short counts for what needs someone, only on a phone", () => {
     showRow({ rejected: 1, waiting: 2, missing: 4, verified: 6 });
 
     expect(isHiddenOnPhone(screen.getByText(/1 rejected/i))).toBe(false);
     expect(isHiddenOnPhone(screen.getByText(/2 to check/i))).toBe(false);
-    expect(isHiddenOnPhone(screen.getByText(/4 missing/i))).toBe(true);
-    expect(isHiddenOnPhone(screen.getByText(/6 correct/i))).toBe(true);
+    expect(screen.getByText(/1 rejected/i).closest("[data-counts]")).toHaveClass("phone:hidden");
+    expect(screen.queryByText(/4 missing|6 correct/i)).not.toBeInTheDocument();
   });
 
-  it("drop the chips box when nothing needs anyone", () => {
+  it("have no counts when nothing needs anyone", () => {
     showRow({ missing: 4, verified: 6 });
 
-    expect(isHiddenOnPhone(screen.getByText(/4 missing/i).closest("div"))).toBe(true);
+    expect(document.querySelector("[data-counts]")).toBeNull();
   });
 
-  it("show '5 of 13' without the bar, the name on one line and no Stage line", () => {
+  it("show no pills", () => {
+    showRow({ missing: 1, items: [{ name: "Passport", state: "missing" }] });
+
+    expect(isHiddenOnPhone(screen.getByText("Passport"))).toBe(true);
+  });
+
+  it("show '5 of 13' without 'received', the name on one line and no Stage line", () => {
     showRow({ waiting: 1 });
 
-    expect(isHiddenOnPhone(screen.getByRole("progressbar"))).toBe(true);
-    expect(isHiddenOnPhone(screen.getByText(/5 of 13/))).toBe(false);
+    const received = document.querySelector("[data-received]");
+    expect(received).toHaveTextContent("5 of 13 received");
+    expect(isHiddenOnPhone(received)).toBe(false);
+    expect(isHiddenOnPhone(screen.getByText("received"))).toBe(true);
     expect(screen.getByText("Aarav Sharma")).toHaveClass("max-phone:truncate");
     expect(isHiddenOnPhone(screen.getByText(/Applying, Australia/))).toBe(true);
     expect(isHiddenOnPhone(screen.getByRole("button", { name: /Open checklist/ }))).toBe(false);

@@ -210,6 +210,12 @@ describe("Tables on a sheet (ticket 21)", () => {
     );
   });
 
+  it("show the same fill on a Documents page row, which opens a checklist (ticket 12)", () => {
+    expect(tables).toMatch(
+      /@media \(hover: hover\) \{[^@]*li\[data-opens-checklist\]:hover \{\s*background: var\(--row-hover\);/,
+    );
+  });
+
   it("sit a wide table's cells closer on tablets, so it never runs past its sheet", () => {
     expect(tables).toMatch(
       /@media \(width >= 40\.0625rem\) and \(width < 64\.0625rem\) \{[\s\S]*padding-inline: 0\.5rem;/,

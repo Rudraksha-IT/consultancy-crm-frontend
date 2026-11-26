@@ -6,6 +6,7 @@ import {
   DOCUMENT_GROUPS,
   DOCUMENT_LINK_KINDS,
   DOCUMENT_STATES,
+  PaperworkItemState,
   VERIFICATIONS,
 } from "@/constants/documents";
 import { Stage } from "@/constants/stages";
@@ -319,6 +320,13 @@ const CountsFields = {
 export const PaperworkCountsSchema = z.object(CountsFields);
 export type PaperworkCounts = z.infer<typeof PaperworkCountsSchema>;
 
+/** One checklist document of a Student on the Documents page: its name and where it stands. */
+const PaperworkItemSchema = z.object({
+  name: z.string(),
+  state: z.enum(PaperworkItemState),
+});
+export type PaperworkItem = z.infer<typeof PaperworkItemSchema>;
+
 /** One Student on the Documents page. */
 const PaperworkRowSchema = z
   .object({
@@ -332,6 +340,8 @@ const PaperworkRowSchema = z
     done: z.number().int().nonnegative(),
     total: z.number().int().nonnegative(),
     ...CountsFields,
+    // Each checklist document, in checklist order (UI revamp 12).
+    items: z.array(PaperworkItemSchema),
   })
   .transform(({ student, ...rest }) => ({
     ...rest,

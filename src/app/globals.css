@@ -459,6 +459,8 @@
   --spacing-note-side: 21.25rem;
   --spacing-note-room: calc(100dvh - 6.75rem);
   --spacing-desk-empty: 10.5rem;
+  /* the Documents page (UI revamp 12): the least a row's name column is wide beside its pills */
+  --spacing-doc-name: 12.5rem;
   /* the pill drawn inside a 44 tall button on phones (Assign on Home) */
   --spacing-pill: 2rem;
   --container-content: var(--size-content);
@@ -744,6 +746,11 @@ main[data-page-move="in-from-bottom"] {
 /* A row that opens something shows a soft fill under the pointer; a finger leaves no shade. */
 @media (hover: hover) {
   tr[data-opens-page]:hover {
+    background: var(--row-hover);
+  }
+
+  /* A Documents page row opens that Student's checklist (UI revamp 12). */
+  li[data-opens-checklist]:hover {
     background: var(--row-hover);
   }
 }
