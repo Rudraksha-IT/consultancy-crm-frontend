@@ -4,10 +4,10 @@ import type { ReactNode } from "react";
 
 import { Icon, type IconName } from "./Icon";
 
-// No card: figures stand in a row with thin lines between them (TileGrid draws them). A container,
-// so the number can shrink to the tile's width on a phone.
+// No card of its own: figures share one sheet with thin lines between them (TileGrid draws both). A
+// container, so the number can shrink to the tile's width on a phone.
 const TILE_CLASSES =
-  "max-phone:@container grid min-w-0 content-start gap-1.5 px-5 py-4 text-ink max-phone:gap-1 max-phone:px-0 max-phone:py-3";
+  "max-phone:@container grid min-w-0 content-start gap-1.5 px-5 py-4.5 text-ink max-phone:gap-1 max-phone:px-0 max-phone:py-3";
 
 type FigureTileProps = {
   label: string;

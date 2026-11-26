@@ -25,11 +25,49 @@ type JourneyProps = {
   info?: ReactNode;
 };
 
-const STOP_CLASSES: Record<StopState, string> = {
-  done: "border-accent bg-accent text-accent-ink",
-  current: "border-accent bg-paper ring-5 ring-tint",
-  next: "border-rule-2 bg-paper",
-};
+/**
+ * The steps are the thread's beads (ticket 21): each Stage a shade deeper, Lead to Visa. A done
+ * step is filled in its shade (the tick dark on the two light shades, light on the rest), the
+ * current one is ringed in its shade, and the line from a done step runs into the next shade.
+ */
+const BEADS = [
+  {
+    done: "border-bead-1 bg-bead-1 text-ink",
+    current: "border-bead-1 bg-paper ring-5 ring-bead-1/25",
+    line: "before:from-bead-1 before:to-bead-2 before:bg-linear-to-r",
+  },
+  {
+    done: "border-bead-2 bg-bead-2 text-ink",
+    current: "border-bead-2 bg-paper ring-5 ring-bead-2/25",
+    line: "before:from-bead-2 before:to-bead-3 before:bg-linear-to-r",
+  },
+  {
+    done: "border-bead-3 bg-bead-3 text-accent-ink",
+    current: "border-bead-3 bg-paper ring-5 ring-bead-3/25",
+    line: "before:from-bead-3 before:to-bead-4 before:bg-linear-to-r",
+  },
+  {
+    done: "border-bead-4 bg-bead-4 text-accent-ink",
+    current: "border-bead-4 bg-paper ring-5 ring-bead-4/25",
+    line: "before:from-bead-4 before:to-bead-5 before:bg-linear-to-r",
+  },
+  {
+    done: "border-bead-5 bg-bead-5 text-accent-ink",
+    current: "border-bead-5 bg-paper ring-5 ring-bead-5/25",
+    line: "",
+  },
+] as const;
+const NEXT_STOP = "border-rule-2 bg-paper";
+
+/** The line running on from a done step, into the next Stage's shade. */
+function lineClasses(index: number, state: StopState): string {
+  return state === "done" ? (BEADS[index]?.line ?? "") : "";
+}
+
+function stopClasses(index: number, state: StopState): string {
+  if (state === "next") return NEXT_STOP;
+  return BEADS[index]?.[state] ?? NEXT_STOP;
+}
 
 const NAME_CLASSES: Record<StopState, string> = {
   done: "text-ink-2 font-medium",
@@ -51,7 +89,7 @@ export function Journey({ stage, nextStep, isDone, onMoveTo, isMoving, info }: J
   return (
     <div
       data-lost={isLost}
-      className="rounded-panel border-rule bg-paper shadow-raise phone:px-6 phone:pt-7 phone:pb-6 max-phone:px-3 max-phone:pt-4 max-phone:pb-3.5 min-w-0 border p-5"
+      className="rounded-panel border-sheet-rule bg-paper shadow-raise phone:px-6 phone:pt-7 phone:pb-6 max-phone:px-3 max-phone:pt-4 max-phone:pb-3.5 min-w-0 border p-5"
     >
       {info !== undefined && <div className="-mt-2 mb-2 flex items-center gap-1.5">{info}</div>}
       <div className="phone:overflow-x-auto">
@@ -67,6 +105,7 @@ export function Journey({ stage, nextStep, isDone, onMoveTo, isMoving, info }: J
             <Stop
               key={step}
               step={step}
+              index={index}
               state={isDone === true ? "done" : stopState(index, at, isLost)}
               isLast={index === JOURNEY_STAGES.length - 1}
               onMove={step === stage || !MANUAL_STAGES.includes(step) ? undefined : moveTo}
@@ -89,6 +128,8 @@ function stopState(index: number, at: number, isLost: boolean): StopState {
 
 type StopProps = {
   step: Stage;
+  /** Where the Stage is on the journey, 0 (Lead) to 4 (Visa): it picks the bead's shade. */
+  index: number;
   state: StopState;
   /** Given, the Stage's name is a button that moves the Student there. */
   onMove: ((stage: Stage) => void) | undefined;
@@ -107,7 +148,7 @@ const PHONE_STOP =
 const ACROSS_STOP =
   "phone:content-start phone:items-start phone:justify-items-start phone:gap-3 phone:text-left phone:before:top-2.5 phone:before:bottom-auto phone:before:right-1 phone:before:left-5 phone:before:w-auto phone:before:h-0.75";
 
-function Stop({ step, state, onMove, isMoving, isLast }: StopProps) {
+function Stop({ step, index, state, onMove, isMoving, isLast }: StopProps) {
   return (
     <li
       data-state={state}
@@ -115,14 +156,14 @@ function Stop({ step, state, onMove, isMoving, isLast }: StopProps) {
         "before:bg-fill-2 relative grid before:absolute before:rounded-full",
         PHONE_STOP,
         ACROSS_STOP,
-        state === "done" && "before:bg-accent",
+        lineClasses(index, state),
         isLast && "before:hidden",
       )}
     >
       <span
         className={clsx(
           "relative z-10 grid size-5.5 place-items-center rounded-full border-3",
-          STOP_CLASSES[state],
+          stopClasses(index, state),
         )}
       >
         {state === "done" && <Icon name="check" size="sm" />}

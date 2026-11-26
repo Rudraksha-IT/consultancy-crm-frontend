@@ -3,8 +3,8 @@
 /*
  * Design tokens (docs/design-system.md). Components use these through Tailwind classes only.
  *
- * Themed colours come from buildThemeTokens() in src/lib/theme: the Ivory theme (UI revamp, ticket
- * 03), the same for every office. They are written here too, so the first paint looks right; a test
+ * Themed colours come from buildThemeTokens() in src/lib/theme: the Ivory theme (UI revamp, tickets
+ * 03 and 21), the same for every office. They are written here too, so the first paint looks right; a test
  * keeps these values equal to the function's output.
  */
 :root {
@@ -12,12 +12,11 @@
   --mark: #c8102e;
   /* themed: Ivory, light */
   --paper: #ffffff;
-  --canvas: #faf8f4;
+  --canvas: #f6f3ed;
   --fill: #f4f1eb;
   --fill-2: #ece7df;
   --rule: #dddddc;
   --rule-2: #c5c3c2;
-  --rule-strong: #84817f;
   --ink: #1f1916;
   --ink-2: #625750;
   --ink-3: #766c65;
@@ -25,13 +24,13 @@
   --accent-hover: #57141e;
   --accent-ink: #ffffff;
   --tint: #f3e6e3;
-  --side-bg: #faf8f4;
+  --side-bg: #f6f3ed;
   --side-ink: #1f1916;
   --side-muted: #625750;
   --side-hover: #f4f1eb;
   --side-active: #ece7df;
   --side-active-ink: #1f1916;
-  --side-rule: #faf8f4;
+  --side-rule: #f6f3ed;
 
   /* fixed: status colours never change with the Theme */
   --good: #3f6b3a;
@@ -55,9 +54,30 @@
   --c2: #eb6834;
   --c3: #1baf7a;
 
-  /* Ivory: sections have no box, so nothing is raised; popups lift off the page */
+  /*
+   * Sheets (ticket 21): a section's content is a white sheet on the page, with a thin border and
+   * a faint shadow. Column heads sit on a faint band; a row that opens something shows a soft
+   * fill under the pointer.
+   */
+  --sheet-rule: var(--rule);
+  --band: color-mix(in srgb, var(--fill) 55%, var(--paper));
+  --row-hover: color-mix(in srgb, var(--fill) 60%, var(--paper));
+  /*
+   * The thread (ticket 21): a Student's journey is five beads, Lead to Visa, each a shade deeper,
+   * the last the brand colour itself.
+   */
+  --bead-1: color-mix(in srgb, var(--accent) 30%, var(--paper));
+  --bead-2: color-mix(in srgb, var(--accent) 47.5%, var(--paper));
+  --bead-3: color-mix(in srgb, var(--accent) 65%, var(--paper));
+  --bead-4: color-mix(in srgb, var(--accent) 82.5%, var(--paper));
+  --bead-5: var(--accent);
+  /* a bead still to come: its hollow ring and the string to the next */
+  --bead-string: var(--rule-2);
+  --bead-ring: var(--rule-2);
+
+  /* a sheet is raised a hair off the page; popups lift off it */
   --scrim: rgb(28 16 12 / 0.42);
-  --raise: none;
+  --raise: 0 1px 2px rgb(42 22 16 / 0.04);
   --lift: 0 1px 2px rgb(42 22 16 / 0.06), 0 16px 40px rgb(42 22 16 / 0.14);
   /* swiping between pages (issue 90): the gap a pull opens, and the page's moving edge */
   --gap: color-mix(in srgb, var(--ink) 9%, var(--canvas));
@@ -65,47 +85,62 @@
   --edge-bottom: 0 10px 24px -12px rgb(0 0 0 / 0.25), 0 1px 0 var(--rule-2);
 
   /*
-   * Sizes that change on phones, 640 px and below (design system: Type, and Phones). Above 640 the
-   * computer scale (UI revamp, ticket 03): page text 16, names in lists 17, the line under them
-   * 15, table cells 16, column heads 14.5, buttons 15.5. At 640 and below (the media block after
-   * this one) one step smaller, so a screen holds more. The query matches Tailwind's `max-phone`.
+   * Sizes that change on phones, 640 px and below (design system: Type, and Phones). One type
+   * scale (ticket 21): 12, 13, 14, 15, 16, 18, 20, 24, 28 and 32, in weights 400, 500 and 600.
+   * Above 640: page text 16, names in lists 18, the line under them, chips and buttons 15, column
+   * heads and captions 14. At 640 and below (the media block after this one) a step smaller, so a
+   * screen holds more. The query matches Tailwind's `max-phone`.
    */
   --size-page-margin: 1.625rem;
   --size-topbar: 4.5rem;
   --size-panel-corner: 0.875rem;
   --size-title: 1.75rem;
   --size-title-line: 2.125rem;
-  --size-section-title: 1.0625rem;
-  --size-section-title-line: 1.4375rem;
+  --size-section-title: 1.125rem;
+  --size-section-title-line: 1.5rem;
   --size-body: 1rem;
   --size-body-line: 1.5rem;
-  --size-name: 1.0625rem;
+  --size-name: 1.125rem;
   --size-name-line: 1.5rem;
   --size-secondary: 0.9375rem;
   --size-secondary-line: 1.375rem;
   --size-small: 0.875rem;
   --size-small-line: 1.25rem;
-  --size-head: 0.90625rem;
+  --size-head: 0.875rem;
   --size-head-line: 1.25rem;
-  --size-button: 0.96875rem;
+  --size-button: 0.9375rem;
   --size-button-sm: 0.9375rem;
   --size-figure: 2rem;
   --size-figure-line: 2.5rem;
   /* Configuration > Universities: the university's name above its courses */
-  --size-uni-name: 1.3125rem;
+  --size-uni-name: 1.25rem;
   --size-uni-name-line: 1.75rem;
   /* the Email list: the Student's name is the biggest line of a row */
-  --size-email-name: 1.1875rem;
+  --size-email-name: 1.25rem;
   --size-email-name-line: 1.625rem;
   /* the sideways room inside a button, and a small one (phones have less) */
   --size-button-pad: 0.75rem;
   --size-button-pad-main: 1rem;
   --size-button-pad-sm: 0.625rem;
-  /* rows and cells have 12 inside, and a section is pulled out by it, so text lines up with the
-     title above (phones 8) */
-  --size-gutter: 0.75rem;
+  /* a sheet's padding: rows and cells keep 18 from its sides (phones 14) */
+  --size-gutter: 1.125rem;
+  /* the page's content: 1240 at most, growing with a wide screen (the blocks after this one) */
+  --size-content: 77.5rem;
 
   color-scheme: light;
+}
+
+/* Wide screens: the page grows in steps, so a big screen is not mostly empty. */
+@media (width >= 100rem) {
+  :root {
+    --size-content: 87.5rem;
+  }
+}
+
+@media (width >= 137.5rem) {
+  :root {
+    --size-content: 97.5rem;
+  }
 }
 
 /* Phones, 640 px and below: the sizes above take their phone values. */
@@ -113,33 +148,29 @@
   :root {
     --size-page-margin: 1rem;
     --size-topbar: 3.75rem;
-    --size-panel-corner: 1rem;
     --size-title: 1.5rem;
     --size-title-line: 1.875rem;
-    --size-section-title: 1.03125rem;
-    --size-section-title-line: 1.375rem;
     --size-body: 0.9375rem;
     --size-body-line: 1.375rem;
     --size-name: 1rem;
     --size-name-line: 1.375rem;
-    --size-secondary: 0.84375rem;
-    --size-secondary-line: 1.1875rem;
+    --size-secondary: 0.875rem;
+    --size-secondary-line: 1.25rem;
     --size-small: 0.8125rem;
     --size-small-line: 1.125rem;
     --size-head: 0.8125rem;
     --size-head-line: 1.125rem;
-    --size-button: 0.90625rem;
     --size-button-sm: 0.875rem;
     --size-figure: 1.5rem;
     --size-figure-line: 1.875rem;
     --size-uni-name: 1rem;
     --size-uni-name-line: 1.375rem;
-    --size-email-name: 1.0625rem;
+    --size-email-name: 1.125rem;
     --size-email-name-line: 1.5rem;
     --size-button-pad: 0.875rem;
     --size-button-pad-main: 0.875rem;
     --size-button-pad-sm: 0.625rem;
-    --size-gutter: 0.5rem;
+    --size-gutter: 0.875rem;
   }
 }
 
@@ -152,7 +183,6 @@
   --fill-2: #292624;
   --rule: #3f3b39;
   --rule-2: #54504c;
-  --rule-strong: #908a84;
   --ink: #f1e8dd;
   --ink-2: #bcae9f;
   --ink-3: #8f8174;
@@ -181,6 +211,15 @@
   --c1: #3987e5;
   --c2: #d95926;
   --c3: #199e70;
+  /* dark: a sheet has no shadow and a quieter border; every bead starts brighter */
+  --sheet-rule: color-mix(in srgb, var(--ink) 13%, var(--paper));
+  --bead-1: color-mix(in srgb, var(--accent) 44%, var(--paper));
+  --bead-2: color-mix(in srgb, var(--accent) 58%, var(--paper));
+  --bead-3: color-mix(in srgb, var(--accent) 72%, var(--paper));
+  --bead-4: color-mix(in srgb, var(--accent) 86%, var(--paper));
+  --bead-5: var(--accent);
+  --bead-string: color-mix(in srgb, var(--ink) 22%, var(--paper));
+  --bead-ring: color-mix(in srgb, var(--ink) 30%, var(--paper));
   --scrim: rgb(0 0 0 / 0.6);
   --raise: none;
   --lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px rgb(0 0 0 / 0.55);
@@ -203,7 +242,7 @@
   --color-fill-2: var(--fill-2);
   --color-rule: var(--rule);
   --color-rule-2: var(--rule-2);
-  --color-rule-strong: var(--rule-strong);
+  --color-sheet-rule: var(--sheet-rule);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
@@ -228,6 +267,11 @@
   --color-note: var(--note);
   --color-note-rule: var(--note-rule);
   --color-gold: var(--gold);
+  --color-bead-1: var(--bead-1);
+  --color-bead-2: var(--bead-2);
+  --color-bead-3: var(--bead-3);
+  --color-bead-4: var(--bead-4);
+  --color-bead-5: var(--bead-5);
   --color-on-status: var(--on-status);
   --color-qr-dark: var(--qr-dark);
   --color-qr-light: var(--qr-light);
@@ -252,12 +296,13 @@
   --text-section-title: var(--size-section-title);
   --text-section-title--line-height: var(--size-section-title-line);
   --text-section-title--font-weight: 600;
-  --text-card-title: 1.0625rem;
+  --text-section-title--letter-spacing: -0.01em;
+  --text-card-title: 1.125rem;
   --text-card-title--line-height: 1.5rem;
   --text-card-title--font-weight: 600;
   /* a dialog's title, in the title face */
-  --text-dialog-title: 1.4375rem;
-  --text-dialog-title--line-height: 1.8125rem;
+  --text-dialog-title: 1.5rem;
+  --text-dialog-title--line-height: 1.875rem;
   --text-dialog-title--font-weight: 500;
   --text-dialog-title--letter-spacing: -0.025em;
   --text-figure: var(--size-figure);
@@ -286,7 +331,7 @@
   --text-button-sm--line-height: 1.25rem;
   --text-email-name: var(--size-email-name);
   --text-email-name--line-height: var(--size-email-name-line);
-  --text-email-name--font-weight: 650;
+  --text-email-name--font-weight: 600;
   --text-uni-name: var(--size-uni-name);
   --text-uni-name--line-height: var(--size-uni-name-line);
   --text-uni-name--font-weight: 600;
@@ -364,7 +409,7 @@
   --spacing-inbox: 32.5rem;
   --spacing-conversations-list: 40rem;
   --spacing-thread: 28.75rem;
-  --container-content: 67.5rem;
+  --container-content: var(--size-content);
   /* the top bar's search box above 1024px, centred over the page content (issue 88) */
   --container-search: 32rem;
   /* the Intake month grid, one year at a time (issue 92) */
@@ -419,6 +464,13 @@
     line-height: 1.5;
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Titles break into even lines (ticket 21). */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 
   /* Bold in the content no heavier than a task's title (600), owner 2026-11-25. */
@@ -572,36 +624,18 @@ main[data-page-move="in-from-bottom"] {
   }
 }
 
-/* Arrow steps (a Student's Stage): each step is a chevron; the first has a flat left edge. */
-@utility clip-chevron {
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 0 100%, 9px 50%);
-}
-
-@utility clip-chevron-first {
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 0 100%);
-}
-
 /*
- * Section lines (Ivory, ticket 03). A section's content (`ui/Panel`) has a strong line on top, under
- * its title. Not where something above already draws the top: mini tabs or a switch (Transfer
- * requests; Tasks' To do / Given to others / Done), a toolbar that holds them, or figure boxes
- * (Accounts' table under its figures). Outside Tailwind's layers, so it wins over the panel's own.
- */
-:is([role="tablist"], [data-strip], [data-tiles]) + [data-panel],
-:has(> [role="tablist"], > [data-strip]) + [data-panel],
-[data-panel][data-no-line] {
-  border-top-width: 0;
-}
-
-/*
- * Ivory tables (ticket 03): quiet column heads with no fill, cells in page text, and the first and
- * last cells keeping the row gutter, so the text lines up with the section title. Only while rows
- * are table rows (from 761 for a table whose rows stack below tablet width, any other above 640).
+ * Tables on a sheet (ticket 21). Column heads sit on a faint band, 42 tall, with a line under
+ * them; the first and last cells keep the sheet's padding from its sides (18, phones 14). Only
+ * while rows are table rows (from 761 for a table whose rows stack below tablet width, any other
+ * above 640). Outside Tailwind's layers, so these win over a table's own classes.
  */
 @media (width >= 40.0625rem) {
   table[data-phone]:not([data-stacks]) > thead th {
-    background: transparent;
-    color: var(--ink-3);
+    height: 2.625rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--band);
+    color: var(--ink-2);
     font-size: var(--size-head);
     line-height: var(--size-head-line);
     font-weight: 500;
@@ -622,8 +656,10 @@ main[data-page-move="in-from-bottom"] {
 
 @media (width >= 47.5625rem) {
   table[data-stacks] > thead th {
-    background: transparent;
-    color: var(--ink-3);
+    height: 2.625rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--band);
+    color: var(--ink-2);
     font-size: var(--size-head);
     line-height: var(--size-head-line);
     font-weight: 500;
@@ -637,7 +673,14 @@ main[data-page-move="in-from-bottom"] {
     padding-right: var(--size-gutter);
   }
 }
-/* End of Ivory tables. */
+
+/* A row that opens something shows a soft fill under the pointer; a finger leaves no shade. */
+@media (hover: hover) {
+  tr[data-opens-page]:hover {
+    background: var(--row-hover);
+  }
+}
+/* End of tables on a sheet (the tablet rules follow "Tables fit their panel"). */
 
 /*
  * A row that opens a page (DataRow opensPage): clicking anywhere on it follows the name's link,
@@ -921,6 +964,154 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   }
 }
 /* End of tables fit their panel. */
+
+/*
+ * Tables on a sheet (ticket 21), tablets: a wide table (Applications, Visas) ran past the right
+ * edge of its sheet. From 641 to 1024 its cells sit closer (8 on each side) and a cell that does
+ * not shrink may take two lines (a date), so every column stays inside. The first and last cells
+ * keep the sheet's padding. Only while rows are table rows.
+ */
+@media (width >= 40.0625rem) and (width < 64.0625rem) {
+  table[data-phone]:not([data-stacks]) > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+    padding-inline: 0.5rem;
+  }
+
+  table[data-phone]:not([data-stacks]) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child {
+    padding-left: var(--size-gutter);
+  }
+
+  table[data-phone]:not([data-stacks]) > :is(thead, tbody, tfoot) > tr > :is(th, td):last-child {
+    padding-right: var(--size-gutter);
+  }
+
+  table:not([data-stacks], [data-wraps]):has([data-shrinks]) > tbody > tr > td:not([data-shrinks]) {
+    white-space: normal;
+  }
+}
+
+@media (width >= 47.5625rem) and (width < 64.0625rem) {
+  table[data-stacks] > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+    padding-inline: 0.5rem;
+  }
+
+  table[data-stacks] > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child {
+    padding-left: var(--size-gutter);
+  }
+
+  table[data-stacks] > :is(thead, tbody, tfoot) > tr > :is(th, td):last-child {
+    padding-right: var(--size-gutter);
+  }
+
+  table[data-stacks]:not([data-wraps]):has([data-shrinks]) > tbody > tr > td:not([data-shrinks]) {
+    white-space: normal;
+  }
+}
+/* End of tables on a sheet, tablets. */
+
+/*
+ * The thread (ticket 21, `ui/Thread`): five beads on a string, Lead to Visa. A bead reached is
+ * filled in its own shade and joined to the next by a string of that shade; the current bead has
+ * a ring (a 2px gap, then 2px in its shade); the rest are hollow on a grey string. The list keeps
+ * room round its beads, so the ring is never cut off by what holds it.
+ */
+[data-thread] {
+  box-sizing: content-box;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  max-width: 23.75rem;
+  height: 0.875rem;
+  margin: -0.1875rem -0.4375rem;
+  padding: 0.4375rem;
+  overflow: visible;
+  list-style: none;
+}
+
+[data-thread] > li {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0.875rem;
+  height: 0.875rem;
+}
+
+[data-thread] > li:last-child {
+  flex: 0 0 0.875rem;
+}
+
+[data-thread] > li[data-bead="1"] {
+  --bead: var(--bead-1);
+}
+
+[data-thread] > li[data-bead="2"] {
+  --bead: var(--bead-2);
+}
+
+[data-thread] > li[data-bead="3"] {
+  --bead: var(--bead-3);
+}
+
+[data-thread] > li[data-bead="4"] {
+  --bead: var(--bead-4);
+}
+
+[data-thread] > li[data-bead="5"] {
+  --bead: var(--bead-5);
+}
+
+/* the string to the next bead */
+[data-thread] > li::before {
+  content: "";
+  position: absolute;
+  top: 0.375rem;
+  right: -0.4375rem;
+  left: 0.4375rem;
+  height: 2px;
+  background: var(--bead-string);
+}
+
+[data-thread] > li:last-child::before {
+  display: none;
+}
+
+[data-thread] > li[data-state="past"]::before {
+  background: var(--bead);
+}
+
+/* the bead */
+[data-thread] > li::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--bead-ring);
+}
+
+[data-thread] > li:is([data-state="past"], [data-state="now"])::after {
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, white 28%, var(--bead)),
+    var(--bead) 70%
+  );
+  box-shadow: none;
+}
+
+[data-thread] > li[data-state="now"]::after {
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 4px var(--bead);
+}
+
+@media (width < 40.0625rem) {
+  [data-thread] {
+    max-width: 12.5rem;
+  }
+}
+/* End of the thread. */
 
 /* The logo loader (list tidy-ups 06, chosen in 19): the product's logo turns at one steady speed,
    never stopping, while its petals and lines close together into a small flower and open out

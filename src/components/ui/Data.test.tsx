@@ -1,25 +1,25 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
-import { ArrowSteps } from "./ArrowSteps";
 import { BarList } from "./BarList";
 import { ColumnChart } from "./ColumnChart";
 import { StageCards } from "./StageCards";
+import { Thread } from "./Thread";
 
-describe("ArrowSteps", () => {
-  it("names the current Stage and marks the steps before it as done", () => {
-    render(<ArrowSteps stage="applying" />);
+describe("Thread", () => {
+  it("names the current Stage and marks the beads before it as reached", () => {
+    render(<Thread stage="applying" />);
 
     const steps = screen.getByRole("list", { name: "Stage: Applying" });
     const states = within(steps)
       .getAllByRole("listitem")
       .map((step) => step.dataset.state);
     expect(states).toEqual(["past", "past", "now", "next", "next"]);
-    expect(within(steps).getByText("Applying")).toBeInTheDocument();
+    expect(screen.getByText("Applying")).toBeInTheDocument();
   });
 
   it("marks nothing for a Lost Student and says Lost", () => {
-    render(<ArrowSteps stage="lost" />);
+    render(<Thread stage="lost" />);
 
     const steps = screen.getByRole("list", { name: "Stage: Lost" });
     expect(

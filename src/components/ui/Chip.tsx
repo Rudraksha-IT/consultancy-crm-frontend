@@ -3,14 +3,18 @@ import type { ReactNode } from "react";
 
 import { Icon, type IconName } from "./Icon";
 
-/** Status colours are fixed; `accent` follows the Theme and is for neutral highlights only. */
+/**
+ * Status colours are fixed. `accent` is a status that is simply in progress (Applied, Offer, New
+ * visitor): ink with a hollow ring, never the brand colour, which sits too close to the problem
+ * red (ticket 21). Red is only for a problem.
+ */
 export type ChipTone = "good" | "warn" | "bad" | "accent" | "muted";
 
 const TONE_CLASSES: Record<ChipTone, string> = {
   good: "text-good",
   warn: "text-warn",
   bad: "text-bad",
-  accent: "text-accent",
+  accent: "text-ink",
   muted: "text-ink-2",
 };
 
@@ -35,16 +39,26 @@ export function Chip({ children, tone = "muted", hasDot = true, icon }: ChipProp
         TONE_CLASSES[tone],
       )}
     >
-      <ChipMark icon={icon} hasDot={hasDot} />
+      <ChipMark icon={icon} hasDot={hasDot} isHollow={tone === "accent"} />
       {/* In a narrow cell the word is cut with …, never spilling out (list tidy-ups 17). */}
       <span className="min-w-0 truncate">{children}</span>
     </span>
   );
 }
 
-/** The icon, else the dot (unless left out). */
-function ChipMark({ icon, hasDot }: { icon: IconName | undefined; hasDot: boolean }) {
+type ChipMarkProps = { icon: IconName | undefined; hasDot: boolean; isHollow: boolean };
+
+/** The icon, else the dot (unless left out): filled in the status colour, or a hollow ring. */
+function ChipMark({ icon, hasDot, isHollow }: ChipMarkProps) {
   if (icon !== undefined) return <Icon name={icon} size="sm" />;
   if (!hasDot) return null;
-  return <span aria-hidden="true" className="size-chip-dot rounded-pill flex-none bg-current" />;
+  return (
+    <span
+      aria-hidden="true"
+      className={clsx(
+        "size-chip-dot rounded-pill flex-none",
+        isHollow ? "border-ink-3 border-2" : "bg-current",
+      )}
+    />
+  );
 }

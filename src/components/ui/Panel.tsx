@@ -8,19 +8,18 @@ type PanelProps = {
 };
 
 /**
- * A section's content under its title, with no box around it (Ivory, ticket 03): a strong line
- * (2px, ink 55%) on top divides the title from the content, and light lines divide the rows. The
- * panel is pulled out by the row gutter, so the text inside lines up with the title above. No
- * strong line where mini tabs, a toolbar holding tabs or figure boxes already sit above it
- * (globals.css, "Section lines").
+ * A section's content under its title: a white sheet on the page (ticket 21), with a thin border,
+ * 14 corners and a faint shadow in light, so what belongs together is seen at once. Rows and
+ * table cells inside keep the sheet's padding from its sides (`px-gutter`: 18, phones 14); light
+ * lines divide the rows. There is no line under the title.
  */
 export function Panel({ children, isPadded = false }: PanelProps) {
   return (
     <div
       data-panel=""
       className={clsx(
-        "border-rule-strong -mx-gutter min-w-0 border-t-2",
-        isPadded && "px-gutter grid gap-4 pt-4.5",
+        "rounded-panel border-sheet-rule bg-paper shadow-raise min-w-0 overflow-hidden border",
+        isPadded && "max-phone:px-gutter max-phone:py-4 grid gap-4 p-5",
       )}
     >
       {children}

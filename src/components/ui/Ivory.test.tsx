@@ -14,24 +14,39 @@ import { TileGrid } from "./TileGrid";
 /** The Ivory look (UI revamp, ticket 03): no box around everything, lines and words instead. */
 const GLOBALS_CSS = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
-describe("Ivory sections", () => {
-  it("draw a section's content with a strong line on top and no box", () => {
+describe("Sheets (ticket 21)", () => {
+  it("draw a section's content as a white sheet, with no title line", () => {
     render(<Panel>rows</Panel>);
 
     const panel = screen.getByText("rows");
     expect(panel).toHaveAttribute("data-panel");
-    expect(panel).toHaveClass("border-t-2", "border-rule-strong");
-    expect(panel).not.toHaveClass("bg-paper", "border", "rounded-panel", "shadow-raise");
+    expect(panel).toHaveClass(
+      "bg-paper",
+      "border",
+      "border-sheet-rule",
+      "rounded-panel",
+      "shadow-raise",
+      "overflow-hidden",
+    );
+    expect(panel.className).not.toMatch(/border-t-2|rule-strong|-mx-gutter/);
   });
 
-  it("drop the strong line under mini tabs, a toolbar holding them, and figure boxes", () => {
-    const rule = /([^{}]+)\{\s*border-top-width: 0;\s*\}/.exec(GLOBALS_CSS)?.[1] ?? "";
+  it("keep a padded sheet's content 20 from its edges, 14 from its sides on phones", () => {
+    render(<Panel isPadded>form</Panel>);
 
-    expect(rule).toContain('[role="tablist"]');
-    expect(rule).toContain("[data-strip]");
-    expect(rule).toContain("[data-tiles]");
-    expect(rule).toContain(':has(> [role="tablist"], > [data-strip]) + [data-panel]');
-    expect(rule).toContain("[data-panel][data-no-line]");
+    expect(screen.getByText("form")).toHaveClass("p-5", "max-phone:px-gutter", "max-phone:py-4");
+  });
+
+  it("have no rules left about a title line after tabs or figures", () => {
+    expect(GLOBALS_CSS).not.toContain("border-top-width: 0");
+    expect(GLOBALS_CSS).not.toContain("rule-strong");
+    expect(GLOBALS_CSS).not.toContain("data-no-line");
+  });
+
+  it("round a sheet's corners 14 on every width", () => {
+    expect(GLOBALS_CSS.match(/--size-panel-corner: [^;]+;/g)).toEqual([
+      "--size-panel-corner: 0.875rem;",
+    ]);
   });
 });
 
@@ -70,6 +85,22 @@ describe("Ivory statuses", () => {
     const chip = screen.getByText("Rejected").parentElement;
     expect(chip).toHaveClass("text-bad");
     expect(chip?.className).not.toMatch(/(^|\s)bg-/);
+  });
+
+  it("never use the accent for a status: in progress is ink with a hollow ring (ticket 21)", () => {
+    render(<Chip tone="accent">Applied</Chip>);
+
+    const chip = screen.getByText("Applied").parentElement;
+    expect(chip).toHaveClass("text-ink");
+    expect(chip?.outerHTML).not.toContain("accent");
+    expect(chip?.firstElementChild).toHaveClass("border-2", "border-ink-3");
+    expect(chip?.firstElementChild).not.toHaveClass("bg-current");
+  });
+
+  it("keep a filled dot for good, warning and problem", () => {
+    render(<Chip tone="good">Verified</Chip>);
+
+    expect(screen.getByText("Verified").parentElement?.firstElementChild).toHaveClass("bg-current");
   });
 });
 
@@ -112,27 +143,76 @@ describe("Ivory tabs and switches", () => {
   });
 });
 
-describe("Ivory figures", () => {
-  it("stand in a row with thin lines between them, not in cards", () => {
+describe("Figures (ticket 21)", () => {
+  function grid(columns?: 3 | 4): HTMLElement {
     render(
-      <TileGrid label="Money">
+      <TileGrid label="Money" {...(columns === undefined ? {} : { columns })}>
         <FigureTile label="Collected" value="NPR 10" />
         <FigureTile label="Still to pay" value="NPR 5" />
+        <FigureTile label="Owed" value="NPR 1" />
       </TileGrid>,
     );
+    return screen.getByRole("group", { name: "Money" });
+  }
 
-    const grid = screen.getByRole("group", { name: "Money" });
-    expect(grid).toHaveAttribute("data-tiles");
-    expect(grid).toHaveClass("border-y", "*:border-l", "max-phone:*:border-l-0");
-    expect(screen.getByText("Collected").parentElement).not.toHaveClass("bg-paper", "border");
+  it("stand on one sheet", () => {
+    const tiles = grid();
+
+    expect(tiles).toHaveAttribute("data-tiles");
+    expect(tiles).toHaveClass(
+      "bg-paper",
+      "border",
+      "border-sheet-rule",
+      "rounded-panel",
+      "shadow-raise",
+    );
+  });
+
+  it("drop the left line of the first figure of each row, at any number of columns", () => {
+    const tiles = grid(4);
+
+    // Lines are only on a figure's right and under it, reaching one pixel out; the sheet cuts off
+    // what falls outside it. So no figure has a line on its left, however many fit across.
+    expect(tiles).toHaveClass(
+      "overflow-hidden",
+      "phone:*:border-r",
+      "phone:*:border-b",
+      "phone:*:-mr-px",
+      "phone:*:-mb-px",
+    );
+    expect(tiles.className).not.toMatch(/border-l(\s|$)/);
+    expect(tiles.className).not.toMatch(/nth-child\(\dn\+1\)|nth-child\(odd\)\]:border-l-0/);
+  });
+
+  it("have no side lines on phones, inside the sheet's padding", () => {
+    expect(grid()).toHaveClass("max-phone:px-gutter", "max-phone:grid-cols-2");
   });
 });
 
-describe("Ivory tables", () => {
-  it("give column heads no fill, quiet small text, and keep the row gutter", () => {
-    const tables = GLOBALS_CSS.slice(GLOBALS_CSS.indexOf("Ivory tables (ticket 03)"));
+describe("Tables on a sheet (ticket 21)", () => {
+  const tables = GLOBALS_CSS.slice(GLOBALS_CSS.indexOf("Tables on a sheet (ticket 21)"));
 
-    expect(tables).toMatch(/thead th \{[^}]*background: transparent;[^}]*color: var\(--ink-3\);/);
+  it("put column heads on a faint band, 42 tall, with a line under them", () => {
+    expect(GLOBALS_CSS).toContain("--band: color-mix(in srgb, var(--fill) 55%, var(--paper));");
+    expect(tables).toMatch(
+      /thead th \{[^}]*height: 2\.625rem;[^}]*border-bottom: 1px solid var\(--rule\);[^}]*background: var\(--band\);/,
+    );
+  });
+
+  it("keep the first and last cells the sheet's padding from its sides", () => {
     expect(tables).toMatch(/:first-child \{\s*padding-left: var\(--size-gutter\);/);
+    expect(tables).toMatch(/:last-child \{\s*padding-right: var\(--size-gutter\);/);
+  });
+
+  it("show a soft fill under the pointer on a row that opens something, not under a finger", () => {
+    expect(tables).toMatch(
+      /@media \(hover: hover\) \{\s*tr\[data-opens-page\]:hover \{\s*background: var\(--row-hover\);/,
+    );
+  });
+
+  it("sit a wide table's cells closer on tablets, so it never runs past its sheet", () => {
+    expect(tables).toMatch(
+      /@media \(width >= 40\.0625rem\) and \(width < 64\.0625rem\) \{[\s\S]*padding-inline: 0\.5rem;/,
+    );
   });
 });

@@ -4,10 +4,9 @@ import { JOURNEY_STAGES, STAGE_LABELS, Stage } from "@/constants/stages";
 
 type StepState = "on" | "off";
 
-const STEP_CLASSES: Record<StepState, string> = {
-  on: "bg-accent",
-  off: "bg-fill-2",
-};
+/** The thread's shades, Lead to Visa (ticket 21); a Stage not reached is a hollow ring. */
+const BEAD_CLASSES = ["bg-bead-1", "bg-bead-2", "bg-bead-3", "bg-bead-4", "bg-bead-5"] as const;
+const HOLLOW_CLASSES = "border-rule-2 border";
 
 const NAME_CLASSES: Partial<Record<Stage, string>> = {
   [Stage.Lost]: "text-bad",
@@ -18,8 +17,9 @@ type StageMeterProps = {
 };
 
 /**
- * A compact Stage for lists: five small steps filled up to the Stage, and its name. The steps are
- * decoration; the name says it in words. On a phone only the name shows.
+ * A compact Stage for lists: five small beads filled up to the Stage, each in its shade of the
+ * thread, and its name. The beads are decoration; the name says it in words. On a phone only the
+ * name shows.
  */
 export function StageMeter({ stage }: StageMeterProps) {
   const at = JOURNEY_STAGES.findIndex((step) => step === stage);
@@ -27,12 +27,15 @@ export function StageMeter({ stage }: StageMeterProps) {
 
   return (
     <span className="inline-flex items-center gap-3 whitespace-nowrap">
-      <span aria-hidden="true" className="max-phone:hidden inline-grid grid-cols-5 gap-0.75">
+      <span aria-hidden="true" className="max-phone:hidden inline-flex items-center gap-0.75">
         {JOURNEY_STAGES.map((step, index) => (
           <i
             key={step}
             data-step={stateOf(index)}
-            className={clsx("rounded-pill block h-2 w-3", STEP_CLASSES[stateOf(index)])}
+            className={clsx(
+              "rounded-pill block size-2",
+              stateOf(index) === "on" ? BEAD_CLASSES[index] : HOLLOW_CLASSES,
+            )}
           />
         ))}
       </span>

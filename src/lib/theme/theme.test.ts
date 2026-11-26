@@ -19,10 +19,10 @@ function expectReadable(tokens: ThemeTokens): void {
 }
 
 describe("buildThemeTokens: the Ivory theme for every office", () => {
-  it("gives the Ivory light tokens: cream page, white panels, burgundy actions", () => {
+  it("gives the Ivory light tokens: a deeper cream page so white sheets stand off it", () => {
     const { light } = buildThemeTokens();
 
-    expect(light.canvas).toBe("#faf8f4");
+    expect(light.canvas).toBe("#f6f3ed");
     expect(light.paper).toBe("#ffffff");
     expect(light.ink).toBe("#1f1916");
     expect(light["ink-2"]).toBe("#625750");
@@ -50,13 +50,13 @@ describe("buildThemeTokens: the Ivory theme for every office", () => {
     expect(dark["side-bg"]).toBe(dark.canvas);
   });
 
-  it("draws row lines at ink 15% (light) and 17% (dark), and the title line at ink 55%", () => {
+  it("draws row lines at ink 15% (light) and 17% (dark), with no strong title line (ticket 21)", () => {
     const { light, dark } = buildThemeTokens();
 
     expect(light.rule).toBe(mixHex(light.paper, light.ink, 0.15));
     expect(dark.rule).toBe(mixHex(dark.paper, dark.ink, 0.17));
-    expect(light["rule-strong"]).toBe(mixHex(light.paper, light.ink, 0.55));
-    expect(dark["rule-strong"]).toBe(mixHex(dark.paper, dark.ink, 0.55));
+    expect(light).not.toHaveProperty("rule-strong");
+    expect(dark).not.toHaveProperty("rule-strong");
   });
 
   it("keeps every text colour readable on the panels and on the page itself", () => {

@@ -5,15 +5,14 @@ import { useCallback, useState } from "react";
 
 import { ChecklistDialog } from "@/components/features/documents/ChecklistDialog";
 import { DocumentsButton } from "@/components/features/documents/DocumentsButton";
-import { ArrowSteps } from "@/components/ui/ArrowSteps";
 import { Banner } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
+import { Thread } from "@/components/ui/Thread";
 import { Loading } from "@/components/ui/Loading";
 import { HOME_TEXT } from "@/constants/home";
 import { ROUTES } from "@/constants/routes";
-import { STAGE_LABELS } from "@/constants/stages";
 import { COUNTRY_LABELS } from "@/constants/students";
 import { fetchProgress, type ProgressList, type ProgressRow } from "@/lib/api";
 
@@ -29,7 +28,7 @@ type ProgressSectionProps = {
 };
 
 /**
- * Students furthest along first, each with their Stage as arrow steps, the next step and a
+ * Students furthest along first, each with their Stage on the thread, the next step and a
  * documents button that opens their checklist (spec 22a).
  */
 export function ProgressSection({ title, mine, limit, showsCounsellor }: ProgressSectionProps) {
@@ -116,7 +115,7 @@ type ProgressItemProps = {
 };
 
 /**
- * Name and country, then the Stage and arrow steps with the next step, then the documents. On a
+ * Name and country, then the Stage on the thread with the next step, then the documents. On a
  * phone: the name, the Stage and the next step, with the documents button on the right.
  */
 function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
@@ -133,13 +132,8 @@ function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
           {whoLine(row, showsCounsellor)}
         </span>
       </div>
-      <div className="wide:order-none wide:col-span-1 phone:col-span-2 max-phone:col-start-1 max-phone:row-start-2 max-phone:gap-0.5 order-last grid min-w-0 gap-1.5">
-        <b className="text-small text-ink-2 tablet:hidden max-phone:text-secondary max-phone:text-accent">
-          {STAGE_LABELS[row.student.stage]}
-        </b>
-        <div className="max-phone:hidden">
-          <ArrowSteps stage={row.student.stage} isDone={row.isDone} />
-        </div>
+      <div className="wide:order-none wide:col-span-1 phone:col-span-2 max-phone:col-start-1 max-phone:row-start-2 max-phone:gap-1 order-last grid min-w-0 gap-1.5">
+        <Thread stage={row.student.stage} isDone={row.isDone} />
         <span className="text-secondary text-ink-2 max-phone:truncate">
           {row.isDone ? HOME_TEXT.done(row.nextStep) : HOME_TEXT.next(row.nextStep)}
         </span>

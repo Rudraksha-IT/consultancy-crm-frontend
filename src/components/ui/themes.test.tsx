@@ -4,7 +4,6 @@ import { buildThemeTokens } from "@/lib/theme";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { CodeField } from "./CodeField";
-import { ArrowSteps } from "./ArrowSteps";
 import { Avatar } from "./Avatar";
 import { Banner } from "./Banner";
 import { BarList } from "./BarList";
@@ -40,6 +39,7 @@ import { Switch } from "./Switch";
 import { Tabs } from "./Tabs";
 import { TextAreaField } from "./TextAreaField";
 import { TextField } from "./TextField";
+import { Thread } from "./Thread";
 import { InfoTip } from "./InfoTip";
 import { Timeline } from "./Timeline";
 import { ToastProvider } from "./ToastProvider";
@@ -108,7 +108,7 @@ function Gallery() {
         <FigureTile label="Visitors" value="3" />
         <EmptyState>Nothing yet.</EmptyState>
         <Avatar name="Sita Sharma" />
-        <ArrowSteps stage="visa" />
+        <Thread stage="visa" />
         <StageMeter stage="lost" />
         <StageCards counts={COUNTS} hrefFor={(stage) => `/${stage}`} />
         <RowList>

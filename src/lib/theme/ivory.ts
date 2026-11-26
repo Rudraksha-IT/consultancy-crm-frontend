@@ -2,18 +2,17 @@ import { mixHex, readableOn } from "./colour";
 import type { ThemeTokens } from "./types";
 
 /*
- * The Ivory theme (UI revamp, ticket 03): cream pages and burgundy actions, the colours of a
+ * The Ivory theme (UI revamp, tickets 03 and 21): cream pages, white sheets and burgundy actions, the colours of a
  * rudraksha bead, in light and dark. One look for every office. Values from the approved prototype
  * (docs/prototype/v2.0.0/engine/looks.js, `ivory`, and polish.css).
  */
 
 const AA_TEXT = 4.5;
-// Lines are ink mixed into the panel colour (owner, 2026-11-25): rows read apart at a glance, and
-// the line under a section title is much darker than the lines between its rows.
+// Lines are ink mixed into the panel colour (owner, 2026-11-25), so rows read apart at a glance.
+// The strong line under a section title went with the sheets (ticket 21).
 const LINE_MIX = {
   light: { rule: 0.15, rule2: 0.26 },
   dark: { rule: 0.17, rule2: 0.27 },
-  strong: 0.55,
 } as const;
 
 type IvorySet = {
@@ -31,7 +30,8 @@ type IvorySet = {
 };
 
 const LIGHT: IvorySet = {
-  canvas: "#faf8f4",
+  // a little deeper than the prototype's first cream, so white sheets stand off it (ticket 21)
+  canvas: "#f6f3ed",
   paper: "#ffffff",
   fill: "#f4f1eb",
   fill2: "#ece7df",
@@ -59,8 +59,9 @@ const DARK: IvorySet = {
 };
 
 /**
- * Captions sit straight on the page (sections have no box), so the quietest text is made readable
- * on the page colour, the darker of the two backgrounds in light mode (design system rule 4).
+ * Captions also sit straight on the page (a page's sub-line, a count under a sheet), so the
+ * quietest text is made readable on the page colour, the darker of the two backgrounds in light
+ * mode (design system rule 4).
  */
 function readableCaption(set: IvorySet): string {
   return readableOn(
@@ -80,7 +81,6 @@ function ivoryTokens(set: IvorySet, lines: { rule: number; rule2: number }): The
     "fill-2": set.fill2,
     rule: line(lines.rule),
     "rule-2": line(lines.rule2),
-    "rule-strong": line(LINE_MIX.strong),
     ink: set.ink,
     "ink-2": set.ink2,
     "ink-3": readableCaption(set),

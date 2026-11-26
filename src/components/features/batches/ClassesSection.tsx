@@ -98,28 +98,31 @@ function ClassButtons({ state, classes, onPeek }: ClassButtonsProps) {
     );
   }
   return (
-    <div className="tablet:grid-cols-2 wide:grid-cols-3 -mx-gutter tablet:gap-x-4 grid">
-      {classes.map((batch) => (
-        <button
-          key={batch.id}
-          type="button"
-          onClick={() => {
-            onPeek(batch);
-          }}
-          className="border-rule hover:bg-fill px-gutter grid cursor-pointer gap-2 border-t py-4 text-left"
-        >
-          <span className="text-card-title text-ink">{batch.name}</span>
-          <span className="text-secondary text-ink-2 inline-flex items-center gap-2">
-            <Icon name="clock" size="sm" />
-            {batch.timeSlot}
-          </span>
-          <span className="text-secondary text-ink-2 inline-flex items-center gap-2">
-            <Icon name="users" size="sm" />
-            {BATCH_TEXT.studentCount(batch.studentCount)}
-          </span>
-        </button>
-      ))}
-    </div>
+    <Panel>
+      {/* One sheet; the first row's top line falls outside it and is cut off. */}
+      <div className="tablet:grid-cols-2 wide:grid-cols-3 -mt-px grid">
+        {classes.map((batch) => (
+          <button
+            key={batch.id}
+            type="button"
+            onClick={() => {
+              onPeek(batch);
+            }}
+            className="border-rule hover:bg-fill px-gutter grid cursor-pointer gap-2 border-t py-4 text-left"
+          >
+            <span className="text-card-title text-ink">{batch.name}</span>
+            <span className="text-secondary text-ink-2 inline-flex items-center gap-2">
+              <Icon name="clock" size="sm" />
+              {batch.timeSlot}
+            </span>
+            <span className="text-secondary text-ink-2 inline-flex items-center gap-2">
+              <Icon name="users" size="sm" />
+              {BATCH_TEXT.studentCount(batch.studentCount)}
+            </span>
+          </button>
+        ))}
+      </div>
+    </Panel>
   );
 }
 

@@ -15,7 +15,7 @@ type SectionProps = {
 /** A section's own layout: its content at the top, or stretched to fill its row. */
 function sectionClasses(fills: boolean | undefined): string {
   return clsx(
-    "grid min-w-0 gap-3",
+    "grid min-w-0 gap-2.5",
     fills === true ? "h-full grid-rows-[auto_1fr] content-stretch" : "content-start",
   );
 }

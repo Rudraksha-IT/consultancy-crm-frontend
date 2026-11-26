@@ -1,6 +1,6 @@
 # Design system
 
-Status: draft, from the approved prototype (the product docs' `docs/prototype/first/crm-demo.html`). Revised 2026-11-14 from the prototype approved that day (tickets 67 to 69): sidebar width and swipes, swipe between pages, centred search, the confirm popup, the Activity timeline, money on number cards and the keyboard rule. Revised 2026-11-16 (tickets 94 to 97): the phone breakpoint is 640, and phones follow the new "Phones (640 and below)" section (tab bar, iOS / Material sizes, lean lists, pill filters, bottom sheets, settings pages one section at a time). Revised 2026-11-25 (UI revamp, ticket 03) from the owner-approved prototype `docs/prototype/v2.0.0/journey/` (its `engine/looks.js`, `ivory`, and `engine/polish.css`): one look for every office, the Ivory theme in light and dark, no box around everything (lines and words instead), the Geist font, and a type scale for computers and a tighter one for phones. The office colour feature went on 2026-11-26 (ticket 04): the colour editor, the stored office colours and their API are gone.
+Status: draft, from the approved prototype (the product docs' `docs/prototype/first/crm-demo.html`). Revised 2026-11-14 from the prototype approved that day (tickets 67 to 69): sidebar width and swipes, swipe between pages, centred search, the confirm popup, the Activity timeline, money on number cards and the keyboard rule. Revised 2026-11-16 (tickets 94 to 97): the phone breakpoint is 640, and phones follow the new "Phones (640 and below)" section (tab bar, iOS / Material sizes, lean lists, pill filters, bottom sheets, settings pages one section at a time). Revised 2026-11-25 (UI revamp, ticket 03) from the owner-approved prototype `docs/prototype/v2.0.0/journey/` (its `engine/looks.js`, `ivory`, and `engine/polish.css`): one look for every office, the Ivory theme in light and dark, no box around everything (lines and words instead), the Geist font, and a type scale for computers and a tighter one for phones. The office colour feature went on 2026-11-26 (ticket 04): the colour editor, the stored office colours and their API are gone. Revised 2026-11-26 (ticket 21) from the prototype as redesigned on 2026-11-25 (its `engine/studio.css` and `engine/refine.css`): a section's content is a white sheet on a deeper cream page (the strong title line is gone), a Student's journey is five beads on a thread, one type scale of ten sizes and three weights, the accent is never a status, and the page grows on wide screens.
 Applies to the frontend repository. Terminology follows the glossary (`docs/GLOSSARY.md` in the workspace repository).
 
 The product is used all day by non-technical office staff, often with a Student sitting across the desk. Every rule below serves that: big, calm, one job per screen, and the same look and behaviour everywhere.
@@ -9,13 +9,14 @@ The product is used all day by non-technical office staff, often with a Student 
 
 1. **Components use tokens only.** No hex, rgb or named colours, pixel sizes or shadows written inside a component. Everything comes from the tokens below. CI fails on a raw colour outside the token file.
 2. **One theme for every office: Ivory**, light and dark (see Theming). Cream pages and burgundy actions, the colours of a rudraksha bead. Offices no longer choose colours; each person still chooses light or dark.
-3. **Status colours are fixed.** Good (green), warning (amber) and problem (red) have one light set and one dark set, so "Rejected" or "Overdue" means the same everywhere. Money and progress bars use the good green.
-4. **Readable text is guaranteed, not hoped for.** Every text token reaches WCAG 2.2 AA (4.5:1) on the panel and on the page itself (sections have no box, so most text sits on the page colour). A test checks it; the Ivory caption grey was darkened from the prototype's `#8f847c` to `#766c65` to pass.
+3. **Status colours are fixed, and colour means one thing.** Good (green), warning (amber) and problem (red) have one light set and one dark set, so "Rejected" or "Overdue" means the same everywhere. Money and progress bars use the good green. Red is only for a problem. The accent is never a status (the burgundy sits too close to the problem red): a status that is simply in progress (Applied, Offer, Starts on..., New visitor) is ink with a hollow ring, a Normal priority is a hollow ring and Low a quieter one (ticket 21).
+4. **Readable text is guaranteed, not hoped for.** Every text token reaches WCAG 2.2 AA (4.5:1) on the sheet and on the page itself (titles, sub-lines and counts sit on the page colour). A test checks it; the Ivory caption grey was darkened from the prototype's `#8f847c` to `#766c65` to pass.
 5. **Dark mode has its own values.** A warm near-black page (`#121110`) and panel (`#1a1817`), cream text and a soft burgundy accent. It is never a saturated dark blue or brown.
 6. **Colour is never the only signal.** Every status also has a word or an icon (for example a "Rejected" chip, an "Overdue" label).
 7. **Line icons from one set.** No emoji in the interface.
 8. **An action never moves the person.** Approving, saving, deleting, switching a tab, ticking a box or closing a dialog keeps the page where it was: same scroll position, and focus back on the control that was used (or, if it is gone, the nearest control for the same item). Update data in place (React Query cache, local state); never remount the page, reset scroll or navigate for an action that stays on the same page. The same holds inside dialogs and sheets: redrawing a dialog (switching its tabs, ticking, removing an item, coming back after "Are you sure?") keeps each scrolled area where it was. Only opening another page starts at the top. Component tests check that focus stays after the action (product owner, 2026-11-18).
-9. **No box around everything** (Ivory, 2026-11-24). One filled button per screen area, for the main action; every other button is words with an icon and no box. Sections are split by space and lines, not cards. Tabs and switches are words with an underline. A status is a dot and a word, never a filled badge. Boxes are only for popups, menus and the fields you type into.
+9. **No box around every control** (Ivory, 2026-11-24). One filled button per screen area, for the main action; every other button is words with an icon and no box. Tabs and switches are words with an underline. A status is a dot and a word, never a filled badge. A section's content sits on one white sheet (see Sheets), so what belongs together is seen at once; nothing inside a sheet gets a box of its own. Other boxes are only for popups, menus and the fields you type into.
+10. **Padding holds** (ticket 21). Nothing inside a sheet or popup is closer to its sides than 18 (14 on phones) or closer than 10 to its top and bottom; blocks of a page are at least 16 apart.
 
 ## Tokens
 
@@ -25,11 +26,13 @@ All tokens are CSS custom properties set on `<html>`. Tailwind 4 maps them throu
 
 | Token                                                                                                          | Used for                                                                                       |
 | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
-| `--paper`                                                                                                      | Panels, dialogs, inputs                                                                        |
+| `--paper`                                                                                                      | Sheets, dialogs, inputs                                                                        |
 | `--canvas`                                                                                                     | Page background                                                                                |
 | `--fill`, `--fill-2`                                                                                           | Table headers, hovers, quiet backgrounds, empty progress tracks                                |
 | `--rule`, `--rule-2`                                                                                           | Lines between rows (ink 15% light, 17% dark); `rule-2` for inputs                              |
-| `--rule-strong`                                                                                                | The line under a section title (2px, ink 55%)                                                  |
+| `--sheet-rule`                                                                                                 | A sheet's border: `--rule` in light, ink 13% in dark                                           |
+| `--band`, `--row-hover`                                                                                        | The band under column heads (`--fill` 55% into `--paper`); a row under the pointer (60%)       |
+| `--bead-1` to `--bead-5`                                                                                       | The thread's five shades, Lead to Visa (see The thread)                                        |
 | `--ink`, `--ink-2`, `--ink-3`                                                                                  | Main text, secondary text, captions (each at least 4.5:1 on `--paper` and `--canvas`)          |
 | `--accent`, `--accent-hover`, `--accent-ink`, `--tint`                                                         | Primary buttons, links, progress, selected items; text on the accent; light accent backgrounds |
 | `--side-bg`, `--side-ink`, `--side-muted`, `--side-hover`, `--side-active`, `--side-active-ink`, `--side-rule` | Sidebar                                                                                        |
@@ -44,24 +47,26 @@ All tokens are CSS custom properties set on `<html>`. Tailwind 4 maps them throu
 
 ### Type
 
-One family: Geist (fallback: system UI). Figures use tabular numbers. Page titles, dialog titles and big figures use weight 500 with slightly tight letter spacing (-0.025em). Bold in the content is at most 600; a task's title is 500. Sizes come from `--size-*` tokens that take their phone values at 640 and below, so components never pick a size per width.
+One family: Geist (fallback: system UI). Figures use tabular numbers. Page titles, dialog titles and big figures use weight 500 with slightly tight letter spacing (-0.025em); section titles -0.01em. Titles balance their lines (`text-wrap: balance`).
+
+**One scale** (ticket 21): the sizes are 12, 13, 14, 15, 16, 18, 20, 24, 28 and 32, and the weights 400, 500 and 600. Nothing else exists (a test reads `globals.css` and fails on any other size or weight). Bold in the content is at most 600; a task's title is 500. Sizes come from `--size-*` tokens that take their phone values at 640 and below, so components never pick a size per width.
 
 | Role                                   | Computers (above 640) | Phones (640 and below) | Weight |
 | -------------------------------------- | --------------------- | ---------------------- | ------ |
 | Page title                             | 28 / 34               | 24 / 30                | 500    |
-| Section title                          | 17 / 23               | 16.5 / 22              | 600    |
-| Dialog title                           | 23 / 29               | 23 / 29                | 500    |
+| Section title                          | 18 / 24               | 18 / 24                | 600    |
+| Dialog title                           | 24 / 30               | 24 / 30                | 500    |
 | Page text, table cells                 | 16 / 24               | 15 / 22                | 400    |
-| A name in a list (`text-name`)         | 17 / 24               | 16 / 22                | 600    |
-| The line under it, chips, small text   | 15 / 22               | 13.5 / 19              | 400    |
-| Column heads                           | 14.5 / 20             | 13 / 18                | 500    |
-| Buttons (small buttons)                | 15.5 (15)             | 14.5 (14)              | 500    |
+| A name in a list (`text-name`)         | 18 / 24               | 16 / 22                | 600    |
+| The line under it, chips               | 15 / 22               | 14 / 20                | 400    |
+| Column heads, captions, small text     | 14 / 20               | 13 / 18                | 500    |
+| Buttons (small buttons)                | 15 (15)               | 15 (14)                | 500    |
 | Figures                                | 32 / 40               | 24 / 30                | 500    |
-| Email list: the Student's name         | 19                    | 17                     | 650    |
-| Configuration › Universities: the name | 21 / 28               | 16 / 22                | 600    |
+| Email list: the Student's name         | 20 / 26               | 18 / 24                | 600    |
+| Configuration › Universities: the name | 20 / 28               | 16 / 22                | 600    |
 | Fields you type into (`text-input`)    | 16                    | 16 (iOS never zooms)   | 400    |
 
-Labels never look like their values: a field's label is 15 (13.5 on phones), weight 500, in `--ink-2`.
+Labels never look like their values: a field's label is 15 (14 on phones), weight 500, in `--ink-2`.
 
 Sentence case everywhere. No all-caps labels.
 
@@ -70,18 +75,33 @@ Sentence case everywhere. No all-caps labels.
 - **Spacing scale:** 4, 8, 12, 16, 20, 24, 32, 40, 48. Sections are 32 apart; items in a group are 16 apart.
 - **Control height:** 44 (buttons, inputs, selects, segmented controls). Small buttons are also 44 tall, with less padding and smaller text. Large primary actions 52. Sidebar items 48. Icon buttons (sidebar collapse, Log out, theme, notifications) are 44 square. A checkbox or radio may draw at 22, but the area that toggles it is at least 44 square (a row checkbox fills its table cell). Link buttons and breadcrumbs are 44 tall too.
 - **Table rows:** at least 56. List rows have 20 vertical padding.
-- **Radius:** 6 (chips), 8 (controls), 12 (menus), 14 (dialogs).
-- **Elevation:** nothing is raised (`--raise` is none: sections have no box); `--lift` for dialogs, menus and popovers only.
-- **Row gutter:** rows and table cells have 12 inside (8 on phones), and a section's content is pulled out by the same, so the text lines up with the section title above and a hover shade or a marked row still has room (`--size-gutter`, classes `px-gutter`, `-mx-gutter`).
-- **Content width:** 1080 max. Line length under 75 characters for prose.
+- **Radius:** 6 (chips), 8 (controls), 12 (menus), 14 (sheets, on every width, and dialogs).
+- **Elevation:** a sheet is raised a hair in light (`--raise`, a faint shadow) and not at all in dark; `--lift` for dialogs, menus and popovers only.
+- **Sheet padding:** rows and the first and last cells of a table keep 18 from a sheet's sides (14 on phones): `--size-gutter`, class `px-gutter`. A padded sheet (a form, text) has 20 all round (16 by 14 on phones). See rule 10.
+- **Content width:** 1240 at most; 1400 on screens from 1600 wide and 1560 from 2200 wide, so a big screen is not mostly empty (`--size-content`). Line length under 75 characters for prose.
 - **Page margin:** 26 on each side of the page content, beside the sidebar and on tablets (was 40; reduced on 2026-11-14 when the sidebar grew to 300, so the content area keeps the same width). 16 on phones (see Phones). The safe area of a phone with a notch is added on top.
 
-### Lines
+### Sheets
 
-- **Under a section title** (the top of its content, `ui/Panel`): 2px at ink 55% (`--rule-strong`), so the title and its rows read apart.
+Replaces "Lines" (ticket 21; the 2px line under a section title and its "no line after tabs or figures" rules are gone).
+
+- **A section's content is a sheet** (`ui/Panel`): `--paper`, a 1px border (`--sheet-rule`), 14 corners and a faint shadow in light, none in dark. The page is a little deeper (`--canvas` light `#f6f3ed`) so sheets stand off it. The section title sits above the sheet, 10 from it.
 - **Between rows:** 1px `--rule` (ink 15% light, 17% dark).
-- **No strong line** under mini tabs or a switch (Transfer requests; Tasks' To do / Given to others / Done), after a toolbar that holds tabs, after figure boxes (Accounts' table under its figures: no second line), or above the Home Pipeline. In code: a Panel right after a tab strip, a toolbar holding one, or a `TileGrid` drops its top line (`globals.css`, "Section lines"); `data-no-line` on a Panel drops it anywhere else.
-- **Settings** has no line under its title and no subtitle.
+- **Tables:** column heads sit on a faint band (`--band`), 42 tall, in `--ink-2`, with a line under them. A row that opens something shows a soft fill (`--row-hover`) under the pointer, never under a finger.
+- **Tablets (641 to 1024):** a table's cells sit closer (8 on each side; the first and last keep the sheet's padding) and a cell that does not shrink may take two lines (a date), so no table runs past its sheet.
+- **Figures** (`TileGrid`) are one sheet with thin lines between the figures only, right at any number of columns: the first figure of a row has no line on its left.
+- **Dark:** a card that stands on a tinted column (the Students board) is a step lighter than the column.
+- **Settings** has no subtitle.
+
+### The thread
+
+A Student's journey is five beads on a string, Lead to Visa, each a shade deeper: `--accent` mixed into `--paper` at 30, 47.5, 65, 82.5 and 100% (dark: 44, 58, 72, 86 and 100%), as `--bead-1` to `--bead-5`. "Where is this Student" looks the same everywhere:
+
+- **In a list** (`ui/Thread`): the Stage's name, then the beads. A bead reached is filled in its shade and joined to the next by a string of that shade; the current bead has a ring (a 2px gap, then 2px in its shade) that is never cut off by what holds it; the rest are hollow on a grey string. A granted Visa fills all five; a Lost Student has none marked.
+- **The Students list's Stage column** (`ui/StageMeter`): five small dots in the same shades, hollow when not reached, then the name.
+- **A Student's page** (`ui/Journey`): a done step is filled in its shade, the current one ringed in it.
+- **The board's column heads** carry their Stage's bead.
+- Screen readers hear "Stage: Offer". The colour never stands alone: the Stage's name is always beside the thread.
 
 ## Components
 
@@ -91,14 +111,15 @@ Build each once in `src/components/ui`, with tests, and reuse them. Screens neve
 - **Field:** label always visible, optional hint, error text below. Wraps text, email, tel, date, number, select and textarea.
 - **Segmented control:** two to five choices that switch a view (Light/Dark, New/Returning visitor, report picker), drawn as words with an underline: the chosen one in `--ink` over a 2px accent line, the others in `--ink-3`, with a 1px line under the strip. It is a tab strip: it never wraps onto a second line. On phones it fills the width and scrolls sideways (no scrollbar) when the choices don't fit. On every width, when the strip is drawn after a choice, it scrolls so the chosen one is in view, centred where possible, and never jumps back to the first; this happens once per drawing, so a later small update (the clock timer, typing) never moves a strip the person has swiped. Tabs and the settings section strip on tablets follow the same rule. A choice of one value (Attendance: Present / Absent / Late / Leave) fills the width with equal buttons on one line on phones.
 - **Tabs:** sections of one record (Student profile), words with an underline like the segmented control; a count is a quiet number after the word, not a pill.
-- **Panel:** a section's content for lists, tables and forms, with no box: the strong title line on top (see Lines). A section title sits above the panel, not inside it.
+- **Panel:** a section's content for lists, tables and forms: a sheet (see Sheets). A section title sits above the sheet, not inside it.
 - **Row item:** title (a name, `text-name`), secondary line, right-side actions or status. The standard list row. A marked row (the Chosen Offer) has a 3px good line on its left and a faint good tint.
-- **Chip:** status with a 7px dot and a word in the status colour, no filled badge. Colour comes from the status, never from the theme.
+- **Chip:** status with a 7px dot and a word in the status colour, no filled badge. Colour comes from the status, never from the theme: an in-progress status is ink with a hollow ring (rule 3).
 - **Progress bar:** 12 high, green (`--good`) whether done or not, with the percentage written next to it.
-- **Journey:** Lead → Counselling → Applying → Offer → Visa (Onboarded and Completed are gone). A Granted Visa ticks the last step ("Visa ✓ Granted"); there is no country or plane at the end of the bar. A Lost Student shows the Lost Stage with its reason. For a Student who was ever Lost, a small ⓘ button sits next to the Stage name: on hover, keyboard focus or tap it shows when they were Lost (with the reason) and when they came back. It is a real button (44 target), never hover-only. Across the panel above 640px (scrolling inside its panel if it must, never widening the page). At 640 and below it is a compact horizontal stepper: five dots in a row with the Stage names in 12 under them, never top to bottom. A Stage that can be clicked has a 44 tall target.
+- **Thread:** a Student's Stage in a list, as five beads (see The thread).
+- **Journey:** Lead → Counselling → Applying → Offer → Visa (Onboarded and Completed are gone), its steps in the thread's shades. A Granted Visa ticks the last step ("Visa ✓ Granted"); there is no country or plane at the end of the bar. A Lost Student shows the Lost Stage with its reason. For a Student who was ever Lost, a small ⓘ button sits next to the Stage name: on hover, keyboard focus or tap it shows when they were Lost (with the reason) and when they came back. It is a real button (44 target), never hover-only. Across the panel above 640px (scrolling inside its panel if it must, never widening the page). At 640 and below it is a compact horizontal stepper: five dots in a row with the Stage names in 12 under them, never top to bottom. A Stage that can be clicked has a 44 tall target.
 - **Note:** fixed note colour with a 3px note line on its left, no outline, always at the top of a Student.
 - **Banner:** info, warning or problem message across the page.
-- **Figure tile:** label, big number, one-line footnote. No card: figures stand in a row (`TileGrid`) with a line above and below and thin lines between them, never before the first of a row; on phones no side lines. Money: "NPR" is a small label in front of the amount on the same line (smaller, lighter, never wrapped onto its own line); a big number shrinks a little to fit a narrow card rather than touching its edge.
+- **Figure tile:** label, big number, one-line footnote. No card of its own: the figures of a row share one sheet (`TileGrid`) with thin lines between them, never before the first of a row; on phones no side lines. Money: "NPR" is a small label in front of the amount on the same line (smaller, lighter, never wrapped onto its own line); a big number shrinks a little to fit a narrow card rather than touching its edge.
 - **Dialog:** title (dialog title size), body, footer with the actions on the right (no fill or line above it). Escape and the close button both close it. Focus goes to the first field. On phones it is a bottom sheet (see Phones).
 - **Confirm dialog:** one shared dialog for every delete or remove in the app; nothing is removed without it. The title names the thing ("Remove the Grade 12 Transcript?"), the body says what will happen, and the footer has Cancel and a red button that names the action ("Remove", "Delete", "End session"), never "OK" or "Yes". Focus starts on Cancel; Escape cancels. Where a delete needs a reason (a Document put in the Bin), the reason is asked in the same dialog: quick picks plus "Other" with a text box. Removing a row on an edit page that saves later (Edit details, a University's edit page) needs no popup: the row is only marked, with Undo, until Save.
 - **Menu:** the "More" menu for rare actions. Destructive items sit last, in red.
@@ -131,7 +152,7 @@ Gestures are extra ways to do what a button already does; every button stays, fo
 
 Every screen is checked at 1440, 1024, 820 and 390 pixels wide.
 
-- **Above 1024:** sidebar (300, or 80 collapsed) plus content, max width 1080, with the search centred over the content.
+- **Above 1024:** sidebar (300, or 80 collapsed) plus content, 1240 at most (more on wide screens, see Content width), with the search centred over the content.
 - **1024 and below:** single column with the slide-out menu (opened by ☰ or a swipe from the left edge) and the search icon in the top bar. Two-column layouts stack. Progress rows put the document button beside the name and the bar underneath.
 - **640 and below (phones):** everything in the Phones section below. The top bar keeps icons only (search, Settings, notifications) and the tab bar replaces ☰. Lists keep only what matters and every other table shows as cards, never scrolling sideways; only a chart scrolls sideways inside its own panel.
 - **Scrollbars are hidden** everywhere (`scrollbar-width: none` and `::-webkit-scrollbar`). Content still scrolls with the wheel, touch and keyboard.
@@ -151,9 +172,9 @@ Decided 2026-11-16, after the product owner reviewed the prototype on a phone ("
 ### Sizes and look
 
 - **Layout:** 16 side margins and an 8 spacing rhythm.
-- **Type scale:** one step smaller than on computers (see Type): page text 15, names 16 (Email names 17), sub-lines, chips and small text 13.5, table cells 15, column heads 13, page titles 24, section titles 16.5, Note text 15 / 23, Settings rows 16, buttons 14.5 with 14 side padding (small 14 / 10), figures 24, Pipeline counts 21, a Student's name 22 with a 52 avatar. Fields stay 16. Secondary text uses `--ink-2`.
+- **Type scale:** one step smaller than on computers (see Type): page text 15, names 16 (Email names 18), sub-lines and chips 14, small text and column heads 13, table cells 15, page titles 24, section titles 18, Note text 15 / 23, Settings rows 16, buttons 15 with 14 side padding (small 14 / 10), figures 24, Pipeline counts 21, a Student's name 22 with a 52 avatar. Fields stay 16. Secondary text uses `--ink-2`.
 - **Touch targets:** every tap target is at least 44 tall. Main page actions are 48. Fields are 48 tall with 16 text, so phones never zoom in on them.
-- **Sections:** no box, as on computers; the row gutter is 8.
+- **Sections:** a sheet, as on computers, with 14 inside its sides.
 - **Feedback:** everything tappable has a pressed state (a `--fill` background on rows, a slight shrink on buttons).
 
 ### Page actions
@@ -191,19 +212,19 @@ Decided 2026-11-16, after the product owner reviewed the prototype on a phone ("
 
 Every office shows the same theme, Ivory (owner, 2026-11-24): almost white, burgundy only where it matters, the menu part of the page. Each Staff member chooses light or dark for themselves (stored per person); nothing else about the colours is chosen. The office logo still shows in the menu and on the login screens.
 
-| Token                           | Light                                                                                   | Dark                       |
-| ------------------------------- | --------------------------------------------------------------------------------------- | -------------------------- |
-| `canvas` (page)                 | `#faf8f4`                                                                               | `#121110`                  |
-| `paper` (panels)                | `#ffffff`                                                                               | `#1a1817`                  |
-| `fill`, `fill-2`                | `#f4f1eb`, `#ece7df`                                                                    | `#211f1d`, `#292624`       |
-| `ink`                           | `#1f1916`                                                                               | `#f1e8dd`                  |
-| `ink-2`                         | `#625750`                                                                               | `#bcae9f`                  |
-| `ink-3`                         | `#766c65`                                                                               | `#8f8174`                  |
-| `accent`, hover                 | `#6e1a26`, `#57141e`                                                                    | `#d98a8f`, `#e7a2a6`       |
-| `accent-ink`                    | `#ffffff`                                                                               | `#1d1012`                  |
-| `tint`                          | `#f3e6e3`                                                                               | `#3a1d1f`                  |
-| `rule`, `rule-2`, `rule-strong` | ink 15%, 26%, 55% into the panel                                                        | ink 17%, 27%, 55%          |
-| Menu (`side-*`)                 | the page colour, page text, `fill` hover, `fill-2` for the open page, no line beside it | the same from the dark set |
+| Token            | Light                                                                                   | Dark                       |
+| ---------------- | --------------------------------------------------------------------------------------- | -------------------------- |
+| `canvas` (page)  | `#f6f3ed`                                                                               | `#121110`                  |
+| `paper` (panels) | `#ffffff`                                                                               | `#1a1817`                  |
+| `fill`, `fill-2` | `#f4f1eb`, `#ece7df`                                                                    | `#211f1d`, `#292624`       |
+| `ink`            | `#1f1916`                                                                               | `#f1e8dd`                  |
+| `ink-2`          | `#625750`                                                                               | `#bcae9f`                  |
+| `ink-3`          | `#766c65`                                                                               | `#8f8174`                  |
+| `accent`, hover  | `#6e1a26`, `#57141e`                                                                    | `#d98a8f`, `#e7a2a6`       |
+| `accent-ink`     | `#ffffff`                                                                               | `#1d1012`                  |
+| `tint`           | `#f3e6e3`                                                                               | `#3a1d1f`                  |
+| `rule`, `rule-2` | ink 15%, 26% into the panel                                                             | ink 17%, 27%               |
+| Menu (`side-*`)  | the page colour, page text, `fill` hover, `fill-2` for the open page, no line beside it | the same from the dark set |
 
 ### How it becomes tokens
 
