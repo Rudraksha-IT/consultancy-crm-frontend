@@ -270,7 +270,10 @@ type ViewBarProps = {
 /** How to move a card (on the Board) on the left, the Board / List switch on the right. */
 function ViewBar({ view, onChange }: ViewBarProps) {
   return (
-    <div className="px-gutter flex flex-wrap items-center justify-between gap-3 py-3">
+    <div
+      data-swap-bar=""
+      className="px-gutter flex flex-wrap items-center justify-between gap-3 py-3"
+    >
       {view === StudentsView.Board && (
         <p className="text-small text-ink-2">
           <span data-hint="drag">{BOARD_TEXT.hintDrag}</span>

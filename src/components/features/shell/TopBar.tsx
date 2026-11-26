@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, type RefObject } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } from "react";
 
 import { GlobalSearch } from "@/components/features/search/GlobalSearch";
 import { ThemeToggle } from "@/components/features/theme/ThemeToggle";
@@ -40,8 +40,12 @@ export function TopBar({ context, colourMode, isDrawerOpen, onOpenDrawer }: TopB
   const search = useSmallScreenSearch(pathname, searchIconRef);
   const hiddenWhileSearching = search.isOpen && "max-wide:hidden";
   const isPhone = usePhoneWidth();
+  const isScrolled = useIsScrolled();
   return (
-    <header className="min-h-office-bar border-rule bg-canvas max-phone:bg-canvas/88 max-phone:backdrop-blur-lg max-phone:backdrop-saturate-150 phone:gap-4 wide:pr-10 wide:pl-8 wide:grid wide:grid-cols-[minmax(0,1fr)_minmax(0,var(--container-search))_minmax(0,1fr)] sticky top-0 z-30 flex items-center gap-2 border-b px-4">
+    <header
+      data-scrolled={isScrolled ? "" : undefined}
+      className="min-h-office-bar border-rule bg-canvas max-phone:bg-canvas/88 max-phone:backdrop-blur-lg max-phone:backdrop-saturate-150 phone:gap-4 wide:pr-10 wide:pl-8 wide:grid wide:grid-cols-[minmax(0,1fr)_minmax(0,var(--container-search))_minmax(0,1fr)] data-scrolled:shadow-bar sticky top-0 z-30 flex items-center gap-2 border-b px-4 transition-shadow duration-(--move-marker)"
+    >
       <div className={clsx("flex min-w-0 items-center gap-1", hiddenWhileSearching)}>
         {!isPhone && (
           <span className="wide:hidden contents">
@@ -86,6 +90,25 @@ export function TopBar({ context, colourMode, isDrawerOpen, onOpenDrawer }: TopB
         />
       </div>
     </header>
+  );
+}
+
+/** How far (px) the page is scrolled before the top bar lifts off it. */
+const SCROLLED_PAST = 4;
+
+function watchScroll(onScroll: () => void): () => void {
+  window.addEventListener("scroll", onScroll, { passive: true });
+  return () => {
+    window.removeEventListener("scroll", onScroll);
+  };
+}
+
+/** Whether the page is scrolled: the top bar then gains a soft shadow (design system: Movement). */
+function useIsScrolled(): boolean {
+  return useSyncExternalStore(
+    watchScroll,
+    () => window.scrollY > SCROLLED_PAST,
+    () => false,
   );
 }
 

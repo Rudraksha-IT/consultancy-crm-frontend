@@ -57,7 +57,7 @@ export function IconButton({
       onClick={onClick}
       disabled={isDisabled}
       className={clsx(
-        "size-control rounded-control relative grid flex-none cursor-pointer place-items-center disabled:cursor-not-allowed disabled:opacity-50",
+        "size-control rounded-control relative grid flex-none cursor-pointer place-items-center not-disabled:active:scale-97 disabled:cursor-not-allowed disabled:opacity-50",
         ICON_TONE_CLASSES[tone],
       )}
     >

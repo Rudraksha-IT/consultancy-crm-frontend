@@ -87,6 +87,32 @@
   --edge-bottom: 0 10px 24px -12px rgb(0 0 0 / 0.25), 0 1px 0 var(--rule-2);
 
   /*
+   * Movement (ticket 22): the one place for how long things take and how they ease. One curve for
+   * what arrives and one for what leaves; lib/motion/timing.ts holds the same values for code, and
+   * a test keeps the two equal. Nothing else in this file or in a component writes a time.
+   */
+  --curve-arrive: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --curve-leave: cubic-bezier(0.4, 0, 1, 1);
+  --move-press: 100ms;
+  --move-leave: 140ms;
+  --move-quick: 150ms;
+  --move-swap: 180ms;
+  --move-sink: 200ms;
+  --move-open: 220ms;
+  --move-glide: 240ms;
+  --move-marker: 250ms;
+  --move-sheet: 280ms;
+  --move-page: 300ms;
+  --move-cross: 320ms;
+  --move-ring: 1100ms;
+  --move-wash: 1200ms;
+  /* a page's blocks come in this far apart, and its rows this far apart */
+  --move-step-block: 40ms;
+  --move-step-row: 18ms;
+  /* the top bar lifts off the page once the page is scrolled */
+  --bar-lift: 0 1px 0 var(--rule), 0 12px 24px -20px rgb(42 22 16 / 0.45);
+
+  /*
    * Sizes that change on phones, 640 px and below (design system: Type, and Phones). One type
    * scale (ticket 21): 12, 13, 14, 15, 16, 18, 20, 24, 28 and 32, in weights 400, 500 and 600.
    * Above 640: page text 16, names in lists 18, the line under them, chips and buttons 15, column
@@ -248,6 +274,7 @@
   --scrim: rgb(0 0 0 / 0.6);
   --raise: none;
   --lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px rgb(0 0 0 / 0.55);
+  --bar-lift: 0 1px 0 var(--rule), 0 12px 24px -20px rgb(0 0 0 / 0.7);
   --gap: color-mix(in srgb, black 35%, var(--canvas));
   --edge-top: 0 -10px 24px -12px rgb(0 0 0 / 0.6), 0 -1px 0 var(--rule-2);
   --edge-bottom: 0 10px 24px -12px rgb(0 0 0 / 0.6), 0 1px 0 var(--rule-2);
@@ -499,6 +526,11 @@
   --shadow-lift: var(--lift);
   --shadow-edge-top: var(--edge-top);
   --shadow-edge-bottom: var(--edge-bottom);
+  --shadow-bar: var(--bar-lift);
+
+  /* the two curves of Movement (ticket 22): `ease-arrive` and `ease-leave` */
+  --ease-arrive: var(--curve-arrive);
+  --ease-leave: var(--curve-leave);
 
   /* 1024 and below is the slide-out menu; 640 and below is phone width (design system: Phones) */
   --breakpoint-*: initial;
@@ -590,6 +622,28 @@
     }
   }
 
+  /*
+   * Touch and hover (ticket 22): colours ease, and a pressed button gives a little. Only where
+   * the device has not asked for less motion.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    a,
+    button,
+    summary,
+    input,
+    select,
+    textarea,
+    tbody tr,
+    [data-row] {
+      transition:
+        color var(--move-quick) ease,
+        background-color var(--move-quick) ease,
+        border-color var(--move-quick) ease,
+        box-shadow var(--move-quick) ease,
+        scale var(--move-press) var(--curve-arrive);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     * {
       transition: none !important;
@@ -630,19 +684,19 @@
 }
 
 main[data-page-move="out-down"] {
-  animation: page-out-down 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: page-out-down var(--move-sink) var(--curve-leave) forwards;
 }
 
 main[data-page-move="out-up"] {
-  animation: page-out-up 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: page-out-up var(--move-sink) var(--curve-leave) forwards;
 }
 
 main[data-page-move="in-from-top"] {
-  animation: page-in-from-top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: page-in-from-top var(--move-page) var(--curve-arrive);
 }
 
 main[data-page-move="in-from-bottom"] {
-  animation: page-in-from-bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: page-in-from-bottom var(--move-page) var(--curve-arrive);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -653,8 +707,8 @@ main[data-page-move="in-from-bottom"] {
 
 /*
  * Phones (design system: Phones). The tab bar keeps clear of a phone's rounded corners and home
- * bar; the page leaves room under its content for the tab bar; dialogs rise from the bottom as
- * sheets (none of it moves with reduce motion on).
+ * bar; the page leaves room under its content for the tab bar (how a sheet rises is under
+ * Movement).
  */
 /* The side menu's links fade out at its foot, where they scroll under the product's mark (ticket 05). */
 @utility menu-fade {
@@ -684,18 +738,307 @@ main[data-page-move="in-from-bottom"] {
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 }
 
-@keyframes sheet-up {
+/*
+ * Movement (design system: Movement; UI revamp, ticket 22). Calm, for an app used all day: short,
+ * small, only `transform` and `opacity` move (and the wash on a changed row), one curve for what
+ * arrives and one for what leaves, no bounce and no spin. Movement says what happened: a page
+ * came, a popup opened, a row changed. Every time comes from the `--move-*` tokens.
+ *
+ * Nothing here plays because something was merely drawn again. Each rule waits for a mark the
+ * code sets when the thing really happened (`data-arrive` on the page, `data-move` on what opens
+ * or changes, `data-leaving` on the copy of what closes), so an action on the same page never
+ * replays a page's arrival (rule 8). All of it is inside "no-preference": with "reduce motion"
+ * on, everything switches at once.
+ */
+@keyframes move-rise {
   from {
-    translate: 0 2.5rem;
-    opacity: 0.4;
+    opacity: 0;
+    transform: translateY(0.375rem);
   }
 }
 
-@utility animate-sheet-up {
-  animation: sheet-up 0.22s ease-out;
+@keyframes move-row {
+  from {
+    opacity: 0;
+    transform: translateY(0.3125rem);
+  }
+}
 
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
+@keyframes move-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes move-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes move-wash {
+  from {
+    background-color: color-mix(in srgb, var(--tint) 60%, transparent);
+  }
+}
+
+@keyframes move-dialog {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.985);
+  }
+}
+
+@keyframes move-dialog-next {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes move-dialog-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.985);
+  }
+}
+
+@keyframes move-sheet {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes move-sheet-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes move-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-0.375rem) scale(0.96);
+  }
+}
+
+@keyframes move-pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.97);
+  }
+}
+
+@keyframes move-toast {
+  from {
+    opacity: 0;
+    transform: translateY(0.625rem);
+  }
+}
+
+@keyframes move-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.625rem);
+  }
+}
+
+/* What is on its way out: a copy that fades while the page under it is already usable. */
+#leaving {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+}
+
+#leaving * {
+  pointer-events: none !important;
+}
+
+/* A marker (the underline of a tab, the pill of a switch) grows from its left as it slides. */
+[data-marker] {
+  transform-origin: left center;
+}
+
+/* The ring round a board card that was just moved is drawn over it, and only fades. */
+[data-card] {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /*
+   * A page arrives: its blocks rise and fade in, one after another (four steps at most), then
+   * its first rows follow. Not after a pull between pages, which slides the whole page itself.
+   * The animation only fills backwards, so nothing is left on a block once it has come in.
+   */
+  main[data-arrive]:not([data-page-move]) > div > * {
+    animation: move-rise var(--move-page) var(--curve-arrive) backwards;
+  }
+
+  main[data-arrive]:not([data-page-move]) > div > :nth-child(2) {
+    animation-delay: var(--move-step-block);
+  }
+
+  main[data-arrive]:not([data-page-move]) > div > :nth-child(3) {
+    animation-delay: calc(var(--move-step-block) * 2);
+  }
+
+  main[data-arrive]:not([data-page-move]) > div > :nth-child(n + 4) {
+    animation-delay: calc(var(--move-step-block) * 3);
+  }
+
+  /* A block that sizes itself to the window (the Inbox) is measured as it comes in: it only fades. */
+  main[data-arrive]:not([data-page-move])
+    > div
+    > :is([data-fills-window], :has([data-fills-window])) {
+    animation-name: move-fade;
+  }
+
+  main[data-arrive]:not([data-page-move]) :is(tbody > tr, [data-row]):nth-child(-n + 14) {
+    animation: move-row var(--move-marker) var(--curve-arrive) backwards;
+    animation-delay: calc(var(--move-step-block) * 2 + var(--i, 0) * var(--move-step-row));
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(2) {
+    --i: 1;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(3) {
+    --i: 2;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(4) {
+    --i: 3;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(5) {
+    --i: 4;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(6) {
+    --i: 5;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(7) {
+    --i: 6;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(8) {
+    --i: 7;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(9) {
+    --i: 8;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(10) {
+    --i: 9;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(11) {
+    --i: 10;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(12) {
+    --i: 11;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(13) {
+    --i: 12;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(14) {
+    --i: 13;
+  }
+
+  /* The same page: a row that is new or changed fades in under a soft wash that clears. */
+  [data-move="new"] {
+    animation:
+      move-fade var(--move-marker) ease-out backwards,
+      move-wash var(--move-wash) ease-out backwards;
+  }
+
+  /* Something that only appears (the shade behind the slide-out menu). */
+  [data-move="fade"] {
+    animation: move-fade var(--move-sink) ease-out backwards;
+  }
+
+  /* A popup fades in and rises with its shade; one that takes another's place only cross-fades. */
+  [data-move="open"] {
+    animation: move-fade var(--move-swap) ease-out backwards;
+  }
+
+  [data-move="open"] > [data-panel] {
+    animation: move-dialog var(--move-open) var(--curve-arrive) backwards;
+  }
+
+  [data-move="next"] > [data-panel] {
+    animation: move-dialog-next var(--move-quick) var(--curve-arrive) backwards;
+  }
+
+  [data-leaving="dialog"] {
+    animation: move-fade-out var(--move-leave) var(--curve-leave) forwards;
+  }
+
+  [data-leaving="dialog"] > [data-panel] {
+    animation: move-dialog-out var(--move-leave) var(--curve-leave) forwards;
+  }
+
+  /* Phones: a sheet rises from the bottom and sinks back. */
+  @media (width < 40.0625rem) {
+    [data-move="open"] > [data-panel] {
+      animation: move-sheet var(--move-sheet) var(--curve-arrive) backwards;
+    }
+
+    [data-leaving="dialog"] {
+      animation-duration: var(--move-sink);
+    }
+
+    [data-leaving="dialog"] > [data-panel] {
+      animation: move-sheet-out var(--move-sink) var(--curve-leave) forwards;
+    }
+  }
+
+  /* Menus and small panels open from the button that owns them. */
+  [data-move="pop"] {
+    transform-origin: top right;
+    animation: move-pop var(--move-quick) var(--curve-arrive) backwards;
+  }
+
+  [data-leaving="pop"] {
+    transform-origin: top right;
+    animation: move-pop-out var(--move-leave) var(--curve-leave) forwards;
+  }
+
+  /* The message at the bottom rises in and fades out. */
+  [data-move="toast"] {
+    animation: move-toast var(--move-marker) var(--curve-arrive) backwards;
+  }
+
+  [data-leaving="toast"] {
+    animation: move-toast-out var(--move-sink) var(--curve-leave) forwards;
+  }
+
+  /* The Students board: the card that was moved is ringed for a second. */
+  [data-card][data-landed]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--accent);
+    pointer-events: none;
+    animation: move-fade-out var(--move-ring) ease-out forwards;
+  }
+
+  /* Light and dark: one cross-fade of the whole screen, where the browser can. */
+  html[data-theme-fade]::view-transition-old(root) {
+    animation: move-fade-out var(--move-open) ease both;
+    mix-blend-mode: normal;
+  }
+
+  html[data-theme-fade]::view-transition-new(root) {
+    animation: move-fade var(--move-open) ease both;
+    mix-blend-mode: normal;
   }
 }
 
@@ -790,8 +1133,8 @@ main[data-page-move="in-from-bottom"] {
 
 [data-column] {
   transition:
-    background-color 0.12s,
-    box-shadow 0.12s;
+    background-color var(--move-quick),
+    box-shadow var(--move-quick);
 }
 
 [data-column][data-over="true"] {

@@ -6,6 +6,7 @@ import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 
 import { Icon } from "./Icon";
 import type { MenuItem } from "./Menu";
+import { useLeaving } from "./useMovement";
 
 const ITEM = '[role="menuitem"], [role="menuitemradio"]';
 
@@ -35,6 +36,8 @@ export function MenuList({
   header,
 }: MenuListProps) {
   const listRef = useRef<HTMLDivElement>(null);
+  // It opens from its button and a copy fades out as it closes (design system: Movement).
+  useLeaving(listRef, "pop");
 
   useEffect(() => {
     listRef.current?.querySelector<HTMLElement>(ITEM)?.focus();
@@ -54,6 +57,7 @@ export function MenuList({
       ref={listRef}
       id={id}
       role="menu"
+      data-move="pop"
       aria-label={label}
       onKeyDown={handleKeyDown}
       className={clsx(

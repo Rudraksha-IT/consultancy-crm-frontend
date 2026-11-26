@@ -1,12 +1,21 @@
 "use client";
 
 import clsx from "clsx";
-import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from "react";
+import {
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { LABELS } from "@/constants/messages";
+import { movesNow } from "@/lib/motion";
 
 import { IconButton } from "./IconButton";
+import { useLeaving } from "./useMovement";
 
 const FIRST_FIELD = "input:not([type=hidden]):not([readonly]), select, textarea";
 /** A control marked to take focus first, e.g. Cancel in a confirm dialog. */
@@ -34,6 +43,37 @@ type DialogProps = {
   headerAside?: ReactNode;
 };
 
+/** The dialog that opened in the change being drawn right now, if one did. */
+let justOpened: HTMLElement | null = null;
+
+/**
+ * Whether a dialog that closed shows its copy fading out. Not when another dialog opened in the
+ * same change (the steps of a board move): that one takes its place and only cross-fades.
+ */
+function leavesAlone(): boolean {
+  if (justOpened === null) return true;
+  justOpened.dataset.move = "next";
+  return false;
+}
+
+/**
+ * How a dialog comes and goes (design system: Movement): it fades in and rises with its shade
+ * (a sheet from the bottom on phones), and a copy of it fades out when it closes, so the page
+ * under it is usable at once. With less motion it opens and closes at once.
+ */
+function useDialogMovement(overlayRef: { current: HTMLDivElement | null }): void {
+  useLayoutEffect(() => {
+    const overlay = overlayRef.current;
+    if (overlay === null || !movesNow()) return;
+    overlay.dataset.move = "open";
+    justOpened = overlay;
+    queueMicrotask(() => {
+      if (justOpened === overlay) justOpened = null;
+    });
+  }, [overlayRef]);
+  useLeaving(overlayRef, "dialog", leavesAlone);
+}
+
 /**
  * A modal dialog. Escape, the close button or a click outside close it. On phones it is a bottom
  * sheet: full width, rounded top corners and a grab handle; the content scrolls while the header
@@ -50,6 +90,7 @@ function OpenDialog(props: DialogProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
+  useDialogMovement(overlayRef);
 
   // Escape still closes it when focus has left it, e.g. after its focused button was disabled
   // while saving. Inside, the overlay's own handler does it, so a menu inside can use Escape.
@@ -93,6 +134,7 @@ function OpenDialog(props: DialogProps) {
       <div
         ref={panelRef}
         role="dialog"
+        data-panel=""
         aria-modal="true"
         aria-labelledby={titleId}
         {...smallText(props.hasSmallText)}
@@ -170,7 +212,7 @@ const WIDTHS = {
 function panelClasses(width: keyof typeof WIDTHS, isFull: boolean | undefined): string {
   return clsx(
     "rounded-dialog bg-paper shadow-lift max-h-full w-full overflow-auto",
-    "max-phone:max-w-none max-phone:max-h-sheet max-phone:rounded-t-sheet max-phone:rounded-b-none max-phone:animate-sheet-up max-phone:flex max-phone:flex-col max-phone:overflow-hidden",
+    "max-phone:max-w-none max-phone:max-h-sheet max-phone:rounded-t-sheet max-phone:rounded-b-none max-phone:flex max-phone:flex-col max-phone:overflow-hidden",
     "print:max-h-none print:max-w-none print:overflow-visible print:shadow-none",
     isFull === true
       ? "max-w-composer h-composer max-phone:h-sheet flex flex-col overflow-hidden"

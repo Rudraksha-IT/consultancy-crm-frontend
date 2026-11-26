@@ -82,6 +82,7 @@ function HolidayCard({ group, isPast, onRemove }: HolidayCardProps) {
   const words = holidayWords(group, dates.date);
   return (
     <li
+      data-row=""
       data-holiday-card=""
       className={clsx(
         "rounded-menu border-sheet-rule bg-paper shadow-raise pl-gutter grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3.5 border py-3",

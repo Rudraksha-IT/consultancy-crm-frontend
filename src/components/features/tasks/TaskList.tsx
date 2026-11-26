@@ -80,6 +80,7 @@ function TaskRow({ task, showsStudent, onChanged, look }: TaskRowProps) {
   const { isBusy, toggle } = useToggle(task, onChanged);
   return (
     <li
+      data-row=""
       data-look={look}
       className={clsx(
         "pr-gutter grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-2 pl-0",

@@ -1,6 +1,9 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useRef } from "react";
+
+import { useMarkerSlide } from "@/components/ui/useMovement";
 
 import { LABELS } from "@/constants/messages";
 import type { Module } from "@/constants/modules";
@@ -28,6 +31,9 @@ export function Navigation({ role, modules, onNavigate }: NavigationProps) {
   const items = buildNavigation(role, modules);
   const counts = useNavCounts();
   const isCurrent = (href: string): boolean => isCurrentPage(href, pathname);
+  const navRef = useRef<HTMLElement>(null);
+  // The shade behind the open page glides to the page that was picked (Movement).
+  useMarkerSlide(navRef, items.find((item) => isCurrent(item.href))?.href ?? "");
 
   const renderLinks = (group: "work" | "business") =>
     items
@@ -46,6 +52,7 @@ export function Navigation({ role, modules, onNavigate }: NavigationProps) {
 
   return (
     <nav
+      ref={navRef}
       aria-label={LABELS.mainNavigation}
       className="menu-fade wide:px-2 wide:py-1 flex-1 overflow-y-auto px-4 py-2"
     >

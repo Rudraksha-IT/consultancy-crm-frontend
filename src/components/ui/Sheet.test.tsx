@@ -40,8 +40,9 @@ describe("a dialog on a phone is a bottom sheet", () => {
       "max-phone:max-w-none",
       "max-phone:rounded-t-sheet",
       "max-phone:rounded-b-none",
-      "max-phone:animate-sheet-up",
     );
+    // How it rises is the stylesheet's (Movement, ticket 22): the panel is marked for it.
+    expect(panel()).toHaveAttribute("data-panel");
   });
 
   it("has a grab handle, hidden from screen readers and above 640 px", () => {

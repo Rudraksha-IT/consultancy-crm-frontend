@@ -6,10 +6,10 @@ export type ButtonSize = "sm" | "md" | "lg";
 /*
  * One filled button per screen area, for the main action; every other button is words with an
  * icon and no box, showing a soft fill on hover (Ivory, UI revamp ticket 03). Every button stays at
- * least 44 tall to tap. On phones a pressed button shrinks a little, so a tap always shows.
+ * least 44 tall to tap. A pressed button gives a little, so a press always shows (Movement).
  */
 const BASE =
-  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-control border font-medium no-underline disabled:cursor-not-allowed disabled:opacity-50 max-phone:active:scale-97";
+  "inline-flex cursor-pointer items-center justify-center gap-2 whitespace-nowrap rounded-control border font-medium no-underline disabled:cursor-not-allowed disabled:opacity-50 not-disabled:active:scale-97";
 
 const QUIET = "border-transparent bg-transparent hover:bg-fill";
 

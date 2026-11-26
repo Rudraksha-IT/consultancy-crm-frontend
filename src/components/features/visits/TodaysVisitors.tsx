@@ -62,7 +62,7 @@ function TodayBody({ state }: { state: Loaded<TodaysVisits> }) {
 function VisitRow({ visit }: { visit: TimelineVisit }) {
   const isNew = visit.kind === VisitKind.New;
   return (
-    <li className="group phone:px-gutter px-gutter flex gap-3">
+    <li data-row="" className="group phone:px-gutter px-gutter flex gap-3">
       <span className="phone:w-16 w-12 shrink-0 py-4 font-semibold tabular-nums">
         {localTime(visit.at)}
       </span>

@@ -10,6 +10,7 @@ import { buttonClasses } from "./buttonStyles";
 import { FilterField } from "./FilterField";
 import { clearFilters, isFilterSet, type ListFilter } from "./filters";
 import { Icon } from "./Icon";
+import { Pop } from "./Pop";
 import { useMenu } from "./useMenu";
 
 /** The panel keeps at least this far from the screen's left edge, or opens the other way. */
@@ -69,7 +70,7 @@ export function MoreFilters({ filters }: { filters: readonly ListFilter[] }) {
         <SetCount count={setCount} />
       </button>
       {isOpen && (
-        <div
+        <Pop
           ref={panel}
           role="dialog"
           aria-label={LABELS.moreFilters}
@@ -95,7 +96,7 @@ export function MoreFilters({ filters }: { filters: readonly ListFilter[] }) {
               {LABELS.filtersDone}
             </Button>
           </footer>
-        </div>
+        </Pop>
       )}
     </span>
   );

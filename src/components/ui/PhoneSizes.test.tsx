@@ -157,7 +157,10 @@ describe("phone sizes", () => {
   it("give every button a pressed state", () => {
     render(<Button>Save</Button>);
 
-    expect(screen.getByRole("button", { name: "Save" })).toHaveClass("max-phone:active:scale-97");
+    // on every width since ticket 22 (Movement), and never while it is disabled
+    expect(screen.getByRole("button", { name: "Save" })).toHaveClass(
+      "not-disabled:active:scale-97",
+    );
   });
 
   it("show a section as a sheet on phones too, with 14 corners and 14 inside its sides", () => {

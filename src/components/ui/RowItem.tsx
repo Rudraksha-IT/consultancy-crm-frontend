@@ -23,7 +23,7 @@ type RowItemProps = {
 /** The standard list row. Use inside a `RowList`. */
 export function RowItem({ title, meta, children, right, ...look }: RowItemProps) {
   return (
-    <li className={rowClasses(look)}>
+    <li data-row="" className={rowClasses(look)}>
       <div className="grid min-w-0 gap-1">
         <div className="text-name text-ink min-w-0 font-semibold">{title}</div>
         {meta !== undefined && <div className={metaClasses(look)}>{meta}</div>}

@@ -32,7 +32,7 @@ export function ConversationList({ state, openId, onOpen }: ConversationListProp
   return (
     <ul aria-label={INBOX_TEXT.conversationsLabel}>
       {state.conversations.map((conversation) => (
-        <li key={conversation.person.id} className="border-rule border-b">
+        <li key={conversation.person.id} data-row="" className="border-rule border-b">
           <ConversationRow
             conversation={conversation}
             isOpen={conversation.person.id === openId}

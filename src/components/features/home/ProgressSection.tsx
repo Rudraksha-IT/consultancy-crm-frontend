@@ -121,7 +121,10 @@ type ProgressItemProps = {
  */
 function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
   return (
-    <li className="phone:grid-cols-[minmax(0,1fr)_auto] wide:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] max-phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-x-3 max-phone:gap-y-0.5 max-phone:px-4 max-phone:py-3.5 px-gutter grid grid-cols-1 items-center gap-x-6 gap-y-3 py-5">
+    <li
+      data-row=""
+      className="phone:grid-cols-[minmax(0,1fr)_auto] wide:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] max-phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-x-3 max-phone:gap-y-0.5 max-phone:px-4 max-phone:py-3.5 px-gutter grid grid-cols-1 items-center gap-x-6 gap-y-3 py-5"
+    >
       <div className="max-phone:col-start-1 max-phone:row-start-1 grid min-w-0 gap-1">
         <Link
           href={ROUTES.student(row.student.id)}

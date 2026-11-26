@@ -121,8 +121,11 @@ describe("Ivory tabs and switches", () => {
     );
 
     const tab = screen.getByRole("tab", { name: "Applications" });
-    expect(tab).toHaveClass("border-b-2", "aria-selected:border-accent", "aria-selected:text-ink");
+    expect(tab).toHaveClass("border-b-2", "border-transparent", "aria-selected:text-ink");
     expect(tab.className).not.toMatch(/(^|\s)bg-/);
+    // The underline is a line of its own under the chosen tab, so it can slide (ticket 22).
+    expect(tab.querySelector("[data-marker]")).toHaveClass("bg-accent", "h-0.5", "-bottom-0.5");
+    expect(screen.getByRole("tab", { name: "Visas" }).querySelector("[data-marker]")).toBeNull();
   });
 
   it("draw a switch as words with an underline, not a sliding box", () => {
@@ -139,7 +142,10 @@ describe("Ivory tabs and switches", () => {
     );
 
     expect(screen.getByRole("group", { name: "Tasks" })).not.toHaveClass("bg-fill-2");
-    expect(screen.getByRole("button", { name: "To do" })).toHaveClass("aria-pressed:border-accent");
+    expect(
+      screen.getByRole("button", { name: "To do" }).querySelector("[data-marker]"),
+    ).toHaveClass("bg-accent", "h-0.5");
+    expect(screen.getByRole("button", { name: "Done" }).querySelector("[data-marker]")).toBeNull();
   });
 });
 

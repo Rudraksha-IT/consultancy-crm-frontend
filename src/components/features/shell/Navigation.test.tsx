@@ -127,11 +127,16 @@ describe("The side menu's look (UI revamp, ticket 05)", () => {
     pathname.current = "/tasks";
     render(<Navigation role={Role.Teacher} modules={MODULES} />);
 
-    expect(screen.getByRole("link", { name: "Tasks" })).toHaveClass(
-      "text-accent",
-      "wide:bg-side-active",
-      "font-semibold",
+    const open = screen.getByRole("link", { name: "Tasks" });
+    expect(open).toHaveClass("text-accent", "font-semibold");
+    // The fill is one shade of its own behind the open page, so it can glide to it (ticket 22).
+    expect(document.querySelectorAll("[data-marker]")).toHaveLength(1);
+    expect(open.querySelector("[data-marker]")).toHaveClass(
+      "bg-side-active",
+      "hidden",
+      "wide:block",
     );
+    expect(open.querySelector("[data-marker]")).toHaveAttribute("aria-hidden", "true");
     expect(screen.getByRole("link", { name: "Home" })).not.toHaveClass("text-accent");
   });
 

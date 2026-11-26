@@ -31,14 +31,20 @@ export function NavLink({ item, isCurrent, waiting, onNavigate }: NavLinkProps) 
       aria-current={isCurrent ? "page" : undefined}
       onClick={onNavigate}
       className={clsx(
-        "min-h-side-item rounded-control text-body relative flex items-center gap-3.5 px-3.5 no-underline",
+        "min-h-side-item rounded-control text-body relative z-0 flex items-center gap-3.5 px-3.5 no-underline",
         "wide:min-h-rail-item wide:rounded-menu wide:text-rail wide:flex-col wide:justify-center wide:gap-1 wide:px-1 wide:py-2 wide:text-center",
         "hover:bg-side-hover max-phone:active:bg-side-hover",
-        isCurrent
-          ? "text-accent wide:bg-side-active font-semibold"
-          : "text-side-muted hover:text-side-ink font-medium",
+        isCurrent ? "text-accent font-semibold" : "text-side-muted hover:text-side-ink font-medium",
       )}
     >
+      {/* The shade behind the open page, an element of its own so it can glide to it (Movement). */}
+      {isCurrent && (
+        <span
+          aria-hidden="true"
+          data-marker=""
+          className="rounded-menu bg-side-active wide:block absolute inset-0 -z-10 hidden"
+        />
+      )}
       <Icon name={item.icon} />
       <span className="wide:max-w-full">{item.label}</span>
       <NavCount waiting={waiting} />

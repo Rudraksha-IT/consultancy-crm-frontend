@@ -26,6 +26,7 @@ import type { BoardStudent, StaffContext } from "@/lib/api";
 import { BEAD_CLASSES } from "./beads";
 import { MoveDialog } from "./MoveDialog";
 import { useBoardMove } from "./useBoardMove";
+import { useCardGlide } from "./useCardGlide";
 import type { BoardColumn, StudentBoard as Board } from "./useStudentBoard";
 
 type Viewer = StaffContext["staff"];
@@ -69,6 +70,8 @@ export function StudentBoard({ board, viewer }: StudentBoardProps) {
     const buttons = [...root.querySelectorAll<HTMLElement>("[data-move-for]")];
     (buttons.find((button) => button.dataset.moveFor === id) ?? root).focus();
   }, [moves]);
+
+  useCardGlide(rootRef, board.columns);
 
   function endDrag(): void {
     setDragged(null);
@@ -285,7 +288,7 @@ function Card(props: CardProps) {
 
   return (
     <article
-      data-card=""
+      data-card={student.id}
       data-dragging={props.isDragged}
       draggable={isDraggable}
       onClick={handleClick}

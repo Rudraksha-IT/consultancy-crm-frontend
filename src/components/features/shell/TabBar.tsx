@@ -3,9 +3,10 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 
 import { Icon, type IconName } from "@/components/ui/Icon";
+import { useMarkerSlide } from "@/components/ui/useMovement";
 import { usePhoneWidth } from "@/components/ui/usePhoneWidth";
 import { LABELS } from "@/constants/messages";
 import type { Module } from "@/constants/modules";
@@ -48,8 +49,12 @@ function PhoneTabBar({ role, modules, isMenuOpen, onOpenMenu }: TabBarProps) {
     .map((href) => items.find((item) => item.href === href))
     .filter((item): item is NavItem => item !== undefined);
   const isMenuCurrent = !tabs.some((tab) => isCurrentPage(tab.href, pathname));
+  const barRef = useRef<HTMLElement>(null);
+  // The tinted pill slides sideways to the tab that was tapped (Movement).
+  useMarkerSlide(barRef, tabs.find((tab) => isCurrentPage(tab.href, pathname))?.href ?? "menu");
   return (
     <nav
+      ref={barRef}
       aria-label={LABELS.quickLinks}
       data-tabbar=""
       className="phone:hidden border-rule bg-paper/88 tabbar-safe fixed inset-x-0 bottom-0 z-30 grid auto-cols-fr grid-flow-col border-t backdrop-blur-lg backdrop-saturate-150"
@@ -92,6 +97,7 @@ function TabIcon(props: { icon: IconName; isCurrent: boolean; children?: ReactNo
   const { icon, isCurrent, children } = props;
   return (
     <span
+      {...(isCurrent ? { "data-marker": "" } : {})}
       className={clsx(
         "h-tab-pill-h w-tab-pill rounded-pill relative grid place-items-center transition-colors",
         isCurrent ? "bg-tint" : "group-active:bg-fill-2",

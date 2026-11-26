@@ -60,7 +60,7 @@ function gapClasses(edge: PageEdge, isPulled: boolean): string {
   return clsx(
     "bg-gap text-secondary pointer-events-none absolute inset-x-0 grid place-content-center justify-items-center gap-2 overflow-hidden font-semibold transition-[height,opacity]",
     // While pulled it eases after each scroll step; once let go it closes with the page.
-    isPulled ? "duration-150 ease-out" : "duration-200 ease-in-out",
+    isPulled ? "duration-(--move-quick) ease-out" : "duration-(--move-sink) ease-in-out",
     edge === "top" ? "top-0" : "bottom-0",
   );
 }

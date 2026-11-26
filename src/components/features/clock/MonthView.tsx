@@ -47,7 +47,7 @@ export function MonthView({ month, listPage, onListPage, onOpenDay }: MonthViewP
       <Figures month={month} />
       <div className="grid gap-2.5">
         {view !== null && (
-          <div className="flex justify-end">
+          <div data-swap-bar="" className="flex justify-end">
             <ViewSwitch
               label={TEXT.showMonthAs}
               options={VIEW_OPTIONS}

@@ -3,7 +3,9 @@
 import clsx from "clsx";
 import { useRef } from "react";
 
+import { ChosenLine } from "./Tabs";
 import { useChosenInView } from "./useChosenInView";
+import { useMarkerSlide, useSwapFade, whatFollows } from "./useMovement";
 
 type SegmentedOption<Value extends string> = {
   value: Value;
@@ -37,6 +39,9 @@ export function SegmentedControl<Value extends string>({
 }: SegmentedControlProps<Value>) {
   const stripRef = useRef<HTMLDivElement>(null);
   useChosenInView(stripRef, value, CHOSEN);
+  // The underline slides to the choice and what comes after the strip fades in (Movement).
+  useMarkerSlide(stripRef, value);
+  useSwapFade(() => whatFollows(stripRef.current), value);
   return (
     <div
       ref={stripRef}
@@ -54,8 +59,8 @@ export function SegmentedControl<Value extends string>({
             onChange(option.value);
           }}
           className={clsx(
-            "text-secondary text-ink-3 hover:text-ink max-phone:shrink-0 -mb-px cursor-pointer border-b-2 border-transparent font-medium whitespace-nowrap",
-            "aria-pressed:border-accent aria-pressed:text-ink",
+            "text-secondary text-ink-3 hover:text-ink max-phone:shrink-0 relative -mb-px cursor-pointer border-b-2 border-transparent font-medium whitespace-nowrap",
+            "aria-pressed:text-ink",
             size === "lg" ? "min-h-control-lg" : "min-h-control",
           )}
         >
@@ -71,6 +76,7 @@ export function SegmentedControl<Value extends string>({
               </span>
             </>
           )}
+          {option.value === value && <ChosenLine />}
         </button>
       ))}
     </div>

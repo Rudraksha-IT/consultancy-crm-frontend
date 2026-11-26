@@ -1,6 +1,9 @@
 "use client";
 
+import { useRef } from "react";
+
 import { Icon, type IconName } from "./Icon";
+import { useMarkerSlide, useSwapFade, whatFollows } from "./useMovement";
 
 type ViewOption<Value extends string> = {
   value: Value;
@@ -26,8 +29,13 @@ export function ViewSwitch<Value extends string>({
   value,
   onChange,
 }: ViewSwitchProps<Value>) {
+  const groupRef = useRef<HTMLDivElement>(null);
+  // The raised pill slides to the choice and what the switch shows fades in (Movement).
+  useMarkerSlide(groupRef, value);
+  useSwapFade(() => whatFollows(groupRef.current), value);
   return (
     <div
+      ref={groupRef}
       role="group"
       aria-label={label}
       className="rounded-pill bg-fill inline-flex flex-none gap-0.5 p-0.75"
@@ -40,8 +48,15 @@ export function ViewSwitch<Value extends string>({
           onClick={() => {
             onChange(option.value);
           }}
-          className="rounded-pill text-button-sm text-ink-2 hover:text-ink aria-pressed:bg-paper aria-pressed:text-ink aria-pressed:shadow-raise min-h-control inline-flex cursor-pointer items-center gap-1.5 px-3.5 font-medium"
+          className="rounded-pill text-button-sm text-ink-2 hover:text-ink aria-pressed:text-ink min-h-control relative z-0 inline-flex cursor-pointer items-center gap-1.5 px-3.5 font-medium"
         >
+          {option.value === value && (
+            <span
+              aria-hidden="true"
+              data-marker=""
+              className="rounded-pill bg-paper shadow-raise absolute inset-0 -z-10"
+            />
+          )}
           <Icon name={option.icon} size="sm" />
           {option.label}
         </button>
