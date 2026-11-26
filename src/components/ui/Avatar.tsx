@@ -4,7 +4,14 @@ const INITIALS_COUNT = 2;
 
 type AvatarProps = {
   name: string;
-  size?: "md" | "lg";
+  /** "xs" is the small round on a board card. */
+  size?: "xs" | "md" | "lg";
+};
+
+const SIZE_CLASSES = {
+  xs: "text-small size-6",
+  md: "size-mark text-secondary",
+  lg: "text-section-title size-16",
 };
 
 function initialsOf(name: string): string {
@@ -23,7 +30,7 @@ export function Avatar({ name, size = "md" }: AvatarProps) {
       aria-hidden="true"
       className={clsx(
         "rounded-pill bg-tint text-accent grid flex-none place-items-center font-semibold",
-        size === "lg" ? "text-section-title size-16" : "size-mark text-secondary",
+        SIZE_CLASSES[size],
       )}
     >
       {initialsOf(name)}

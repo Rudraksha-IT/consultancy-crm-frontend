@@ -10,11 +10,11 @@ import { Journey } from "@/components/ui/Journey";
 import { useToast } from "@/components/ui/useToast";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { STAGE_LABELS, Stage } from "@/constants/stages";
-import { InvalidFieldsError, setStage, type StudentProfile } from "@/lib/api";
+import { setStage, type StudentProfile } from "@/lib/api";
 import { localDayIso } from "@/lib/dates";
 import { lostStory, type LostMoment } from "@/lib/students";
 
-import { saveFailure } from "./saveErrors";
+import { stageFailure } from "./saveErrors";
 
 type StageSectionProps = {
   profile: StudentProfile;
@@ -39,7 +39,7 @@ export function StageSection({ profile, onSaved }: StageSectionProps) {
       showToast(doneMessage);
       onSaved(saved);
     } catch (error) {
-      setFailure(moveFailure(error));
+      setFailure(stageFailure(error));
     }
     setIsMoving(false);
   }
@@ -108,12 +108,4 @@ function LostBefore({ story }: { story: readonly LostMoment[] }) {
       <span className="text-small text-ink-2">{LABELS.lostBefore}</span>
     </>
   );
-}
-
-function moveFailure(error: unknown): string {
-  if (error instanceof InvalidFieldsError) {
-    const [first] = Object.values<string[] | undefined>(error.fieldErrors).flat();
-    if (first !== undefined) return first;
-  }
-  return saveFailure(error);
 }

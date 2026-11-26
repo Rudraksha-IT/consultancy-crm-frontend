@@ -1,13 +1,16 @@
 import { parseRecordId, type RecordId } from "@/lib/recordId";
 import { API_PATHS } from "@/constants/api";
-import { studentListQuery, type StudentFilters } from "@/lib/students";
+import type { Stage } from "@/constants/stages";
+import { studentBoardQuery, studentListQuery, type StudentFilters } from "@/lib/students";
 
 import { getJson, postJson } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
 import {
+  BoardStudentPageSchema,
   NEW_STUDENT_API_FIELDS,
   StudentPageSchema,
   StudentSchema,
+  type BoardStudentPage,
   type NewStudent,
   type Student,
   type StudentPage,
@@ -34,6 +37,20 @@ export function fetchStudents(
 ): Promise<StudentPage> {
   const path = `${API_PATHS.students}${studentListQuery(filters, page)}`;
   return getJson(path, StudentPageSchema, fetchFn);
+}
+
+/**
+ * One page of one column of the Students board: the Students at `stage` matching the filters,
+ * newest first, each with their next step and document counts (UI revamp 08).
+ */
+export function fetchBoardStudents(
+  filters: StudentFilters,
+  stage: Stage,
+  page: number,
+  fetchFn: typeof fetch = fetch,
+): Promise<BoardStudentPage> {
+  const path = `${API_PATHS.students}${studentBoardQuery(filters, stage, page)}`;
+  return getJson(path, BoardStudentPageSchema, fetchFn);
 }
 
 /**

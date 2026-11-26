@@ -1,3 +1,4 @@
+import { STUDENTS_VIEW_KEY } from "@/constants/students";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -20,6 +21,11 @@ const ADMIN: StaffContext = {
   colourMode: "light",
   supportAccess: null,
 };
+
+// These tests are about the List; the Board (the first view on a computer) has its own file.
+beforeEach(() => {
+  window.localStorage.setItem(STUDENTS_VIEW_KEY, "list");
+});
 
 function as(role: StaffContext["staff"]["role"]): StaffContext {
   return { ...ADMIN, staff: { ...ADMIN.staff, role } };

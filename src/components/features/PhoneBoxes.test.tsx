@@ -156,10 +156,11 @@ describe("Bar lists on a phone", () => {
 });
 
 describe("The Stage on a phone", () => {
-  it("is the name alone in a list, without the dots", () => {
+  it("shows five small beads before the name in a list (UI revamp 08)", () => {
     const { container } = render(<StageMeter stage={Stage.Applying} />);
 
-    expect(isHiddenOnPhone(container.querySelector("[data-step]"))).toBe(true);
+    expect(container.querySelectorAll("[data-step]")).toHaveLength(5);
+    expect(isHiddenOnPhone(container.querySelector("[data-step]"))).toBe(false);
     expect(isHiddenOnPhone(screen.getByText("Applying"))).toBe(false);
   });
 

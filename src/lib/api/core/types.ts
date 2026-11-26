@@ -361,6 +361,41 @@ export const StudentPageSchema = z
 
 export type StudentPage = z.infer<typeof StudentPageSchema>;
 
+/** One Student on the Students board: a list row with their next step and document counts. */
+export const BoardStudentSchema = z
+  .object({
+    ...StudentRowFields,
+    next_step: z.string(),
+    documents: z.object({
+      done: z.number().int().nonnegative(),
+      total: z.number().int().nonnegative(),
+    }),
+  })
+  .transform(({ assigned_counsellor, next_step, ...rest }) => ({
+    ...rest,
+    assignedCounsellor: assigned_counsellor,
+    nextStep: next_step,
+  }));
+
+export type BoardStudent = z.infer<typeof BoardStudentSchema>;
+
+/** One page of a column of the Students board. */
+export const BoardStudentPageSchema = z
+  .object({
+    count: z.number().int().nonnegative(),
+    page: z.number().int().positive(),
+    page_size: z.number().int().positive(),
+    results: z.array(BoardStudentSchema),
+  })
+  .transform(({ count, page, page_size, results }) => ({
+    count,
+    page,
+    pageSize: page_size,
+    students: results,
+  }));
+
+export type BoardStudentPage = z.infer<typeof BoardStudentPageSchema>;
+
 const StudentFields = {
   ...StudentRowFields,
   highest_qualification: z.enum(QUALIFICATIONS),

@@ -3,10 +3,12 @@ export {
   hasAnyFilter,
   NO_STUDENT_FILTERS,
   priorityFrom,
+  studentBoardQuery,
   studentFilterValues,
   studentListQuery,
 } from "./filters";
 export type { StudentFilters } from "./filters";
+export { studentsViewFrom } from "./view";
 export { addressText, ageOn, viewOnlyReason } from "./profile";
 export type { AddressParts } from "./profile";
 export { mergeActivity, sourcesToLoadNext } from "./activity";

@@ -427,6 +427,7 @@ export type {
 } from "./money/payments";
 export {
   addStudent,
+  fetchBoardStudents,
   fetchHighPriorityStudents,
   fetchStudents,
   fetchStudentsByName,
@@ -494,6 +495,8 @@ export type {
   NewStudent,
   NewStudentField,
   Student,
+  BoardStudent,
+  BoardStudentPage,
   StudentPage,
   StudentRow,
   AcademicRecord,

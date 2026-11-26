@@ -1,3 +1,4 @@
+import { STUDENTS_VIEW_KEY } from "@/constants/students";
 import { uid } from "@/test/ids";
 import { render, screen } from "@testing-library/react";
 
@@ -23,6 +24,11 @@ const COUNSELLOR: StaffContext = {
   colourMode: "light",
   supportAccess: null,
 };
+
+// These tests are about the List; the Board (the first view on a computer) has its own file.
+beforeEach(() => {
+  window.localStorage.setItem(STUDENTS_VIEW_KEY, "list");
+});
 
 function renderRoute() {
   const fetchFn = vi.fn((path: string) =>
