@@ -22,6 +22,8 @@ type ButtonProps = {
   hasFirstFocus?: boolean;
   /** Whether what the button opens is open (a picker shown under it). */
   isExpanded?: boolean;
+  /** For an on/off button (`aria-pressed`), e.g. a chart shown as its table. */
+  isPressed?: boolean;
   /** For giving the cursor back to the button, such as after what it opened closes. */
   ref?: Ref<HTMLButtonElement>;
   /**
@@ -55,6 +57,7 @@ export function Button(props: ButtonProps) {
     onClick,
     hasFirstFocus,
     isExpanded,
+    isPressed,
     ref,
     label,
   } = {
@@ -67,6 +70,7 @@ export function Button(props: ButtonProps) {
       type={type}
       form={form}
       aria-expanded={isExpanded}
+      aria-pressed={isPressed}
       aria-label={label}
       disabled={isDisabled || isLoading}
       aria-busy={isLoading}

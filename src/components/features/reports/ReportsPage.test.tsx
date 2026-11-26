@@ -287,6 +287,7 @@ describe("The Students report", () => {
     renderReports();
 
     const chart = within(await region("Visitors, sign-ups and visas each month"));
+    await userEvent.click(chart.getByRole("button", { name: "Show as a table" }));
     const table = chart.getByRole("table");
     const september = within(table).getByRole("row", { name: /Sep 2026/ });
     expect(
@@ -294,7 +295,67 @@ describe("The Students report", () => {
         .getAllByRole("cell")
         .map((cell) => cell.textContent),
     ).toEqual(["Sep 2026", "30", "12", "9"]);
-    expect(chart.getByText("Show as a table")).toBeInTheDocument();
+  });
+
+  it("has Show as a table on each chart's title line, and swaps that chart only", async () => {
+    backend(...EVERYTHING);
+    renderReports();
+    const MONTHLY = "Visitors, sign-ups and visas each month";
+    const NAMES = [MONTHLY, "Visas granted by country", "Countries Students want"];
+    for (const name of NAMES) {
+      const section = await region(name);
+      const button = within(section).getByRole("button", { name: "Show as a table" });
+      const titleLine = within(section).getByRole("heading", { name }).parentElement?.parentElement;
+      expect(titleLine).toContainElement(button);
+      expect(button.closest("[data-panel]")).toBeNull();
+      expect(button).toHaveAttribute("aria-pressed", "false");
+      expect(within(section).queryByRole("table")).toBeNull();
+    }
+    // The funnel is a bar list, not a chart with a table.
+    expect(
+      within(await region("What happened to them")).queryByRole("button", {
+        name: "Show as a table",
+      }),
+    ).toBeNull();
+
+    const monthly = within(await region(MONTHLY));
+    const button = monthly.getByRole("button", { name: "Show as a table" });
+    await userEvent.click(button);
+
+    expect(monthly.getByRole("table")).toBeInTheDocument();
+    expect(monthly.queryByRole("img")).toBeNull();
+    expect(button).toHaveFocus();
+    expect(button).toHaveAccessibleName("Show as a chart");
+    expect(button).toHaveAttribute("aria-pressed", "true");
+    expect(within(await region("Countries Students want")).queryByRole("table")).toBeNull();
+    expect(screen.getAllByRole("button", { name: "Show as a table" })).toHaveLength(2);
+
+    await userEvent.click(button);
+
+    expect(monthly.getByRole("img", { name: MONTHLY })).toBeInTheDocument();
+    expect(monthly.queryByRole("table")).toBeNull();
+    expect(button).toHaveFocus();
+  });
+
+  it("remembers each chart's choice while the page is open", async () => {
+    backend(...EVERYTHING);
+    renderReports();
+    const NAME = "Visitors, sign-ups and visas each month";
+    await userEvent.click(
+      within(await region(NAME)).getByRole("button", { name: "Show as a table" }),
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Last 12 months" }));
+    await screen.findByText("in the last 12 months");
+    expect(within(await region(NAME)).getByRole("table")).toBeInTheDocument();
+
+    await openTab("Where visitors came from");
+    await openTab("Students");
+
+    const back = within(await region(NAME));
+    expect(back.getByRole("table")).toBeInTheDocument();
+    expect(back.getByRole("button", { name: "Show as a chart" })).toBeInTheDocument();
+    expect(within(await region("Countries Students want")).queryByRole("table")).toBeNull();
   });
 
   it("switches to the last 12 months", async () => {
@@ -354,7 +415,8 @@ describe("The Students report's countries", () => {
     expect(legend.getByText("Students")).toBeInTheDocument();
     wanted.getByRole("button", { name: "Canada: Students 40" }).focus();
     expect(await wanted.findByRole("tooltip")).toHaveTextContent("Canada");
-    await userEvent.click(wanted.getByText("Show as a table"));
+    await userEvent.click(wanted.getByRole("button", { name: "Show as a table" }));
+    expect(wanted.queryByRole("list", { name: "Countries Students want" })).toBeNull();
     const rows = within(wanted.getByRole("table")).getAllByRole("row");
     expect(rows.map((row) => row.textContent)).toEqual([
       "CountryStudents",
@@ -375,6 +437,8 @@ describe("The Students report's countries", () => {
     expect(await granted.findByText("No visas granted in this time.")).toBeInTheDocument();
     const wanted = within(await region("Countries Students want"));
     expect(wanted.getByText("Nobody came in during this time.")).toBeInTheDocument();
+    expect(wanted.queryByRole("button", { name: "Show as a table" })).toBeNull();
+    expect(granted.queryByRole("button", { name: "Show as a table" })).toBeNull();
     expect(
       wanted.getByText("Students who came in during the last 12 months, by the country they want."),
     ).toBeInTheDocument();
@@ -750,6 +814,13 @@ describe("Money", () => {
       "Money in",
       "Money out",
     ]);
+    const button = chart.getByRole("button", { name: "Show as a table" });
+    expect(
+      chart.getByRole("heading", { name: "Money in and money out each month" }).parentElement
+        ?.parentElement,
+    ).toContainElement(button);
+    await userEvent.click(button);
+    expect(button).toHaveAccessibleName("Show as a chart");
     const september = within(chart.getByRole("table")).getByRole("row", { name: /Sep 2026/ });
     expect(
       within(september)

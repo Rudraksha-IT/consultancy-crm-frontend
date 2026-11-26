@@ -153,10 +153,20 @@ describe("ColumnChart", () => {
     expect(screen.getByRole("tooltip")).toHaveTextContent("September 2026");
   });
 
-  it("can be shown as a table", async () => {
+  it("has no table while it is a chart", () => {
     render(<ColumnChart title="Visitors each month" categories={MONTHS} series={SERIES} />);
 
-    await userEvent.click(screen.getByText("Show as a table"));
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.queryByText("Show as a table")).toBeNull();
+  });
+
+  it("can be shown as a table, in place of the chart", () => {
+    render(
+      <ColumnChart title="Visitors each month" categories={MONTHS} series={SERIES} showsTable />,
+    );
+
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.queryByRole("list", { name: "Legend" })).toBeNull();
 
     const table = screen.getByRole("table");
     expect(

@@ -21,11 +21,13 @@ type BarChartProps = {
   /** Every row for "Show as a table", when the bars group some together; `rows` by default. */
   tableRows?: readonly BarChartRow[];
   format?: ValueFormat;
+  /** Show the numbers as a table in the chart's place ("Show as a table", `ChartSection`). */
+  showsTable?: boolean;
 };
 
 /**
- * One series as horizontal bars in the accent colour, each with its number, a legend, the exact
- * value on hover or focus, and a table view.
+ * One series as horizontal bars in the accent colour, each with its number, a legend and the
+ * exact value on hover or focus; or, in its place, the same numbers as a table.
  */
 export function BarChart(props: BarChartProps) {
   const { title, seriesName, rows } = props;
@@ -34,8 +36,23 @@ export function BarChart(props: BarChartProps) {
   const max = Math.max(1, ...rows.map((row) => row.value));
   const tableRows = props.tableRows ?? rows;
 
+  if (props.showsTable === true) {
+    return (
+      <ChartTable
+        title={title}
+        categoryHeading={props.categoryHeading}
+        categories={tableRows.map((row) => ({
+          key: row.key,
+          label: row.label,
+          shortLabel: row.label,
+        }))}
+        series={[{ name: seriesName, values: tableRows.map((row) => row.value) }]}
+        format={format}
+      />
+    );
+  }
   return (
-    <div className="grid gap-3 px-7 pt-6 pb-2">
+    <div className="px-gutter grid gap-3 pt-5 pb-4">
       <ul aria-label={LABELS.legend} className="text-secondary text-ink-2 flex gap-6">
         <li className="flex items-center gap-2">
           <span aria-hidden="true" className="bg-accent size-3 rounded-sm" />
@@ -87,16 +104,6 @@ export function BarChart(props: BarChartProps) {
           </li>
         ))}
       </ul>
-      <ChartTable
-        categoryHeading={props.categoryHeading}
-        categories={tableRows.map((row) => ({
-          key: row.key,
-          label: row.label,
-          shortLabel: row.label,
-        }))}
-        series={[{ name: seriesName, values: tableRows.map((row) => row.value) }]}
-        format={format}
-      />
     </div>
   );
 }

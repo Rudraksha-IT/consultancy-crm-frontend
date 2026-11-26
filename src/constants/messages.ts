@@ -269,6 +269,7 @@ export const LABELS = {
   switchToLight: "Switch to light mode",
   legend: "Legend",
   showAsTable: "Show as a table",
+  showAsChart: "Show as a chart",
   month: "Month",
   stageIs: (stage: string) => `Stage: ${stage}`,
   studentsAtEachStage: "Students at each Stage",
