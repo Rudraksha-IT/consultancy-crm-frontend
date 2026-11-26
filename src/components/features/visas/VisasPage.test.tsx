@@ -229,14 +229,15 @@ describe("VisasPage", () => {
     const fetchFn = backend(listing(), choices, counsellors);
     renderPage();
     await rowFor("Sita Karki");
-    await user.click(screen.getByRole("button", { name: "More filters" }));
-    await screen.findByRole("option", { name: "Sep 2027" });
     await screen.findByRole("option", { name: "Bikash Thapa" });
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Visa status" }), "Applied");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Counsellor" }), "Bikash Thapa");
+    // The panel under "More filters" stays open while its filters are chosen (UI revamp 06).
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+    await screen.findByRole("option", { name: "Sep 2027" });
     await user.selectOptions(screen.getByRole("combobox", { name: "Country" }), "Canada");
     await user.selectOptions(screen.getByRole("combobox", { name: "Intake" }), "Sep 2027");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Counsellor" }), "Bikash Thapa");
 
     await waitFor(() => {
       expect(lastListCall(fetchFn)).toBe(
@@ -387,10 +388,14 @@ describe("VisasPage More filters (list tidy-ups 03)", () => {
 
     await user.click(screen.getByRole("button", { name: "More filters" }));
 
+    const panel = screen.getByRole("dialog", { name: "More filters" });
     for (const name of ["Country", "Intake", "Sort"]) {
-      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+      expect(within(panel).getByRole("combobox", { name })).toBeInTheDocument();
     }
-    expect(screen.queryByRole("button", { name: "More filters" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More filters" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
   });
 });
 

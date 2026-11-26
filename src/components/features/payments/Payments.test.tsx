@@ -455,6 +455,25 @@ describe("taking a payment", () => {
     expect(screen.queryByRole("button", { name: "Take a payment" })).not.toBeInTheDocument();
   });
 
+  it("is a compact rounded button on the name's line on phones (UI revamp 06)", async () => {
+    backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
+    renderPage();
+
+    const button = await screen.findByRole("button", { name: "Take a payment" });
+    expect(button).toHaveAttribute("data-variant", "primary");
+    expect(button).toHaveClass("min-h-control");
+    // The name takes the line's room and the main action follows it; the rest go underneath.
+    expect(button.parentElement).toHaveClass(
+      "max-phone:contents",
+      "max-phone:*:order-5",
+      "max-phone:*:data-[variant=primary]:order-3",
+      "max-phone:*:data-[variant=primary]:rounded-pill",
+      "max-phone:*:data-[variant=primary]:flex-none",
+    );
+    const name = screen.getByRole("heading", { name: "Sita Gurung" });
+    expect(name.closest(".max-phone\\:order-1")).toHaveClass("max-phone:flex-1", "min-w-0");
+  });
+
   it("sits beside Assign a counsellor for a Student who has none", async () => {
     backend(
       on("GET", `/api/students/${uid(7)}/`, {

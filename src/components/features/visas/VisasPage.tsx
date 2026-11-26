@@ -75,6 +75,7 @@ function VisaList({ role, initialAppointment }: VisaListProps) {
       <PageHeader
         title={TEXT.title}
         subtitle={TEXT.subtitle}
+        isActionBesideTitle
         actions={
           <VisasExport role={role} list={list} filters={filters} counsellors={counsellors} />
         }
@@ -89,6 +90,7 @@ function VisaList({ role, initialAppointment }: VisaListProps) {
           choices={choices}
           counsellors={counsellors}
           canBeAssigned={canBeAssignedStudents(role)}
+          resultText={list.status === "loaded" ? TEXT.count(list.page.count) : undefined}
         />
         <ListContent
           list={list}

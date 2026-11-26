@@ -1,12 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
-
-import { FilterBar, MoreFiltersButton } from "@/components/ui/FilterBar";
-import { FilterSelect } from "@/components/ui/FilterSelect";
+import { FilterBar, type ListFilter } from "@/components/ui/FilterBar";
 import { counsellorFilterOptions } from "@/components/features/students/counsellorFilter";
 import type { SelectOption } from "@/components/ui/SelectField";
-import { LABELS } from "@/constants/messages";
 import { COUNTRIES, COUNTRY_LABELS, type Country } from "@/constants/students";
 import {
   DEFAULT_VISA_SORT,
@@ -32,6 +28,8 @@ type VisaFilterBarProps = {
   counsellors: readonly CounsellorChoice[];
   /** Admins and Counsellors can be assigned Students, so "My Students" means something. */
   canBeAssigned: boolean;
+  /** How many the list shows now ("3 visas"), for the phone's filter sheet. */
+  resultText?: string | undefined;
 };
 
 const COUNSELLOR_FILTER_LABELS = { any: TEXT.anyCounsellor, me: TEXT.myStudents };
@@ -58,91 +56,77 @@ const SORT_OPTIONS: SelectOption[] = VISA_SORTS.map((sort) => ({
  */
 export function VisaFilterBar(props: VisaFilterBarProps) {
   const { filters, onChange, choices } = props;
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
-  // Closes on a press outside the filters or Esc; the button then counts what is set there.
-  const closeMore = useCallback(() => {
-    setIsMoreOpen(false);
-  }, []);
-  const moreSet = [filters.country, filters.intake].filter((value) => value !== "").length;
-  const more = (
-    <>
-      <FilterSelect
-        label={TEXT.country}
-        isLabelShown
-        value={filters.country}
-        options={[{ value: "", label: TEXT.anyCountry }, ...countryOptions(choices.countries)]}
-        onChange={(country) => {
-          onChange({ country: toCountry(country) });
-        }}
-      />
-      <FilterSelect
-        label={TEXT.intake}
-        isLabelShown
-        value={filters.intake}
-        options={[
-          { value: "", label: TEXT.anyIntake },
-          ...withCurrent(choices.intakes, filters.intake).map((intake) => ({
-            value: intake,
-            label: formatIntake(intake),
-          })),
-        ]}
-        onChange={(intake) => {
-          onChange({ intake });
-        }}
-      />
-      <FilterSelect
-        label={TEXT.sort}
-        isLabelShown
-        value={filters.sort}
-        options={SORT_OPTIONS}
-        onChange={(sort) => {
-          onChange({ sort: toSort(sort) });
-        }}
-      />
-    </>
-  );
-  return (
-    <FilterBar label={TEXT.filters} more={isMoreOpen ? more : undefined} onMoreClose={closeMore}>
-      <FilterSelect
-        label={TEXT.status}
-        value={filters.status}
-        options={STATUS_OPTIONS}
-        onChange={(status) => {
-          onChange({ status: toStatus(status) });
-        }}
-      />
-      <FilterSelect
-        label={TEXT.counsellor}
-        value={filters.counsellor}
-        options={counsellorFilterOptions(
-          props.counsellors,
-          props.canBeAssigned,
-          COUNSELLOR_FILTER_LABELS,
-        )}
-        onChange={(counsellor) => {
-          onChange({ counsellor });
-        }}
-      />
-      <FilterSelect
-        label={TEXT.appointment}
-        value={filters.appointment}
-        options={APPOINTMENT_OPTIONS}
-        onChange={(appointment) => {
-          onChange({ appointment: toAppointmentWhen(appointment) });
-        }}
-      />
-      {!isMoreOpen && (
-        <MoreFiltersButton
-          setCount={moreSet}
-          onClick={() => {
-            setIsMoreOpen(true);
-          }}
-        >
-          {LABELS.moreFilters}
-        </MoreFiltersButton>
-      )}
-    </FilterBar>
-  );
+  const listFilters: ListFilter[] = [
+    {
+      id: "status",
+      label: TEXT.status,
+      value: filters.status,
+      options: STATUS_OPTIONS,
+      onChange: (status) => {
+        onChange({ status: toStatus(status) });
+      },
+    },
+    {
+      id: "counsellor",
+      label: TEXT.counsellor,
+      value: filters.counsellor,
+      options: counsellorFilterOptions(
+        props.counsellors,
+        props.canBeAssigned,
+        COUNSELLOR_FILTER_LABELS,
+      ),
+      onChange: (counsellor) => {
+        onChange({ counsellor });
+      },
+    },
+    {
+      id: "appointment",
+      label: TEXT.appointment,
+      value: filters.appointment,
+      options: APPOINTMENT_OPTIONS,
+      onChange: (appointment) => {
+        onChange({ appointment: toAppointmentWhen(appointment) });
+      },
+    },
+    {
+      id: "country",
+      label: TEXT.country,
+      value: filters.country,
+      options: [{ value: "", label: TEXT.anyCountry }, ...countryOptions(choices.countries)],
+      onChange: (country) => {
+        onChange({ country: toCountry(country) });
+      },
+      isMore: true,
+    },
+    {
+      id: "intake",
+      label: TEXT.intake,
+      value: filters.intake,
+      options: [
+        { value: "", label: TEXT.anyIntake },
+        ...withCurrent(choices.intakes, filters.intake).map((intake) => ({
+          value: intake,
+          label: formatIntake(intake),
+        })),
+      ],
+      onChange: (intake) => {
+        onChange({ intake });
+      },
+      isMore: true,
+    },
+    {
+      id: "sort",
+      label: TEXT.sort,
+      value: filters.sort,
+      options: SORT_OPTIONS,
+      onChange: (sort) => {
+        onChange({ sort: toSort(sort) });
+      },
+      isSort: true,
+      isMore: true,
+    },
+  ];
+  return <FilterBar label={TEXT.filters} filters={listFilters} resultText={props.resultText} />;
 }
 
 /** The choices, keeping the chosen one even before the choices have loaded. */

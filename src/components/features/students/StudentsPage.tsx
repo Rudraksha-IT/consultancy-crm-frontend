@@ -168,6 +168,7 @@ function StudentList({
           onChange={change}
           counsellors={counsellors}
           canBeAssigned={canBeAssignedStudents(role)}
+          resultText={list.status === "loaded" ? LABELS.studentCount(list.page.count) : undefined}
         />
         <ListContent
           list={list}

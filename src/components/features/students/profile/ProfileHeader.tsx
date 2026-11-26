@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import Link from "next/link";
 import { useState, type ReactNode } from "react";
 
@@ -11,6 +12,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Menu, type MenuItem } from "@/components/ui/Menu";
+import { PHONE_LINE_BREAK, PHONE_MAIN_ACTION } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/useToast";
 import { COMMUNICATION_TEXT } from "@/constants/communication";
 import { LABELS } from "@/constants/messages";
@@ -48,8 +50,10 @@ export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
         <Icon name="left" size="sm" />
         {LABELS.allStudents}
       </Link>
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-5">
-        <div className="flex min-w-0 items-center gap-5">
+      {/* Phones (UI revamp 06): the main action is a compact rounded button on the name's line;
+          Priority and the other actions follow on the next line. */}
+      <div className="max-phone:items-start max-phone:justify-start max-phone:gap-x-2 max-phone:gap-y-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-5">
+        <div className="max-phone:order-1 max-phone:flex-1 max-phone:gap-3 flex min-w-0 items-center gap-5">
           <Avatar name={profile.name} size="lg" />
           <div className="grid min-w-0 gap-1">
             <h1 className="text-page-title-sm wide:text-page-title wrap-anywhere">
@@ -67,7 +71,12 @@ export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
             </div>
           </div>
         </div>
-        <div className="flex flex-wrap items-start gap-3">
+        <div
+          className={clsx(
+            "max-phone:contents max-phone:*:order-5 flex flex-wrap items-start gap-3",
+            PHONE_LINE_BREAK,
+          )}
+        >
           <PriorityPicker profile={profile} onSaved={onSaved} />
           <HeaderActions profile={profile} onOpen={setOpen} />
         </div>
@@ -159,7 +168,13 @@ function HeaderActions({ profile, onOpen }: HeaderActionsProps) {
     onOpen(dialog);
   };
   return (
-    <div className="flex flex-wrap items-center gap-3 empty:hidden">
+    <div
+      className={clsx(
+        "flex flex-wrap items-center gap-3 empty:hidden",
+        "max-phone:contents max-phone:*:order-5 max-phone:*:text-button-sm",
+        PHONE_MAIN_ACTION,
+      )}
+    >
       {profile.canAssign && (
         <Button variant="primary" icon="userplus" onClick={opens("assign")}>
           {LABELS.assignACounsellor}

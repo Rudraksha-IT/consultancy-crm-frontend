@@ -36,29 +36,89 @@ describe("phone page actions", () => {
     return screen.getByRole("button", { name: "Export" }).parentElement;
   }
 
-  it("put the main action full width on top, 48 tall", () => {
+  it("put the main action beside the title: compact, rounded, 44 tall with small text", () => {
     const actions = showHeader();
 
     expect(screen.getByRole("button", { name: "Add a visitor" })).toHaveAttribute(
       "data-variant",
       "primary",
     );
+    // The title's own line: the title takes the room, the main action follows it.
+    const title = screen.getByRole("heading", { level: 1 });
+    expect(title).toHaveClass("max-phone:order-2", "max-phone:flex-1");
+    // It never shrinks under its longest word, or the button would sit on top of it.
+    expect(title).not.toHaveClass("max-phone:min-w-0");
     expect(actions).toHaveClass(
-      "max-phone:w-full",
-      "max-phone:*:data-[variant=primary]:order-first",
-      "max-phone:*:data-[variant=primary]:basis-full",
-      "max-phone:*:data-[variant=primary]:min-h-action-phone",
+      "max-phone:contents",
+      "max-phone:*:data-[variant=primary]:order-3",
+      "max-phone:*:data-[variant=primary]:flex-none",
+      "max-phone:*:data-[variant=primary]:rounded-pill",
+      "max-phone:*:data-[variant=primary]:px-3.5",
+      "max-phone:*:text-button-sm",
     );
+    // No full-width bar, and 44 tall as every button is.
+    expect(actions).not.toHaveClass("max-phone:*:data-[variant=primary]:basis-full");
+    expect(screen.getByRole("button", { name: "Add a visitor" })).toHaveClass("min-h-control");
   });
 
-  it("let the other actions share one row under it", () => {
+  it("put the other actions on the next line as small text buttons, from the left", () => {
     const actions = showHeader();
 
-    expect(actions).toHaveClass("max-phone:*:grow", "max-phone:*:basis-0");
+    expect(actions).toHaveClass("max-phone:*:order-5", "max-phone:*:px-button-sm");
+    // A full-width break between the title's line and theirs, so they never join the title.
+    expect(actions).toHaveClass(
+      "max-phone:before:order-4",
+      "max-phone:before:basis-full",
+      "max-phone:before:content-['']",
+    );
+    expect(actions).not.toHaveClass("max-phone:*:grow");
+    expect(actions?.parentElement).toHaveClass("max-phone:justify-start");
     expect(screen.getByRole("button", { name: "Export" })).toHaveAttribute(
       "data-variant",
       "secondary",
     );
+  });
+
+  it("keep the line under the title between the title and the other actions", () => {
+    render(<PageHeader title="Visas" subtitle="Every visa." actions={<Button>Export</Button>} />);
+
+    expect(screen.getByText("Every visa.")).toHaveClass(
+      "max-phone:order-4",
+      "max-phone:basis-full",
+    );
+  });
+
+  it("put a lone Export beside the title, small and outlined, when there is no main action", () => {
+    render(<PageHeader title="Visas" isActionBesideTitle actions={<Button>Export</Button>} />);
+
+    const actions = screen.getByRole("button", { name: "Export" }).parentElement;
+    expect(actions).toHaveClass(
+      "max-phone:*:data-variant:order-3",
+      "max-phone:*:data-variant:flex-none",
+      "max-phone:*:data-variant:rounded-pill",
+      "max-phone:*:data-variant:border-rule",
+    );
+    expect(screen.getByRole("button", { name: "Export" })).toHaveClass("min-h-control");
+  });
+
+  it("leave an action alone on the next line unless the page asks for it beside the title", () => {
+    render(<PageHeader title="Emails" actions={<Button>Email a Student</Button>} />);
+
+    const actions = screen.getByRole("button", { name: "Email a Student" }).parentElement;
+    expect(actions).not.toHaveClass("max-phone:*:data-variant:order-3");
+  });
+
+  it("give something that is not a button (the clock card) the whole width", () => {
+    const actions = showHeader();
+
+    expect(actions).toHaveClass("max-phone:*:not-data-variant:basis-full");
+  });
+
+  it("keep the page top of computers and tablets", () => {
+    const actions = showHeader();
+
+    expect(actions).toHaveClass("flex", "flex-wrap", "items-end", "gap-3");
+    expect(actions?.parentElement).toHaveClass("justify-between", "items-end");
   });
 
   it("mark link buttons the same way", () => {

@@ -1,135 +1,246 @@
 "use client";
 
 import clsx from "clsx";
-import { useEffect, useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
+import { useContext, useRef, useState, type ReactNode, type RefObject } from "react";
 
-import { buttonClasses } from "./buttonStyles";
+import { LABELS } from "@/constants/messages";
 
-/**
- * Where each filter row was left, sideways, by the bar's name and the row's place. Kept for the
- * page's life, so a row drawn again (a list loading again) comes back where the person left it.
- */
-const keptScroll = new Map<string, number>();
+import { Button } from "./Button";
+import { Dialog } from "./Dialog";
+import { FilterField } from "./FilterField";
+import { chosenLabel, clearFilters, isFilterSet, type ListFilter } from "./filters";
+import { FilterSelect } from "./FilterSelect";
+import { Icon } from "./Icon";
+import { MoreFilters, SetCount } from "./MoreFilters";
+import { ToastContext } from "./toastContext";
+import { usePhoneWidth } from "./usePhoneWidth";
 
-/**
- * A pill on a phone: a 44 tall target with a 36 tall rounded box drawn inside it (design system:
- * Phones, filters). Above 640 it is invisible to the layout.
- */
-export const PILL_CLASSES =
-  "max-phone:relative max-phone:isolate max-phone:inline-flex max-phone:min-h-control max-phone:shrink-0 max-phone:items-center max-phone:before:absolute max-phone:before:inset-x-0 max-phone:before:inset-y-1 max-phone:before:-z-1 max-phone:before:rounded-pill max-phone:before:border max-phone:before:border-rule-2 max-phone:before:bg-paper max-phone:has-[select:focus-visible]:before:border-accent max-phone:has-[select:focus-visible]:before:outline-3 max-phone:has-[select:focus-visible]:before:outline-tint";
-
-/** A filter row: one line that scrolls sideways on a phone; above 640, part of the bar's flow. */
-const ROW_CLASSES =
-  "max-phone:-mx-3 max-phone:flex max-phone:flex-nowrap max-phone:gap-2 max-phone:overflow-x-auto max-phone:px-3 max-phone:after:block max-phone:after:w-px max-phone:after:shrink-0";
+export type { ListFilter } from "./filters";
 
 type FilterBarProps = {
-  /** Names the bar, and keeps each row's sideways position apart from other bars. */
+  /** Names the bar for screen readers ("Filter Students"). */
   label: string;
-  /** The search box, on its own line on a phone. */
+  /** The search box, first in the bar. */
   search?: ReactNode;
-  /** The other filters: small pills in one row on a phone. */
-  children: ReactNode;
-  /** "More filters", once opened: a second row of pills, read as one box with the first. */
-  more?: ReactNode;
-  /** Closes "More filters": a press outside the filters, or Esc in them (list tidy-ups 18). */
-  onMoreClose?: () => void;
+  /** Every filter of the list, in the order they are shown. */
+  filters: readonly ListFilter[];
+  /** What the list shows now, from its own count ("3 Students"); left out while it loads. */
+  resultText?: string | undefined;
 };
 
 /**
- * A list's filters above it. Above 640 the search and the filters share one row that wraps; on a
- * phone the search sits on its own line and the filters are pills in one row that slides
- * sideways and never wraps.
+ * A list's filters above it (ticket 06). On computers and tablets the search and the filters
+ * share one row that wraps: a filter that is set is outlined, the extra ones open in a small
+ * panel under "More filters", and "Clear filters" ends the bar once anything is set. On a phone
+ * they fold behind one button beside the search and open as a sheet from the bottom, and the
+ * ones that are set stay in view as chips.
  */
-export function FilterBar({ label, search, children, more, onMoreClose }: FilterBarProps) {
-  const bar = useRef<HTMLDivElement>(null);
-  useCloseOutside(bar, more === undefined ? undefined : onMoreClose);
+export function FilterBar(props: FilterBarProps) {
+  const isPhone = usePhoneWidth();
   return (
-    <div
-      ref={bar}
-      role="group"
-      aria-label={label}
-      className="border-rule border-b"
-      onKeyDown={(event) => {
-        if (event.key === "Escape" && more !== undefined) onMoreClose?.();
-      }}
-    >
-      <div className="max-phone:grid max-phone:gap-2 max-phone:p-3 max-phone:pb-1 px-gutter flex flex-wrap items-center gap-3 py-5">
-        {search}
-        <FilterRow storeKey={`${label}|0`} className="contents">
-          {children}
-        </FilterRow>
-      </div>
-      {more !== undefined && (
-        <FilterRow
-          storeKey={`${label}|1`}
-          className="max-phone:mx-0 max-phone:pt-0 max-phone:pb-1 px-gutter flex flex-wrap items-center gap-3 pb-5"
+    <div role="group" aria-label={props.label} className="border-rule border-b">
+      {isPhone ? <PhoneFilters {...props} /> : <WideFilters {...props} />}
+    </div>
+  );
+}
+
+/** Says "Filters cleared" where the page can (it is left out where there is no toast). */
+function useClear(): (filters: readonly ListFilter[]) => void {
+  const toast = useContext(ToastContext);
+  return (filters) => {
+    clearFilters(filters);
+    toast?.showToast(LABELS.filtersCleared);
+  };
+}
+
+function WideFilters({ search, filters }: FilterBarProps) {
+  const row = useRef<HTMLDivElement>(null);
+  const clear = useClear();
+  const more = filters.filter((filter) => filter.isMore === true);
+  return (
+    <div ref={row} className="px-gutter flex flex-wrap items-center gap-3 py-5">
+      {search}
+      {filters
+        .filter((filter) => filter.isMore !== true)
+        .map((filter) => (
+          <FilterSelect
+            key={filter.id}
+            label={filter.label}
+            value={filter.value}
+            options={filter.options}
+            onChange={filter.onChange}
+            isSet={isFilterSet(filter)}
+          />
+        ))}
+      {more.length > 0 && <MoreFilters filters={more} />}
+      {filters.some(isFilterSet) && (
+        <button
+          type="button"
+          onClick={() => {
+            clear(filters);
+            // The button goes with the last filter, so the cursor moves to the bar's first control.
+            row.current?.querySelector<HTMLElement>("input, select")?.focus();
+          }}
+          className="text-accent text-button hover:bg-fill rounded-control min-h-control px-button inline-flex cursor-pointer items-center gap-2 font-medium whitespace-nowrap"
         >
-          {more}
-        </FilterRow>
+          <Icon name="x" size="sm" />
+          {LABELS.clearFilters}
+        </button>
       )}
     </div>
   );
 }
 
-/** While `onClose` is given, a press anywhere outside `area` calls it. */
-function useCloseOutside(area: RefObject<HTMLElement | null>, onClose: (() => void) | undefined) {
-  useEffect(() => {
-    if (onClose === undefined) return undefined;
-    const close = onClose;
-    function onPress(event: PointerEvent) {
-      if (event.target instanceof Node && area.current?.contains(event.target) !== true) close();
-    }
-    document.addEventListener("pointerdown", onPress);
-    return () => {
-      document.removeEventListener("pointerdown", onPress);
-    };
-  }, [area, onClose]);
-}
-
-type FilterRowProps = { storeKey: string; className: string; children: ReactNode };
-
-function FilterRow({ storeKey, className, children }: FilterRowProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  // After every drawing, put the row back where it was left; a redraw never moves it.
-  useLayoutEffect(() => {
-    const row = ref.current;
-    const kept = keptScroll.get(storeKey);
-    if (row !== null && kept !== undefined && row.scrollLeft !== kept) row.scrollLeft = kept;
-  });
+function PhoneFilters({ search, filters, resultText }: FilterBarProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const button = useRef<HTMLButtonElement>(null);
+  const clear = useClear();
+  const set = filters.filter(isFilterSet);
+  const close = (): void => {
+    setIsOpen(false);
+  };
   return (
-    <div
-      ref={ref}
-      data-filter-row=""
-      onScroll={(event) => {
-        keptScroll.set(storeKey, event.currentTarget.scrollLeft);
-      }}
-      className={clsx(className, ROW_CLASSES)}
-    >
-      {children}
+    <div className="px-gutter grid gap-1 py-3">
+      <div className="flex items-center justify-end gap-2">
+        {search !== undefined && <div className="min-w-0 flex-1">{search}</div>}
+        <FilterButton
+          ref={button}
+          setCount={set.length}
+          hasWord={search === undefined}
+          isOpen={isOpen}
+          onClick={() => {
+            setIsOpen(true);
+          }}
+        />
+      </div>
+      {set.length > 0 && (
+        <FilterChips
+          set={set}
+          onClear={() => {
+            clear(filters);
+          }}
+          button={button}
+        />
+      )}
+      <Dialog
+        isOpen={isOpen}
+        title={LABELS.filters}
+        onClose={close}
+        footer={
+          <>
+            <Button
+              variant="ghost"
+              isDisabled={set.length === 0}
+              onClick={() => {
+                clear(filters);
+              }}
+            >
+              {LABELS.clearAll}
+            </Button>
+            <Button variant="primary" onClick={close}>
+              {resultText === undefined ? LABELS.filtersDone : LABELS.showResult(resultText)}
+            </Button>
+          </>
+        }
+      >
+        <div className="grid gap-3.5">
+          {filters.map((filter) => (
+            <FilterField key={filter.id} filter={filter} />
+          ))}
+        </div>
+      </Dialog>
     </div>
   );
 }
 
-type MoreFiltersButtonProps = {
+type FilterButtonProps = {
+  ref: RefObject<HTMLButtonElement | null>;
+  setCount: number;
+  /** With no search beside it, the button says "Filters"; beside a search it is the icon alone. */
+  hasWord: boolean;
+  isOpen: boolean;
   onClick: () => void;
-  children: ReactNode;
-  /** How many of the other filters are set, shown while they are closed ("More filters · 2"). */
-  setCount?: number;
 };
 
-/** Opens a list's other filters: a quiet button, and a dashed pill on a phone. */
-export function MoreFiltersButton({ onClick, children, setCount = 0 }: MoreFiltersButtonProps) {
+/** Opens the phone's filter sheet; it carries how many filters are set. */
+function FilterButton({ ref, setCount, hasWord, isOpen, onClick }: FilterButtonProps) {
   return (
     <button
+      ref={ref}
       type="button"
+      aria-haspopup="dialog"
+      aria-expanded={isOpen}
+      aria-label={filterButtonName(setCount)}
       onClick={onClick}
       className={clsx(
-        buttonClasses("ghost", "md"),
-        "max-phone:relative max-phone:isolate max-phone:shrink-0 max-phone:border-0 max-phone:px-3.5 max-phone:text-small max-phone:before:absolute max-phone:before:inset-x-0 max-phone:before:inset-y-1 max-phone:before:-z-1 max-phone:before:rounded-pill max-phone:before:border max-phone:before:border-dashed max-phone:before:border-rule-2",
+        "rounded-menu border-rule bg-paper text-ink-2 text-button-sm active:bg-fill relative inline-flex flex-none cursor-pointer items-center justify-center gap-1.5 border font-medium",
+        hasWord ? "min-h-control px-3.5" : "size-control",
       )}
     >
-      {children}
-      {setCount > 0 && ` · ${String(setCount)}`}
+      {hasWord ? <Icon name="sliders" size="sm" /> : <Icon name="sliders" />}
+      {hasWord && LABELS.filters}
+      {/* Beside the word, or on the corner of the icon alone. */}
+      <span className={hasWord ? "contents" : "absolute -top-1.5 -right-1.5"}>
+        <SetCount count={setCount} />
+      </span>
     </button>
+  );
+}
+
+function filterButtonName(setCount: number): string {
+  return setCount > 0 ? LABELS.filtersSet(setCount) : LABELS.filters;
+}
+
+type FilterChipsProps = {
+  set: readonly ListFilter[];
+  onClear: () => void;
+  /** The filter button: a chip that is tapped is gone, so the cursor goes there. */
+  button: RefObject<HTMLButtonElement | null>;
+};
+
+/**
+ * The filters that are set, in view under the search while the sheet is closed: one tap on a chip
+ * removes its filter (44 tall to tap, a 30 pill drawn inside). One row that slides sideways.
+ */
+function FilterChips({ set, onClear, button }: FilterChipsProps) {
+  return (
+    <div
+      role="group"
+      aria-label={LABELS.setFilters}
+      className="-mb-2 flex gap-x-1.5 overflow-x-auto"
+    >
+      {set.map((filter) => {
+        const chosen = chosenLabel(filter);
+        return (
+          <button
+            key={filter.id}
+            type="button"
+            aria-label={LABELS.removeFilter(filter.label, chosen)}
+            onClick={() => {
+              clearFilters([filter]);
+              button.current?.focus();
+            }}
+            className="text-accent group min-h-control inline-flex flex-none cursor-pointer items-center"
+          >
+            <span className="rounded-pill bg-tint text-secondary group-active:bg-fill-2 inline-flex min-h-7.5 items-center gap-1 pr-2 pl-3 font-semibold whitespace-nowrap">
+              {chosen}
+              <Icon name="x" size="sm" />
+            </span>
+          </button>
+        );
+      })}
+      {set.length > 1 && (
+        <button
+          type="button"
+          onClick={() => {
+            onClear();
+            button.current?.focus();
+          }}
+          className="text-ink-2 text-secondary min-h-control flex-none cursor-pointer px-1.5 font-medium whitespace-nowrap underline underline-offset-4"
+        >
+          {LABELS.clearAll}
+        </button>
+      )}
+    </div>
   );
 }
