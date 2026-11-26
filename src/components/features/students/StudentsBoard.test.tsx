@@ -245,17 +245,17 @@ describe("Students board (UI revamp 08)", () => {
     expect(await screen.findByRole("dialog", { name: "Move Anish Neupane" })).toBeInTheDocument();
   });
 
-  it("moves a Student with Move, in place, and keeps the cursor on their card", async () => {
+  it("moves a Student back with Move, in place, and keeps the cursor on their card", async () => {
     const { fetchFn } = office([ANISH, SITA]);
     const user = userEvent.setup();
     renderPage();
-    const anish = await card("Anish Neupane");
+    const sita = await card("Sita Karki");
 
-    await user.click(within(anish).getByRole("button", { name: "Move Anish Neupane" }));
-    const dialog = await screen.findByRole("dialog", { name: "Move Anish Neupane" });
-    expect(within(dialog).getByText("Now: Lead.")).toBeInTheDocument();
+    await user.click(within(sita).getByRole("button", { name: "Move Sita Karki" }));
+    const dialog = await screen.findByRole("dialog", { name: "Move Sita Karki" });
+    expect(within(dialog).getByText("Now: Applying.")).toBeInTheDocument();
     const stages = within(dialog).getByRole("group", { name: "Stages" });
-    expect(within(stages).getByRole("button", { name: "Lead" })).toBeDisabled();
+    expect(within(stages).getByRole("button", { name: "Applying" })).toBeDisabled();
     expect(
       within(stages)
         .getAllByRole("button")
@@ -264,36 +264,36 @@ describe("Students board (UI revamp 08)", () => {
     await user.click(within(stages).getByRole("button", { name: "Counselling" }));
 
     const counselling = await column(/^Counselling, 1$/);
-    expect(within(counselling).getByRole("link", { name: "Anish Neupane" })).toBeInTheDocument();
-    expect(await column(/^Lead, 0$/)).toBeInTheDocument();
+    expect(within(counselling).getByRole("link", { name: "Sita Karki" })).toBeInTheDocument();
+    expect(await column(/^Applying, 0$/)).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(await screen.findByText("Stage set to Counselling")).toBeInTheDocument();
-    expect(calls(fetchFn, "POST")).toEqual([`/api/students/${uid(1)}/stage/`]);
+    expect(calls(fetchFn, "POST")).toEqual([`/api/students/${uid(2)}/stage/`]);
     await waitFor(() => {
-      expect(within(counselling).getByRole("button", { name: "Move Anish Neupane" })).toHaveFocus();
+      expect(within(counselling).getByRole("button", { name: "Move Sita Karki" })).toHaveFocus();
     });
   });
 
   it("shows the server's reason and leaves the card when a move is refused", async () => {
-    const { state } = office([ANISH]);
+    const { state } = office([SITA]);
     state.stageAnswer = jsonResponse(
-      { stage: ["Applying follows the Student's Applications."] },
+      { stage: ["This Student's Stage now follows their Applications."] },
       400,
     );
     const user = userEvent.setup();
     renderPage();
-    const anish = await card("Anish Neupane");
+    const sita = await card("Sita Karki");
 
-    await user.click(within(anish).getByRole("button", { name: "Move Anish Neupane" }));
-    await user.click(await screen.findByRole("button", { name: "Applying" }));
+    await user.click(within(sita).getByRole("button", { name: "Move Sita Karki" }));
+    await user.click(await screen.findByRole("button", { name: "Lead" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Applying follows the Student's Applications.",
+      "This Student's Stage now follows their Applications.",
     );
-    const lead = await column(/^Lead, 1$/);
-    expect(within(lead).getByRole("link", { name: "Anish Neupane" })).toBeInTheDocument();
+    const lead = await column(/^Applying, 1$/);
+    expect(within(lead).getByRole("link", { name: "Sita Karki" })).toBeInTheDocument();
     await waitFor(() => {
-      expect(within(lead).getByRole("button", { name: "Move Anish Neupane" })).toHaveFocus();
+      expect(within(lead).getByRole("button", { name: "Move Sita Karki" })).toHaveFocus();
     });
   });
 
@@ -314,21 +314,21 @@ describe("Students board (UI revamp 08)", () => {
     expect(screen.queryByRole("link", { name: "Anish Neupane" })).toBeNull();
   });
 
-  it("moves a card dragged onto another Stage", async () => {
-    const { fetchFn } = office([ANISH]);
+  it("moves a card dragged back onto an earlier Stage", async () => {
+    const { fetchFn } = office([SITA]);
     renderPage();
-    const anish = await card("Anish Neupane");
-    expect(anish).toHaveAttribute("draggable", "true");
+    const sita = await card("Sita Karki");
+    expect(sita).toHaveAttribute("draggable", "true");
     const counselling = await column(/^Counselling, 0$/);
     const dataTransfer = { setData: vi.fn(), effectAllowed: "", dropEffect: "" };
 
-    fireEvent.dragStart(anish, { dataTransfer });
+    fireEvent.dragStart(sita, { dataTransfer });
     fireEvent.dragOver(counselling, { dataTransfer });
     expect(counselling).toHaveAttribute("data-over", "true");
     fireEvent.drop(counselling, { dataTransfer });
 
     expect(await column(/^Counselling, 1$/)).toBeInTheDocument();
-    expect(calls(fetchFn, "POST")).toEqual([`/api/students/${uid(1)}/stage/`]);
+    expect(calls(fetchFn, "POST")).toEqual([`/api/students/${uid(2)}/stage/`]);
   });
 
   it("does nothing when a card is dropped on its own Stage", async () => {

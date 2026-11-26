@@ -300,7 +300,19 @@ export const BOARD_TEXT = {
   moveNamed: (name: string) => `Move ${name}`,
   nowAt: (stage: string) => `Now: ${stage}.`,
   moveHelp:
-    "Lead and Counselling are set by hand. Applying, Offer and Visa follow the Student's applications, offer letters and visas.",
+    "Moving forward asks for what the Stage needs: a counsellor, an application, an offer letter or the visa.",
   stages: "Stages",
   bringBackNamed: (label: string, name: string) => `${label}: ${name}`,
+  studentNotLoaded: "Couldn't load this Student. Try again.",
+  whoCounsels: (name: string) => `Who counsels ${name}?`,
+  counsellorHelp: (firstName: string) =>
+    `Choose a counsellor to move ${firstName} to Counselling. You can skip this and assign one later.`,
+  skipForNow: "Skip for now",
+  assignAndMove: "Assign and move",
+  visaFor: (firstName: string) => `Apply for ${firstName}'s visa`,
+  visaHelp:
+    "Choose the offer to go ahead with. The visa starts as Applied, and the Student moves to Visa.",
+  goAheadWith: "Go ahead with",
+  offerLine: (course: string, kind: string) => `${course}, ${kind} offer`,
+  applyForVisa: "Apply for the visa",
 };
