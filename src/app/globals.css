@@ -544,9 +544,14 @@
     outline-offset: 2px;
   }
 
-  /* The browser's own swipe back/forward is off inside the app (issue 89); Back still works. */
-  html {
-    overscroll-behavior-x: none;
+  /*
+   * Phones and tablets only (ticket 19): there a finger from the left edge opens the menu, so the
+   * browser's own sideways swipe is off. A computer keeps its touchpad swipe back and forward.
+   */
+  @media (width < 64.0625rem) {
+    html {
+      overscroll-behavior-x: none;
+    }
   }
 
   /*
@@ -1452,7 +1457,10 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   stroke: currentColor;
 }
 
-/* In the gap a pull opens, the pull turns the logo and opens its petals (list tidy-ups 20). */
+/*
+ * In the gap a pull opens, the pull turns the logo and opens its petals (list tidy-ups 20): 3
+ * degrees for each pixel the page has moved, set in place by the page (ticket 19).
+ */
 .logo-loader[data-size="pull"] {
   width: 2.5rem;
   height: 2.5rem;
@@ -1463,7 +1471,8 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
 }
 
 .logo-loader[data-pull] .logo-loader-breathe {
-  transition: transform 150ms ease-out;
+  transform: rotate(var(--pull-turn)) scale(var(--pull-open));
+  transition: transform 60ms linear;
 }
 
 .logo-loader-turn,
@@ -1507,6 +1516,12 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
 
   .logo-loader-breathe {
     animation: none;
+  }
+
+  /* A pull never turns or grows it. */
+  .logo-loader[data-pull] .logo-loader-breathe {
+    transform: none;
+    transition: none;
   }
 }
 /* End of the logo loader */

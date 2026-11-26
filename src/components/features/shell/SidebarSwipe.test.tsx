@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { uid } from "@/test/ids";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
@@ -213,5 +216,18 @@ describe("a two-finger touchpad swipe on a computer (UI revamp, ticket 05)", () 
     expect(screen.queryByRole("button", { name: "Expand the menu" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Collapse the menu" })).not.toBeInTheDocument();
     expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBeNull();
+  });
+});
+
+describe("the browser's own sideways swipe (UI revamp, ticket 19)", () => {
+  const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+
+  it("is stopped on phones and tablets only, so a computer keeps back and forward", () => {
+    const rules = [...css.matchAll(/overscroll-behavior-x: none/g)];
+    expect(rules).toHaveLength(1);
+
+    const before = css.slice(0, rules[0]?.index);
+    const media = before.slice(before.lastIndexOf("@media"));
+    expect(media).toMatch(/^@media \(width < 64\.0625rem\) \{\s*html \{\s*$/);
   });
 });

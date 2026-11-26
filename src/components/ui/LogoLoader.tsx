@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, type CSSProperties } from "react";
 
 /** The 8 petals of the product's logo, each drawn alone so it can move on its own. */
 const PETALS = [
@@ -23,7 +23,17 @@ export type LoaderSize = "page" | "panel" | "button" | "pull";
 
 // Petals and lines at rest in a pull: closed to the breath's smallest, open at the full pull.
 const PULL_SMALLEST = 0.49;
-const FULL_TURN = 360;
+
+/** A pull that moves the logo: how far it has turned, and how far its petals have opened. */
+export type LoaderPull = {
+  /** Degrees; negative is anticlockwise. */
+  turn: number;
+  /** 0 (a small flower) to 1 (full size). */
+  open: number;
+};
+
+type PullPose = CSSProperties & { "--pull-turn": string; "--pull-open": string };
+
 /**
  * When the first loader's animations started. Every later loader starts at the same moment, so a
  * handover or two loaders in the same place never jump; the first one is never moved
@@ -50,7 +60,7 @@ function joinOne(animation: Animation): void {
  * "The logo loader").
  * Decoration only; whoever shows it says "Loading…" in words.
  */
-export function LogoLoader({ size, pull }: { size: LoaderSize; pull?: number }) {
+export function LogoLoader({ size, pull }: { size: LoaderSize; pull?: LoaderPull }) {
   const mark = useRef<SVGSVGElement>(null);
   useLayoutEffect(() => {
     if (mark.current !== null) joinTheClock(mark.current);
@@ -78,12 +88,12 @@ export function LogoLoader({ size, pull }: { size: LoaderSize; pull?: number }) 
 }
 
 /**
- * Moved by a pull instead of a timer (list tidy-ups 20): `pull` 0 to 1 turns the logo that much of
- * a full turn and opens its petals from a small flower to full size.
+ * Moved by a pull instead of a timer (list tidy-ups 20; UI revamp, ticket 19). The pose is handed
+ * to the stylesheet as two values, set on the same element each time, so the logo turns smoothly in
+ * place; with reduced motion the stylesheet leaves them unused and the logo stays still.
  */
-function pullPose(pull: number | undefined): { transform: string } | undefined {
+function pullPose(pull: LoaderPull | undefined): PullPose | undefined {
   if (pull === undefined) return undefined;
-  const turn = Math.round(pull * FULL_TURN);
-  const open = Number((PULL_SMALLEST + (1 - PULL_SMALLEST) * pull).toFixed(4));
-  return { transform: `rotate(${String(turn)}deg) scale(${String(open)})` };
+  const open = Number((PULL_SMALLEST + (1 - PULL_SMALLEST) * pull.open).toFixed(4));
+  return { "--pull-turn": `${String(pull.turn)}deg`, "--pull-open": String(open) };
 }

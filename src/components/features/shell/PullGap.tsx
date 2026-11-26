@@ -18,9 +18,11 @@ const ARROWS = { top: "arrowUp", bottom: "arrowDown" } as const;
 
 /**
  * The gap a pull opens at the top or bottom of the page (issue 90). A little darker than the page,
- * it says where letting go will go. The product's logo turns with the pull and opens fully once
- * letting go will change the page (list tidy-ups 20); the words change too. It grows and closes smoothly with the page
- * (the same easing), so it never jumps with each scroll step or vanishes on letting go.
+ * it says where letting go will go. The product's logo turns with how far the page has moved (3
+ * degrees for each pixel of the gap, so it turns back as the page returns) and is fully open once
+ * letting go will change the page (list tidy-ups 20; UI revamp, ticket 19); the words change too.
+ * The gap grows and closes smoothly with the page (the same easing), so it never jumps with each
+ * scroll step or vanishes on letting go.
  */
 export function PullGap({ edge, hint, isLeaving }: PullGapProps) {
   const shown = hint?.edge === edge ? hint : null;
@@ -37,7 +39,7 @@ export function PullGap({ edge, hint, isLeaving }: PullGapProps) {
         <Icon name={ARROWS[edge]} size="sm" />
         {hintText(shown)}
       </p>
-      <LogoLoader size="pull" pull={shown.progress} />
+      <LogoLoader size="pull" pull={{ turn: shown.turn, open: shown.progress }} />
     </div>
   );
 }
