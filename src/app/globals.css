@@ -439,12 +439,11 @@
   /* A day of the Clock-in month calendar (issue 56), and on phones. */
   --spacing-cal-day: 5.75rem;
   --spacing-cal-day-sm: 3.625rem;
-  /* the Inbox (issue 86): the conversation list's width, the panel's least height, how tall the
-     list and the open conversation grow before they scroll */
+  /* the Inbox (issue 86; UI revamp 14): the conversation list's width, the small picture in a
+     list row and the unread dot. Its height is the window's (useFillWindow), not a token. */
   --spacing-conversations: 21.25rem;
-  --spacing-inbox: 32.5rem;
-  --spacing-conversations-list: 40rem;
-  --spacing-thread: 28.75rem;
+  --spacing-avatar-sm: 2.125rem;
+  --spacing-unread-dot: 0.625rem;
   /* Home (UI revamp 07): a "Waiting for you" card is at least this wide and this tall (a row of
      the phone sheet is 60); its icon's round; the desk's right column; an empty part of it */
   --spacing-todo: 15.625rem;

@@ -4,12 +4,13 @@ const INITIALS_COUNT = 2;
 
 type AvatarProps = {
   name: string;
-  /** "xs" is the small round on a board card. */
-  size?: "xs" | "md" | "lg";
+  /** "xs" is the small round on a board card; "sm" the one in an Inbox list row. */
+  size?: "xs" | "sm" | "md" | "lg";
 };
 
 const SIZE_CLASSES = {
   xs: "text-small size-6",
+  sm: "text-small size-avatar-sm",
   md: "size-mark text-secondary",
   lg: "text-section-title size-16",
 };

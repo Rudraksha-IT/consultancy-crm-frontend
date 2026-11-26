@@ -20,17 +20,17 @@ type ConversationListProps = {
   onOpen: (personId: RecordId) => void;
 };
 
-/** My conversations, newest first: who, the start of the last message, when, and if unread. */
+/**
+ * My conversations, newest first: only who, when, and a dot if unread; the messages themselves
+ * are in the open conversation (UI revamp 14). The list scrolls inside the Inbox's sheet.
+ */
 export function ConversationList({ state, openId, onOpen }: ConversationListProps) {
   if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{INBOX_TEXT.loadFailed}</Banner>;
   if (state.conversations.length === 0)
     return <EmptyState>{INBOX_TEXT.noConversations}</EmptyState>;
   return (
-    <ul
-      aria-label={INBOX_TEXT.conversationsLabel}
-      className="wide:max-h-conversations-list wide:overflow-y-auto"
-    >
+    <ul aria-label={INBOX_TEXT.conversationsLabel}>
       {state.conversations.map((conversation) => (
         <li key={conversation.person.id} className="border-rule border-b">
           <ConversationRow
@@ -60,17 +60,14 @@ function ConversationRow({ conversation, isOpen, onOpen }: ConversationRowProps)
         onOpen(person.id);
       }}
       className={clsx(
-        "hover:bg-fill relative grid min-h-18 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-5 py-3.5 text-left",
+        "hover:bg-fill px-gutter relative grid min-h-15 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 py-2.5 text-left",
         isOpen &&
           "bg-fill before:w-active-line before:bg-accent before:absolute before:inset-y-0 before:left-0",
       )}
     >
-      <Avatar name={person.name} />
-      <span className="grid min-w-0">
-        <PersonName name={person.name} hasLeft={person.hasLeft} />
-        <LastLine text={last.text} isFromMe={last.fromMe} isUnread={unread} />
-      </span>
-      <span className="text-small text-ink-2 grid justify-items-end gap-1.5">
+      <Avatar name={person.name} size="sm" />
+      <PersonName name={person.name} hasLeft={person.hasLeft} />
+      <span className="text-small text-ink-3 grid justify-items-end gap-1.5">
         <WhenSent moment={last.sentAt} />
         {unread && <UnreadMark />}
       </span>
@@ -80,34 +77,19 @@ function ConversationRow({ conversation, isOpen, onOpen }: ConversationRowProps)
 
 function PersonName({ name, hasLeft }: { name: string; hasLeft: boolean }) {
   return (
-    <span className="font-semibold">
+    <span title={name} className="min-w-0 truncate font-semibold">
       {name}
       {hasLeft && <span className="text-ink-2 font-normal"> {INBOX_TEXT.hasLeft}</span>}
     </span>
   );
 }
 
-/** The start of the last message; "You: " when I wrote it; bold while unread. */
-function LastLine(props: { text: string; isFromMe: boolean; isUnread: boolean }) {
-  return (
-    <span
-      className={clsx(
-        "text-secondary truncate",
-        props.isUnread ? "text-ink font-semibold" : "text-ink-2",
-      )}
-    >
-      {props.isFromMe && INBOX_TEXT.you}
-      {props.text}
-    </span>
-  );
-}
-
-/** A dot with the word, so the colour never stands alone. */
+/** A dot, with its word for screen readers, so the colour never stands alone. */
 function UnreadMark() {
   return (
-    <span className="text-accent flex items-center gap-1.5 font-semibold">
-      <span aria-hidden="true" className="bg-accent rounded-pill size-dot" />
-      {INBOX_TEXT.unread}
+    <span className="flex items-center">
+      <span aria-hidden="true" className="bg-accent rounded-pill size-unread-dot" />
+      <span className="sr-only">{INBOX_TEXT.unread}</span>
     </span>
   );
 }

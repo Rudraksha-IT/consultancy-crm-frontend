@@ -145,6 +145,8 @@ function PulledPage({ pull, children }: { pull: PagePullView; children: ReactNod
         className={clsx(
           // On phones it leaves room under the content for the tab bar.
           "px-page wide:pt-10 max-phone:pt-4 max-phone:pb-tabbar-room relative min-w-0 flex-1 pt-7 pb-30",
+          // A page that fills the window (the Inbox) sizes itself to its bottom: no spacing under it.
+          "has-data-fills-window:pb-0",
           // Snaps back in 0.2 s; while pulled it eases after each scroll step, like the gap.
           "transition-[translate] duration-200 ease-in-out",
           "data-pulled:bg-canvas data-pulled:duration-150 data-pulled:ease-out",

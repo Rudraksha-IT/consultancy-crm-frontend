@@ -67,7 +67,7 @@ type OpenThreadProps = {
 
 function OpenThread({ thread, onBack, onSent }: OpenThreadProps) {
   return (
-    <div className="grid min-w-0 grid-rows-[auto_minmax(0,1fr)_auto]">
+    <div className="grid h-full min-h-0 min-w-0 grid-rows-[auto_minmax(0,1fr)_auto]">
       <ThreadHead person={thread.person} onBack={onBack} />
       <Messages thread={thread} />
       {thread.canWrite ? (
@@ -114,22 +114,50 @@ function ThreadHead({ person, onBack }: { person: InboxPerson; onBack: () => voi
   );
 }
 
-/** The messages, oldest first, scrolled to the newest whenever one arrives. */
+/** How close to the end of the messages still counts as "at the newest". */
+const AT_NEWEST_PX = 8;
+
+/**
+ * The messages, oldest first, scrolled to the newest whenever one arrives. They scroll inside
+ * the Inbox's sheet; when the room for them changes (the window is resized) the newest stays in
+ * view, unless the person has scrolled up to read older ones.
+ */
 function Messages({ thread }: { thread: InboxThread }) {
   const ref = useRef<HTMLDivElement>(null);
+  const isAtNewest = useRef(true);
   const count = thread.messages.length;
 
   useEffect(() => {
     const box = ref.current;
     if (box !== null) box.scrollTop = box.scrollHeight;
+    isAtNewest.current = true;
   }, [count]);
+
+  useEffect(() => {
+    const box = ref.current;
+    if (box === null || typeof ResizeObserver === "undefined") return undefined;
+    const observer = new ResizeObserver(() => {
+      if (isAtNewest.current) box.scrollTop = box.scrollHeight;
+    });
+    observer.observe(box);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  function handleScroll(): void {
+    const box = ref.current;
+    if (box === null) return;
+    isAtNewest.current = box.scrollHeight - box.scrollTop - box.clientHeight <= AT_NEWEST_PX;
+  }
 
   return (
     <div
       ref={ref}
       role="log"
+      onScroll={handleScroll}
       aria-label={`Conversation with ${thread.person.name}`}
-      className="wide:max-h-thread grid content-start gap-3 overflow-y-auto p-5"
+      className="grid min-h-0 content-start gap-3 overflow-y-auto overscroll-contain p-5"
     >
       {thread.hasMore && (
         <p className="text-small text-ink-2 text-center">{INBOX_TEXT.olderLeftOut}</p>

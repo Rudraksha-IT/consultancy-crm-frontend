@@ -51,6 +51,7 @@ function PhoneTabBar({ role, modules, isMenuOpen, onOpenMenu }: TabBarProps) {
   return (
     <nav
       aria-label={LABELS.quickLinks}
+      data-tabbar=""
       className="phone:hidden border-rule bg-paper/88 tabbar-safe fixed inset-x-0 bottom-0 z-30 grid auto-cols-fr grid-flow-col border-t backdrop-blur-lg backdrop-saturate-150"
     >
       {tabs.map((tab) => (
