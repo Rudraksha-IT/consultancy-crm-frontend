@@ -36,8 +36,9 @@ type ShellFrameProps = {
 };
 
 /**
- * The logged-in layout in the Ivory theme: sidebar, top bar and the page, with the tab bar
- * at the bottom on phones (design system: Phones).
+ * The logged-in layout, the Journey frame in the Ivory theme (UI revamp, ticket 05): the narrow
+ * side menu, the top bar and the page, with the tab bar at the bottom on phones (design system:
+ * Phones). It stays in place from page to page, so the side menu keeps its own scroll.
  */
 export function ShellFrame({ context, children }: ShellFrameProps) {
   useTabTitle(context.consultancy.name, context.staff.role);
@@ -56,14 +57,7 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
     <>
       {/* A reload covers the whole app with one loader (list tidy-ups 27). */}
       <PageLoadProvider>
-        <div
-          className={clsx(
-            "grid min-h-full transition-[grid-template-columns]",
-            sidebar.isCollapsed
-              ? "wide:grid-cols-[var(--spacing-rail)_minmax(0,1fr)]"
-              : "wide:grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]",
-          )}
-        >
+        <div className="wide:grid-cols-[var(--spacing-rail)_minmax(0,1fr)] grid min-h-full">
           <a
             href={`#${MAIN_ID}`}
             className="rounded-control bg-paper sr-only z-50 focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:p-3"

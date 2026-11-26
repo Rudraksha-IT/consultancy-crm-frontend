@@ -2,7 +2,7 @@
 
 import clsx from "clsx";
 import Link from "next/link";
-import { useEffect, useRef, type KeyboardEvent } from "react";
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 
 import { Icon } from "./Icon";
 import type { MenuItem } from "./Menu";
@@ -20,6 +20,8 @@ type MenuListProps = {
   align?: "start" | "end";
   /** Show the label as a small title above the items. */
   hasTitle?: boolean;
+  /** Something above the items that is not one of them, such as whose menu it is. */
+  header?: ReactNode;
 };
 
 /** The open menu: focus starts on the first item and the arrow keys move between items. */
@@ -30,6 +32,7 @@ export function MenuList({
   onChosen,
   align = "end",
   hasTitle = false,
+  header,
 }: MenuListProps) {
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -63,6 +66,7 @@ export function MenuList({
           {label}
         </p>
       )}
+      {header}
       {items.map((item) => (
         <MenuListItem key={item.label} item={item} onChosen={onChosen} />
       ))}

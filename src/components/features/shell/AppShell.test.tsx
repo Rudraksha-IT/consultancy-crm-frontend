@@ -17,7 +17,11 @@ const router = vi.hoisted(() => ({
   replace: vi.fn<(href: string) => void>(),
   push: vi.fn<(href: string) => void>(),
 }));
-vi.mock("next/navigation", () => ({ useRouter: () => router, usePathname: () => "/" }));
+const pathname = vi.hoisted(() => ({ current: "/" }));
+vi.mock("next/navigation", () => ({
+  useRouter: () => router,
+  usePathname: () => pathname.current,
+}));
 const navigate = vi.hoisted(() => vi.fn<(path: string) => void>());
 vi.mock("@/hooks/useFullPageNavigation", () => ({ useFullPageNavigation: () => navigate }));
 
@@ -69,6 +73,7 @@ beforeEach(() => {
   router.replace.mockReset();
   router.push.mockReset();
   navigate.mockReset();
+  pathname.current = "/";
 });
 
 afterEach(() => {
@@ -138,10 +143,16 @@ describe("AppShell dates", () => {
 
 const LOGO = { url: "/api/consultancy/logo/4/", show_name: true };
 
+/** The office's logo wherever the side menu shows it (the product's own mark is not one). */
 function sidebarImages(): HTMLImageElement[] {
   const sidebar = document.getElementById("side-nav");
   if (sidebar === null) throw new Error("no sidebar");
-  return [...sidebar.querySelectorAll("img")];
+  return [...sidebar.querySelectorAll("img")].filter((image) => image.alt !== "Rudraksha CRM");
+}
+
+async function openYourMenu(name: string): Promise<HTMLElement> {
+  await userEvent.click(await screen.findByRole("button", { name: `${name}, your menu` }));
+  return screen.getByRole("menu", { name: "Your menu" });
 }
 
 function LogoChangingPage() {
@@ -176,7 +187,7 @@ describe("AppShell's office logo", () => {
     expect(document.getElementById("side-nav")).toHaveTextContent("AE");
   });
 
-  it("shows the logo in the sidebar, the collapsed strip and the top bar, with the name", async () => {
+  it("shows the logo in the side menu (its strip and its slide-out top) and the top bar, with the name", async () => {
     await renderShellFor({
       ...TEACHER_CONTEXT,
       consultancy: { name: "Acme Education", logo: LOGO },
@@ -184,19 +195,13 @@ describe("AppShell's office logo", () => {
 
     expect(sidebarImages().map((image) => image.getAttribute("src"))).toEqual([
       "/api/consultancy/logo/4/",
-    ]);
-    expect(document.getElementById("side-nav")).toHaveTextContent("Acme Education");
-    expect(screen.getByRole("banner").querySelector("img")).toHaveAttribute(
-      "src",
       "/api/consultancy/logo/4/",
-    );
-
-    await userEvent.click(screen.getByRole("button", { name: "Collapse the menu" }));
-
-    const expand = screen.getByRole("button", { name: "Expand the menu" });
-    const railLogo = expand.querySelector("img");
-    expect(railLogo).toHaveAttribute("src", "/api/consultancy/logo/4/");
-    expect(railLogo).toHaveClass("max-w-logo-rail");
+    ]);
+    expect(sidebarImages()[1]).toHaveClass("max-w-logo-rail");
+    expect(document.getElementById("side-nav")).toHaveTextContent("Acme Education");
+    const topBar = screen.getByRole("banner");
+    expect(topBar.querySelector("img")).toHaveAttribute("src", "/api/consultancy/logo/4/");
+    expect(within(topBar).getByText("Acme Education")).toBeVisible();
   });
 
   it("shows the logo alone when the name is switched off", async () => {
@@ -207,9 +212,13 @@ describe("AppShell's office logo", () => {
 
     const sidebar = document.getElementById("side-nav");
     expect(sidebar).not.toHaveTextContent("Acme Education");
+    // Too wide for the strip: it is at the top of the slide-out menu and in the top bar only.
     expect(
       within(sidebar ?? document.body).getAllByRole("img", { name: "Acme Education" }),
-    ).not.toHaveLength(0);
+    ).toHaveLength(1);
+    const topBar = screen.getByRole("banner");
+    expect(within(topBar).getByRole("img", { name: "Acme Education" })).toBeVisible();
+    expect(within(topBar).queryByText("Acme Education")).not.toBeInTheDocument();
   });
 
   it("changes the logo everywhere at once, e.g. after an Admin uploads one", async () => {
@@ -292,7 +301,8 @@ describe("AppShell", () => {
     const fetchFn = answerContextWith(jsonResponse(TEACHER_CONTEXT));
     render(<AppShell>page</AppShell>);
 
-    await userEvent.click(await screen.findByRole("button", { name: "Log out" }));
+    const menu = await openYourMenu("Ram Thapa");
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Log out" }));
 
     expect(fetchFn).toHaveBeenCalledWith(
       "/api/auth/logout/",
@@ -339,28 +349,55 @@ describe("AppShell's Theme", () => {
   });
 });
 
-describe("AppShell's sidebar", () => {
-  it("shows who is logged in at the bottom, linking to their Settings", async () => {
+describe("AppShell's side menu (UI revamp, ticket 05)", () => {
+  it("no longer shows who is logged in or Log out: they are in your menu", async () => {
     await renderShellFor(TEACHER_CONTEXT);
 
-    expect(screen.getByRole("link", { name: "Ram Thapa, Teacher" })).toHaveAttribute(
-      "href",
-      "/settings",
-    );
+    const sidebar = document.getElementById("side-nav");
+    if (sidebar === null) throw new Error("no sidebar");
+    expect(sidebar).not.toHaveTextContent("Ram Thapa");
+    expect(within(sidebar).queryByRole("link", { name: /Ram Thapa/ })).not.toBeInTheDocument();
+    expect(within(sidebar).queryByRole("button", { name: "Log out" })).not.toBeInTheDocument();
   });
 
-  it("collapses to an icon strip and opens again from the logo, remembering the choice", async () => {
+  it("has the product's mark alone at its foot", async () => {
     await renderShellFor(TEACHER_CONTEXT);
 
-    await userEvent.click(screen.getByRole("button", { name: "Collapse the menu" }));
+    const sidebar = document.getElementById("side-nav");
+    if (sidebar === null) throw new Error("no sidebar");
+    const mark = within(sidebar).getByRole("img", { name: "Rudraksha CRM" });
+    expect(mark).toHaveClass("size-control");
+    expect(sidebar.lastElementChild).toContainElement(mark);
+    expect(sidebar.lastElementChild).not.toHaveTextContent("Rudraksha CRM");
+  });
 
-    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBe("true");
-    const expand = screen.getByRole("button", { name: "Expand the menu" });
+  it("can't be collapsed: there is one narrow strip", async () => {
+    await renderShellFor(TEACHER_CONTEXT);
+
     expect(screen.queryByRole("button", { name: "Collapse the menu" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Expand the menu" })).not.toBeInTheDocument();
+  });
 
-    await userEvent.click(expand);
+  it("keeps its own scroll when a page is picked (U6)", async () => {
+    answerContextWith(jsonResponse(ADMIN_CONTEXT));
+    const { rerender } = render(<AppShell>page</AppShell>);
+    await screen.findByText("page");
+    const menu = screen.getByRole("navigation", { name: "Main" });
+    menu.scrollTop = 180;
 
-    expect(screen.getByRole("button", { name: "Collapse the menu" })).toBeInTheDocument();
+    await userEvent.click(within(menu).getByRole("link", { name: "Tasks" }));
+    pathname.current = "/tasks";
+    rerender(<AppShell>another page</AppShell>);
+    await screen.findByText("another page");
+
+    const after = screen.getByRole("navigation", { name: "Main" });
+    expect(within(after).getByRole("link", { name: "Tasks" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    // The same menu, never drawn again from the top.
+    expect(after).toBe(menu);
+    expect(after.scrollTop).toBe(180);
   });
 
   it("slides out from the menu button and closes on Escape, on the close button or on a link", async () => {
@@ -405,7 +442,16 @@ describe("AppShell on a phone", () => {
     expect(menu).toHaveAttribute("aria-expanded", "false");
   });
 
-  it("drops ☰ and light/dark from the top bar, and has light/dark in the sidebar", async () => {
+  it("shows the office's logo without its name in the top bar: the name is in the menu", async () => {
+    await renderShellFor(TEACHER_CONTEXT);
+
+    const topBar = screen.getByRole("banner");
+    expect(topBar).toHaveTextContent("AE");
+    expect(within(topBar).queryByText("Acme Education")).not.toBeInTheDocument();
+    expect(document.getElementById("side-nav")).toHaveTextContent("Acme Education");
+  });
+
+  it("drops ☰ and light/dark from the top bar, and has light/dark in the side menu", async () => {
     await renderShellFor(TEACHER_CONTEXT);
 
     const topBar = screen.getByRole("banner");
@@ -413,7 +459,7 @@ describe("AppShell on a phone", () => {
     expect(
       within(topBar).queryByRole("button", { name: "Switch to dark mode" }),
     ).not.toBeInTheDocument();
-    expect(within(topBar).getByRole("link", { name: "Settings" })).toBeInTheDocument();
+    expect(within(topBar).getByRole("button", { name: "Ram Thapa, your menu" })).toBeVisible();
     await userEvent.click(screen.getByRole("button", { name: "Switch to dark mode" }));
     expect(document.documentElement.dataset.theme).toBe("dark");
   });
@@ -430,6 +476,23 @@ describe("AppShell above phone width", () => {
     await renderShellFor(ADMIN_CONTEXT);
 
     expect(screen.queryByRole("navigation", { name: "Quick links" })).not.toBeInTheDocument();
+  });
+
+  it("names the office at the top left as plain text, never a link", async () => {
+    await renderShellFor(ADMIN_CONTEXT);
+
+    const name = within(screen.getByRole("banner")).getByText("Acme Education");
+    expect(name).toBeVisible();
+    expect(name.closest("a")).toBeNull();
+  });
+
+  it("keeps light/dark in the top bar, and none in the side menu", async () => {
+    await renderShellFor(ADMIN_CONTEXT);
+
+    expect(screen.getAllByRole("button", { name: "Switch to dark mode" })).toHaveLength(1);
+    expect(
+      within(screen.getByRole("banner")).getByRole("button", { name: "Switch to dark mode" }),
+    ).toBeVisible();
   });
 });
 
@@ -490,10 +553,30 @@ describe("AppShell's top bar", () => {
     expect(icon).toHaveFocus();
   });
 
-  it("links the gear to the person's own Settings", async () => {
+  it("has no gear: Settings is in your menu, with My working hours while Clock-in is on", async () => {
+    await renderShellFor({ ...TEACHER_CONTEXT, modules: [...TEACHER_CONTEXT.modules, "clock_in"] });
+
+    expect(screen.queryByRole("link", { name: "Settings" })).not.toBeInTheDocument();
+
+    const menu = await openYourMenu("Ram Thapa");
+
+    expect(within(menu).getByText("Teacher")).toBeVisible();
+    expect(within(menu).getByRole("menuitem", { name: "Settings" })).toHaveAttribute(
+      "href",
+      "/settings",
+    );
+    expect(within(menu).getByRole("menuitem", { name: "My working hours" })).toHaveAttribute(
+      "href",
+      "/clock",
+    );
+  });
+
+  it("has no My working hours in your menu while Clock-in is off", async () => {
     await renderShellFor(TEACHER_CONTEXT);
 
-    expect(screen.getByRole("link", { name: "Settings" })).toHaveAttribute("href", "/settings");
+    const menu = await openYourMenu("Ram Thapa");
+
+    expect(within(menu).queryByRole("menuitem", { name: "My working hours" })).toBeNull();
   });
 
   it("opens the notifications, which says when there is nothing new", async () => {
@@ -545,22 +628,22 @@ describe("AppShell during Support Access", () => {
   });
 
   it("shows a shield and Platform Admin in place of initials and Role", async () => {
-    await renderShellFor(VISITOR_CONTEXT);
+    await renderShellFor({ ...VISITOR_CONTEXT, modules: [...ADMIN_CONTEXT.modules, "clock_in"] });
 
-    const sidebar = document.getElementById("side-nav");
-    if (sidebar === null) throw new Error("no sidebar");
-    expect(within(sidebar).getByText("Platform Admin")).toBeVisible();
-    expect(within(sidebar).queryByText("AA")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Ramesh, your menu" })).not.toHaveTextContent("R");
+    const menu = await openYourMenu("Ramesh");
+    expect(within(menu).getByText("Platform Admin")).toBeVisible();
+    // A Platform Admin is not Staff: no working hours of their own.
+    expect(within(menu).queryByRole("menuitem", { name: "My working hours" })).toBeNull();
   });
 
-  it("leaves the office from the sidebar too, back to the Platform", async () => {
+  it("leaves the office from your menu too, back to the Platform", async () => {
     const fetchFn = answerContextWith(jsonResponse(VISITOR_CONTEXT));
     render(<AppShell>page</AppShell>);
     await screen.findByText("page");
 
-    const [, sidebarLeave] = screen.getAllByRole("button", { name: "Leave this office" });
-    if (sidebarLeave === undefined) throw new Error("no sidebar button");
-    await userEvent.click(sidebarLeave);
+    const menu = await openYourMenu("Ramesh");
+    await userEvent.click(within(menu).getByRole("menuitem", { name: "Leave this office" }));
 
     await waitFor(() => {
       expect(navigate).toHaveBeenCalledWith(`http://${testHost("admin")}:3000/platform`);

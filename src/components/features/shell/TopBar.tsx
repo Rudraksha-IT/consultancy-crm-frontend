@@ -8,16 +8,15 @@ import { GlobalSearch } from "@/components/features/search/GlobalSearch";
 import { ThemeToggle } from "@/components/features/theme/ThemeToggle";
 import { BrandMark, showsOfficeName } from "@/components/ui/BrandMark";
 import { IconButton } from "@/components/ui/IconButton";
-import { IconLink } from "@/components/ui/IconLink";
 import { usePhoneWidth } from "@/components/ui/usePhoneWidth";
 import { LABELS } from "@/constants/messages";
-import { ROUTES } from "@/constants/routes";
 import { SEARCH_TEXT } from "@/constants/search";
 import type { StaffContext } from "@/lib/api";
 import type { ColourModeState } from "@/components/features/theme/useColourMode";
 
 import { NotificationsButton } from "./NotificationsButton";
 import { SIDEBAR_ID } from "./Sidebar";
+import { YourMenu } from "./YourMenu";
 
 type TopBarProps = {
   context: StaffContext;
@@ -27,11 +26,13 @@ type TopBarProps = {
 };
 
 /**
- * Search, light/dark, Settings and notifications; the menu button and office name at 1024px and
- * below. Above 1024px the search sits centred over the page content (issue 88); at 1024px and
- * below a search icon opens it across the whole top bar, with an × to close it. On phones the bar
- * is 60 tall and see-through with a blur; Menu in the tab bar replaces ☰, and light/dark moves to
- * the sidebar (design system: Phones).
+ * The top bar of the Journey frame (UI revamp, ticket 05): the office's name at the top left
+ * (plain text, not a link), search, light/dark, notifications, and your initials with your menu.
+ * Above 1024px the office's mark is at the top of the side menu and the search sits centred over
+ * the page (issue 88). At 1024px and below the mark and ☰ come first, and a search icon opens
+ * the search across the whole bar, with an × to close it. On phones only the mark shows (the name
+ * is in the menu), Menu in the tab bar replaces ☰, light/dark moves to the side menu, and the bar
+ * is see-through with a blur (design system: Phones).
  */
 export function TopBar({ context, colourMode, isDrawerOpen, onOpenDrawer }: TopBarProps) {
   const pathname = usePathname();
@@ -40,25 +41,20 @@ export function TopBar({ context, colourMode, isDrawerOpen, onOpenDrawer }: TopB
   const hiddenWhileSearching = search.isOpen && "max-wide:hidden";
   const isPhone = usePhoneWidth();
   return (
-    <header className="min-h-topbar border-rule bg-paper max-phone:bg-paper/88 max-phone:backdrop-blur-lg max-phone:backdrop-saturate-150 phone:gap-4 wide:px-10 wide:grid wide:grid-cols-[minmax(0,1fr)_minmax(0,var(--container-search))_minmax(0,1fr)] sticky top-0 z-30 flex items-center gap-2 border-b px-4">
-      <div className={clsx("wide:hidden flex min-w-0 items-center gap-1", hiddenWhileSearching)}>
+    <header className="min-h-office-bar border-rule bg-canvas max-phone:bg-canvas/88 max-phone:backdrop-blur-lg max-phone:backdrop-saturate-150 phone:gap-4 wide:pr-10 wide:pl-8 wide:grid wide:grid-cols-[minmax(0,1fr)_minmax(0,var(--container-search))_minmax(0,1fr)] sticky top-0 z-30 flex items-center gap-2 border-b px-4">
+      <div className={clsx("flex min-w-0 items-center gap-1", hiddenWhileSearching)}>
         {!isPhone && (
-          <IconButton
-            icon="burger"
-            label={LABELS.openMenu}
-            isExpanded={isDrawerOpen}
-            controls={SIDEBAR_ID}
-            onClick={onOpenDrawer}
-          />
+          <span className="wide:hidden contents">
+            <IconButton
+              icon="burger"
+              label={LABELS.openMenu}
+              isExpanded={isDrawerOpen}
+              controls={SIDEBAR_ID}
+              onClick={onOpenDrawer}
+            />
+          </span>
         )}
-        <span className="flex min-w-0 items-center gap-3 px-2">
-          <BrandMark name={context.consultancy.name} logo={context.consultancy.logo} />
-          {showsOfficeName(context.consultancy.logo) && (
-            <b className="text-body phone:block hidden truncate font-semibold">
-              {context.consultancy.name}
-            </b>
-          )}
-        </span>
+        <Office consultancy={context.consultancy} hasName={!isPhone} />
       </div>
       <GlobalSearch
         role={context.staff.role}
@@ -82,15 +78,35 @@ export function TopBar({ context, colourMode, isDrawerOpen, onOpenDrawer }: TopB
           />
         </span>
         {!isPhone && <ThemeToggle mode={colourMode.mode} onToggle={colourMode.toggleMode} />}
-        <IconLink
-          href={ROUTES.mySettings}
-          icon="gear"
-          label={LABELS.settings}
-          isCurrent={pathname === ROUTES.mySettings}
-        />
         <NotificationsButton />
+        <YourMenu
+          staff={context.staff}
+          modules={context.modules}
+          supportAccess={context.supportAccess}
+        />
       </div>
     </header>
+  );
+}
+
+type OfficeProps = { consultancy: StaffContext["consultancy"]; hasName: boolean };
+
+/**
+ * Which office this is: its mark and its name, a label and never a link. Above 1024px the mark is
+ * at the top of the side menu, so only the name is here; a logo that carries the name itself
+ * stays here at every width, since the side menu is too narrow for it.
+ */
+function Office({ consultancy: { name, logo }, hasName }: OfficeProps) {
+  const isNamed = showsOfficeName(logo);
+  return (
+    <span className="wide:px-0 flex min-w-0 items-center gap-3 px-2">
+      <span className={clsx("contents", isNamed && "wide:hidden")}>
+        <BrandMark name={name} logo={logo} />
+      </span>
+      {hasName && isNamed && (
+        <b className="text-body wide:text-section-title truncate font-semibold">{name}</b>
+      )}
+    </span>
   );
 }
 

@@ -249,8 +249,9 @@ export const LABELS = {
   chooseOne: "Choose one",
   previewLink: "Open Student",
   previewButton: "Add Lead",
-  collapseMenu: "Collapse the menu",
-  expandMenu: "Expand the menu",
+  /** The initials button at the top right, and the small menu it opens (UI revamp, ticket 05). */
+  yourMenu: "Your menu",
+  yourMenuOf: (name: string) => `${name}, your menu`,
   openMenu: "Open the menu",
   closeMenu: "Close the menu",
   /** The phone tab bar (design system: Phones): the pages used most, then Menu. */
@@ -264,7 +265,6 @@ export const LABELS = {
   /** The office's login page (first live fixes, ticket 08). */
   welcomeBack: (office: string) => `Welcome back, ${office}`,
   skipToContent: "Skip to content",
-  personAndRole: (name: string, role: string) => `${name}, ${role}`,
   switchToDark: "Switch to dark mode",
   switchToLight: "Switch to light mode",
   legend: "Legend",

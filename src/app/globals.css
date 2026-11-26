@@ -338,6 +338,9 @@
   /* boxes you type into stay 16 on every width, so iPhones never zoom in */
   --text-input: 1rem;
   --text-input--line-height: 1.5rem;
+  /* a page's label under its icon in the side menu */
+  --text-rail: 0.8125rem;
+  --text-rail--line-height: 1rem;
   --text-tiny: 0.75rem;
   --text-tiny--line-height: 1.25rem;
 
@@ -366,11 +369,14 @@
   /* the email composer's height above 640 px: the window less a margin, so it never scrolls */
   --spacing-composer: calc(100dvh - 6rem);
   --spacing-grab-h: 0.3125rem;
-  --spacing-sidebar: 18.75rem;
   --spacing-drawer: 20rem;
   /* 26 on each side of the page content beside the sidebar and on tablets; 16 on phones */
   --spacing-page: var(--size-page-margin);
-  --spacing-rail: 5rem;
+  /* the side menu above 1024: a strip 112 wide, each page 66 tall with its label under its icon,
+     and the office's top bar, 60 on every width (UI revamp, ticket 05) */
+  --spacing-rail: 7rem;
+  --spacing-rail-item: 4.125rem;
+  --spacing-office-bar: 3.75rem;
   --spacing-mark: 2.5rem;
   --spacing-mark-lg: 4.5rem;
   --spacing-icon: 1.25rem;
@@ -591,6 +597,16 @@ main[data-page-move="in-from-bottom"] {
  * bar; the page leaves room under its content for the tab bar; dialogs rise from the bottom as
  * sheets (none of it moves with reduce motion on).
  */
+/* The side menu's links fade out at its foot, where they scroll under the product's mark (ticket 05). */
+@utility menu-fade {
+  mask-image: linear-gradient(to bottom, black calc(100% - 1.75rem), transparent);
+}
+
+/* The foot of the side menu clears a phone's home bar. */
+@utility pb-menu-foot {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
 @utility tabbar-safe {
   padding: 0.25rem max(0.25rem, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px)
     max(0.25rem, env(safe-area-inset-left, 0px));
