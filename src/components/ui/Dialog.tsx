@@ -75,9 +75,10 @@ function useDialogMovement(overlayRef: { current: HTMLDivElement | null }): void
 }
 
 /**
- * A modal dialog. Escape, the close button or a click outside close it. On phones it is a bottom
- * sheet: full width, rounded top corners and a grab handle; the content scrolls while the header
- * and the buttons stay in view, and the buttons share the width (design system: Phones).
+ * A modal dialog. Escape, the close button or a click outside close it. Only its middle scrolls:
+ * the header and the buttons stay in view, with a thin line above the buttons. On phones it is a
+ * bottom sheet: full width, rounded top corners and a grab handle, and the buttons share the
+ * width (design system: Dialog, and Phones).
  */
 export function Dialog(props: DialogProps) {
   if (!props.isOpen) return null;
@@ -87,6 +88,7 @@ export function Dialog(props: DialogProps) {
 function OpenDialog(props: DialogProps) {
   const { title, onClose, children, footer, isPrintable, isFull, headerAside } = props;
   const width = widthOf(props);
+  const look = isFull === true ? FULL_LOOK : LOOK;
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -147,32 +149,26 @@ function OpenDialog(props: DialogProps) {
         />
         <header
           className={clsx(
-            "phone:px-8 max-phone:flex-none max-phone:px-4 max-phone:pt-3 flex items-center justify-between gap-4 px-5 print:hidden",
-            isFull === true
-              ? "border-rule max-phone:flex-wrap flex-none border-b pt-5 pb-4"
-              : "pt-7 pb-1",
+            "phone:px-8 max-phone:px-4 flex flex-none items-center justify-between gap-4 px-5 print:hidden",
+            look.header,
           )}
         >
           <h2 id={titleId} className="text-dialog-title min-w-0 truncate">
             {title}
           </h2>
-          {headerAside !== undefined && (
-            <div className="max-phone:order-last max-phone:basis-full ml-auto">{headerAside}</div>
-          )}
+          {headerAside !== undefined && <div className={look.aside}>{headerAside}</div>}
           <IconButton icon="x" label={LABELS.close} onClick={onClose} />
         </header>
-        <div
-          data-dialog-body=""
-          className={
-            isFull === true
-              ? "min-h-0 flex-1 overflow-hidden"
-              : "phone:px-8 max-phone:min-h-0 max-phone:flex-1 max-phone:overflow-y-auto max-phone:overscroll-contain max-phone:px-4 max-phone:pb-5 grid gap-5 px-5 pt-5 pb-7 print:p-0"
-          }
-        >
+        <div data-dialog-body="" className={look.body}>
           {children}
         </div>
         {footer !== undefined && (
-          <footer className="phone:px-6 max-phone:flex-none max-phone:gap-2 max-phone:px-4 max-phone:pt-3 max-phone:pb-sheet-safe max-phone:*:flex-1 flex flex-none flex-wrap justify-end gap-1 px-5 pt-1 pb-5 print:hidden">
+          <footer
+            className={clsx(
+              "phone:px-6 max-phone:gap-2 max-phone:px-4 max-phone:pt-3 max-phone:pb-sheet-safe max-phone:*:flex-1 flex flex-none flex-wrap justify-end px-5 print:hidden",
+              look.footer,
+            )}
+          >
             {footer}
           </footer>
         )}
@@ -180,6 +176,32 @@ function OpenDialog(props: DialogProps) {
     </div>
   );
 }
+
+type Look = { header: string; aside: string; body: string; footer: string };
+
+/**
+ * A dialog's parts. Only the body scrolls, and above phone width a thin line parts the buttons
+ * from the body that scrolls over them (UI revamp 23).
+ */
+const LOOK: Look = {
+  header: "phone:pb-3 max-phone:pt-3 pt-7 pb-1",
+  aside: "max-phone:order-last max-phone:basis-full ml-auto",
+  body: "phone:px-8 max-phone:px-4 max-phone:pb-5 grid min-h-0 flex-1 gap-5 overflow-y-auto overscroll-contain px-5 pt-5 pb-7 print:overflow-visible print:p-0",
+  footer: "phone:border-t border-rule phone:pt-3.5 phone:pb-4.5 gap-2",
+};
+
+/**
+ * The email writer's parts: its body lays out and scrolls its own areas. On phones (UI revamp 23)
+ * the title and the close button share the first line and what sits between them (Write /
+ * Preview) takes the second, with no line under it; the form starts under them.
+ */
+const FULL_LOOK: Look = {
+  header:
+    "border-rule border-b pt-5 pb-4 max-phone:grid max-phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-y-0.5 max-phone:border-b-0 max-phone:pt-2 max-phone:pr-3 max-phone:pb-0",
+  aside: "ml-auto max-phone:col-span-full max-phone:row-start-2 max-phone:ml-0",
+  body: "min-h-0 flex-1 overflow-hidden",
+  footer: "gap-1 pt-1 pb-5",
+};
 
 /** The marked control, else the first field, else the first button (the close button). */
 function firstFocusIn(panel: HTMLElement): HTMLElement | null {
@@ -211,11 +233,10 @@ const WIDTHS = {
 
 function panelClasses(width: keyof typeof WIDTHS, isFull: boolean | undefined): string {
   return clsx(
-    "rounded-dialog bg-paper shadow-lift max-h-full w-full overflow-auto",
-    "max-phone:max-w-none max-phone:max-h-sheet max-phone:rounded-t-sheet max-phone:rounded-b-none max-phone:flex max-phone:flex-col max-phone:overflow-hidden",
-    "print:max-h-none print:max-w-none print:overflow-visible print:shadow-none",
-    isFull === true
-      ? "max-w-composer h-composer max-phone:h-sheet flex flex-col overflow-hidden"
-      : WIDTHS[width],
+    // Only the middle scrolls: the title and the buttons stay in view (UI revamp 23).
+    "rounded-dialog bg-paper shadow-lift flex max-h-full w-full flex-col overflow-hidden",
+    "max-phone:max-w-none max-phone:max-h-sheet max-phone:rounded-t-sheet max-phone:rounded-b-none",
+    "print:block print:max-h-none print:max-w-none print:overflow-visible print:shadow-none",
+    isFull === true ? "max-w-composer h-composer max-phone:h-sheet" : WIDTHS[width],
   );
 }

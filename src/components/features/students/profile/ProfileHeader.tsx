@@ -61,7 +61,8 @@ export function ProfileHeader({ profile, onSaved, children }: ProfileHeaderProps
       >
         {/* Phones (UI revamp 06): the main action is a compact rounded button on the name's line;
             Priority and the other actions follow on the next line. */}
-        <div className="max-phone:px-gutter max-phone:py-4 max-phone:items-start max-phone:justify-start max-phone:gap-x-2 max-phone:gap-y-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-5 p-5">
+        {/* On phones the row is what the Priority and More menus open from (UI revamp 23). */}
+        <div className="max-phone:relative max-phone:px-gutter max-phone:py-4 max-phone:items-start max-phone:justify-start max-phone:gap-x-2 max-phone:gap-y-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-5 p-5">
           <div className="max-phone:order-1 max-phone:flex-1 max-phone:gap-3 flex min-w-0 items-center gap-5">
             <Avatar name={profile.name} size="lg" />
             <div className="grid min-w-0 gap-1">

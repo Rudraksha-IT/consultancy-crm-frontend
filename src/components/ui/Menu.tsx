@@ -4,7 +4,7 @@ import { useRef } from "react";
 
 import { buttonClasses } from "./buttonStyles";
 import { Icon, type IconName } from "./Icon";
-import { MenuList } from "./MenuList";
+import { MENU_IN_ROW_HOLDER, MenuList } from "./MenuList";
 import { useMenu } from "./useMenu";
 
 /** One item: an action, or a link to another page (e.g. "Edit details"). */
@@ -26,7 +26,10 @@ type MenuProps = {
   items: readonly MenuItem[];
 };
 
-/** The "More" menu for rare actions. */
+/**
+ * The "More" menu for rare actions, in a page's action row. On phones it opens from the left of
+ * that row and stays on the screen (see `MenuList`).
+ */
 export function Menu({ label, items }: MenuProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -37,7 +40,7 @@ export function Menu({ label, items }: MenuProps) {
   ];
 
   return (
-    <div ref={rootRef} onKeyDown={menu.handleKeyDown} className="relative">
+    <div ref={rootRef} onKeyDown={menu.handleKeyDown} className={MENU_IN_ROW_HOLDER}>
       <button
         ref={buttonRef}
         type="button"
@@ -51,7 +54,7 @@ export function Menu({ label, items }: MenuProps) {
         {label}
       </button>
       {menu.isOpen && (
-        <MenuList id={menu.menuId} label={label} items={ordered} onChosen={menu.dismiss} />
+        <MenuList id={menu.menuId} label={label} items={ordered} onChosen={menu.dismiss} isInRow />
       )}
     </div>
   );

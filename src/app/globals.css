@@ -497,6 +497,8 @@
   /* the Intake month grid, one year at a time (issue 92) */
   --container-month-grid: 26.25rem;
   --container-login: 28.75rem;
+  /* a menu in a page's action row on a phone: the screen less the page's 16 margins */
+  --container-menu-phone: calc(100vw - 2rem);
   --container-dialog: 37.5rem;
   --container-dialog-wide: 52.5rem;
   /* the email composer (issue 04): near full screen, writing beside the preview */

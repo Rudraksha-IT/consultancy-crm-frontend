@@ -11,7 +11,7 @@ type CheckboxFieldProps = {
  */
 export function CheckboxField({ label, name, isChecked, onChange }: CheckboxFieldProps) {
   return (
-    <label className="min-h-control rounded-control hover:bg-fill -mx-2 inline-flex max-w-full min-w-0 cursor-pointer items-center gap-3 justify-self-start px-2">
+    <label className="min-h-control rounded-control text-body hover:bg-fill -mx-2 inline-flex max-w-full min-w-0 cursor-pointer items-center gap-3 justify-self-start px-2">
       <input
         type="checkbox"
         name={name}

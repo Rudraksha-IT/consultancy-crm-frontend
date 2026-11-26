@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject 
 
 import { Banner } from "@/components/ui/Banner";
 import { Icon } from "@/components/ui/Icon";
-import { MenuList } from "@/components/ui/MenuList";
+import { MENU_IN_ROW_HOLDER, MenuList } from "@/components/ui/MenuList";
 import { useToast } from "@/components/ui/useToast";
 import { PRIORITIES, PRIORITY_LABELS, type Priority } from "@/constants/priority";
 import { STUDENT_PRIORITY_TEXT as TEXT } from "@/constants/students";
@@ -68,7 +68,7 @@ function PriorityMenu({ profile, onSaved }: PriorityPickerProps) {
 
   return (
     <div className="grid gap-2">
-      <div ref={rootRef} onKeyDown={handleKeyDown} className="relative w-fit">
+      <div ref={rootRef} onKeyDown={handleKeyDown} className={clsx(MENU_IN_ROW_HOLDER, "w-fit")}>
         <button
           ref={buttonRef}
           type="button"
@@ -89,6 +89,7 @@ function PriorityMenu({ profile, onSaved }: PriorityPickerProps) {
             id={menuId}
             label={TEXT.menu}
             hasTitle
+            isInRow
             items={PRIORITIES.map((priority) => ({
               label: PRIORITY_LABELS[priority],
               hint: TEXT.hints[priority],

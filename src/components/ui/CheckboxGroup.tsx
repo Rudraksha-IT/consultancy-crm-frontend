@@ -46,7 +46,7 @@ export function CheckboxGroup({
         {options.map((option) => (
           <label
             key={option.value}
-            className="min-h-control rounded-control hover:bg-fill inline-flex cursor-pointer items-center gap-2.5 px-2"
+            className="min-h-control rounded-control text-body hover:bg-fill inline-flex cursor-pointer items-center gap-2.5 px-2"
           >
             <input
               type="checkbox"
@@ -56,7 +56,7 @@ export function CheckboxGroup({
               onChange={(event) => {
                 toggle(option.value, event.target.checked);
               }}
-              className="accent-accent size-5"
+              className="accent-accent size-5 flex-none"
             />
             {option.label}
           </label>
