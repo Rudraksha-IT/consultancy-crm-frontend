@@ -252,6 +252,10 @@ describe("MyWorkingHoursPage", () => {
       "href",
       "/staff?tab=hours",
     );
+    // On phones it sits at the right of the title, on its line (owner).
+    expect(screen.getByRole("link", { name: "Everyone's hours" }).parentElement).toHaveClass(
+      "max-phone:*:data-variant:order-3",
+    );
     expect(
       await screen.findByRole("group", { name: "Clock-ins, November 2026" }),
     ).toBeInTheDocument();

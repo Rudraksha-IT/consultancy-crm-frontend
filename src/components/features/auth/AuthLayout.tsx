@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+import { CopyrightLine } from "@/components/ui/CopyrightLine";
+
 import { AuthThemeToggle } from "./AuthThemeToggle";
 
 type AuthLayoutProps = {
@@ -13,7 +15,7 @@ type AuthLayoutProps = {
 
 /**
  * Login and password screens: the brand large and centred, then one panel. No menus; only the
- * light/dark button at the top right.
+ * light/dark button at the top right. The copyright line under the panel.
  */
 export function AuthLayout({ brand, title, intro, steps, children }: AuthLayoutProps) {
   return (
@@ -31,6 +33,9 @@ export function AuthLayout({ brand, title, intro, steps, children }: AuthLayoutP
           </div>
           {children}
         </div>
+        <footer>
+          <CopyrightLine />
+        </footer>
       </div>
     </main>
   );

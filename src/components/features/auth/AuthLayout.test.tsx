@@ -6,6 +6,8 @@ import { PlatformBrand } from "@/components/features/platform/PlatformBrand";
 import { buildThemeTokens } from "@/lib/theme";
 import { resetTheme } from "@/test/themes";
 
+import { copyrightLine, yearInNepal } from "@/lib/brand/copyright";
+
 import { AuthLayout } from "./AuthLayout";
 
 afterEach(resetTheme);
@@ -22,6 +24,18 @@ describe("AuthLayout", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
     expect(screen.getByText("Use your work email and password.")).toBeInTheDocument();
     expect(screen.getByText("Form")).toBeInTheDocument();
+  });
+
+  it("ends with the copyright line for this year, under the panel (owner)", () => {
+    render(
+      <AuthLayout brand={<p>Brand</p>} title="Log in" intro="Intro">
+        <p>Form</p>
+      </AuthLayout>,
+    );
+
+    expect(screen.getByRole("contentinfo")).toHaveTextContent(
+      copyrightLine(yearInNepal(new Date())),
+    );
   });
 });
 

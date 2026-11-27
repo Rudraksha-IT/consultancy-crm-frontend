@@ -91,6 +91,8 @@ function MyPage({ askedTab }: { askedTab: string | null }) {
         title={TEXT.pageTitle}
         subtitle={subtitleOf(tab, month)}
         crumbs={<CrumbHome />}
+        // Phones: an Admin's "Everyone's hours" sits at the right of the title (owner).
+        isActionBesideTitle={tab === ClockTab.Hours}
         actions={
           <TabActions
             tab={tab}

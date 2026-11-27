@@ -9,6 +9,7 @@ import { reportServerAnswer, type StaffContext } from "@/lib/api";
 import { formatAdDate } from "@/lib/dates";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
+import { copyrightLine, yearInNepal } from "@/lib/brand/copyright";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { fakeMatchMedia } from "@/test/matchMedia";
 
@@ -132,6 +133,13 @@ describe("MySettingsPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "All of Settings" }));
     expect(screen.getByRole("navigation", { name: "Settings" })).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Password" })).not.toBeInTheDocument();
+  });
+
+  it("ends with the copyright line for this year (owner)", () => {
+    backend(on("GET", ME_PATH, ME));
+    renderPage();
+
+    expect(screen.getByText(copyrightLine(yearInNepal(new Date())))).toBeInTheDocument();
   });
 
   it("links to My progress (issue 84)", () => {
