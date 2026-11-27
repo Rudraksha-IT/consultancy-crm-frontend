@@ -57,7 +57,7 @@ function LoadedBrand({ consultancy, isWelcome }: LoadedBrandProps) {
 
 type LoadedOffice = { name: string };
 
-/** The Ivory theme on the page (one look for every office), and the office's name in the tab. */
+/** The Porcelain theme on the page (one look for every office), and the office's name in the tab. */
 function useOfficeLook(office: LoadedOffice | null): void {
   const { mode } = useColourMode(VISITOR);
   useAppliedTheme(mode);

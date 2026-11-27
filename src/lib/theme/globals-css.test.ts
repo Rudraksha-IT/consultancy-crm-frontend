@@ -21,20 +21,22 @@ function themedValues(block: Map<string, string>): Record<string, string | undef
 }
 
 describe("globals.css", () => {
-  const ivory = buildThemeTokens();
+  const porcelain = buildThemeTokens();
 
-  it("starts with the Ivory light tokens", () => {
-    expect(themedValues(declarations(":root"))).toEqual(ivory.light);
+  it("starts with the Porcelain light tokens", () => {
+    expect(themedValues(declarations(":root"))).toEqual(porcelain.light);
   });
 
-  it("has the Ivory dark tokens for a dark choice", () => {
-    expect(themedValues(declarations(':root[data-theme="dark"]'))).toEqual(ivory.dark);
+  it("has the Porcelain dark tokens for a dark choice", () => {
+    expect(themedValues(declarations(':root[data-theme="dark"]'))).toEqual(porcelain.dark);
   });
 
-  it("has Ivory's own status colours, light and dark", () => {
+  it("keeps the status colours, light and dark, and a cool gold", () => {
     expect(declarations(":root").get("good")).toBe("#3f6b3a");
     expect(declarations(":root").get("bad")).toBe("#9b2226");
     expect(declarations(':root[data-theme="dark"]').get("good")).toBe("#8fbf85");
+    expect(declarations(":root").get("gold")).toBe("#55708d");
+    expect(declarations(':root[data-theme="dark"]').get("gold")).toBe("#9fb6cf");
   });
 
   it("uses one font, Geist", () => {
@@ -59,7 +61,7 @@ describe("globals.css", () => {
   });
 
   it("draws a sheet: a faint shadow in light, none in dark, and a quieter border in dark", () => {
-    expect(declarations(":root").get("raise")).toBe("0 1px 2px rgb(42 22 16 / 0.04)");
+    expect(declarations(":root").get("raise")).toBe("0 1px 2px rgb(22 32 43 / 0.05)");
     expect(declarations(":root").get("sheet-rule")).toBe("var(--rule)");
     expect(declarations(':root[data-theme="dark"]').get("raise")).toBe("none");
     expect(declarations(':root[data-theme="dark"]').get("sheet-rule")).toBe(

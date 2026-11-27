@@ -2,9 +2,10 @@ import { mixHex, readableOn } from "./colour";
 import type { ThemeTokens } from "./types";
 
 /*
- * The Ivory theme (UI revamp, tickets 03 and 21): cream pages, white sheets and burgundy actions, the colours of a
- * rudraksha bead, in light and dark. One look for every office. Values from the approved prototype
- * (docs/prototype/v2.0.0/engine/looks.js, `ivory`, and polish.css).
+ * The Porcelain theme (owner, 2026-11-27; it replaced Ivory): cool blue-white pages, white sheets,
+ * blue-grey text and burgundy actions, so the burgundy stands out the most. In light and dark, one
+ * look for every office. Values from the prototype (docs/prototype/v2.0.0/engine/looks.js,
+ * `porcelain`); the dark text is the prototype's cool menu text.
  */
 
 const AA_TEXT = 4.5;
@@ -15,7 +16,7 @@ const LINE_MIX = {
   dark: { rule: 0.17, rule2: 0.27 },
 } as const;
 
-type IvorySet = {
+type PorcelainSet = {
   canvas: string;
   paper: string;
   fill: string;
@@ -29,29 +30,28 @@ type IvorySet = {
   tint: string;
 };
 
-const LIGHT: IvorySet = {
-  // a little deeper than the prototype's first cream, so white sheets stand off it (ticket 21)
-  canvas: "#f6f3ed",
+const LIGHT: PorcelainSet = {
+  canvas: "#f3f6f9",
   paper: "#ffffff",
-  fill: "#f4f1eb",
-  fill2: "#ece7df",
-  ink: "#1f1916",
-  ink2: "#625750",
-  ink3: "#8f847c",
+  fill: "#eaeff4",
+  fill2: "#dde4ec",
+  ink: "#16202b",
+  ink2: "#4d5b6a",
+  ink3: "#7a8797",
   accent: "#6e1a26",
   accentHover: "#57141e",
   accentInk: "#ffffff",
   tint: "#f3e6e3",
 };
 
-const DARK: IvorySet = {
-  canvas: "#121110",
-  paper: "#1a1817",
-  fill: "#211f1d",
-  fill2: "#292624",
-  ink: "#f1e8dd",
-  ink2: "#bcae9f",
-  ink3: "#8f8174",
+const DARK: PorcelainSet = {
+  canvas: "#0d1115",
+  paper: "#141a20",
+  fill: "#1a2128",
+  fill2: "#212a32",
+  ink: "#e3eaf1",
+  ink2: "#9aa9b8",
+  ink3: "#7a8797",
   accent: "#d98a8f",
   accentHover: "#e7a2a6",
   accentInk: "#1d1012",
@@ -63,7 +63,7 @@ const DARK: IvorySet = {
  * quietest text is made readable on the page colour, the darker of the two backgrounds in light
  * mode (design system rule 4).
  */
-function readableCaption(set: IvorySet): string {
+function readableCaption(set: PorcelainSet): string {
   return readableOn(
     readableOn(set.ink3, set.canvas, set.ink, AA_TEXT),
     set.paper,
@@ -72,7 +72,7 @@ function readableCaption(set: IvorySet): string {
   );
 }
 
-function ivoryTokens(set: IvorySet, lines: { rule: number; rule2: number }): ThemeTokens {
+function porcelainTokens(set: PorcelainSet, lines: { rule: number; rule2: number }): ThemeTokens {
   const line = (amount: number): string => mixHex(set.paper, set.ink, amount);
   return {
     paper: set.paper,
@@ -99,5 +99,5 @@ function ivoryTokens(set: IvorySet, lines: { rule: number; rule2: number }): The
   };
 }
 
-export const IVORY_LIGHT: ThemeTokens = ivoryTokens(LIGHT, LINE_MIX.light);
-export const IVORY_DARK: ThemeTokens = ivoryTokens(DARK, LINE_MIX.dark);
+export const PORCELAIN_LIGHT: ThemeTokens = porcelainTokens(LIGHT, LINE_MIX.light);
+export const PORCELAIN_DARK: ThemeTokens = porcelainTokens(DARK, LINE_MIX.dark);

@@ -56,7 +56,7 @@ export function DataTable({
         {...flag("data-stacks", stacksBelowTablet)}
         {...flag("data-wraps", wraps)}
         // Cells in page text, column titles on one line (list tidy-ups 26); heads and gutters in
-        // globals.css ("Ivory tables").
+        // globals.css ("Porcelain tables").
         className={clsx("text-body w-full border-collapse [&_th]:whitespace-nowrap", className)}
       >
         {children}

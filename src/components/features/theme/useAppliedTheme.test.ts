@@ -10,7 +10,7 @@ afterEach(resetTheme);
 const INITIAL: { mode: ColourMode } = { mode: "light" };
 
 describe("useAppliedTheme", () => {
-  it("writes the Ivory tokens for the mode onto the page, and again when the mode changes", () => {
+  it("writes the Porcelain tokens for the mode onto the page, and again when the mode changes", () => {
     const root = document.documentElement;
     const { rerender } = renderHook(
       ({ mode }) => {

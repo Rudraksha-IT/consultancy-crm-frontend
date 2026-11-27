@@ -45,7 +45,7 @@ describe("ConsultancyBrand", () => {
     expect(image).toHaveClass("h-mark-lg");
   });
 
-  it("shows the Ivory theme whatever colours the office once had (one look for every office)", async () => {
+  it("shows the Porcelain theme whatever colours the office once had (one look for every office)", async () => {
     answerWith(new Response(JSON.stringify({ name: "Acme Education" })));
 
     render(<ConsultancyBrand />);

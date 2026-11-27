@@ -3,34 +3,34 @@
 /*
  * Design tokens (docs/design-system.md). Components use these through Tailwind classes only.
  *
- * Themed colours come from buildThemeTokens() in src/lib/theme: the Ivory theme (UI revamp, tickets
- * 03 and 21), the same for every office. They are written here too, so the first paint looks right; a test
+ * Themed colours come from buildThemeTokens() in src/lib/theme: the Porcelain theme (owner,
+ * 2026-11-27, in place of Ivory), the same for every office. They are written here too, so the first paint looks right; a test
  * keeps these values equal to the function's output.
  */
 :root {
   /* the product logo's own red, for the loading animation (list tidy-ups 06); brighter (24) */
   --mark: #c8102e;
-  /* themed: Ivory, light */
+  /* themed: Porcelain, light */
   --paper: #ffffff;
-  --canvas: #f6f3ed;
-  --fill: #f4f1eb;
-  --fill-2: #ece7df;
-  --rule: #dddddc;
-  --rule-2: #c5c3c2;
-  --ink: #1f1916;
-  --ink-2: #625750;
-  --ink-3: #766c65;
+  --canvas: #f3f6f9;
+  --fill: #eaeff4;
+  --fill-2: #dde4ec;
+  --rule: #dcdedf;
+  --rule-2: #c2c5c8;
+  --ink: #16202b;
+  --ink-2: #4d5b6a;
+  --ink-3: #64707f;
   --accent: #6e1a26;
   --accent-hover: #57141e;
   --accent-ink: #ffffff;
   --tint: #f3e6e3;
-  --side-bg: #f6f3ed;
-  --side-ink: #1f1916;
-  --side-muted: #625750;
-  --side-hover: #f4f1eb;
-  --side-active: #ece7df;
-  --side-active-ink: #1f1916;
-  --side-rule: #f6f3ed;
+  --side-bg: #f3f6f9;
+  --side-ink: #16202b;
+  --side-muted: #4d5b6a;
+  --side-hover: #eaeff4;
+  --side-active: #dde4ec;
+  --side-active-ink: #16202b;
+  --side-rule: #f3f6f9;
 
   /* fixed: status colours never change with the Theme */
   --good: #3f6b3a;
@@ -42,8 +42,8 @@
   --note: #fbf3df;
   --note-rule: #e9d9ae;
   --on-status: #ffffff;
-  /* a small mark of value (Ivory), such as beside a high-priority Student */
-  --gold: #8f7444;
+  /* a small mark of value (Porcelain), such as beside a high-priority Student */
+  --gold: #55708d;
 
   /* fixed in light and dark: a QR code is always black on white, so every app can scan it */
   --qr-dark: #000000;
@@ -81,8 +81,8 @@
 
   /* a sheet is raised a hair off the page; popups lift off it */
   --scrim: rgb(28 16 12 / 0.42);
-  --raise: 0 1px 2px rgb(42 22 16 / 0.04);
-  --lift: 0 1px 2px rgb(42 22 16 / 0.06), 0 16px 40px rgb(42 22 16 / 0.14);
+  --raise: 0 1px 2px rgb(22 32 43 / 0.05);
+  --lift: 0 1px 2px rgb(22 32 43 / 0.06), 0 16px 40px rgb(22 32 43 / 0.14);
   /* swiping between pages (issue 90): the gap a pull opens, and the page's moving edge */
   --gap: color-mix(in srgb, var(--ink) 9%, var(--canvas));
   --edge-top: 0 -10px 24px -12px rgb(0 0 0 / 0.25), 0 -1px 0 var(--rule-2);
@@ -112,7 +112,7 @@
   --move-step-block: 40ms;
   --move-step-row: 18ms;
   /* the top bar lifts off the page once the page is scrolled */
-  --bar-lift: 0 1px 0 var(--rule), 0 12px 24px -20px rgb(42 22 16 / 0.45);
+  --bar-lift: 0 1px 0 var(--rule), 0 12px 24px -20px rgb(22 32 43 / 0.45);
 
   /*
    * Sizes that change on phones, 640 px and below (design system: Type, and Phones). One type
@@ -216,26 +216,26 @@
 /* Dark by the person's choice. Same values as above. */
 :root[data-theme="dark"] {
   --mark: #ff5263;
-  --paper: #1a1817;
-  --canvas: #121110;
-  --fill: #211f1d;
-  --fill-2: #292624;
-  --rule: #3f3b39;
-  --rule-2: #54504c;
-  --ink: #f1e8dd;
-  --ink-2: #bcae9f;
-  --ink-3: #8f8174;
+  --paper: #141a20;
+  --canvas: #0d1115;
+  --fill: #1a2128;
+  --fill-2: #212a32;
+  --rule: #373d44;
+  --rule-2: #4c5258;
+  --ink: #e3eaf1;
+  --ink-2: #9aa9b8;
+  --ink-3: #7a8797;
   --accent: #d98a8f;
   --accent-hover: #e7a2a6;
   --accent-ink: #1d1012;
   --tint: #3a1d1f;
-  --side-bg: #121110;
-  --side-ink: #f1e8dd;
-  --side-muted: #bcae9f;
-  --side-hover: #211f1d;
-  --side-active: #292624;
-  --side-active-ink: #f1e8dd;
-  --side-rule: #121110;
+  --side-bg: #0d1115;
+  --side-ink: #e3eaf1;
+  --side-muted: #9aa9b8;
+  --side-hover: #1a2128;
+  --side-active: #212a32;
+  --side-active-ink: #e3eaf1;
+  --side-rule: #0d1115;
 
   --good: #8fbf85;
   --good-tint: #1c2619;
@@ -246,7 +246,7 @@
   --note: #241e14;
   --note-rule: #3d3322;
   --on-status: #1d1012;
-  --gold: #c9a86a;
+  --gold: #9fb6cf;
   --c1: #3987e5;
   --c2: #d95926;
   --c3: #199e70;
@@ -434,7 +434,7 @@
   --spacing-icon-sm: 1rem;
   --spacing-progress: 0.75rem;
   --spacing-dot: 0.5rem;
-  /* a status chip's dot (Ivory: a dot and a word) */
+  /* a status chip's dot (Porcelain: a dot and a word) */
   --spacing-chip-dot: 0.4375rem;
   --spacing-active-line: 0.25rem;
   --spacing-chart: 40rem;

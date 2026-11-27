@@ -59,7 +59,7 @@ describe("PlatformBrand", () => {
     expect(screen.getByText(LABELS.staffLogin)).toBeInTheDocument();
   });
 
-  it("shows the product's name in the Ivory theme", () => {
+  it("shows the product's name in the Porcelain theme", () => {
     render(<PlatformBrand />);
 
     expect(screen.getByRole("heading", { level: 2, name: LABELS.productName })).toBeInTheDocument();

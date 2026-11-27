@@ -313,7 +313,7 @@ describe("AppShell", () => {
 });
 
 describe("AppShell's Theme", () => {
-  it("shows the Ivory theme even when an old answer still carries office colours", async () => {
+  it("shows the Porcelain theme even when an old answer still carries office colours", async () => {
     await renderShellFor({ ...TEACHER_CONTEXT, theme: { page: "ice", accent: "red" } });
 
     const expected = buildThemeTokens().light;

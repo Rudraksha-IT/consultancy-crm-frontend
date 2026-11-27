@@ -39,7 +39,7 @@ type ShellFrameProps = {
 };
 
 /**
- * The logged-in layout, the Journey frame in the Ivory theme (UI revamp, ticket 05): the narrow
+ * The logged-in layout, the Journey frame in the Porcelain theme (UI revamp, ticket 05): the narrow
  * side menu, the top bar and the page, with the tab bar at the bottom on phones (design system:
  * Phones). It stays in place from page to page, so the side menu keeps its own scroll.
  */

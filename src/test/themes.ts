@@ -1,10 +1,10 @@
 import { applyTheme } from "@/components/features/theme/applyTheme";
 import { buildThemeTokens, type ColourMode } from "@/lib/theme";
 
-/** Ivory in light and in dark: every component is checked in both (design-system Enforcement). */
+/** Porcelain in light and in dark: every component is checked in both (design-system Enforcement). */
 export const THEME_CASES: readonly { name: string; mode: ColourMode }[] = [
-  { name: "Ivory, light", mode: "light" },
-  { name: "Ivory, dark", mode: "dark" },
+  { name: "Porcelain, light", mode: "light" },
+  { name: "Porcelain, dark", mode: "dark" },
 ];
 
 /** Put `<html>` into light or dark before rendering a component. */

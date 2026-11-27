@@ -11,7 +11,7 @@ import { SegmentedControl } from "./SegmentedControl";
 import { Tabs } from "./Tabs";
 import { TileGrid } from "./TileGrid";
 
-/** The Ivory look (UI revamp, ticket 03): no box around everything, lines and words instead. */
+/** The Porcelain look (UI revamp, ticket 03): no box around everything, lines and words instead. */
 const GLOBALS_CSS = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
 describe("Sheets (ticket 21)", () => {
@@ -50,7 +50,7 @@ describe("Sheets (ticket 21)", () => {
   });
 });
 
-describe("Ivory buttons", () => {
+describe("Porcelain buttons", () => {
   it("fill only the main button; the others are words with no box", () => {
     render(
       <>
@@ -78,7 +78,7 @@ describe("Ivory buttons", () => {
   });
 });
 
-describe("Ivory statuses", () => {
+describe("Porcelain statuses", () => {
   it("show a status as a dot and a word, with no filled badge", () => {
     render(<Chip tone="bad">Rejected</Chip>);
 
@@ -104,7 +104,7 @@ describe("Ivory statuses", () => {
   });
 });
 
-describe("Ivory tabs and switches", () => {
+describe("Porcelain tabs and switches", () => {
   it("draw tabs as words with an underline", () => {
     render(
       <Tabs

@@ -5,7 +5,7 @@ export type ButtonSize = "sm" | "md" | "lg";
 
 /*
  * One filled button per screen area, for the main action; every other button is words with an
- * icon and no box, showing a soft fill on hover (Ivory, UI revamp ticket 03). Every button stays at
+ * icon and no box, showing a soft fill on hover (Porcelain, UI revamp ticket 03). Every button stays at
  * least 44 tall to tap. A pressed button gives a little, so a press always shows (Movement).
  */
 const BASE =

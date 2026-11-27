@@ -18,26 +18,29 @@ function expectReadable(tokens: ThemeTokens): void {
   );
 }
 
-describe("buildThemeTokens: the Ivory theme for every office", () => {
-  it("gives the Ivory light tokens: a deeper cream page so white sheets stand off it", () => {
+describe("buildThemeTokens: the Porcelain theme for every office", () => {
+  it("gives the Porcelain light tokens: a cool blue-white page, blue-grey text, burgundy actions", () => {
     const { light } = buildThemeTokens();
 
-    expect(light.canvas).toBe("#f6f3ed");
+    expect(light.canvas).toBe("#f3f6f9");
     expect(light.paper).toBe("#ffffff");
-    expect(light.ink).toBe("#1f1916");
-    expect(light["ink-2"]).toBe("#625750");
+    expect(light.fill).toBe("#eaeff4");
+    expect(light["fill-2"]).toBe("#dde4ec");
+    expect(light.ink).toBe("#16202b");
+    expect(light["ink-2"]).toBe("#4d5b6a");
     expect(light.accent).toBe("#6e1a26");
     expect(light["accent-hover"]).toBe("#57141e");
     expect(light["accent-ink"]).toBe("#ffffff");
     expect(light.tint).toBe("#f3e6e3");
   });
 
-  it("gives the Ivory dark tokens: warm near-black page, soft burgundy actions", () => {
+  it("gives the Porcelain dark tokens: cool near-black page, cool text, soft burgundy actions", () => {
     const { dark } = buildThemeTokens();
 
-    expect(dark.canvas).toBe("#121110");
-    expect(dark.paper).toBe("#1a1817");
-    expect(dark.ink).toBe("#f1e8dd");
+    expect(dark.canvas).toBe("#0d1115");
+    expect(dark.paper).toBe("#141a20");
+    expect(dark.ink).toBe("#e3eaf1");
+    expect(dark["ink-2"]).toBe("#9aa9b8");
     expect(dark.accent).toBe("#d98a8f");
     expect(dark["accent-ink"]).toBe("#1d1012");
   });

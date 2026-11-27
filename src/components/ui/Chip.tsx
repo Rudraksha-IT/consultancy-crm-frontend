@@ -28,7 +28,7 @@ type ChipProps = {
 };
 
 /**
- * A status: a dot and a word, coloured by the status, with no filled badge behind it (Ivory).
+ * A status: a dot and a word, coloured by the status, with no filled badge behind it (Porcelain).
  * Never wider than its container.
  */
 export function Chip({ children, tone = "muted", hasDot = true, icon }: ChipProps) {
