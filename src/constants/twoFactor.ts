@@ -17,7 +17,7 @@ export const TWO_FACTOR_TEXT = {
   wrongNumber: "That number isn't right. Enter the newest number from your app.",
   wrongRecoveryCode: "That recovery code isn't right, or it was already used.",
   tooManyTries: "Too many wrong tries. Wait 15 minutes, then try again.",
-  startAgain: "This sign-in has timed out or was already used. Log in again.",
+  startAgain: "This login has timed out or was already used. Log in again.",
   failed: "We couldn't check that. Please try again.",
   backToLogIn: "Back to log in",
 

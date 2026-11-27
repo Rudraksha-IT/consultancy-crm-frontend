@@ -7,8 +7,8 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { formatDateTime } from "@/lib/dates/display";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { PROFILE } from "@/test/studentProfile";
+import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { StudentProfilePage } from "./StudentProfilePage";
 import { consultancySummary } from "@/test/consultancy";
@@ -21,7 +21,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 function as(role: StaffContext["staff"]["role"], id = uid(9)): StaffContext {
@@ -131,6 +130,51 @@ describe("StudentProfilePage", () => {
     expect(within(note).getByText("Wants Melbourne only.")).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Stage: Counselling" })).toBeInTheDocument();
     expect(screen.getByText("Choose a course and apply")).toBeInTheDocument();
+  });
+
+  it("holds the name, the actions and the Stage steps on one sheet (UI revamp 11)", async () => {
+    backend(profile());
+    renderPage();
+
+    const sheet = await screen.findByRole("region", { name: "Sita Gurung" });
+    expect(sheet).toHaveClass("bg-paper", "rounded-panel", "border-sheet-rule");
+    expect(within(sheet).getByRole("heading", { level: 1, name: "Sita Gurung" })).toBeVisible();
+    expect(within(sheet).getByText("9841000001")).toBeVisible();
+    expect(within(sheet).getByRole("button", { name: /^Priority/ })).toBeVisible();
+    expect(within(sheet).getByRole("button", { name: "Take a payment" })).toBeVisible();
+    expect(within(sheet).getByRole("button", { name: "More" })).toBeVisible();
+    const steps = within(sheet).getByRole("list", { name: "Stage: Counselling" });
+    expect(within(sheet).getByText("Next step:")).toBeVisible();
+    // One sheet, not a sheet inside a sheet: the steps have no border or shadow of their own.
+    expect(steps.closest(".shadow-raise")).toBe(sheet);
+    // The way back and the Note are not on it.
+    expect(within(sheet).queryByRole("link", { name: /All Students/ })).toBeNull();
+    expect(within(sheet).queryByRole("region", { name: "Note" })).toBeNull();
+  });
+
+  it("keeps a Lost Student's reason and Bring back on the sheet", async () => {
+    backend(profile({ ...PROFILE, stage: "lost", lost_reason: "Chose another office" }));
+    renderPage();
+
+    const sheet = await screen.findByRole("region", { name: "Sita Gurung" });
+    expect(within(sheet).getByText("Chose another office")).toBeVisible();
+    expect(within(sheet).getByRole("button", { name: "Bring back to Counselling" })).toBeVisible();
+  });
+
+  it("puts the Note in a column of its own beside the tabs from 1280 (UI revamp 11)", async () => {
+    backend(profile());
+    renderPage();
+
+    const note = await screen.findByRole("region", { name: "Note" });
+    const side = note.closest("[data-note-side]");
+    expect(side).toHaveClass("desk:sticky", "desk:top-21", "desk:order-2", "min-w-0");
+    const grid = side?.parentElement;
+    expect(grid).toHaveClass("desk:grid-cols-[minmax(0,1fr)_var(--spacing-note-side)]");
+    const tabs = screen.getByRole("tablist", { name: "Sections" });
+    expect(grid).toContainElement(tabs);
+    expect(side).not.toContainElement(tabs);
+    // Below 1280 it comes first, above the tabs, as before.
+    expect(side?.compareDocumentPosition(tabs)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it("lets a long name and the contact line wrap instead of widening the page", async () => {
@@ -524,7 +568,11 @@ describe("StudentProfilePage", () => {
     });
 
     it("loads older changes on request", async () => {
-      const fetchFn = backend(profile(), visits(), history([ENTRY], 51));
+      // The second page holds another, older entry (an entry is never shown twice, ticket 25).
+      const older = { ...ENTRY, id: uid(3), at: "2026-10-20T09:00:00+05:45" };
+      const fetchFn = backend(profile(), visits(), (path, init) =>
+        history([path.endsWith("page=2") ? older : ENTRY], 51)(path, init),
+      );
       renderPage();
 
       await userEvent.click(await screen.findByRole("tab", { name: "Activity" }));
@@ -824,5 +872,24 @@ describe("StudentProfilePage: who did each action, in Activity (issue 83)", () =
 
     expect(await screen.findByText("Task done: <img src=x onerror=alert(1)>")).toBeInTheDocument();
     expect(document.querySelector("img[src='x']")).toBeNull();
+  });
+});
+
+describe.each(THEME_CASES)("a Student's page in the $name Theme (UI revamp 11)", ({ mode }) => {
+  beforeEach(() => {
+    applyThemeCase(mode);
+  });
+
+  afterEach(() => {
+    resetTheme();
+  });
+
+  it("shows the sheet with the name and the Stage steps, and the Note", async () => {
+    backend(profile());
+    renderPage();
+
+    const sheet = await screen.findByRole("region", { name: "Sita Gurung" });
+    expect(within(sheet).getByRole("list", { name: "Stage: Counselling" })).toBeVisible();
+    expect(screen.getByRole("region", { name: "Note" })).toBeVisible();
   });
 });

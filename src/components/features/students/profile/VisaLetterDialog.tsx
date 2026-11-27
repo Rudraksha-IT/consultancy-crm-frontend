@@ -19,8 +19,10 @@ import { addVisaLetter, type StudentProfile, type Visa } from "@/lib/api";
 import { documentFileProblem } from "@/lib/documents";
 
 import { SaveDialog } from "./SaveDialog";
+import { VisaFinalDialog } from "./VisaFinalDialog";
 import { statusSavedMessage } from "./statusSaved";
 import { useFormSave } from "./useFormSave";
+import { LABEL_CLASSES } from "@/components/ui/Field";
 
 const RESULT_TONES: Record<VisaResult, ChoiceTone> = { granted: "good", refused: "bad" };
 const RESULT_OPTIONS = VISA_RESULTS.map((result) => ({
@@ -39,7 +41,9 @@ type VisaLetterDialogProps = {
 /**
  * Upload a Visa's letter (spec 116; prototype visaLetter). On a Visa at Applied the letter says
  * Granted or Refused, and the server saves the file and the Status together; the Stage follows.
- * A Visa already decided only takes the letter, keeping its Status.
+ * That result is final, so it is asked first, over this dialog; Cancel there comes back here with
+ * the file and the choice kept (UI revamp ticket 10). A Visa already decided only takes the
+ * letter, keeping its Status.
  */
 export function VisaLetterDialog({ profile, visa, onClose, onSaved }: VisaLetterDialogProps) {
   const { showToast } = useToast();
@@ -48,56 +52,102 @@ export function VisaLetterDialog({ profile, visa, onClose, onSaved }: VisaLetter
   const [result, setResult] = useState<VisaResult | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [problems, setProblems] = useState<Problems>(NO_PROBLEMS);
+  const [asking, setAsking] = useState<VisaResult | null>(null);
   const { isSaving, fieldErrors, failure, save } = useFormSave();
+  const sentResult = isWaiting ? result : null;
 
   function submit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
-    const sentResult = isWaiting ? result : null;
     const found = problemsOf(file, isWaiting && result === null);
     setProblems(found);
     if (file === null || hasProblem(found)) return;
+    if (sentResult === null) send(file);
+    else setAsking(sentResult);
+  }
+
+  function send(letter: File): void {
     void save(async () => {
-      const saved = await addVisaLetter(profile.id, visa.id, { result: sentResult, file });
+      const saved = await addVisaLetter(profile.id, visa.id, { result: sentResult, file: letter });
       showToast(savedMessage(visa, sentResult, profile.stage, saved.stage));
       onSaved(saved);
     });
   }
 
   return (
-    <SaveDialog
-      title={VISA_TEXT.letterTitle}
-      formId={formId}
-      saveLabel={VISA_TEXT.saveLetter}
-      saveIcon="upload"
-      isSaving={isSaving}
-      failure={failure}
-      onClose={onClose}
-    >
-      <form id={formId} noValidate onSubmit={submit} className="grid gap-5">
-        <FileField
-          label={VISA_TEXT.letter}
-          name="file"
-          accept={DOCUMENT_FILE_ACCEPT}
-          hint={VISA_TEXT.letterHint}
-          errors={problems.file === null ? fieldErrors.file : [problems.file]}
-          onChange={(chosen) => {
-            setFile(chosen);
-            setProblems((found) => ({ ...found, file: null }));
-          }}
-        />
-        {isWaiting && (
-          <ResultField
-            value={result}
+    <>
+      <SaveDialog
+        title={VISA_TEXT.letterTitle}
+        formId={formId}
+        saveLabel={VISA_TEXT.saveLetter}
+        saveIcon="upload"
+        isSaving={isSaving}
+        failure={failure}
+        onClose={onClose}
+      >
+        <form id={formId} noValidate onSubmit={submit} className="grid gap-5">
+          <FileField
+            label={VISA_TEXT.letter}
+            name="file"
+            accept={DOCUMENT_FILE_ACCEPT}
+            hint={VISA_TEXT.letterHint}
+            errors={problems.file === null ? fieldErrors.file : [problems.file]}
             onChange={(chosen) => {
-              setResult(chosen);
-              setProblems((found) => ({ ...found, result: null }));
+              setFile(chosen);
+              setProblems((found) => ({ ...found, file: null }));
             }}
-            errors={problems.result === null ? fieldErrors.result : [problems.result]}
           />
-        )}
-        <p className="text-secondary text-ink-2">{whatHappens(profile, visa)}</p>
-      </form>
-    </SaveDialog>
+          {isWaiting && (
+            <ResultField
+              value={result}
+              onChange={(chosen) => {
+                setResult(chosen);
+                setProblems((found) => ({ ...found, result: null }));
+              }}
+              errors={problems.result === null ? fieldErrors.result : [problems.result]}
+            />
+          )}
+          <p className="text-secondary text-ink-2">{whatHappens(profile, visa)}</p>
+        </form>
+      </SaveDialog>
+      <AskFirst
+        profile={profile}
+        visa={visa}
+        result={asking}
+        file={file}
+        onYes={(letter) => {
+          setAsking(null);
+          send(letter);
+        }}
+        onClose={() => {
+          setAsking(null);
+        }}
+      />
+    </>
+  );
+}
+
+type AskFirstProps = Pick<VisaLetterDialogProps, "profile" | "visa" | "onClose"> & {
+  /** The result to ask about; null while nothing is asked. */
+  result: VisaResult | null;
+  file: File | null;
+  /** Yes: the letter is then saved in the letter dialog, where a refused file is shown. */
+  onYes: (letter: File) => void;
+};
+
+/** Over the letter dialog: asks before the letter's result, which is final, is saved. */
+function AskFirst({ profile, visa, result, file, onYes, onClose }: AskFirstProps) {
+  if (result === null || file === null) return null;
+  return (
+    <VisaFinalDialog
+      profile={profile}
+      visa={visa}
+      result={result}
+      onConfirm={() => {
+        onYes(file);
+        return Promise.resolve();
+      }}
+      onClose={onClose}
+    />
   );
 }
 
@@ -151,7 +201,7 @@ function ResultField({ value, onChange, errors }: ResultFieldProps) {
   const noteId = useId();
   return (
     <div className="grid gap-2">
-      <span aria-hidden="true" className="text-secondary text-ink font-semibold">
+      <span aria-hidden="true" className={LABEL_CLASSES}>
         {VISA_TEXT.whatItSays}
       </span>
       <SegmentedChoice

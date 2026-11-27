@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import { Fragment, useState, type ReactNode } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -10,19 +11,22 @@ import { Journey } from "@/components/ui/Journey";
 import { useToast } from "@/components/ui/useToast";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { STAGE_LABELS, Stage } from "@/constants/stages";
-import { InvalidFieldsError, setStage, type StudentProfile } from "@/lib/api";
+import { setStage, type StudentProfile } from "@/lib/api";
 import { localDayIso } from "@/lib/dates";
 import { lostStory, type LostMoment } from "@/lib/students";
 
-import { saveFailure } from "./saveErrors";
+import { stageFailure } from "./saveErrors";
 
 type StageSectionProps = {
   profile: StudentProfile;
   onSaved: (profile: StudentProfile) => void;
 };
 
+/** What sits beside the steps on the sheet keeps the sheet's padding from its sides. */
+const IN_SHEET = "max-phone:px-gutter px-5";
+
 /**
- * The Student's journey. Their counsellor or an Admin moves a hand-set Stage by clicking it, and
+ * The Student's journey, the lower part of the sheet that starts with their name (UI revamp 11). Their counsellor or an Admin moves a hand-set Stage by clicking it, and
  * brings a Lost Student back to Counselling from the Lost banner (spec 38-40).
  */
 export function StageSection({ profile, onSaved }: StageSectionProps) {
@@ -39,32 +43,36 @@ export function StageSection({ profile, onSaved }: StageSectionProps) {
       showToast(doneMessage);
       onSaved(saved);
     } catch (error) {
-      setFailure(moveFailure(error));
+      setFailure(stageFailure(error));
     }
     setIsMoving(false);
   }
 
   return (
-    <div className="grid gap-4">
+    <div className="border-rule grid border-t">
       {isLost && (
-        <Banner
-          tone="problem"
-          action={
-            profile.canSetStage && (
-              <Button
-                isLoading={isMoving}
-                loadingLabel={LABELS.saving}
-                onClick={() => void move(Stage.Counselling, MESSAGES.backInCounselling)}
-              >
-                {LABELS.bringBackToCounselling}
-              </Button>
-            )
-          }
-        >
-          <b>{LABELS.lost}</b> <span className="whitespace-pre-wrap">{profile.lostReason}</span>
-        </Banner>
+        <div className={clsx(IN_SHEET, "pt-4")}>
+          <Banner
+            tone="problem"
+            action={
+              profile.canSetStage && (
+                <Button
+                  isLoading={isMoving}
+                  loadingLabel={LABELS.saving}
+                  onClick={() => void move(Stage.Counselling, MESSAGES.backInCounselling)}
+                >
+                  {LABELS.bringBackToCounselling}
+                </Button>
+              )
+            }
+          >
+            <b>{LABELS.lost}</b>{" "}
+            <span className="wrap-anywhere whitespace-pre-wrap">{profile.lostReason}</span>
+          </Banner>
+        </div>
       )}
       <Journey
+        isOnSheet
         stage={profile.stage}
         nextStep={profile.progress.nextStep}
         isDone={profile.progress.isDone}
@@ -76,7 +84,11 @@ export function StageSection({ profile, onSaved }: StageSectionProps) {
             : undefined
         }
       />
-      {failure !== null && <Banner tone="problem">{failure}</Banner>}
+      {failure !== null && (
+        <div className={clsx(IN_SHEET, "pb-4")}>
+          <Banner tone="problem">{failure}</Banner>
+        </div>
+      )}
     </div>
   );
 }
@@ -108,12 +120,4 @@ function LostBefore({ story }: { story: readonly LostMoment[] }) {
       <span className="text-small text-ink-2">{LABELS.lostBefore}</span>
     </>
   );
-}
-
-function moveFailure(error: unknown): string {
-  if (error instanceof InvalidFieldsError) {
-    const [first] = Object.values<string[] | undefined>(error.fieldErrors).flat();
-    if (first !== undefined) return first;
-  }
-  return saveFailure(error);
 }

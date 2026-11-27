@@ -12,7 +12,6 @@ import { ROUTES } from "@/constants/routes";
 import { ADMIN_TEXT, SETUP_TEXT } from "@/constants/consultancyStatus";
 import {
   retryConsultancySetup,
-  updateConsultancyTheme,
   updateModules,
   type ConsultancyOverview,
   updatingOr,
@@ -24,7 +23,7 @@ import { ConsultancyListContent } from "./ConsultancyListContent";
 import { useConsultancies } from "./useConsultancies";
 
 /**
- * The Platform's list of every Consultancy: create one; change its Features, Colours and Admins
+ * The Platform's list of every Consultancy: create one; change its Features and Admins
  * (issue 64) in its Configuration (ticket 16); change its Status; open it as Platform Admin
  * (issue 27), or set it up again if its setup failed (issue 60); then every Platform Admin visit.
  */
@@ -73,11 +72,6 @@ export function ConsultancyList() {
           onSaveFeatures={async (switches) => {
             const updated = await updateModules(configuring.id, switches);
             showToast(MESSAGES.featuresSaved(updated.name));
-            replace(updated);
-          }}
-          onSaveColours={async (theme) => {
-            const updated = await updateConsultancyTheme(configuring.id, theme);
-            showToast(MESSAGES.coloursSaved(updated.name));
             replace(updated);
           }}
           onAdminAdded={(name) => {

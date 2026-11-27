@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 
 import { fakeMatchMedia } from "@/test/matchMedia";
 
+import { PageHeader } from "./PageHeader";
 import { SectionMenu, useSectionChoice, type MenuSection } from "./SectionMenu";
 import { PHONE_QUERY } from "./usePhoneWidth";
 
@@ -34,6 +35,20 @@ function Menu({ sections = SECTIONS, keepsAllMounted = false, footer }: MenuProp
       choice={choice}
       keepsAllMounted={keepsAllMounted}
       footer={footer}
+    />
+  );
+}
+
+/** A page whose title is drawn by the menu, so the way back can sit beside it on phones. */
+function MenuWithTitle() {
+  const choice = useSectionChoice(SECTIONS[0]?.id ?? "");
+  return (
+    <SectionMenu
+      label="Configuration"
+      backLabel="All of Configuration"
+      sections={SECTIONS}
+      choice={choice}
+      header={(back) => <PageHeader title="Configuration" leading={back} />}
     />
   );
 }
@@ -192,6 +207,28 @@ describe("SectionMenu at phone width", () => {
     expect(menu()).toBeInTheDocument();
     expect(screen.queryByText("Docs")).not.toBeInTheDocument();
     expect(menuItem("Documents")).toHaveFocus();
+  });
+
+  it("puts the way back left of the page title, on its line, when the page draws its title through the menu", async () => {
+    const user = userEvent.setup();
+    render(<MenuWithTitle />);
+    expect(screen.getByRole("heading", { level: 1, name: "Configuration" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "All of Configuration" })).not.toBeInTheDocument();
+
+    await user.click(menuItem("Documents"));
+
+    const back = screen.getByRole("button", { name: "All of Configuration" });
+    const title = screen.getByRole("heading", { level: 1, name: "Configuration" });
+    expect(back.parentElement).toBe(title.parentElement);
+    expect(back.compareDocumentPosition(title) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // An arrow only: the title beside it says where it goes.
+    expect(back).toHaveTextContent("");
+    expect(back).toHaveFocus();
+
+    await user.click(back);
+
+    expect(menuItem("Documents")).toHaveFocus();
+    expect(screen.queryByRole("button", { name: "All of Configuration" })).not.toBeInTheDocument();
   });
 
   it("starts at the list again each time the page is opened", async () => {

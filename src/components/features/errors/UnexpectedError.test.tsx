@@ -5,9 +5,9 @@ import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { UnexpectedError } from "./UnexpectedError";
 
-describe.each(THEME_CASES)("UnexpectedError in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("UnexpectedError in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

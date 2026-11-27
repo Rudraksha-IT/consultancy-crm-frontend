@@ -1,11 +1,10 @@
 import { uid } from "@/test/ids";
-import type { ThemeConfig } from "@/lib/theme";
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import {
   ApiRequestError,
   InvalidCredentialsError,
   InvalidFieldsError,
   NotLoggedInError,
+  TooManyPasswordTriesError,
 } from "../core/errors";
 import {
   changeConsultancyStatus,
@@ -15,19 +14,10 @@ import {
   logInToPlatform,
   logOutOfPlatform,
   retryConsultancySetup,
-  updateConsultancyTheme,
   updateModules,
 } from "./platform";
 import { jsonResponse } from "../core/test-helpers";
-import { CONTRASTING_THEME } from "@/test/themes";
 import { testHost } from "@/test/hosts";
-
-const THEME: ThemeConfig = {
-  page: "ice",
-  sidebar: TEST_COLOURS.deepTeal,
-  accent: TEST_COLOURS.arcticTeal,
-  dark: { base: "teal", sidebar: "brand", accent: "auto" },
-};
 
 const ADMIN = { id: uid(1), name: "Platform Ops", email: "ops@platform.test" };
 
@@ -41,7 +31,6 @@ const ACME = {
   evaluation_ends_at: "2026-11-18T03:15:00Z",
   paid_until: null,
   modules: ["students", "batches"],
-  theme: THEME,
   setup_state: "ready",
 };
 
@@ -55,7 +44,6 @@ const ACME_OVERVIEW = {
   evaluationEndsAt: "2026-11-18T03:15:00Z",
   paidUntil: null,
   modules: ["students", "batches"],
-  theme: THEME,
   setupState: "ready",
 };
 
@@ -63,7 +51,6 @@ const NEW_CONSULTANCY = {
   name: "Acme Education",
   subdomain: "acme",
   contactEmail: "info@acme.com",
-  theme: THEME,
   status: "evaluation",
   paidUntil: "",
 } as const;
@@ -106,6 +93,14 @@ describe("logInToPlatform", () => {
     await expect(
       logInToPlatform({ email: "x@y.z", password: "bad" }, fetchFn),
     ).rejects.toBeInstanceOf(InvalidCredentialsError);
+  });
+
+  it("rejects with TooManyPasswordTriesError once the wrong passwords are used up", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ detail: "x" }, 429));
+
+    await expect(
+      logInToPlatform({ email: "x@y.z", password: "pw" }, fetchFn),
+    ).rejects.toBeInstanceOf(TooManyPasswordTriesError);
   });
 
   it("passes other failures through", async () => {
@@ -181,7 +176,6 @@ describe("createConsultancy", () => {
           subdomain: "acme",
           contact_email: "info@acme.com",
           status: "evaluation",
-          theme: THEME,
         }),
       }),
     );
@@ -418,38 +412,13 @@ describe("updateModules", () => {
   });
 });
 
-describe("updateConsultancyTheme", () => {
-  const OVERVIEW = {
-    id: uid(3),
-    name: "Acme Education",
-    subdomain: "acme",
-    host: testHost("acme"),
-    status: "active",
-    status_reason: "",
-    evaluation_ends_at: null,
-    paid_until: "2027-03-31",
-    modules: ["students"],
-    theme: CONTRASTING_THEME,
-    setup_state: "ready",
-  };
+describe("office colours are gone (ticket 04)", () => {
+  it("drops a theme an old answer still carries", async () => {
+    const old = { ...ACME, theme: { page: "ice", accent: "red;background:url(x)" } };
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse([old]));
 
-  it("puts the colours to the office on the Platform and returns its summary", async () => {
-    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(OVERVIEW));
+    const [first] = await fetchConsultancies(fetchFn);
 
-    const updated = await updateConsultancyTheme(uid(3), CONTRASTING_THEME, fetchFn);
-
-    expect(updated.theme).toEqual(CONTRASTING_THEME);
-    expect(fetchFn).toHaveBeenCalledWith(
-      `/api/platform/consultancies/${uid(3)}/theme/`,
-      expect.objectContaining({ method: "PUT", body: JSON.stringify(CONTRASTING_THEME) }),
-    );
-  });
-
-  it("passes a refusal through", async () => {
-    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ page: ["Bad"] }, 400));
-
-    await expect(updateConsultancyTheme(uid(3), CONTRASTING_THEME, fetchFn)).rejects.toBeInstanceOf(
-      ApiRequestError,
-    );
+    expect(first).not.toHaveProperty("theme");
   });
 });

@@ -6,7 +6,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { formatAdDateTime } from "@/lib/dates";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 
@@ -19,7 +18,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 const PATH = "/api/clock/working-day/";
 const DAYS_OFF_PATH = "/api/clock/days-off/";
@@ -157,8 +155,8 @@ describe("WorkingDaySettings", () => {
     expect(days[1]).toHaveTextContent("Open");
     expect(screen.getByText(/never count as not in or a short day/)).toBeInTheDocument();
     const hours = screen.getByRole("textbox", { name: "Hours in a working day" });
-    expect(hours.closest(".rounded-panel")).toContainElement(daysOff);
-    expect(document.querySelectorAll(".rounded-panel")).toHaveLength(1);
+    expect(hours.closest("[data-panel]")).toContainElement(daysOff);
+    expect(document.querySelectorAll("[data-panel]")).toHaveLength(1);
   });
 
   it.each([

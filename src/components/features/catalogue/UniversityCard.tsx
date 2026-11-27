@@ -33,11 +33,11 @@ export function UniversityCard({ university, ...actions }: UniversityCardProps) 
   return (
     <section aria-labelledby={`university-${university.id}`} className="min-w-0">
       <Panel>
-        <header className="border-rule flex flex-wrap items-center justify-between gap-x-5 gap-y-3 border-b px-6 py-4">
+        <header className="border-rule px-gutter flex flex-wrap items-center justify-between gap-x-5 gap-y-3 border-b py-4">
           <div className="grid min-w-0 gap-1">
             <h2
               id={`university-${university.id}`}
-              className="text-section-title text-ink flex flex-wrap items-center gap-2 break-words"
+              className="text-uni-name text-ink flex flex-wrap items-center gap-2 break-words"
             >
               {university.name}
               {university.archived && <Chip hasDot={false}>{CATALOGUE_TEXT.archived}</Chip>}
@@ -53,7 +53,7 @@ export function UniversityCard({ university, ...actions }: UniversityCardProps) 
         </header>
         <CourseRows university={university} {...actions} />
         {!university.archived && (
-          <div className="border-rule bg-fill border-t px-6 py-3">
+          <div className="border-rule px-gutter border-t py-3">
             <Button
               icon="plus"
               size="sm"
@@ -77,7 +77,7 @@ export function UniversityCard({ university, ...actions }: UniversityCardProps) 
  */
 function CourseRows({ university, ...actions }: UniversityCardProps) {
   if (university.courses.length === 0) {
-    return <p className="text-ink-2 px-6 py-4">{CATALOGUE_TEXT.noCourses}</p>;
+    return <p className="text-ink-2 px-gutter py-4">{CATALOGUE_TEXT.noCourses}</p>;
   }
   return (
     <ul aria-label={CATALOGUE_TEXT.courseCount(university.courses.length)} className="min-w-0">
@@ -136,7 +136,7 @@ function CourseRow(props: CourseRowProps) {
   return (
     <li
       className={clsx(
-        "border-rule phone:px-6 grid min-w-0 gap-3 border-t px-4 py-4",
+        "border-rule phone:px-gutter px-gutter grid min-w-0 gap-3 border-t py-4",
         course.archived && "text-ink-2",
       )}
     >

@@ -194,7 +194,7 @@ function SearchField({
           onChange={(event) => {
             onType(event.target.value);
           }}
-          className="h-side-item rounded-control bg-fill text-body text-ink focus:border-accent focus:bg-paper w-full border border-transparent pr-16 pl-11.5 [&::-webkit-search-cancel-button]:appearance-none"
+          className="h-side-item rounded-control bg-fill text-input text-ink focus:border-accent focus:bg-paper w-full border border-transparent pr-16 pl-11.5 [&::-webkit-search-cancel-button]:appearance-none"
         />
         <kbd
           aria-hidden="true"

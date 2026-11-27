@@ -6,7 +6,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { StudentProfilePage } from "@/components/features/students/profile/StudentProfilePage";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend as backendOnly, callsTo, on, onEach, type Answer } from "@/test/backend";
 import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
@@ -25,7 +24,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const ADMIN_WITHOUT_ACCOUNTS: StaffContext = { ...ADMIN, modules: ["students", "payments"] };

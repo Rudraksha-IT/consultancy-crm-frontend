@@ -131,7 +131,7 @@ function ContactFooter() {
 function OfficeMark() {
   const { consultancy } = useCurrentStaff();
   if (consultancy.logo === null) {
-    return <p className="text-card-title text-accent font-bold">{consultancy.name}</p>;
+    return <p className="text-card-title text-accent font-semibold">{consultancy.name}</p>;
   }
   return (
     <Image

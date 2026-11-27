@@ -1,5 +1,5 @@
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
-import { addStudent, fetchStudents } from "./students";
+import { addStudent, fetchBoardStudents, fetchStudents } from "./students";
 import { jsonResponse } from "../core/test-helpers";
 import { uid } from "@/test/ids";
 import { NO_STUDENT_FILTERS } from "@/lib/students";
@@ -190,5 +190,46 @@ describe("addStudent", () => {
     const fetchFn = answering(jsonResponse({ detail: "Teachers can't see Students." }, 403));
 
     await expect(addStudent(NEW_ANISH, fetchFn)).rejects.toBeInstanceOf(ApiRequestError);
+  });
+});
+
+describe("fetchBoardStudents (UI revamp 08)", () => {
+  const CARD = { ...ROW, next_step: "Choose a course and apply", documents: { done: 2, total: 9 } };
+
+  it("asks one Stage with the filters and progress, and returns the cards in frontend naming", async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ count: 26, page: 2, page_size: 25, results: [CARD] }));
+
+    const page = await fetchBoardStudents(
+      { ...NO_STUDENT_FILTERS, search: "ani", country: "canada", stage: "offer" },
+      "lead",
+      2,
+      fetchFn,
+    );
+
+    expect(fetchFn.mock.calls[0]?.[0]).toBe(
+      "/api/students/?q=ani&stage=lead&country=canada&progress=true&page=2",
+    );
+    expect(page.count).toBe(26);
+    expect(page.students[0]).toMatchObject({
+      name: "Anish Neupane",
+      nextStep: "Choose a course and apply",
+      documents: { done: 2, total: 9 },
+      assignedCounsellor: { name: "Bikash Thapa" },
+    });
+  });
+
+  it.each([
+    { ...CARD, next_step: undefined },
+    { ...CARD, documents: { done: -1, total: 9 } },
+    { ...CARD, documents: { done: "2", total: 9 } },
+    { ...CARD, stage: "<script>" },
+  ])("rejects a card that is not what the API promises", async (bad) => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ count: 1, page: 1, page_size: 25, results: [bad] }));
+
+    await expect(fetchBoardStudents(NO_STUDENT_FILTERS, "lead", 1, fetchFn)).rejects.toThrow();
   });
 });

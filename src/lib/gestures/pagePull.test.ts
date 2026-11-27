@@ -320,4 +320,31 @@ describe("the pull's look", () => {
   it("shows nothing without a pull", () => {
     expect(pullHint(null, neighbours)).toBeNull();
   });
+
+  it("turns the logo 3 degrees for each pixel the page has moved, clockwise from the top (ticket 19)", () => {
+    const pulled = pullHint({ edge: "top", distance: 120 }, neighbours);
+
+    expect(pulled?.turn).toBe(Math.round(pullShift(120) * 3));
+    expect(pulled?.turn).toBeGreaterThan(0);
+  });
+
+  it("turns it the other way when the bottom is pulled", () => {
+    const top = pullHint({ edge: "top", distance: 120 }, neighbours);
+    const bottom = pullHint({ edge: "bottom", distance: 120 }, neighbours);
+
+    expect(bottom?.turn).toBe(-(top?.turn ?? 0));
+    expect(bottom?.turn).toBeLessThan(0);
+  });
+
+  it("turns back as the page comes back, and slows as the page resists", () => {
+    const turnAt = (distance: number): number =>
+      pullHint({ edge: "top", distance }, neighbours)?.turn ?? Number.NaN;
+
+    expect(turnAt(80)).toBeLessThan(turnAt(160));
+    expect(turnAt(40)).toBeLessThan(turnAt(80));
+    // The same 100 of pull turns it less further out, where the page moves less.
+    expect(turnAt(400) - turnAt(300)).toBeLessThan(turnAt(100) - turnAt(0));
+    expect(turnAt(0)).toBe(0);
+    expect(pullHint({ edge: "bottom", distance: 0 }, neighbours)?.turn).toBe(0);
+  });
 });

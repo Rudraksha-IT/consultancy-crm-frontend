@@ -1,18 +1,18 @@
 import type { RecordId } from "@/lib/recordId";
 import { uid } from "@/test/ids";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useState } from "react";
 
 import { InboxCheckContext, type InboxCheckState } from "@/components/features/shell/inboxCheck";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
-import { INBOX_TEXT } from "@/constants/inbox";
 import { consultancySummary } from "@/test/consultancy";
 import { fakeMatchMedia } from "@/test/matchMedia";
 import { testHost } from "@/test/hosts";
+
+import { FIT_GAP_PX, FIT_LEAST_PX } from "@/lib/fitWindow/fitWindow";
 
 import { InboxPage } from "./InboxPage";
 import { openIdFrom } from "./InboxRoute";
@@ -24,7 +24,6 @@ const SITA: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const PLATFORM_VISIT: StaffContext = {
@@ -107,7 +106,7 @@ afterEach(() => {
 });
 
 describe("The conversation list", () => {
-  it("lists my conversations newest first, with who wrote last and what is unread", async () => {
+  it("lists my conversations newest first: the name, the start of the last message, the time and what is unread (owner, 2026-11-27)", async () => {
     backend(on("GET", LIST, CONVERSATIONS));
 
     renderInbox();
@@ -121,11 +120,50 @@ describe("The conversation list", () => {
     ]);
     const pooja = within(list).getByRole("button", { name: /Pooja Shrestha/ });
     const nabin = within(list).getByRole("button", { name: /Nabin Adhikari/ });
-    expect(pooja).toHaveTextContent("Shall I send her up?");
-    expect(within(pooja).getByText("Unread")).toBeInTheDocument();
-    expect(nabin).toHaveTextContent("You: Yes, after lunch.");
+    // The start of the last message is under the name, on one line; mine starts with "You: ".
+    const theirs = within(pooja).getByText("Shall I send her up?");
+    expect(theirs).toHaveClass("truncate");
+    expect(within(nabin).getByText("You: Yes, after lunch.")).toHaveClass("truncate");
+    expect(pooja).toHaveTextContent("PSPooja ShresthaShall I send her up?28 Oct 2026Unread");
+    // The dot has its word for screen readers, so it never stands alone.
+    expect(within(pooja).getByText("Unread")).toHaveClass("sr-only");
     expect(within(nabin).queryByText("Unread")).not.toBeInTheDocument();
     expect(screen.getByText("Pick a conversation, or start a new one.")).toBeInTheDocument();
+  });
+
+  it("shows an unread conversation in bold, with its dot; a read one is quieter", async () => {
+    backend(on("GET", LIST, CONVERSATIONS));
+
+    renderInbox();
+
+    const list = await screen.findByRole("list", { name: "Conversations" });
+    const pooja = within(list).getByRole("button", { name: /Pooja Shrestha/ });
+    const nabin = within(list).getByRole("button", { name: /Nabin Adhikari/ });
+    expect(within(pooja).getByText("Pooja Shrestha")).toHaveClass("font-semibold", "text-ink");
+    expect(within(pooja).getByText("Shall I send her up?")).toHaveClass("text-ink", "font-medium");
+    expect(within(nabin).getByText("Nabin Adhikari")).toHaveClass("font-medium");
+    expect(within(nabin).getByText("Nabin Adhikari")).not.toHaveClass("font-semibold");
+    expect(within(nabin).getByText("You: Yes, after lunch.")).toHaveClass("text-ink-2");
+  });
+
+  it("shows the last message as text, never as markup, and on one line", async () => {
+    backend(
+      on("GET", LIST, {
+        conversations: [
+          {
+            person: POOJA,
+            last: { text: "<b>Hi</b>\nsecond line", from_me: false, sent_at: LATER },
+            unread: false,
+          },
+        ],
+      }),
+    );
+
+    renderInbox();
+
+    const list = await screen.findByRole("list", { name: "Conversations" });
+    expect(within(list).getByText("<b>Hi</b> second line")).toBeInTheDocument();
+    expect(list.querySelector("b")).toBeNull();
   });
 
   it("says when there are no conversations yet", async () => {
@@ -163,6 +201,161 @@ describe("The conversation list", () => {
     await waitFor(() => {
       expect(callsTo(fetchFn, "GET", LIST).length).toBe(before + 1);
     });
+  });
+});
+
+describe("The page", () => {
+  it("has no line under its title and no note under the page", async () => {
+    backend(on("GET", LIST, CONVERSATIONS));
+
+    renderInbox();
+    await screen.findByRole("list", { name: "Conversations" });
+
+    expect(screen.queryByText(/Messages between you and one other person/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/New messages show within about 30 seconds/)).not.toBeInTheDocument();
+  });
+});
+
+describe("The height", () => {
+  const TOP = 150;
+
+  /** A window this tall, with the Inbox starting `TOP` from its top. */
+  function windowOf(height: number): void {
+    vi.stubGlobal("innerHeight", height);
+    vi.spyOn(HTMLElement.prototype, "getBoundingClientRect").mockReturnValue(
+      new DOMRect(0, TOP, 800, 0),
+    );
+  }
+
+  function inboxBox(): HTMLElement {
+    const box = document.querySelector<HTMLElement>("[data-fills-window]");
+    if (box === null) throw new Error("The Inbox has no box that fills the window.");
+    return box;
+  }
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("fills the window down to its bottom, and fits again when the window changes", async () => {
+    windowOf(900);
+    backend(on("GET", LIST, CONVERSATIONS), on("GET", WITH_NABIN, THREAD_WITH_NABIN));
+    renderInbox({ openId: uid(1) });
+    await screen.findByRole("log");
+
+    expect(inboxBox()).toHaveStyle({ height: `${String(900 - TOP - FIT_GAP_PX)}px` });
+
+    windowOf(700);
+    act(() => {
+      window.dispatchEvent(new Event("resize"));
+    });
+
+    expect(inboxBox()).toHaveStyle({ height: `${String(700 - TOP - FIT_GAP_PX)}px` });
+  });
+
+  it("stops above the phone tab bar", async () => {
+    windowOf(800);
+    const bar = document.createElement("nav");
+    bar.setAttribute("data-tabbar", "");
+    Object.defineProperty(bar, "offsetHeight", { value: 60 });
+    document.body.append(bar);
+    backend(on("GET", LIST, CONVERSATIONS));
+
+    renderInbox();
+    await screen.findByRole("list", { name: "Conversations" });
+
+    expect(inboxBox()).toHaveStyle({ height: `${String(800 - TOP - 60 - FIT_GAP_PX)}px` });
+    bar.remove();
+  });
+
+  it("keeps a least height in a very short window", async () => {
+    windowOf(200);
+    backend(on("GET", LIST, CONVERSATIONS));
+
+    renderInbox();
+    await screen.findByRole("list", { name: "Conversations" });
+
+    expect(inboxBox()).toHaveStyle({ height: `${String(FIT_LEAST_PX)}px` });
+  });
+
+  it("scrolls the messages inside, with the box to write in under them", async () => {
+    windowOf(900);
+    backend(on("GET", LIST, CONVERSATIONS), on("GET", WITH_NABIN, THREAD_WITH_NABIN));
+    renderInbox({ openId: uid(1) });
+
+    const log = await screen.findByRole("log");
+    const composer = screen
+      .getByRole("textbox", { name: "Message to Nabin Adhikari" })
+      .closest("form");
+
+    // The messages take the room that is left and scroll; the composer is the row after them.
+    expect(log).toHaveClass("min-h-0", "overflow-y-auto");
+    expect(log.parentElement).toHaveClass("grid-rows-[auto_minmax(0,1fr)_auto]", "h-full");
+    expect(log.nextElementSibling).toBe(composer);
+    expect(inboxBox()).toContainElement(composer);
+    // The list scrolls on its own too.
+    expect(screen.getByRole("list", { name: "Conversations" }).parentElement).toHaveClass(
+      "overflow-y-auto",
+    );
+  });
+});
+
+describe("The newest message", () => {
+  /** A ResizeObserver the test fires by hand. */
+  function fakeResizeObserver(): { fire: () => void } {
+    const callbacks: (() => void)[] = [];
+    class FakeResizeObserver {
+      constructor(callback: () => void) {
+        callbacks.push(callback);
+      }
+      observe = vi.fn<() => void>();
+      disconnect = vi.fn<() => void>();
+    }
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+    return {
+      fire: () => {
+        for (const callback of callbacks) callback();
+      },
+    };
+  }
+
+  function scrollable(log: HTMLElement, sizes: { scrollHeight: number; clientHeight: number }) {
+    Object.defineProperty(log, "scrollHeight", { configurable: true, value: sizes.scrollHeight });
+    Object.defineProperty(log, "clientHeight", { configurable: true, value: sizes.clientHeight });
+  }
+
+  it("stays in view when the window gets shorter", async () => {
+    const resize = fakeResizeObserver();
+    backend(on("GET", LIST, CONVERSATIONS), on("GET", WITH_NABIN, THREAD_WITH_NABIN));
+    renderInbox({ openId: uid(1) });
+    const log = await screen.findByRole("log");
+    scrollable(log, { scrollHeight: 1000, clientHeight: 400 });
+    log.scrollTop = 600;
+    fireEvent.scroll(log);
+
+    scrollable(log, { scrollHeight: 1000, clientHeight: 300 });
+    act(() => {
+      resize.fire();
+    });
+
+    expect(log.scrollTop).toBe(1000);
+  });
+
+  it("leaves me where I was reading older messages", async () => {
+    const resize = fakeResizeObserver();
+    backend(on("GET", LIST, CONVERSATIONS), on("GET", WITH_NABIN, THREAD_WITH_NABIN));
+    renderInbox({ openId: uid(1) });
+    const log = await screen.findByRole("log");
+    scrollable(log, { scrollHeight: 1000, clientHeight: 400 });
+    log.scrollTop = 100;
+    fireEvent.scroll(log);
+
+    scrollable(log, { scrollHeight: 1000, clientHeight: 300 });
+    act(() => {
+      resize.fire();
+    });
+
+    expect(log.scrollTop).toBe(100);
   });
 });
 
@@ -251,13 +444,11 @@ describe("A conversation", () => {
     await screen.findByRole("log");
 
     expect(screen.queryByRole("button", { name: "New message" })).not.toBeInTheDocument();
-    expect(screen.queryByText(INBOX_TEXT.intro)).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Inbox" })).toHaveClass("sr-only");
 
     await userEvent.click(screen.getByRole("button", { name: "Back to conversations" }));
 
     expect(screen.getByRole("button", { name: "New message" })).toBeInTheDocument();
-    expect(screen.getByText(INBOX_TEXT.intro)).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Inbox" })).not.toHaveClass("sr-only");
   });
 
@@ -267,7 +458,6 @@ describe("A conversation", () => {
     await screen.findByRole("log");
 
     expect(screen.getByRole("button", { name: "New message" })).toBeInTheDocument();
-    expect(screen.getByText(INBOX_TEXT.intro)).toBeInTheDocument();
   });
 
   it("lets me read someone who has left, but not write to them", async () => {
@@ -347,6 +537,20 @@ describe("Writing", () => {
         text: "Line one\nLine two",
       });
     });
+  });
+
+  it("has Send beside the box, on its line (owner, 2026-11-27)", async () => {
+    sendingBackend({ body: SENT, status: 201 });
+    renderInbox({ openId: uid(1) });
+    const box = await screen.findByRole("textbox", { name: "Message to Nabin Adhikari" });
+
+    const send = screen.getByRole("button", { name: "Send" });
+    const line = send.parentElement;
+    expect(line).toHaveClass("grid-cols-[minmax(0,1fr)_auto]", "items-start");
+    expect(line).toContainElement(box);
+    // One line to start with, growing with what is typed.
+    expect(box).toHaveAttribute("rows", "1");
+    expect(box).toHaveClass("field-sizing-content", "resize-none");
   });
 
   it("counts characters and tells the keys", async () => {

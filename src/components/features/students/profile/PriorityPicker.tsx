@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent, type RefObject 
 
 import { Banner } from "@/components/ui/Banner";
 import { Icon } from "@/components/ui/Icon";
-import { MenuList } from "@/components/ui/MenuList";
+import { MENU_IN_ROW_HOLDER, MenuList } from "@/components/ui/MenuList";
 import { useToast } from "@/components/ui/useToast";
 import { PRIORITIES, PRIORITY_LABELS, type Priority } from "@/constants/priority";
 import { STUDENT_PRIORITY_TEXT as TEXT } from "@/constants/students";
@@ -34,8 +34,9 @@ export function PriorityPicker({ profile, onSaved }: PriorityPickerProps) {
   return <PriorityMenu profile={profile} onSaved={onSaved} />;
 }
 
+/** On a phone it is small, like the actions beside it: a pill, still 44 tall to tap. */
 const CONTROL =
-  "min-h-control rounded-control border-rule bg-paper text-body inline-flex items-center gap-2.5 border px-4";
+  "min-h-control rounded-control border-rule bg-paper text-body max-phone:rounded-pill max-phone:text-button-sm max-phone:gap-1.5 max-phone:px-3 inline-flex items-center gap-2.5 border px-4";
 
 /** "Priority" quietly, then the dot and the word. */
 function PriorityValue({ priority }: { priority: Priority }) {
@@ -68,7 +69,7 @@ function PriorityMenu({ profile, onSaved }: PriorityPickerProps) {
 
   return (
     <div className="grid gap-2">
-      <div ref={rootRef} onKeyDown={handleKeyDown} className="relative w-fit">
+      <div ref={rootRef} onKeyDown={handleKeyDown} className={clsx(MENU_IN_ROW_HOLDER, "w-fit")}>
         <button
           ref={buttonRef}
           type="button"
@@ -89,6 +90,7 @@ function PriorityMenu({ profile, onSaved }: PriorityPickerProps) {
             id={menuId}
             label={TEXT.menu}
             hasTitle
+            isInRow
             items={PRIORITIES.map((priority) => ({
               label: PRIORITY_LABELS[priority],
               hint: TEXT.hints[priority],

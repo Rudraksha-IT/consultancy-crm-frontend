@@ -4,6 +4,7 @@ import { useCallback } from "react";
 
 import { BarChart } from "@/components/ui/BarChart";
 import { BarList } from "@/components/ui/BarList";
+import { ChartSection } from "@/components/ui/ChartSection";
 import { ColumnChart } from "@/components/ui/ColumnChart";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FigureTile } from "@/components/ui/FigureTile";
@@ -64,8 +65,8 @@ function StudentCharts({ report, months }: { report: StudentReportAnswer; months
           )}
         />
       </TileGrid>
-      <Section title={text.eachMonth}>
-        <Panel>
+      <ChartSection title={text.eachMonth}>
+        {(showsTable) => (
           <ColumnChart
             title={text.eachMonth}
             categories={monthCategories(rows.map((row) => row.month))}
@@ -74,32 +75,25 @@ function StudentCharts({ report, months }: { report: StudentReportAnswer; months
               { name: text.series.signedUp, values: rows.map((row) => row.signedUp) },
               { name: text.series.visasGranted, values: rows.map((row) => row.visasGranted) },
             ]}
+            showsTable={showsTable}
           />
-        </Panel>
-      </Section>
+        )}
+      </ChartSection>
       <div className="wide:grid-cols-2 grid items-start gap-8">
-        <Section title={text.countries.granted}>
-          <Panel>
-            <CountryChart
-              title={text.countries.granted}
-              seriesName={text.countries.grantedSeries}
-              counts={report.visasGrantedByCountry}
-              empty={text.countries.noneGranted}
-            />
-            <PanelFoot>{text.countries.grantedFoot}</PanelFoot>
-          </Panel>
-        </Section>
-        <Section title={text.countries.wanted}>
-          <Panel>
-            <CountryChart
-              title={text.countries.wanted}
-              seriesName={text.countries.wantedSeries}
-              counts={report.countriesWanted}
-              empty={text.countries.nobodyCame}
-            />
-            <PanelFoot>{text.countries.wantedFoot(months)}</PanelFoot>
-          </Panel>
-        </Section>
+        <CountrySection
+          title={text.countries.granted}
+          seriesName={text.countries.grantedSeries}
+          counts={report.visasGrantedByCountry}
+          empty={text.countries.noneGranted}
+          foot={text.countries.grantedFoot}
+        />
+        <CountrySection
+          title={text.countries.wanted}
+          seriesName={text.countries.wantedSeries}
+          counts={report.countriesWanted}
+          empty={text.countries.nobodyCame}
+          foot={text.countries.wantedFoot(months)}
+        />
       </div>
       <Section title={text.whatHappened}>
         <Panel>
@@ -134,23 +128,40 @@ function StudentCharts({ report, months }: { report: StudentReportAnswer; months
   );
 }
 
-type CountryChartProps = {
+type CountrySectionProps = {
   title: string;
   seriesName: string;
   counts: readonly CountryCount[];
   empty: string;
+  /** The quiet line under the chart: what it counts. */
+  foot: string;
 };
 
-/** The top ten countries as bars, the rest under Other; the table lists every country. */
-function CountryChart({ title, seriesName, counts, empty }: CountryChartProps) {
-  if (counts.length === 0) return <EmptyState>{empty}</EmptyState>;
+/**
+ * The top ten countries as bars, the rest under Other; the table lists every country. With no
+ * countries it says so, and there is nothing to switch.
+ */
+function CountrySection({ title, seriesName, counts, empty, foot }: CountrySectionProps) {
+  const isEmpty = counts.length === 0;
   return (
-    <BarChart
-      title={title}
-      seriesName={seriesName}
-      categoryHeading={REPORTS_TEXT.countries.country}
-      rows={topCountries(counts)}
-      tableRows={countryRows(counts)}
-    />
+    <ChartSection title={title} hasSwitch={!isEmpty}>
+      {(showsTable) => (
+        <>
+          {isEmpty ? (
+            <EmptyState>{empty}</EmptyState>
+          ) : (
+            <BarChart
+              title={title}
+              seriesName={seriesName}
+              categoryHeading={REPORTS_TEXT.countries.country}
+              rows={topCountries(counts)}
+              tableRows={countryRows(counts)}
+              showsTable={showsTable}
+            />
+          )}
+          <PanelFoot>{foot}</PanelFoot>
+        </>
+      )}
+    </ChartSection>
   );
 }

@@ -1,11 +1,13 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { uid } from "@/test/ids";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { NARROW_SCREEN_QUERY } from "@/lib/gestures";
 import { fakeMatchMedia } from "@/test/matchMedia";
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { resetTheme } from "@/test/themes";
 
 import { AppShell } from "./AppShell";
@@ -29,12 +31,6 @@ const CONTEXT = {
   modules: ["students", "tasks", "batches"],
   date_display: "AD",
   support_access: null,
-  theme: {
-    page: "stone",
-    sidebar: TEST_COLOURS.white,
-    accent: TEST_COLOURS.emerald,
-    dark: { base: "soft", sidebar: "darker", accent: "auto" },
-  },
 };
 
 const NO_NOTIFICATIONS = { count: 0, page: 1, page_size: 20, unread_count: 0, results: [] };
@@ -56,8 +52,15 @@ async function renderShell({ isNarrow }: { isNarrow: boolean }): Promise<void> {
       return Promise.resolve(new Response(null, { status: 204 }));
     }),
   );
+  const listens = vi.spyOn(document, "addEventListener");
   render(<AppShell>page</AppShell>);
   await screen.findByText("page");
+  // The shell starts listening for touches in an effect, and React may run it a moment after the
+  // page is drawn. A touch fired before that reaches nobody, which failed this file about one run
+  // in fifteen (ticket 25); so wait until it listens.
+  await waitFor(() => {
+    expect(listens).toHaveBeenCalledWith("touchstart", expect.any(Function), expect.anything());
+  });
   Object.defineProperty(menu(), "offsetWidth", { configurable: true, value: MENU_WIDTH });
   // A swipe is one burst of events by their times (Date.now in jsdom). Freeze the date, so a slow
   // machine can't split one swipe into two; timers stay real.
@@ -204,70 +207,34 @@ describe("swiping the slide-out menu on phones and tablets", () => {
     wheel(screen.getByRole("main"), { deltaX: 40 }, 16);
 
     expect(event.defaultPrevented).toBe(false);
-    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBeNull();
+    expect(menuButton()).toHaveAttribute("aria-expanded", "false");
   });
 });
 
-describe("swiping the sidebar with two fingers on a laptop touchpad", () => {
-  it("collapses on a swipe to the left and opens on a later one to the right, remembered", async () => {
+describe("a two-finger touchpad swipe on a computer (UI revamp, ticket 05)", () => {
+  it("is left to the browser: the side menu has nothing to collapse", async () => {
     await renderShell({ isNarrow: false });
     const main = screen.getByRole("main");
 
     const first = wheel(main, { deltaX: 30 }, 1000);
     wheel(main, { deltaX: 30 }, 1016);
 
-    expect(first.defaultPrevented).toBe(true);
-    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBe("true");
-    expect(screen.getByRole("button", { name: "Expand the menu" })).toBeInTheDocument();
-
-    wheel(main, { deltaX: -30 }, 2000);
-    wheel(main, { deltaX: -30 }, 2016);
-
-    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBe("false");
-    expect(screen.getByRole("button", { name: "Collapse the menu" })).toBeInTheDocument();
-  });
-
-  it("switches once per gesture: reversing in the same gesture does nothing", async () => {
-    await renderShell({ isNarrow: false });
-    const main = screen.getByRole("main");
-
-    for (const [deltaX, at] of [
-      [30, 0],
-      [30, 16],
-      [-40, 32],
-      [-40, 48],
-      [-40, 64],
-    ] as const) {
-      wheel(main, { deltaX }, at);
-    }
-
-    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBe("true");
-  });
-
-  it("never moves on a mouse wheel", async () => {
-    await renderShell({ isNarrow: false });
-    const main = screen.getByRole("main");
-
-    const down = wheel(main, { deltaY: 100 }, 0);
-    wheel(main, { deltaX: 100, shiftKey: true }, 400);
-    wheel(main, { deltaX: 100, shiftKey: true }, 450);
-
-    expect(down.defaultPrevented).toBe(false);
+    expect(first.defaultPrevented).toBe(false);
+    expect(screen.queryByRole("button", { name: "Expand the menu" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Collapse the menu" })).not.toBeInTheDocument();
     expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBeNull();
   });
+});
 
-  it("leaves a sideways scroller (a wide table) to scroll", async () => {
-    await renderShell({ isNarrow: false });
-    const table = document.createElement("div");
-    table.style.overflowX = "auto";
-    Object.defineProperty(table, "scrollWidth", { value: 1200 });
-    Object.defineProperty(table, "clientWidth", { value: 600 });
-    screen.getByRole("main").append(table);
+describe("the browser's own sideways swipe (UI revamp, ticket 19)", () => {
+  const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
-    const event = wheel(table, { deltaX: 30 }, 0);
-    wheel(table, { deltaX: 30 }, 16);
+  it("is stopped on phones and tablets only, so a computer keeps back and forward", () => {
+    const rules = [...css.matchAll(/overscroll-behavior-x: none/g)];
+    expect(rules).toHaveLength(1);
 
-    expect(event.defaultPrevented).toBe(false);
-    expect(window.localStorage.getItem("crm.sidebar-collapsed")).toBeNull();
+    const before = css.slice(0, rules[0]?.index);
+    const media = before.slice(before.lastIndexOf("@media"));
+    expect(media).toMatch(/^@media \(width < 64\.0625rem\) \{\s*html \{\s*$/);
   });
 });

@@ -13,6 +13,21 @@ import { TaskCountContext } from "./taskCount";
 
 const pathname = vi.hoisted(() => ({ current: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
+// A tap only marks the tab here; the page itself never changes in these tests.
+vi.mock("next/link", () => ({
+  default: ({
+    onClick,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement> & { href: string }) => (
+    <a
+      {...props}
+      onClick={(event) => {
+        onClick?.(event);
+        event.preventDefault();
+      }}
+    />
+  ),
+}));
 
 function doNothing(): void {
   return undefined;
@@ -91,6 +106,32 @@ describe("TabBar", () => {
     );
     expect(within(bar()).getByRole("link", { name: "Home" })).not.toHaveAttribute("aria-current");
     expect(menuButton()).not.toHaveAttribute("data-current");
+  });
+
+  it("moves the pill to a tapped tab at once, before the page has changed (owner)", async () => {
+    const user = userEvent.setup();
+    showBar();
+    const tasks = within(bar()).getByRole("link", { name: "Tasks" });
+
+    await user.click(tasks);
+
+    expect(tasks).toHaveAttribute("data-current");
+    expect(within(bar()).getByRole("link", { name: "Home" })).not.toHaveAttribute("data-current");
+    // Screen readers still hear the page that is open until the next one has come.
+    expect(within(bar()).getByRole("link", { name: "Home" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("slides only the pill: it is a layer of its own behind the icon (owner)", () => {
+    showBar();
+
+    const markers = bar().querySelectorAll("[data-marker]");
+    expect(markers).toHaveLength(1);
+    const pill = markers[0];
+    expect(pill).toHaveClass("bg-tint", "absolute", "inset-0");
+    expect(pill?.querySelector("svg")).toBeNull();
   });
 
   it("shows Menu as current on a page that isn't in the bar", () => {

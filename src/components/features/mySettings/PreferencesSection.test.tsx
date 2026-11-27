@@ -7,7 +7,6 @@ import { SetPageSwipeContext } from "@/components/features/shell/pageSwipe";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 
@@ -20,7 +19,6 @@ const TEACHER: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 const PATH = "/api/me/";
 const ME = {
@@ -74,7 +72,7 @@ describe("Settings → Preferences: Swipe between pages, each person's own (aske
     expect(within(section).getByText(/an ordinary scroll never changes the page/)).toBeVisible();
     expect(within(section).getByText("Only for you, on every device you use.")).toBeVisible();
     const help = within(section).getByText(/an ordinary scroll never changes the page/);
-    expect(help.closest(".rounded-panel")).toContainElement(
+    expect(help.closest("[data-panel]")).toContainElement(
       within(section).getByRole("switch", { name: "Swipe between pages" }),
     );
     expect(help).toHaveClass("text-small");

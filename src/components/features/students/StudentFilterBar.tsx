@@ -1,10 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
-
-import { FilterBar, MoreFiltersButton } from "@/components/ui/FilterBar";
-import { FilterSelect } from "@/components/ui/FilterSelect";
+import { FilterBar, type ListFilter } from "@/components/ui/FilterBar";
 import { SearchBox } from "@/components/ui/SearchBox";
+import { EXPORT_TEXT } from "@/constants/exports";
 import { LABELS } from "@/constants/messages";
 import { PRIORITIES, PRIORITY_LABELS } from "@/constants/priority";
 import { Stage } from "@/constants/stages";
@@ -43,22 +41,79 @@ type StudentFilterBarProps = {
   counsellors: readonly CounsellorChoice[];
   /** Admins and Counsellors can be assigned Students, so "Assigned to me" means something. */
   canBeAssigned: boolean;
+  /** How many Students the list shows now ("3 Students"), for the phone's filter sheet. */
+  resultText?: string | undefined;
 };
 
 /**
  * Search, Stage, Priority and counsellor, with "How they found us", "Wants to study in" and "Target level"
- * under More filters.
+ * under More filters. The search counts as a filter that is set, as on Visas (UI revamp ticket 25).
  */
 export function StudentFilterBar(props: StudentFilterBarProps) {
   const { filters, onChange } = props;
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
-  // Closes on a press outside the filters or Esc; the button then counts what is set there.
-  const closeMore = useCallback(() => {
-    setIsMoreOpen(false);
-  }, []);
-  const moreSet = [filters.source, filters.country, filters.targetLevel].filter(
-    (value) => value !== "",
-  ).length;
+  const listFilters: ListFilter[] = [
+    {
+      id: "stage",
+      label: LABELS.stage,
+      value: filters.stage,
+      options: [{ value: "", label: LABELS.allStages }, ...STAGE_OPTIONS],
+      onChange: (stage) => {
+        onChange({ stage: toStage(stage) });
+      },
+    },
+    {
+      id: "priority",
+      label: LABELS.priority,
+      value: filters.priority,
+      options: PRIORITY_OPTIONS,
+      onChange: (priority) => {
+        onChange({ priority: priorityFrom(priority) });
+      },
+    },
+    {
+      id: "counsellor",
+      label: LABELS.counsellor,
+      value: filters.counsellor,
+      options: counsellorFilterOptions(
+        props.counsellors,
+        props.canBeAssigned,
+        COUNSELLOR_FILTER_LABELS,
+      ),
+      onChange: (counsellor) => {
+        onChange({ counsellor });
+      },
+    },
+    {
+      id: "source",
+      label: LABELS.howTheyFoundUs,
+      value: filters.source,
+      options: [{ value: "", label: LABELS.anyWay }, ...SOURCE_OPTIONS],
+      onChange: (source) => {
+        onChange({ source: toSource(source) });
+      },
+      isMore: true,
+    },
+    {
+      id: "country",
+      label: LABELS.wantsToStudyIn,
+      value: filters.country,
+      options: [{ value: "", label: PROFILE_TEXT.anyCountry }, ...COUNTRY_OPTIONS],
+      onChange: (country) => {
+        onChange({ country: toCountry(country) });
+      },
+      isMore: true,
+    },
+    {
+      id: "targetLevel",
+      label: PROFILE_TEXT.targetLevel,
+      value: filters.targetLevel,
+      options: [{ value: "", label: PROFILE_TEXT.anyLevel }, ...TARGET_LEVEL_OPTIONS],
+      onChange: (level) => {
+        onChange({ targetLevel: toTargetLevel(level) });
+      },
+      isMore: true,
+    },
+  ];
 
   return (
     <FilterBar
@@ -71,83 +126,16 @@ export function StudentFilterBar(props: StudentFilterBarProps) {
           onChange={props.onSearch}
         />
       }
-      more={isMoreOpen ? <MoreFilters {...props} /> : undefined}
-      onMoreClose={closeMore}
-    >
-      <FilterSelect
-        label={LABELS.stage}
-        value={filters.stage}
-        options={[{ value: "", label: LABELS.allStages }, ...STAGE_OPTIONS]}
-        onChange={(stage) => {
-          onChange({ stage: toStage(stage) });
-        }}
-      />
-      <FilterSelect
-        label={LABELS.priority}
-        value={filters.priority}
-        options={PRIORITY_OPTIONS}
-        onChange={(priority) => {
-          onChange({ priority: priorityFrom(priority) });
-        }}
-      />
-      <FilterSelect
-        label={LABELS.counsellor}
-        value={filters.counsellor}
-        options={counsellorFilterOptions(
-          props.counsellors,
-          props.canBeAssigned,
-          COUNSELLOR_FILTER_LABELS,
-        )}
-        onChange={(counsellor) => {
-          onChange({ counsellor });
-        }}
-      />
-      {!isMoreOpen && (
-        <MoreFiltersButton
-          setCount={moreSet}
-          onClick={() => {
-            setIsMoreOpen(true);
-          }}
-        >
-          {LABELS.moreFilters}
-        </MoreFiltersButton>
-      )}
-    </FilterBar>
-  );
-}
-
-/** "How they found us", "Wants to study in" and "Target level", once More filters is open. */
-function MoreFilters({ filters, onChange }: StudentFilterBarProps) {
-  return (
-    <>
-      <FilterSelect
-        label={LABELS.howTheyFoundUs}
-        isLabelShown
-        value={filters.source}
-        options={[{ value: "", label: LABELS.anyWay }, ...SOURCE_OPTIONS]}
-        onChange={(source) => {
-          onChange({ source: toSource(source) });
-        }}
-      />
-      <FilterSelect
-        label={LABELS.wantsToStudyIn}
-        isLabelShown
-        value={filters.country}
-        options={[{ value: "", label: PROFILE_TEXT.anyCountry }, ...COUNTRY_OPTIONS]}
-        onChange={(country) => {
-          onChange({ country: toCountry(country) });
-        }}
-      />
-      <FilterSelect
-        label={PROFILE_TEXT.targetLevel}
-        isLabelShown
-        value={filters.targetLevel}
-        options={[{ value: "", label: PROFILE_TEXT.anyLevel }, ...TARGET_LEVEL_OPTIONS]}
-        onChange={(level) => {
-          onChange({ targetLevel: toTargetLevel(level) });
-        }}
-      />
-    </>
+      searchFilter={{
+        label: EXPORT_TEXT.search,
+        value: props.search,
+        onClear: () => {
+          props.onSearch("");
+        },
+      }}
+      filters={listFilters}
+      resultText={props.resultText}
+    />
   );
 }
 

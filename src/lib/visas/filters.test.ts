@@ -12,6 +12,7 @@ describe("defaultVisaFilters", () => {
 
   it.each([Role.Admin, Role.FrontDesk])("starts %s on everyone", (role) => {
     expect(defaultVisaFilters(role)).toEqual({
+      search: "",
       status: "",
       country: "",
       intake: "",
@@ -29,6 +30,7 @@ describe("visaListQuery", () => {
 
   it("names every filter that is set, the order and the page, as the API does", () => {
     const filters: VisaFilters = {
+      search: "  Sita K ",
       status: "applied",
       country: "canada",
       intake: "2027-09",
@@ -38,7 +40,7 @@ describe("visaListQuery", () => {
     };
 
     expect(visaListQuery(filters, 2, TODAY)).toBe(
-      "?status=applied&country=canada&intake=2027-09&counsellor=5&sort=-appointment&page=2",
+      "?q=Sita+K&status=applied&country=canada&intake=2027-09&counsellor=5&sort=-appointment&page=2",
     );
   });
 
@@ -49,6 +51,10 @@ describe("visaListQuery", () => {
   ] as const)("turns the %s appointment choice into the API's dates", (appointment, query) => {
     expect(visaListQuery({ ...EVERYONE, appointment }, 1, TODAY)).toBe(query);
   });
+
+  it("leaves out a search of only spaces (ticket 24)", () => {
+    expect(visaListQuery({ ...EVERYONE, search: "   " }, 1, TODAY)).toBe("");
+  });
 });
 
 describe("hasAnyVisaFilter", () => {
@@ -56,6 +62,8 @@ describe("hasAnyVisaFilter", () => {
     expect(hasAnyVisaFilter({ ...EVERYONE, sort: "appointment" })).toBe(false);
     expect(hasAnyVisaFilter({ ...EVERYONE, appointment: "none" })).toBe(true);
     expect(hasAnyVisaFilter({ ...EVERYONE, country: "canada" })).toBe(true);
+    expect(hasAnyVisaFilter({ ...EVERYONE, search: "sita" })).toBe(true);
+    expect(hasAnyVisaFilter({ ...EVERYONE, search: "  " })).toBe(false);
     expect(hasAnyVisaFilter(defaultVisaFilters(Role.Counsellor))).toBe(true);
   });
 });

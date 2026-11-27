@@ -25,7 +25,7 @@ import { BackLink } from "./BackLink";
 export const HEAD = "text-small text-ink-2 bg-fill px-6 py-3 text-left font-semibold";
 export const CELL = "px-6 py-4 align-middle";
 export const NUMBER = "text-right whitespace-nowrap tabular-nums";
-const FOOT = "border-rule border-t px-6 py-4 font-semibold max-phone:hidden";
+const FOOT = "border-rule border-t px-gutter py-4 font-semibold max-phone:hidden";
 
 /**
  * Fees by type (spec 79-81, 84, 93): To collect, Received and Remaining for all time, then one row

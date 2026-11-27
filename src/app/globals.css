@@ -3,45 +3,47 @@
 /*
  * Design tokens (docs/design-system.md). Components use these through Tailwind classes only.
  *
- * Themed colours come from buildThemeTokens() in src/lib/theme. The values here are the default
- * Theme ("Stone and emerald") so the first paint looks right; the shell then writes the
- * Consultancy's own tokens onto <html>. A test keeps these defaults equal to the function's output.
+ * Themed colours come from buildThemeTokens() in src/lib/theme: the Porcelain theme (owner,
+ * 2026-11-27, in place of Ivory), the same for every office. They are written here too, so the first paint looks right; a test
+ * keeps these values equal to the function's output.
  */
 :root {
   /* the product logo's own red, for the loading animation (list tidy-ups 06); brighter (24) */
   --mark: #c8102e;
-  /* themed: default, light */
+  /* themed: Porcelain, light */
   --paper: #ffffff;
-  --canvas: #f1f2ef;
-  --fill: #ebece9;
-  --fill-2: #e0e1de;
-  --rule: #dfe0dd;
-  --rule-2: #c6c6c4;
-  --ink: #181818;
-  --ink-2: #4d4d4c;
-  --ink-3: #686867;
-  --accent: #047857;
-  --accent-hover: #036247;
+  --canvas: #f3f6f9;
+  --fill: #eaeff4;
+  --fill-2: #dde4ec;
+  --rule: #dcdedf;
+  --rule-2: #c2c5c8;
+  --ink: #16202b;
+  --ink-2: #4d5b6a;
+  --ink-3: #64707f;
+  --accent: #6e1a26;
+  --accent-hover: #57141e;
   --accent-ink: #ffffff;
-  --tint: #e6f2ee;
-  --side-bg: #ffffff;
-  --side-ink: #181818;
-  --side-muted: #4d4d4c;
-  --side-hover: #ebece9;
-  --side-active: #e6f2ee;
-  --side-active-ink: #047857;
-  --side-rule: #dfe0dd;
+  --tint: #f3e6e3;
+  --side-bg: #f3f6f9;
+  --side-ink: #16202b;
+  --side-muted: #4d5b6a;
+  --side-hover: #eaeff4;
+  --side-active: #dde4ec;
+  --side-active-ink: #16202b;
+  --side-rule: #f3f6f9;
 
   /* fixed: status colours never change with the Theme */
-  --good: #1a7f4b;
-  --good-tint: #e7f5ee;
-  --warn: #a15c00;
-  --warn-tint: #fdf3e2;
-  --bad: #c0352b;
-  --bad-tint: #fdecea;
-  --note: #fffaeb;
-  --note-rule: #efe1b4;
+  --good: #3f6b3a;
+  --good-tint: #e8efe1;
+  --warn: #94570f;
+  --warn-tint: #f5e9d4;
+  --bad: #9b2226;
+  --bad-tint: #f6e1de;
+  --note: #fbf3df;
+  --note-rule: #e9d9ae;
   --on-status: #ffffff;
+  /* a small mark of value (Porcelain), such as beside a high-priority Student */
+  --gold: #55708d;
 
   /* fixed in light and dark: a QR code is always black on white, so every app can scan it */
   --qr-dark: #000000;
@@ -52,34 +54,128 @@
   --c2: #eb6834;
   --c3: #1baf7a;
 
-  --scrim: rgb(15 20 28 / 0.55);
-  --raise: 0 1px 2px rgb(23 32 43 / 0.05);
-  --lift: 0 18px 48px rgb(23 32 43 / 0.18), 0 2px 8px rgb(23 32 43 / 0.06);
+  /*
+   * Sheets (ticket 21): a section's content is a white sheet on the page, with a thin border and
+   * a faint shadow. Column heads sit on a faint band; a row that opens something shows a soft
+   * fill under the pointer.
+   */
+  --sheet-rule: var(--rule);
+  --band: color-mix(in srgb, var(--fill) 55%, var(--paper));
+  --row-hover: color-mix(in srgb, var(--fill) 60%, var(--paper));
+  /* a card on the Students board: white on its column; in dark a step lighter than the column */
+  --board-card: var(--paper);
+  /*
+   * The thread (ticket 21): a Student's journey is five beads, Lead to Visa, each a shade deeper,
+   * light green to dark green (owner, 2026-11-27; they were shades of the brand colour).
+   */
+  --bead-1: color-mix(in srgb, var(--good) 30%, var(--paper));
+  --bead-2: color-mix(in srgb, var(--good) 47.5%, var(--paper));
+  --bead-3: color-mix(in srgb, var(--good) 65%, var(--paper));
+  --bead-4: color-mix(in srgb, var(--good) 82.5%, var(--paper));
+  --bead-5: var(--good);
+  /* the tick on a done step of the middle shade: dark on it, in light and in dark */
+  --bead-3-ink: var(--ink);
+  /* a bead still to come: its hollow ring and the string to the next */
+  --bead-string: var(--rule-2);
+  --bead-ring: var(--rule-2);
+
+  /* a sheet is raised a hair off the page; popups lift off it */
+  --scrim: rgb(28 16 12 / 0.42);
+  --raise: 0 1px 2px rgb(22 32 43 / 0.05);
+  --lift: 0 1px 2px rgb(22 32 43 / 0.06), 0 16px 40px rgb(22 32 43 / 0.14);
   /* swiping between pages (issue 90): the gap a pull opens, and the page's moving edge */
   --gap: color-mix(in srgb, var(--ink) 9%, var(--canvas));
   --edge-top: 0 -10px 24px -12px rgb(0 0 0 / 0.25), 0 -1px 0 var(--rule-2);
   --edge-bottom: 0 10px 24px -12px rgb(0 0 0 / 0.25), 0 1px 0 var(--rule-2);
 
   /*
-   * Sizes that change on phones, 640 px and below (design system: Phones). Above 640 they keep
-   * the laptop and tablet values; at 640 and below (the media block after this one) the type
-   * scale, page margin, top bar and cards follow iOS / Material: page title 26, section 19,
-   * secondary 14, caption 13, 16 margins, a 60 top bar and flat cards with 16 corners. The query
-   * matches Tailwind's `max-phone` variant.
+   * Movement (ticket 22): the one place for how long things take and how they ease. One curve for
+   * what arrives and one for what leaves; lib/motion/timing.ts holds the same values for code, and
+   * a test keeps the two equal. Nothing else in this file or in a component writes a time.
+   */
+  --curve-arrive: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --curve-leave: cubic-bezier(0.4, 0, 1, 1);
+  --move-press: 100ms;
+  --move-leave: 140ms;
+  --move-quick: 150ms;
+  --move-swap: 180ms;
+  --move-sink: 200ms;
+  --move-open: 220ms;
+  --move-glide: 240ms;
+  --move-marker: 250ms;
+  --move-sheet: 280ms;
+  --move-page: 300ms;
+  --move-cross: 320ms;
+  --move-ring: 1100ms;
+  --move-wash: 1200ms;
+  /* a page's blocks come in this far apart, and its rows this far apart */
+  --move-step-block: 40ms;
+  --move-step-row: 18ms;
+  /* the top bar lifts off the page once the page is scrolled */
+  --bar-lift: 0 1px 0 var(--rule), 0 12px 24px -20px rgb(22 32 43 / 0.45);
+
+  /*
+   * Sizes that change on phones, 640 px and below (design system: Type, and Phones). One type
+   * scale (ticket 21): 12, 13, 14, 15, 16, 18, 20, 24, 28 and 32, in weights 400, 500 and 600.
+   * Above 640: page text 16, names in lists 18, the line under them, chips and buttons 15, column
+   * heads and captions 14. At 640 and below (the media block after this one) a step smaller, so a
+   * screen holds more. The query matches Tailwind's `max-phone`.
    */
   --size-page-margin: 1.625rem;
   --size-topbar: 4.5rem;
   --size-panel-corner: 0.875rem;
-  --size-title-sm: 1.5rem;
-  --size-title-sm-line: 2rem;
-  --size-section-title: 1.25rem;
-  --size-section-title-line: 1.75rem;
+  --size-title: 1.75rem;
+  --size-title-line: 2.125rem;
+  --size-section-title: 1.125rem;
+  --size-section-title-line: 1.5rem;
+  --size-body: 1rem;
+  --size-body-line: 1.5rem;
+  --size-name: 1.125rem;
+  --size-name-line: 1.5rem;
   --size-secondary: 0.9375rem;
   --size-secondary-line: 1.375rem;
   --size-small: 0.875rem;
   --size-small-line: 1.25rem;
+  --size-head: 0.875rem;
+  --size-head-line: 1.25rem;
+  --size-button: 0.9375rem;
+  --size-button-sm: 0.9375rem;
+  --size-figure: 2rem;
+  --size-figure-line: 2.5rem;
+  /* Home: the count on a "Waiting for you" card, and at each Stage of the Pipeline (UI revamp 07) */
+  --size-todo-count: 1.5rem;
+  --size-todo-count-line: 1.875rem;
+  --size-stage-count: 2rem;
+  --size-stage-count-line: 2.5rem;
+  /* Configuration > Universities: the university's name above its courses */
+  --size-uni-name: 1.25rem;
+  --size-uni-name-line: 1.75rem;
+  /* the Email list: the Student's name is the biggest line of a row */
+  --size-email-name: 1.25rem;
+  --size-email-name-line: 1.625rem;
+  /* the sideways room inside a button, and a small one (phones have less) */
+  --size-button-pad: 0.75rem;
+  --size-button-pad-main: 1rem;
+  --size-button-pad-sm: 0.625rem;
+  /* a sheet's padding: rows and cells keep 18 from its sides (phones 14) */
+  --size-gutter: 1.125rem;
+  /* the page's content: 1240 at most, growing with a wide screen (the blocks after this one) */
+  --size-content: 77.5rem;
 
   color-scheme: light;
+}
+
+/* Wide screens: the page grows in steps, so a big screen is not mostly empty. */
+@media (width >= 100rem) {
+  :root {
+    --size-content: 87.5rem;
+  }
+}
+
+@media (width >= 137.5rem) {
+  :root {
+    --size-content: 97.5rem;
+  }
 }
 
 /* Phones, 640 px and below: the sizes above take their phone values. */
@@ -87,59 +183,88 @@
   :root {
     --size-page-margin: 1rem;
     --size-topbar: 3.75rem;
-    --size-panel-corner: 1rem;
-    --size-title-sm: 1.625rem;
-    --size-title-sm-line: 2rem;
-    --size-section-title: 1.1875rem;
-    --size-section-title-line: 1.5rem;
+    --size-title: 1.5rem;
+    --size-title-line: 1.875rem;
+    --size-body: 0.9375rem;
+    --size-body-line: 1.375rem;
+    --size-name: 1rem;
+    --size-name-line: 1.375rem;
     --size-secondary: 0.875rem;
     --size-secondary-line: 1.25rem;
     --size-small: 0.8125rem;
     --size-small-line: 1.125rem;
-    /* cards are flat on phones: a hairline border and no shadow */
-    --raise: none;
+    --size-head: 0.8125rem;
+    --size-head-line: 1.125rem;
+    --size-button-sm: 0.875rem;
+    --size-figure: 1.5rem;
+    --size-figure-line: 1.875rem;
+    --size-todo-count: 1.25rem;
+    --size-todo-count-line: 1.625rem;
+    --size-stage-count: 1.25rem;
+    --size-stage-count-line: 1.625rem;
+    --size-uni-name: 1rem;
+    --size-uni-name-line: 1.375rem;
+    --size-email-name: 1.125rem;
+    --size-email-name-line: 1.5rem;
+    --size-button-pad: 0.875rem;
+    --size-button-pad-main: 0.875rem;
+    --size-button-pad-sm: 0.625rem;
+    --size-gutter: 0.875rem;
   }
 }
 
 /* Dark by the person's choice. Same values as above. */
 :root[data-theme="dark"] {
   --mark: #ff5263;
-  --paper: #2b2b2d;
-  --canvas: #1f1f21;
-  --fill: #323234;
-  --fill-2: #3a3a3c;
-  --rule: #3c3c3e;
-  --rule-2: #4c4c4d;
-  --ink: #ededed;
-  --ink-2: #bcbcbc;
-  --ink-3: #9a9a9b;
-  --accent: #66ad99;
-  --accent-hover: #85bdad;
-  --accent-ink: #0c0c0d;
-  --tint: #34403e;
-  --side-bg: #131314;
-  --side-ink: #ededed;
-  --side-muted: #a5a5a6;
-  --side-hover: #1f1f20;
-  --side-active: #2b2b2c;
-  --side-active-ink: #66ad99;
-  --side-rule: #242424;
+  --paper: #141a20;
+  --canvas: #0d1115;
+  --fill: #1a2128;
+  --fill-2: #212a32;
+  --rule: #373d44;
+  --rule-2: #4c5258;
+  --ink: #e3eaf1;
+  --ink-2: #9aa9b8;
+  --ink-3: #7a8797;
+  --accent: #d98a8f;
+  --accent-hover: #e7a2a6;
+  --accent-ink: #1d1012;
+  --tint: #3a1d1f;
+  --side-bg: #0d1115;
+  --side-ink: #e3eaf1;
+  --side-muted: #9aa9b8;
+  --side-hover: #1a2128;
+  --side-active: #212a32;
+  --side-active-ink: #e3eaf1;
+  --side-rule: #0d1115;
 
-  --good: #63c38e;
-  --good-tint: #16231a;
-  --warn: #e2a64e;
-  --warn-tint: #2a2214;
-  --bad: #f08a80;
-  --bad-tint: #321b19;
-  --note: #23211a;
-  --note-rule: #3a3626;
-  --on-status: #0c0c0d;
+  --good: #8fbf85;
+  --good-tint: #1c2619;
+  --warn: #e0a85c;
+  --warn-tint: #2d2213;
+  --bad: #e88a85;
+  --bad-tint: #33191a;
+  --note: #241e14;
+  --note-rule: #3d3322;
+  --on-status: #1d1012;
+  --gold: #9fb6cf;
   --c1: #3987e5;
   --c2: #d95926;
   --c3: #199e70;
+  /* dark: a sheet has no shadow and a quieter border; every bead starts brighter */
+  --sheet-rule: color-mix(in srgb, var(--ink) 13%, var(--paper));
+  --board-card: var(--fill-2);
+  --bead-1: color-mix(in srgb, var(--good) 44%, var(--paper));
+  --bead-2: color-mix(in srgb, var(--good) 58%, var(--paper));
+  --bead-3: color-mix(in srgb, var(--good) 72%, var(--paper));
+  --bead-4: color-mix(in srgb, var(--good) 86%, var(--paper));
+  --bead-5: var(--good);
+  --bead-3-ink: var(--accent-ink);
+  --bead-string: color-mix(in srgb, var(--ink) 22%, var(--paper));
+  --bead-ring: color-mix(in srgb, var(--ink) 30%, var(--paper));
   --scrim: rgb(0 0 0 / 0.6);
   --raise: none;
-  --lift: 0 18px 48px rgb(0 0 0 / 0.6);
+  --lift: 0 1px 2px rgb(0 0 0 / 0.4), 0 16px 40px rgb(0 0 0 / 0.55);
+  --bar-lift: 0 1px 0 var(--rule), 0 12px 24px -20px rgb(0 0 0 / 0.7);
   --gap: color-mix(in srgb, black 35%, var(--canvas));
   --edge-top: 0 -10px 24px -12px rgb(0 0 0 / 0.6), 0 -1px 0 var(--rule-2);
   --edge-bottom: 0 10px 24px -12px rgb(0 0 0 / 0.6), 0 1px 0 var(--rule-2);
@@ -159,6 +284,8 @@
   --color-fill-2: var(--fill-2);
   --color-rule: var(--rule);
   --color-rule-2: var(--rule-2);
+  --color-sheet-rule: var(--sheet-rule);
+  --color-board-card: var(--board-card);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-ink-3: var(--ink-3);
@@ -182,6 +309,13 @@
   --color-bad-tint: var(--bad-tint);
   --color-note: var(--note);
   --color-note-rule: var(--note-rule);
+  --color-gold: var(--gold);
+  --color-bead-1: var(--bead-1);
+  --color-bead-2: var(--bead-2);
+  --color-bead-3: var(--bead-3);
+  --color-bead-4: var(--bead-4);
+  --color-bead-5: var(--bead-5);
+  --color-bead-3-ink: var(--bead-3-ink);
   --color-on-status: var(--on-status);
   --color-qr-dark: var(--qr-dark);
   --color-qr-light: var(--qr-light);
@@ -191,37 +325,75 @@
   --color-scrim: var(--scrim);
   --color-gap: var(--gap);
 
-  --font-sans: var(--font-public-sans), "Public Sans", "Segoe UI", system-ui, sans-serif;
+  --font-sans: var(--font-geist), "Geist", "Segoe UI", system-ui, sans-serif;
 
-  /* type: size / line height / weight */
+  /* type: size / line height / weight (computers, then phones through the --size-* values) */
   --text-*: initial;
-  --text-page-title: 1.75rem;
-  --text-page-title--line-height: 2.25rem;
-  --text-page-title--font-weight: 700;
-  --text-page-title-sm: var(--size-title-sm);
-  --text-page-title-sm--line-height: var(--size-title-sm-line);
-  --text-page-title-sm--font-weight: 700;
+  --text-page-title: var(--size-title);
+  --text-page-title--line-height: var(--size-title-line);
+  --text-page-title--font-weight: 500;
+  --text-page-title--letter-spacing: -0.025em;
+  --text-page-title-sm: var(--size-title);
+  --text-page-title-sm--line-height: var(--size-title-line);
+  --text-page-title-sm--font-weight: 500;
+  --text-page-title-sm--letter-spacing: -0.025em;
   --text-section-title: var(--size-section-title);
   --text-section-title--line-height: var(--size-section-title-line);
   --text-section-title--font-weight: 600;
+  --text-section-title--letter-spacing: -0.01em;
   --text-card-title: 1.125rem;
-  --text-card-title--line-height: 1.625rem;
+  --text-card-title--line-height: 1.5rem;
   --text-card-title--font-weight: 600;
-  --text-figure: 2.25rem;
-  --text-figure--line-height: 2.75rem;
-  --text-figure--font-weight: 700;
+  /* a dialog's title, in the title face */
+  --text-dialog-title: 1.5rem;
+  --text-dialog-title--line-height: 1.875rem;
+  --text-dialog-title--font-weight: 500;
+  --text-dialog-title--letter-spacing: -0.025em;
+  --text-figure: var(--size-figure);
+  --text-figure--line-height: var(--size-figure-line);
+  --text-figure--font-weight: 500;
+  --text-figure--letter-spacing: -0.025em;
   /* a number tile's figure on a phone: shrinks with its tile, so "NPR 1,80,000" never overflows */
-  --text-figure-phone: min(1.875rem, 13cqi);
-  --text-figure-phone--line-height: 1.25;
-  --text-figure-phone--font-weight: 700;
-  --text-body: 1rem;
-  --text-body--line-height: 1.5rem;
+  --text-figure-phone: min(1.5rem, 13cqi);
+  --text-figure-phone--line-height: 1.875rem;
+  --text-figure-phone--font-weight: 500;
+  --text-todo-count: var(--size-todo-count);
+  --text-todo-count--line-height: var(--size-todo-count-line);
+  --text-todo-count--font-weight: 500;
+  --text-todo-count--letter-spacing: -0.025em;
+  --text-body: var(--size-body);
+  --text-body--line-height: var(--size-body-line);
+  /* a name in a list (a Student, a task): one step above the page text */
+  --text-name: var(--size-name);
+  --text-name--line-height: var(--size-name-line);
   --text-secondary: var(--size-secondary);
   --text-secondary--line-height: var(--size-secondary-line);
   --text-small: var(--size-small);
   --text-small--line-height: var(--size-small-line);
+  /* a table's column heads */
+  --text-head: var(--size-head);
+  --text-head--line-height: var(--size-head-line);
+  --text-button: var(--size-button);
+  --text-button--line-height: 1.375rem;
+  --text-button-sm: var(--size-button-sm);
+  --text-button-sm--line-height: 1.25rem;
+  --text-email-name: var(--size-email-name);
+  --text-email-name--line-height: var(--size-email-name-line);
+  --text-email-name--font-weight: 600;
+  --text-uni-name: var(--size-uni-name);
+  --text-uni-name--line-height: var(--size-uni-name-line);
+  --text-uni-name--font-weight: 600;
+  /* boxes you type into stay 16 on every width, so iPhones never zoom in */
+  --text-input: 1rem;
+  --text-input--line-height: 1.5rem;
+  /* a page's label under its icon in the side menu */
+  --text-rail: 0.8125rem;
+  --text-rail--line-height: 1rem;
   --text-tiny: 0.75rem;
   --text-tiny--line-height: 1.25rem;
+  /* a day of the month calendar (the prototype's 13; computers and tablets only) */
+  --text-cal: 0.8125rem;
+  --text-cal--line-height: 1.125rem;
 
   /* sizes: spacing classes keep Tailwind's 4px steps (p-4 is 16); these are the named ones */
   --spacing-control: 2.75rem;
@@ -229,6 +401,10 @@
   --spacing-control-lg: 3.25rem;
   --spacing-side-item: 3rem;
   --spacing-row: 3.5rem;
+  --spacing-gutter: var(--size-gutter);
+  --spacing-button: var(--size-button-pad);
+  --spacing-button-main: var(--size-button-pad-main);
+  --spacing-button-sm: var(--size-button-pad-sm);
   --spacing-topbar: var(--size-topbar);
   /* phones: fields are 48 tall (16 text, so phones never zoom in), main page actions 48 */
   --spacing-field-phone: 3rem;
@@ -244,17 +420,22 @@
   /* the email composer's height above 640 px: the window less a margin, so it never scrolls */
   --spacing-composer: calc(100dvh - 6rem);
   --spacing-grab-h: 0.3125rem;
-  --spacing-sidebar: 18.75rem;
   --spacing-drawer: 20rem;
   /* 26 on each side of the page content beside the sidebar and on tablets; 16 on phones */
   --spacing-page: var(--size-page-margin);
-  --spacing-rail: 5rem;
+  /* the side menu above 1024: a strip 112 wide, each page 66 tall with its label under its icon,
+     and the office's top bar, 60 on every width (UI revamp, ticket 05) */
+  --spacing-rail: 7rem;
+  --spacing-rail-item: 4.125rem;
+  --spacing-office-bar: 3.75rem;
   --spacing-mark: 2.5rem;
   --spacing-mark-lg: 4.5rem;
   --spacing-icon: 1.25rem;
   --spacing-icon-sm: 1rem;
   --spacing-progress: 0.75rem;
   --spacing-dot: 0.5rem;
+  /* a status chip's dot (Porcelain: a dot and a word) */
+  --spacing-chip-dot: 0.4375rem;
   --spacing-active-line: 0.25rem;
   --spacing-chart: 40rem;
   --spacing-popover: 26.25rem;
@@ -266,12 +447,14 @@
   --spacing-settings-label: 20rem;
   /* a saved logo's tile in Platform → Settings (ticket 07) */
   --spacing-logo-tile: 11.25rem;
+  /* A holiday's card is at least this wide; cards fill the row (UI revamp 17). */
+  --spacing-holiday-card: 17.5rem;
   /* The left menu of a person's own Settings (issue 38). */
   --spacing-settings-menu: 13.75rem;
   /* A two-step login QR code (issue 61): large enough for any phone camera to read. */
   --spacing-qr: 15rem;
   /* above 600 px the Stage journey keeps its steps readable and scrolls sideways below this */
-  --spacing-journey: 47.5rem;
+  --spacing-journey: 37.5rem;
   /* one round stop on the Stage journey */
   --spacing-stop: 1.375rem;
   /* the round "Received" stamp on a receipt */
@@ -279,18 +462,40 @@
   /* A day of the Clock-in month calendar (issue 56), and on phones. */
   --spacing-cal-day: 5.75rem;
   --spacing-cal-day-sm: 3.625rem;
-  /* the Inbox (issue 86): the conversation list's width, the panel's least height, how tall the
-     list and the open conversation grow before they scroll */
+  /* the month's name between the two arrows of the month stepper: wide enough for "September
+     2026", so the arrows don't move as the months change */
+  --spacing-month-name: 9.5rem;
+  /* the Inbox (issue 86; UI revamp 14): the conversation list's width, the small picture in a
+     list row and the unread dot. Its height is the window's (useFillWindow), not a token. */
   --spacing-conversations: 21.25rem;
-  --spacing-inbox: 32.5rem;
-  --spacing-conversations-list: 40rem;
-  --spacing-thread: 28.75rem;
-  --container-content: 67.5rem;
+  --spacing-avatar-sm: 2.125rem;
+  --spacing-unread-dot: 0.625rem;
+  /* Home (UI revamp 07): a "Waiting for you" card is at least this wide and this tall (a row of
+     the phone sheet is 60); its icon's round; the desk's right column; an empty part of it */
+  --spacing-todo: 15.625rem;
+  --spacing-todo-card: 4.25rem;
+  --spacing-todo-row: 3.75rem;
+  --spacing-todo-icon: 2.5rem;
+  --spacing-todo-icon-sm: 2.25rem;
+  --spacing-desk-side: 23.75rem;
+  /* a Student's page (UI revamp 11): the Note's own column from 1280, and the most it is tall
+     while pinned under the top bar (the screen less the bar, the gap under it and one above
+     the foot) */
+  --spacing-note-side: 21.25rem;
+  --spacing-note-room: calc(100dvh - 6.75rem);
+  --spacing-desk-empty: 10.5rem;
+  /* the Documents page (UI revamp 12): the least a row's name column is wide beside its pills */
+  --spacing-doc-name: 12.5rem;
+  /* the pill drawn inside a 44 tall button on phones (Assign on Home) */
+  --spacing-pill: 2rem;
+  --container-content: var(--size-content);
   /* the top bar's search box above 1024px, centred over the page content (issue 88) */
   --container-search: 32rem;
   /* the Intake month grid, one year at a time (issue 92) */
   --container-month-grid: 26.25rem;
   --container-login: 28.75rem;
+  /* a menu in a page's action row on a phone: the screen less the page's 16 margins */
+  --container-menu-phone: calc(100vw - 2rem);
   --container-dialog: 37.5rem;
   --container-dialog-wide: 52.5rem;
   /* the email composer (issue 04): near full screen, writing beside the preview */
@@ -303,24 +508,37 @@
 
   --radius-*: initial;
   --radius-chip: 0.375rem;
-  --radius-control: 0.625rem;
+  --radius-control: 0.5rem;
   --radius-panel: var(--size-panel-corner);
+  /* Home's clock card on phones (UI revamp 07) */
+  --radius-clock: 1rem;
   /* a bottom sheet's top corners on phones */
   --radius-sheet: 1.25rem;
-  --radius-dialog: 1.125rem;
+  --radius-dialog: 0.875rem;
+  --radius-menu: 0.75rem;
   --radius-pill: 999px;
 
   --shadow-*: initial;
   --shadow-raise: var(--raise);
+  /* a soft ring round the box being typed in */
+  --shadow-focus: 0 0 0 3px var(--tint);
   --shadow-lift: var(--lift);
   --shadow-edge-top: var(--edge-top);
   --shadow-edge-bottom: var(--edge-bottom);
+  --shadow-bar: var(--bar-lift);
+
+  /* the two curves of Movement (ticket 22): `ease-arrive` and `ease-leave` */
+  --ease-arrive: var(--curve-arrive);
+  --ease-leave: var(--curve-leave);
 
   /* 1024 and below is the slide-out menu; 640 and below is phone width (design system: Phones) */
   --breakpoint-*: initial;
   --breakpoint-phone: 40.0625rem;
   --breakpoint-tablet: 47.5625rem;
+  --breakpoint-mid: 56.25rem;
   --breakpoint-wide: 64.0625rem;
+  /* Home becomes a desk: the work on the left, what waits on the right (UI revamp 07) */
+  --breakpoint-desk: 80rem;
 }
 
 @layer base {
@@ -333,20 +551,38 @@
     background: var(--canvas);
     color: var(--ink);
     font-family: var(--font-sans);
-    font-size: 1rem;
+    font-size: var(--size-body);
     line-height: 1.5;
     font-variant-numeric: tabular-nums;
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Titles break into even lines (ticket 21). */
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+  }
+
+  /* Bold in the content no heavier than a task's title (600), owner 2026-11-25. */
+  b,
+  strong {
+    font-weight: 600;
+  }
+
   :focus-visible {
-    outline: 3px solid var(--accent);
+    outline: 2px solid var(--accent);
     outline-offset: 2px;
   }
 
-  /* The browser's own swipe back/forward is off inside the app (issue 89); Back still works. */
-  html {
-    overscroll-behavior-x: none;
+  /*
+   * Phones and tablets only (ticket 19): there a finger from the left edge opens the menu, so the
+   * browser's own sideways swipe is off. A computer keeps its touchpad swipe back and forward.
+   */
+  @media (width < 64.0625rem) {
+    html {
+      overscroll-behavior-x: none;
+    }
   }
 
   /*
@@ -382,6 +618,28 @@
     [data-print] [role="dialog"] * {
       background: transparent !important;
       color: black !important;
+    }
+  }
+
+  /*
+   * Touch and hover (ticket 22): colours ease, and a pressed button gives a little. Only where
+   * the device has not asked for less motion.
+   */
+  @media (prefers-reduced-motion: no-preference) {
+    a,
+    button,
+    summary,
+    input,
+    select,
+    textarea,
+    tbody tr,
+    [data-row] {
+      transition:
+        color var(--move-quick) ease,
+        background-color var(--move-quick) ease,
+        border-color var(--move-quick) ease,
+        box-shadow var(--move-quick) ease,
+        scale var(--move-press) var(--curve-arrive);
     }
   }
 
@@ -425,19 +683,19 @@
 }
 
 main[data-page-move="out-down"] {
-  animation: page-out-down 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: page-out-down var(--move-sink) var(--curve-leave) forwards;
 }
 
 main[data-page-move="out-up"] {
-  animation: page-out-up 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: page-out-up var(--move-sink) var(--curve-leave) forwards;
 }
 
 main[data-page-move="in-from-top"] {
-  animation: page-in-from-top 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: page-in-from-top var(--move-page) var(--curve-arrive);
 }
 
 main[data-page-move="in-from-bottom"] {
-  animation: page-in-from-bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: page-in-from-bottom var(--move-page) var(--curve-arrive);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -448,9 +706,19 @@ main[data-page-move="in-from-bottom"] {
 
 /*
  * Phones (design system: Phones). The tab bar keeps clear of a phone's rounded corners and home
- * bar; the page leaves room under its content for the tab bar; dialogs rise from the bottom as
- * sheets (none of it moves with reduce motion on).
+ * bar; the page leaves room under its content for the tab bar (how a sheet rises is under
+ * Movement).
  */
+/* The side menu's links fade out at its foot, where they scroll under the product's mark (ticket 05). */
+@utility menu-fade {
+  mask-image: linear-gradient(to bottom, black calc(100% - 1.75rem), transparent);
+}
+
+/* The foot of the side menu clears a phone's home bar. */
+@utility pb-menu-foot {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+}
+
 @utility tabbar-safe {
   padding: 0.25rem max(0.25rem, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px)
     max(0.25rem, env(safe-area-inset-left, 0px));
@@ -469,29 +737,472 @@ main[data-page-move="in-from-bottom"] {
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
 }
 
-@keyframes sheet-up {
+/*
+ * Movement (design system: Movement; UI revamp, ticket 22). Calm, for an app used all day: short,
+ * small, only `transform` and `opacity` move (and the wash on a changed row), one curve for what
+ * arrives and one for what leaves, no bounce and no spin. Movement says what happened: a page
+ * came, a popup opened, a row changed. Every time comes from the `--move-*` tokens.
+ *
+ * Nothing here plays because something was merely drawn again. Each rule waits for a mark the
+ * code sets when the thing really happened (`data-arrive` on the page, `data-move` on what opens
+ * or changes, `data-leaving` on the copy of what closes), so an action on the same page never
+ * replays a page's arrival (rule 8). All of it is inside "no-preference": with "reduce motion"
+ * on, everything switches at once.
+ */
+@keyframes move-rise {
   from {
-    translate: 0 2.5rem;
-    opacity: 0.4;
+    opacity: 0;
+    transform: translateY(0.375rem);
   }
 }
 
-@utility animate-sheet-up {
-  animation: sheet-up 0.22s ease-out;
+@keyframes move-row {
+  from {
+    opacity: 0;
+    transform: translateY(0.3125rem);
+  }
+}
 
-  @media (prefers-reduced-motion: reduce) {
+@keyframes move-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes move-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes move-wash {
+  from {
+    background-color: color-mix(in srgb, var(--tint) 60%, transparent);
+  }
+}
+
+@keyframes move-dialog {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.985);
+  }
+}
+
+@keyframes move-dialog-next {
+  from {
+    opacity: 0;
+    transform: scale(0.985);
+  }
+}
+
+@keyframes move-dialog-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.985);
+  }
+}
+
+@keyframes move-sheet {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes move-sheet-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes move-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-0.375rem) scale(0.96);
+  }
+}
+
+@keyframes move-pop-out {
+  to {
+    opacity: 0;
+    transform: translateY(-0.25rem) scale(0.97);
+  }
+}
+
+@keyframes move-toast {
+  from {
+    opacity: 0;
+    transform: translateY(0.625rem);
+  }
+}
+
+@keyframes move-toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(0.625rem);
+  }
+}
+
+/* What is on its way out: a copy that fades while the page under it is already usable. */
+#leaving {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  pointer-events: none;
+}
+
+#leaving * {
+  pointer-events: none !important;
+}
+
+/* A marker (the underline of a tab, the pill of a switch) grows from its left as it slides. */
+[data-marker] {
+  transform-origin: left center;
+}
+
+/* The ring round a board card that was just moved is drawn over it, and only fades. */
+[data-card] {
+  position: relative;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /*
+   * A page arrives: its blocks rise and fade in, one after another (four steps at most), then
+   * its first rows follow. Not after a pull between pages, which slides the whole page itself.
+   * The animation only fills backwards, so nothing is left on a block once it has come in.
+   */
+  main[data-arrive]:not([data-page-move]) > div > * {
+    animation: move-rise var(--move-page) var(--curve-arrive) backwards;
+  }
+
+  main[data-arrive]:not([data-page-move]) > div > :nth-child(2) {
+    animation-delay: var(--move-step-block);
+  }
+
+  main[data-arrive]:not([data-page-move]) > div > :nth-child(3) {
+    animation-delay: calc(var(--move-step-block) * 2);
+  }
+
+  main[data-arrive]:not([data-page-move]) > div > :nth-child(n + 4) {
+    animation-delay: calc(var(--move-step-block) * 3);
+  }
+
+  /* A block that sizes itself to the window (the Inbox) is measured as it comes in: it only fades. */
+  main[data-arrive]:not([data-page-move])
+    > div
+    > :is([data-fills-window], :has([data-fills-window])) {
+    animation-name: move-fade;
+  }
+
+  main[data-arrive]:not([data-page-move]) :is(tbody > tr, [data-row]):nth-child(-n + 14) {
+    animation: move-row var(--move-marker) var(--curve-arrive) backwards;
+    animation-delay: calc(var(--move-step-block) * 2 + var(--i, 0) * var(--move-step-row));
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(2) {
+    --i: 1;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(3) {
+    --i: 2;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(4) {
+    --i: 3;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(5) {
+    --i: 4;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(6) {
+    --i: 5;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(7) {
+    --i: 6;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(8) {
+    --i: 7;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(9) {
+    --i: 8;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(10) {
+    --i: 9;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(11) {
+    --i: 10;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(12) {
+    --i: 11;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(13) {
+    --i: 12;
+  }
+
+  main[data-arrive] :is(tbody > tr, [data-row]):nth-child(14) {
+    --i: 13;
+  }
+
+  /* The same page: a row that is new or changed fades in under a soft wash that clears. */
+  [data-move="new"] {
+    animation:
+      move-fade var(--move-marker) ease-out backwards,
+      move-wash var(--move-wash) ease-out backwards;
+  }
+
+  /* Something that only appears (the shade behind the slide-out menu). */
+  [data-move="fade"] {
+    animation: move-fade var(--move-sink) ease-out backwards;
+  }
+
+  /* A popup fades in and rises with its shade; one that takes another's place only cross-fades. */
+  [data-move="open"] {
+    animation: move-fade var(--move-swap) ease-out backwards;
+  }
+
+  [data-move="open"] > [data-panel] {
+    animation: move-dialog var(--move-open) var(--curve-arrive) backwards;
+  }
+
+  [data-move="next"] > [data-panel] {
+    animation: move-dialog-next var(--move-quick) var(--curve-arrive) backwards;
+  }
+
+  [data-leaving="dialog"] {
+    animation: move-fade-out var(--move-leave) var(--curve-leave) forwards;
+  }
+
+  [data-leaving="dialog"] > [data-panel] {
+    animation: move-dialog-out var(--move-leave) var(--curve-leave) forwards;
+  }
+
+  /* Phones: a sheet rises from the bottom and sinks back. */
+  @media (width < 40.0625rem) {
+    [data-move="open"] > [data-panel] {
+      animation: move-sheet var(--move-sheet) var(--curve-arrive) backwards;
+    }
+
+    [data-leaving="dialog"] {
+      animation-duration: var(--move-sink);
+    }
+
+    [data-leaving="dialog"] > [data-panel] {
+      animation: move-sheet-out var(--move-sink) var(--curve-leave) forwards;
+    }
+  }
+
+  /* Menus and small panels open from the button that owns them. */
+  [data-move="pop"] {
+    transform-origin: top right;
+    animation: move-pop var(--move-quick) var(--curve-arrive) backwards;
+  }
+
+  [data-leaving="pop"] {
+    transform-origin: top right;
+    animation: move-pop-out var(--move-leave) var(--curve-leave) forwards;
+  }
+
+  /* The message at the bottom rises in and fades out. */
+  [data-move="toast"] {
+    animation: move-toast var(--move-marker) var(--curve-arrive) backwards;
+  }
+
+  [data-leaving="toast"] {
+    animation: move-toast-out var(--move-sink) var(--curve-leave) forwards;
+  }
+
+  /* The Students board: the card that was moved is ringed for a second. */
+  [data-card][data-landed]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 0 0 2px var(--accent);
+    pointer-events: none;
+    animation: move-fade-out var(--move-ring) ease-out forwards;
+  }
+
+  /*
+   * Light and dark: one cross-fade of the whole screen, where the browser can. The old screen
+   * stays put and the new one fades in over it, so nothing dims half-way through.
+   */
+  html[data-theme-fade]::view-transition-old(root) {
     animation: none;
+    mix-blend-mode: normal;
+  }
+
+  html[data-theme-fade]::view-transition-new(root) {
+    animation: move-fade var(--move-cross) ease-out both;
+    mix-blend-mode: normal;
+  }
+
+  /* Meanwhile no element runs its own colour fade, which would flicker under the screen's. */
+  html[data-theme-fade] :is(*, *::before, *::after) {
+    transition: none !important;
   }
 }
 
-/* Arrow steps (a Student's Stage): each step is a chevron; the first has a flat left edge. */
-@utility clip-chevron {
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 0 100%, 9px 50%);
+/*
+ * A chart's tooltip stands over the middle of its columns (`--tip-at`), but never past the
+ * chart's sides: half of its least width (14rem) always stays inside, so the first and last
+ * months are not cut off.
+ */
+[data-chart-tip] {
+  left: clamp(7rem, var(--tip-at), calc(100% - 7rem));
 }
 
-@utility clip-chevron-first {
-  clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, 0 100%);
+/*
+ * Tables on a sheet (ticket 21). Column heads sit on a faint band, 42 tall, with a line under
+ * them; the first and last cells keep the sheet's padding from its sides (18, phones 14). Only
+ * while rows are table rows (from 761 for a table whose rows stack below tablet width, any other
+ * above 640). Outside Tailwind's layers, so these win over a table's own classes.
+ */
+@media (width >= 40.0625rem) {
+  table[data-phone]:not([data-stacks]) > thead th {
+    height: 2.625rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--band);
+    color: var(--ink-2);
+    font-size: var(--size-head);
+    line-height: var(--size-head-line);
+    font-weight: 500;
+  }
+
+  table[data-phone]:not([data-stacks]) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child {
+    padding-left: var(--size-gutter);
+  }
+
+  table[data-phone]:not([data-stacks]) > :is(thead, tbody, tfoot) > tr > :is(th, td):last-child {
+    padding-right: var(--size-gutter);
+  }
+
+  table[data-phone] > tfoot td {
+    background: transparent;
+  }
 }
+
+@media (width >= 47.5625rem) {
+  table[data-stacks] > thead th {
+    height: 2.625rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--band);
+    color: var(--ink-2);
+    font-size: var(--size-head);
+    line-height: var(--size-head-line);
+    font-weight: 500;
+  }
+
+  table[data-stacks] > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child {
+    padding-left: var(--size-gutter);
+  }
+
+  table[data-stacks] > :is(thead, tbody, tfoot) > tr > :is(th, td):last-child {
+    padding-right: var(--size-gutter);
+  }
+}
+
+/* A row that opens something shows a soft fill under the pointer; a finger leaves no shade. */
+@media (hover: hover) {
+  tr[data-opens-page]:hover {
+    background: var(--row-hover);
+  }
+
+  /* A Documents page row opens that Student's checklist (UI revamp 12). */
+  li[data-opens-checklist]:hover {
+    background: var(--row-hover);
+  }
+}
+/*
+ * The Students board (UI revamp 08): a column for each Stage, at least 224 wide, scrolling
+ * sideways inside its sheet when they don't fit. One column alone (the Stage filter is set) lays
+ * its cards out side by side. On tablets a little of the next column shows.
+ */
+[data-board] {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  min-width: min-content;
+}
+
+[data-board][data-cols="1"] {
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
+}
+
+[data-board][data-cols="1"] [data-cards] {
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  align-items: start;
+}
+
+@media (width < 64.0625rem) {
+  [data-board]:not([data-cols="1"]) {
+    grid-template-columns: repeat(5, minmax(14rem, 30vw));
+  }
+}
+
+[data-column] {
+  transition:
+    background-color var(--move-quick),
+    box-shadow var(--move-quick);
+}
+
+[data-column][data-over="true"] {
+  background: var(--tint);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+[data-card] {
+  cursor: pointer;
+  box-shadow: 0 1px 0 var(--rule);
+}
+
+[data-card][draggable="true"] {
+  cursor: grab;
+}
+
+[data-card][draggable="true"]:active {
+  cursor: grabbing;
+}
+
+[data-card][data-dragging="true"] {
+  opacity: 0.45;
+}
+
+@media (hover: hover) {
+  [data-card]:hover {
+    box-shadow: 0 0 0 1px var(--rule-2);
+  }
+}
+
+/* How to move a card: by dragging with a mouse; with Move on a touch screen or a tablet. */
+[data-hint="touch"] {
+  display: none;
+}
+
+@media (width < 64.0625rem), (pointer: coarse) {
+  [data-hint="drag"] {
+    display: none;
+  }
+
+  [data-hint="touch"] {
+    display: inline;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-column] {
+    transition: none;
+  }
+}
+
+/* End of tables on a sheet (the tablet rules follow "Tables fit their panel"). */
 
 /*
  * A row that opens a page (DataRow opensPage): clicking anywhere on it follows the name's link,
@@ -544,10 +1255,11 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   }
 
   /* lists */
+  /* The fact takes half the row at most, so a long one never squeezes the name (ticket 25). */
   table[data-phone="list"] > tbody > tr {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) fit-content(50%) auto;
     column-gap: 0.75rem;
     row-gap: 0.125rem;
     align-items: center;
@@ -619,6 +1331,8 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   table[data-phone="list"] td[data-part="fact"] {
     grid-column: 2;
     grid-row: 1 / span 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: var(--size-secondary);
     font-weight: 600;
     text-align: right;
@@ -776,6 +1490,307 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
 }
 /* End of tables fit their panel. */
 
+/*
+ * Tables on a sheet (ticket 21), tablets: a wide table (Applications, Visas) ran past the right
+ * edge of its sheet. From 641 to 1024 its cells sit closer (8 on each side) and a cell that does
+ * not shrink may take two lines (a date), so every column stays inside. The first and last cells
+ * keep the sheet's padding. Only while rows are table rows.
+ */
+@media (width >= 40.0625rem) and (width < 64.0625rem) {
+  table[data-phone]:not([data-stacks]) > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+    padding-inline: 0.5rem;
+  }
+
+  table[data-phone]:not([data-stacks]) > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child {
+    padding-left: var(--size-gutter);
+  }
+
+  table[data-phone]:not([data-stacks]) > :is(thead, tbody, tfoot) > tr > :is(th, td):last-child {
+    padding-right: var(--size-gutter);
+  }
+
+  table:not([data-stacks], [data-wraps]):has([data-shrinks]) > tbody > tr > td:not([data-shrinks]) {
+    white-space: normal;
+  }
+}
+
+@media (width >= 47.5625rem) and (width < 64.0625rem) {
+  table[data-stacks] > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+    padding-inline: 0.5rem;
+  }
+
+  table[data-stacks] > :is(thead, tbody, tfoot) > tr > :is(th, td):first-child {
+    padding-left: var(--size-gutter);
+  }
+
+  table[data-stacks] > :is(thead, tbody, tfoot) > tr > :is(th, td):last-child {
+    padding-right: var(--size-gutter);
+  }
+
+  table[data-stacks]:not([data-wraps]):has([data-shrinks]) > tbody > tr > td:not([data-shrinks]) {
+    white-space: normal;
+  }
+}
+/* End of tables on a sheet, tablets. */
+
+/*
+ * The thread (ticket 21, `ui/Thread`): five beads on a string, Lead to Visa. A bead reached is
+ * filled in its own shade and joined to the next by a string of that shade; the current bead has
+ * a ring (a 2px gap, then 2px in its shade); the rest are hollow on a grey string. The list keeps
+ * room round its beads, so the ring is never cut off by what holds it.
+ */
+[data-thread] {
+  box-sizing: content-box;
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  min-width: 0;
+  max-width: 23.75rem;
+  height: 0.875rem;
+  margin: -0.1875rem -0.4375rem;
+  padding: 0.4375rem;
+  overflow: visible;
+  list-style: none;
+}
+
+[data-thread] > li {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0.875rem;
+  height: 0.875rem;
+}
+
+[data-thread] > li:last-child {
+  flex: 0 0 0.875rem;
+}
+
+[data-thread] > li[data-bead="1"] {
+  --bead: var(--bead-1);
+}
+
+[data-thread] > li[data-bead="2"] {
+  --bead: var(--bead-2);
+}
+
+[data-thread] > li[data-bead="3"] {
+  --bead: var(--bead-3);
+}
+
+[data-thread] > li[data-bead="4"] {
+  --bead: var(--bead-4);
+}
+
+[data-thread] > li[data-bead="5"] {
+  --bead: var(--bead-5);
+}
+
+/* the string to the next bead */
+[data-thread] > li::before {
+  content: "";
+  position: absolute;
+  top: 0.375rem;
+  right: -0.4375rem;
+  left: 0.4375rem;
+  height: 2px;
+  background: var(--bead-string);
+}
+
+[data-thread] > li:last-child::before {
+  display: none;
+}
+
+[data-thread] > li[data-state="past"]::before {
+  background: var(--bead);
+}
+
+/* the bead */
+[data-thread] > li::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 2px var(--bead-ring);
+}
+
+[data-thread] > li:is([data-state="past"], [data-state="now"])::after {
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, white 28%, var(--bead)),
+    var(--bead) 70%
+  );
+  box-shadow: none;
+}
+
+[data-thread] > li[data-state="now"]::after {
+  box-shadow:
+    0 0 0 2px var(--paper),
+    0 0 0 4px var(--bead);
+}
+
+@media (width < 40.0625rem) {
+  [data-thread] {
+    max-width: 12.5rem;
+  }
+}
+/* End of the thread. */
+
+/*
+ * Home's Pipeline (UI revamp 07, `ui/PipelineThread`): the office's Students on the same thread,
+ * five beads from Lead to Visa, each with its Stage, its count and its share. Each Stage is
+ * centred in its fifth of the sheet, so the thread starts and ends the same distance from the
+ * sheet's sides. On phones the thread runs top to bottom, a row per Stage.
+ */
+[data-pipe-thread] {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  padding: 1.5rem 0.75rem 1rem;
+  list-style: none;
+}
+
+[data-pipe-thread] > li {
+  position: relative;
+  min-width: 0;
+}
+
+[data-pipe-thread] > li[data-bead="1"] {
+  --bead: var(--bead-1);
+  --bead-after: var(--bead-2);
+}
+
+[data-pipe-thread] > li[data-bead="2"] {
+  --bead: var(--bead-2);
+  --bead-after: var(--bead-3);
+}
+
+[data-pipe-thread] > li[data-bead="3"] {
+  --bead: var(--bead-3);
+  --bead-after: var(--bead-4);
+}
+
+[data-pipe-thread] > li[data-bead="4"] {
+  --bead: var(--bead-4);
+  --bead-after: var(--bead-5);
+}
+
+[data-pipe-thread] > li[data-bead="5"] {
+  --bead: var(--bead-5);
+}
+
+/* the string to the next Stage, deepening on its way */
+[data-pipe-thread] > li::before {
+  content: "";
+  position: absolute;
+  top: 0.625rem;
+  right: -50%;
+  left: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--bead), var(--bead-after));
+}
+
+[data-pipe-thread] > li:last-child::before {
+  display: none;
+}
+
+[data-pipe-thread] a {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  padding: 0 0.5rem 0.625rem;
+  border-radius: var(--radius-menu);
+  color: var(--ink);
+  text-align: center;
+  text-decoration: none;
+}
+
+[data-pipe-bead] {
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-bottom: 0.875rem;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    color-mix(in srgb, white 30%, var(--bead)),
+    var(--bead) 70%
+  );
+  box-shadow: 0 0 0 5px var(--paper);
+}
+
+[data-pipe-thread] a:is(:hover, :focus-visible) [data-pipe-bead] {
+  box-shadow:
+    0 0 0 5px var(--paper),
+    0 0 0 8px color-mix(in srgb, var(--bead) 40%, var(--paper));
+}
+
+[data-pipe-name] {
+  color: var(--ink-2);
+  font-weight: 500;
+  font-size: var(--size-secondary);
+  line-height: var(--size-secondary-line);
+}
+
+[data-pipe-thread] a:hover [data-pipe-name] {
+  color: var(--accent);
+}
+
+[data-pipe-count] {
+  font-weight: 500;
+  font-size: var(--size-stage-count);
+  line-height: var(--size-stage-count-line);
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-pipe-share] {
+  color: var(--ink-3);
+  font-size: var(--size-small);
+  line-height: var(--size-small-line);
+}
+
+@media (width < 40.0625rem) {
+  [data-pipe-thread] {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0.375rem var(--size-gutter);
+  }
+
+  [data-pipe-thread] > li::before {
+    top: 1.5rem;
+    right: auto;
+    bottom: -1.5rem;
+    left: 0.625rem;
+    width: 2px;
+    height: auto;
+    background: linear-gradient(180deg, var(--bead), var(--bead-after));
+  }
+
+  [data-pipe-thread] a {
+    grid-template-columns: 1.375rem minmax(0, 1fr) auto 2.75rem;
+    align-items: center;
+    justify-items: start;
+    gap: 0.75rem;
+    min-height: 3rem;
+    padding: 0;
+    text-align: start;
+  }
+
+  [data-pipe-bead] {
+    margin: 0;
+    box-shadow: 0 0 0 4px var(--paper);
+  }
+
+  [data-pipe-name] {
+    color: var(--ink);
+  }
+
+  [data-pipe-share] {
+    justify-self: end;
+  }
+}
+/* End of Home's Pipeline. */
+
 /* The logo loader (list tidy-ups 06, chosen in 19): the product's logo turns at one steady speed,
    never stopping, while its petals and lines close together into a small flower and open out
    again, with no bounce. Turn and breath are both 2 s. In a button it takes the button's own
@@ -804,7 +1819,10 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   stroke: currentColor;
 }
 
-/* In the gap a pull opens, the pull turns the logo and opens its petals (list tidy-ups 20). */
+/*
+ * In the gap a pull opens, the pull turns the logo and opens its petals (list tidy-ups 20): 3
+ * degrees for each pixel the page has moved, set in place by the page (ticket 19).
+ */
 .logo-loader[data-size="pull"] {
   width: 2.5rem;
   height: 2.5rem;
@@ -815,7 +1833,8 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
 }
 
 .logo-loader[data-pull] .logo-loader-breathe {
-  transition: transform 150ms ease-out;
+  transform: rotate(var(--pull-turn)) scale(var(--pull-open));
+  transition: transform 60ms linear;
 }
 
 .logo-loader-turn,
@@ -860,6 +1879,12 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   .logo-loader-breathe {
     animation: none;
   }
+
+  /* A pull never turns or grows it. */
+  .logo-loader[data-pull] .logo-loader-breathe {
+    transform: none;
+    transition: none;
+  }
 }
 /* End of the logo loader */
 
@@ -871,14 +1896,14 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
     appearance: none;
     field-sizing: content;
     padding-inline: 0.875rem 2.5rem;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23686867' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23766c65' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
     background-position: right 0.875rem center;
     background-repeat: no-repeat;
     background-size: 1rem;
   }
 
   :root[data-theme="dark"] select[data-filter] {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239a9a9b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238f8174' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9.5 6 6 6-6'/%3E%3C/svg%3E");
   }
 }
 /* End of filter boxes */
@@ -904,3 +1929,8 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   }
 }
 /* End of small text in a dialog */
+
+/* The copyright line ends every page, except one that fills the window (the Inbox). */
+main:has([data-fills-window]) > [data-page-footer] {
+  display: none;
+}

@@ -1,58 +1,61 @@
 "use client";
 
-import { useState } from "react";
-
 import { Banner } from "@/components/ui/Banner";
-import { Button } from "@/components/ui/Button";
 import { Panel } from "@/components/ui/Panel";
 import { PanelFoot } from "@/components/ui/PanelFoot";
-import { Section } from "@/components/ui/Section";
 import { WORK_FROM_HOME_TEXT as TEXT } from "@/constants/workFromHome";
-import { fetchMyWorkFromHome } from "@/lib/api";
+import { fetchMyWorkFromHome, type WorkFromHomeDates } from "@/lib/api";
 
-import { useWorkFromHome } from "./useWorkFromHome";
 import { AskWorkFromHomeDialog } from "./AskWorkFromHomeDialog";
+import { useWorkFromHome } from "./useWorkFromHome";
 import { WorkFromHomeRows } from "./WorkFromHomeRows";
 
+type MyWorkFromHomeProps = {
+  /** "Ask for dates" (the page's main action, beside its title) was pressed. */
+  isAsking: boolean;
+  /** The popup closed, sent or not. */
+  onAskingDone: () => void;
+};
+
 /**
- * My Work From Home dates on My working hours (spec 132): ask for dates, see each one's status,
- * and cancel one still waiting. Not shown to Admins, who clock in from any network.
+ * The Work from home tab of Working hours (spec 132; UI revamp 16): my dates, each with its
+ * status, and cancelling one still waiting. Asking for dates opens from the page's title line.
+ * Not shown to Admins, who clock in from any network.
  */
-export function MyWorkFromHome() {
+export function MyWorkFromHome({ isAsking, onAskingDone }: MyWorkFromHomeProps) {
   const { state, changed } = useWorkFromHome(fetchMyWorkFromHome);
-  const [isAsking, setIsAsking] = useState(false);
-  if (state.status === "loading") return null;
-  if (state.status === "failed") return <Banner tone="problem">{TEXT.loadFailed}</Banner>;
-  if (!state.data.canAsk) return null;
   return (
-    <Section
-      title={TEXT.title}
-      aside={
-        <Button
-          icon="home"
-          onClick={() => {
-            setIsAsking(true);
-          }}
-        >
-          {TEXT.askForDates}
-        </Button>
-      }
-    >
-      <Panel>
-        <WorkFromHomeRows dates={state.data.dates} isAdmin={false} onChanged={changed} />
-        <PanelFoot>{TEXT.myFoot}</PanelFoot>
-      </Panel>
+    <>
+      <MyDates state={state} onChanged={changed} />
+      {/* The popup opens at once, even while my dates are still loading. */}
       {isAsking && (
         <AskWorkFromHomeDialog
-          onClose={() => {
-            setIsAsking(false);
-          }}
+          onClose={onAskingDone}
           onSent={(sent) => {
-            setIsAsking(false);
+            onAskingDone();
             changed(sent);
           }}
         />
       )}
-    </Section>
+    </>
+  );
+}
+
+type Mine = Awaited<ReturnType<typeof fetchMyWorkFromHome>>;
+
+type MyDatesProps = {
+  state: { status: "loading" } | { status: "failed" } | { status: "loaded"; data: Mine };
+  onChanged: (dates: WorkFromHomeDates) => void;
+};
+
+function MyDates({ state, onChanged }: MyDatesProps) {
+  if (state.status === "loading") return null;
+  if (state.status === "failed") return <Banner tone="problem">{TEXT.loadFailed}</Banner>;
+  if (!state.data.canAsk) return null;
+  return (
+    <Panel>
+      <WorkFromHomeRows dates={state.data.dates} isAdmin={false} onChanged={onChanged} />
+      <PanelFoot>{TEXT.myFoot}</PanelFoot>
+    </Panel>
   );
 }

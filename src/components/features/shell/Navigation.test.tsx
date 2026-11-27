@@ -113,6 +113,50 @@ describe("Navigation", () => {
   });
 });
 
+describe("The side menu's look (UI revamp, ticket 05)", () => {
+  it("puts each label under its icon above 1024, and beside it in the slide-out menu", () => {
+    render(<Navigation role={Role.Teacher} modules={MODULES} />);
+
+    const link = screen.getByRole("link", { name: "Tasks" });
+    expect(link).toHaveClass("flex", "items-center", "wide:flex-col", "wide:text-rail");
+    // A page is never a smaller target than 44, on any width.
+    expect(link).toHaveClass("min-h-side-item", "wide:min-h-rail-item");
+  });
+
+  it("marks the open page in the accent colour, with a soft fill in the strip", () => {
+    pathname.current = "/tasks";
+    render(<Navigation role={Role.Teacher} modules={MODULES} />);
+
+    const open = screen.getByRole("link", { name: "Tasks" });
+    expect(open).toHaveClass("text-accent", "font-semibold");
+    // The fill is one shade of its own behind the open page, so it can glide to it (ticket 22).
+    expect(document.querySelectorAll("[data-marker]")).toHaveLength(1);
+    expect(open.querySelector("[data-marker]")).toHaveClass(
+      "bg-side-active",
+      "hidden",
+      "wide:block",
+    );
+    expect(open.querySelector("[data-marker]")).toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("link", { name: "Home" })).not.toHaveClass("text-accent");
+  });
+
+  it("draws a line before the Business pages, and keeps the group's name for screen readers", () => {
+    render(<Navigation role={Role.Admin} modules={MODULES} />);
+
+    const heading = screen.getByRole("heading", { name: "Business" });
+    expect(heading).toHaveClass("border-t", "border-rule-2", "wide:h-0", "wide:overflow-hidden");
+  });
+
+  it("scrolls on its own and fades at its foot", () => {
+    render(<Navigation role={Role.Admin} modules={MODULES} />);
+
+    expect(screen.getByRole("navigation", { name: "Main" })).toHaveClass(
+      "overflow-y-auto",
+      "menu-fade",
+    );
+  });
+});
+
 describe("The Tasks count", () => {
   it("shows my Tasks due today or overdue beside Tasks, named for screen readers", () => {
     render(
@@ -135,18 +179,6 @@ describe("The Tasks count", () => {
     );
 
     expect(screen.getByRole("link", { name: "Tasks" })).toHaveTextContent(/^Tasks$/);
-  });
-
-  it("stays on the icon when the sidebar is collapsed", () => {
-    render(
-      <TaskCountContext value={{ count: 12, refresh: vi.fn<() => void>() }}>
-        <Navigation role={Role.Teacher} modules={MODULES} isCollapsed />
-      </TaskCountContext>,
-    );
-
-    expect(screen.getByRole("link", { name: /^Tasks/ })).toHaveAccessibleName(
-      "Tasks, 12 due today or overdue",
-    );
   });
 });
 

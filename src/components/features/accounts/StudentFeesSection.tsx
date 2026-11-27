@@ -58,7 +58,10 @@ export function StudentFeesSection() {
     <section aria-label={FEE_TEXT.studentFees} className="grid gap-8">
       <div className="min-h-control flex flex-wrap items-center justify-between gap-4">
         <h2 className="text-section-title">{FEE_TEXT.studentFees}</h2>
-        <Link href={ROUTES.feesByType} className="min-h-control inline-flex items-center">
+        <Link
+          href={ROUTES.feesByType}
+          className="text-accent min-h-control inline-flex items-center font-medium hover:underline"
+        >
           {FEES_BY_TYPE_TEXT.byFeeType}
         </Link>
       </div>
@@ -204,10 +207,7 @@ function OwingList({ page, onDetails }: OwingListProps) {
       </thead>
       <tbody className="divide-rule divide-y">
         {page.rows.map((row) => (
-          <DataRow
-            key={row.student.id}
-            className="hover:bg-fill max-tablet:grid max-tablet:gap-2 max-tablet:p-5"
-          >
+          <DataRow key={row.student.id} className="max-tablet:grid max-tablet:gap-2 max-tablet:p-5">
             <DataCell part="title" shrinks className={CELL}>
               <Link
                 href={ROUTES.student(row.student.id)}

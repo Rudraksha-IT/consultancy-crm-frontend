@@ -40,7 +40,7 @@ export function CodeField({ name, ...field }: CodeFieldProps) {
             required={control.required}
             aria-invalid={control["aria-invalid"]}
             aria-describedby={control["aria-describedby"]}
-            className="absolute inset-0 h-full w-full cursor-text bg-transparent text-transparent caret-transparent outline-none selection:bg-transparent"
+            className="text-input absolute inset-0 h-full w-full cursor-text bg-transparent text-transparent caret-transparent outline-none selection:bg-transparent"
             name={name}
             type="text"
             inputMode="numeric"

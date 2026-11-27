@@ -5,7 +5,7 @@ import { RecordIdSchema, type RecordId } from "@/lib/recordId";
 import { API_PATHS, HTTP_STATUS } from "@/constants/api";
 import { WEEKLY_OFF_CHOICES, type WeeklyOff } from "@/constants/clock";
 
-import { getJson, postJson, putJson, sendWithoutBody } from "../core/client";
+import { deleteWithJson, getJson, postJson, putJson } from "../core/client";
 import { ApiRequestError } from "../core/errors";
 import { toFieldErrors } from "../core/fieldErrors";
 import { DetailAnswerSchema, MomentSchema } from "../core/types";
@@ -269,7 +269,8 @@ const HolidayListSchema = z.object({ holidays: z.array(HolidaySchema) });
 
 /** A day the office is closed, set by an Admin in Configuration (asked 2026-11-16). */
 export type Holiday = z.infer<typeof HolidaySchema>;
-export type NewHoliday = { date: string; name: string };
+/** A new holiday: its name and every day of it, added together or not at all (UI revamp 17). */
+export type NewHoliday = { name: string; dates: readonly string[] };
 
 /** The server refused clocking in or out, or a correction; its own short reason is the message. */
 export class ClockRefusedError extends Error {
@@ -288,7 +289,7 @@ export const MISSING_CLOCK_OUT_FIELDS = {
 } as const;
 export const MISSED_TIME_FIELDS = { day: "day", from: "from", to: "to", reason: "reason" } as const;
 export const WORKING_DAY_FIELDS = { minutes: "minutes" } as const;
-export const HOLIDAY_FIELDS = { date: "date", name: "name" } as const;
+export const HOLIDAY_FIELDS = { dates: "dates", name: "name" } as const;
 
 /** My clock: whether I'm clocked in, from the server's clock. */
 export function fetchMyClock(fetchFn: typeof fetch = fetch): Promise<MyClock> {
@@ -360,27 +361,39 @@ export function saveWeeklyOff(
   return putJson(API_PATHS.clockDaysOff, { weekly_off: weeklyOff }, WorkingDaySchema, fetchFn);
 }
 
-/** This year's and later holidays, by day (Admins). */
+/** This year's and later holidays, by day, for every Staff member (UI revamp 17). */
 export async function fetchHolidays(fetchFn: typeof fetch = fetch): Promise<Holiday[]> {
   const answer = await getJson(API_PATHS.clockHolidays, HolidayListSchema, fetchFn);
   return answer.holidays;
 }
 
-/** Add a holiday. Rejects with `InvalidFieldsError` on `date` or `name`. */
-export async function addHoliday(
+/**
+ * Add one holiday on every one of its days, in one call: all of them or none. Answers the days
+ * added. Rejects with `InvalidFieldsError` on `dates` (a taken day is named) or `name`.
+ */
+export async function addHolidays(
   holiday: NewHoliday,
   fetchFn: typeof fetch = fetch,
-): Promise<Holiday> {
+): Promise<Holiday[]> {
   try {
-    return await postJson(API_PATHS.clockHolidays, holiday, HolidaySchema, fetchFn);
+    const answer = await postJson(
+      API_PATHS.clockHolidays,
+      { name: holiday.name, dates: holiday.dates },
+      HolidayListSchema,
+      fetchFn,
+    );
+    return answer.holidays;
   } catch (error) {
     throw toFieldErrors(error, HOLIDAY_FIELDS) ?? error;
   }
 }
 
-/** Remove a holiday. */
-export function removeHoliday(id: RecordId, fetchFn: typeof fetch = fetch): Promise<void> {
-  return sendWithoutBody("DELETE", API_PATHS.clockHoliday(id), fetchFn);
+/** Remove a holiday's days together, in one call: all of them or none. */
+export function removeHolidays(
+  ids: readonly RecordId[],
+  fetchFn: typeof fetch = fetch,
+): Promise<void> {
+  return deleteWithJson(API_PATHS.clockHolidays, { ids }, fetchFn);
 }
 
 /**

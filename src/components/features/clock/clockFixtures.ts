@@ -84,19 +84,23 @@ const WORKED: Partial<Record<number, Partial<DayAnswer>>> = {
 const TODAY = 5;
 const SATURDAY = 6;
 
-function dayOf(number: number, holidays: Partial<Record<number, string>>): DayAnswer {
+function dayOf(
+  number: number,
+  holidays: Partial<Record<number, string>>,
+  today: number,
+): DayAnswer {
   const holiday = holidays[number] ?? null;
   const date = `2026-11-${String(number).padStart(2, "0")}`;
   const isSaturday = new Date(`${date}T12:00:00Z`).getUTCDay() === SATURDAY;
-  const isPastWorkingDay = number < TODAY && !isSaturday && holiday === null;
+  const isPastWorkingDay = number < today && !isSaturday && holiday === null;
   return {
     date,
     minutes: 0,
     first_in: null,
     last_out: null,
     day_off: isSaturday,
-    later: number > TODAY,
-    today: number === TODAY,
+    later: number > today,
+    today: number === today,
     not_in: isPastWorkingDay,
     missing_clock_out: false,
     still_in: false,
@@ -110,18 +114,22 @@ function dayOf(number: number, holidays: Partial<Record<number, string>>): DayAn
   };
 }
 
-/** November 2026 seen on Thursday the 5th: a full day, a short day, a forgotten clock-out. */
+/**
+ * November 2026 seen on Thursday the 5th: a full day, a short day, a forgotten clock-out. A later
+ * `today` (the day of the month) gives more days up to today, for the List's pages.
+ */
 export function novemberMonth(
   staff = { id: uid(3), name: "Bikash Thapa", job_title: "Counsellor", has_left: false },
   holidays: Partial<Record<number, string>> = {},
+  today = TODAY,
 ) {
   return {
     month: "2026-11",
-    today: "2026-11-05",
+    today: `2026-11-${String(today).padStart(2, "0")}`,
     working_day_minutes: 480,
     staff,
     figures: { days_worked: 3, minutes: 744, short_days: 1, missing_clock_outs: 1, corrected: 1 },
-    days: Array.from({ length: 30 }, (_, index) => dayOf(index + 1, holidays)),
+    days: Array.from({ length: 30 }, (_, index) => dayOf(index + 1, holidays, today)),
     corrections: [
       {
         id: uid(9),

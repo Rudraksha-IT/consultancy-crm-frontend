@@ -1,14 +1,4 @@
-import { contrastRatio, isHexColour, mixHex, readableOn } from "./colour";
-
-describe("isHexColour", () => {
-  it.each(["#047857", "#FFFFFF"])("accepts %s", (value) => {
-    expect(isHexColour(value)).toBe(true);
-  });
-
-  it.each(["047857", "#fff", "#gggggg", "", 5, null])("rejects %o", (value) => {
-    expect(isHexColour(value)).toBe(false);
-  });
-});
+import { contrastRatio, mixHex, readableOn } from "./colour";
 
 describe("mixHex", () => {
   it("returns the first colour at 0 and the second at 1", () => {

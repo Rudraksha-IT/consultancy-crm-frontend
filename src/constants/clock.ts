@@ -18,6 +18,46 @@ export const OFFICE_TIME_ZONE = "Asia/Kathmandu";
 
 export const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
+/** A day's full name, Sunday first, as the month's list writes it ("Wednesday, today"). */
+export const WEEKDAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+/** The tabs of the Working hours page; the values are in the address (`/clock?tab=wfh`). */
+export const ClockTab = { Hours: "hours", WorkFromHome: "wfh", Holidays: "holidays" } as const;
+export type ClockTab = (typeof ClockTab)[keyof typeof ClockTab];
+
+/** The address's name for the tab (`?tab=`). */
+export const CLOCK_TAB_PARAM = "tab";
+
+/** Where the device remembers how a month is shown (UI revamp 16). */
+export const CLOCK_VIEW_KEY = "crm:clock-view";
+
+/** The two ways to see a month on a computer or tablet; a phone always shows the List. */
+export const ClockView = { Calendar: "calendar", List: "list" } as const;
+export type ClockView = (typeof ClockView)[keyof typeof ClockView];
+
+/** What one day of the month's list says in its Status column. */
+export const DayStatus = {
+  FullDay: "full_day",
+  ShortDay: "short_day",
+  NoClockOut: "no_clock_out",
+  StillIn: "still_in",
+  NotInYet: "not_in_yet",
+  NotIn: "not_in",
+  DayOff: "day_off",
+  Holiday: "holiday",
+  /** Nothing to say: a day with no clock-in that was not a working day for this person. */
+  None: "none",
+} as const;
+export type DayStatus = (typeof DayStatus)[keyof typeof DayStatus];
+
 /** The office's weekly days off; values match the API (asked 2026-11-17). Saturday at first. */
 export const WEEKLY_OFF_CHOICES = ["saturday", "sunday", "both", "none"] as const;
 export type WeeklyOff = (typeof WEEKLY_OFF_CHOICES)[number];
@@ -40,7 +80,6 @@ export const CLOCK_TEXT = {
   onNetwork: "Office network",
   offNetwork: "Not a saved office network",
   noNetwork: "No office network set up",
-  myMonth: "My working hours this month",
   loadFailed: "The clock couldn't be loaded.",
   clockedIn: (time: string) => `Clocked in at ${time}.`,
   markedNotOut: (day: string) =>
@@ -53,8 +92,32 @@ export const CLOCK_TEXT = {
   nothingRecorded: "Nothing was recorded. Phones on mobile data can't clock in.",
   nothingRecordedShort: "Nothing was recorded.",
   ok: "OK",
-  // My working hours
+  // My working hours (the page is "Working hours"; "My working hours" opens it from your menu)
   myHoursTitle: "My working hours",
+  pageTitle: "Working hours",
+  tabsLabel: "Show",
+  hoursTab: "Working hours",
+  workFromHomeIntro: "Ask for dates to work from home. An Admin approves or declines them.",
+  // The month as a calendar or a list
+  showMonthAs: "Show the month as",
+  calendar: "Calendar",
+  list: "List",
+  listLabel: (month: string) => `Days of ${month}`,
+  day: "Day",
+  timeIn: "In",
+  timeOut: "Out",
+  status: "Status",
+  todayAfter: (weekday: string) => `${weekday}, today`,
+  fullDay: "Full day",
+  stillInStatus: "Still in",
+  notInYet: "Not in yet",
+  outIsMissing: "Missing",
+  timesLine: (start: string, end: string) => `${start} – ${end}`,
+  daysSoFar: (count: number, month: string) => `${plural(count, "day", "days")} so far in ${month}`,
+  daysIn: (count: number, month: string) => `${plural(count, "day", "days")} in ${month}`,
+  previousMonth: "Previous month",
+  nextMonth: "Next month",
+  nothingYet: "Nothing yet this month.",
   home: "Home",
   myHoursIntro: (month: string) => `Your clock-ins for ${month}.`,
   everyonesHours: "Everyone's hours",
@@ -189,37 +252,45 @@ export const CLOCK_TEXT = {
   dayOpen: "Open",
 } as const;
 
-/** Configuration → Holidays (asked 2026-11-16). */
+/** Holidays: Configuration → Working hours, and the Working hours page (UI revamp 17). */
 export const HOLIDAY_TEXT = {
   title: "Holidays",
-  help: "Days the office is closed. They never count as a short day or as not in, and anyone who works can still clock in.",
-  listLabel: "Holidays",
-  none: "No holidays yet.",
+  help: "Days the whole office is closed. They count as days off, like the weekly days off, so nobody is short that day.",
+  /** The tab on the Working hours page, its line under the title and the Admin's way to change them. */
+  tab: "Holidays",
+  intro: "Days the whole office is closed. Nobody needs to clock in.",
+  change: "Change holidays",
+  comingUp: "Coming up",
+  past: "Past holidays",
+  count: (holidays: number, days: number) =>
+    `${String(holidays)} ${holidays === 1 ? "holiday" : "holidays"}, ${String(days)} ${days === 1 ? "day" : "days"}`,
+  none: "No holidays yet. Add the days the office closes, like Dashain and Tihar.",
+  noneForStaff: "No office holidays set yet.",
+  noneComing: "No holidays coming up.",
   loading: "Loading holidays…",
   loadFailed: "The holidays couldn't be loaded. Try again later.",
   saveFailed: "The holiday couldn't be saved. Try again later.",
+  addTitle: "Add a holiday",
   calendarLabel: "Choose the days on the calendar",
-  calendarHelp: "Tap each day the office is closed, for example every day of Dashain.",
-  chooseBy: "How to choose",
-  chooseByDays: "Days",
-  chooseByRange: "From – to",
-  tapFirst: "Tap the first day.",
-  tapLast: "Now tap the last day.",
+  calendarHelp: "Tap each day the office is closed. Tap again to take one off.",
   previousMonth: "Previous month",
   nextMonth: "Next month",
   isHoliday: (day: string, name: string) => `${day}, ${name}`,
-  chosen: (count: number) => `${String(count)} ${count === 1 ? "day" : "days"} chosen`,
+  chosen: (count: number) => `${String(count)} ${count === 1 ? "day" : "days"} chosen.`,
   nameLabel: "Name",
-  namePlaceholder: "For example, Dashain",
+  namePlaceholder: "For example, Tihar",
   chooseDay: "Choose the days on the calendar.",
+  tooManyDays: (most: number) => `Choose at most ${String(most)} days at once.`,
   enterName: "Give the holiday a name.",
   add: "Add holiday",
   added: (name: string, days = 1) =>
-    days === 1 ? `${name} added` : `${name} added on ${String(days)} days`,
+    days === 1 ? `${name} added` : `${name} added for ${String(days)} days`,
   remove: "Remove",
-  removeFor: (name: string) => `Remove ${name}`,
+  removeFor: (name: string, days: string) => `Remove ${name}, ${days}`,
   removeTitle: (name: string) => `Remove ${name}?`,
   removeBody: (day: string) => `${day} will count as an ordinary working day again.`,
+  removeBodyDays: (days: number) =>
+    `Its ${String(days)} days will count as ordinary working days again.`,
   removed: (name: string) => `${name} removed`,
   removeFailed: "The holiday couldn't be removed. Try again later.",
 } as const;

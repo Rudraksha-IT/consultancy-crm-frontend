@@ -28,7 +28,6 @@ export type MySettingsSection = (typeof MY_SETTINGS_SECTIONS)[number];
 
 export const MY_SETTINGS_TEXT = {
   title: "Settings",
-  intro: "Your own details and preferences. Office-wide settings are under Configuration.",
   menu: "Settings",
   backLabel: "All of Settings",
   sections: {

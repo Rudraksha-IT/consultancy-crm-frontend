@@ -36,7 +36,13 @@ import { WorkingDaySettings } from "./WorkingDaySettings";
  * (issue 27).
  */
 /** Sections a link may open, `/configuration?section=universities`. */
-const LINKABLE_SECTIONS: readonly string[] = ["general", "documents", "universities", "fees"];
+const LINKABLE_SECTIONS: readonly string[] = [
+  "general",
+  "documents",
+  "universities",
+  "fees",
+  "workingHours",
+];
 
 /** The section a link asked for, if it is one a link may open. */
 function linkedSection(asked: string | undefined): string | null {
@@ -98,12 +104,18 @@ export function ConfigurationPage({ startSection }: { startSection?: string | un
 
   return (
     <div className="grid gap-8">
-      <PageHeader title={LABELS.configuration} subtitle={MESSAGES.configurationIntro} />
       <SectionMenu
         label={LABELS.configuration}
         backLabel={TEXT.backLabel}
         sections={sections}
         choice={choice}
+        header={(back) => (
+          <PageHeader
+            title={LABELS.configuration}
+            subtitle={MESSAGES.configurationIntro}
+            leading={back}
+          />
+        )}
       />
     </div>
   );

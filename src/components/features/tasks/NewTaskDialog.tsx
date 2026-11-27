@@ -12,6 +12,7 @@ import { useFormSave } from "@/components/features/students/profile/useFormSave"
 import { Banner } from "@/components/ui/Banner";
 import { CheckboxField } from "@/components/ui/CheckboxField";
 import { DateField } from "@/components/ui/DateField";
+import { LABEL_CLASSES } from "@/components/ui/Field";
 import { DetailList } from "@/components/ui/DetailList";
 import { SegmentedChoice } from "@/components/ui/SegmentedChoice";
 import { SelectField } from "@/components/ui/SelectField";
@@ -161,7 +162,7 @@ function WhoFor({ choices, assignees, errors }: WhoForProps) {
   if (choices.isOnlyMe) {
     return (
       <div className="grid content-start gap-2">
-        <span className="text-secondary text-ink font-semibold">{TASK_TEXT.assignTo}</span>
+        <span className={LABEL_CLASSES}>{TASK_TEXT.assignTo}</span>
         <span className="min-h-control text-body text-ink flex items-center">{TASK_TEXT.you}</span>
       </div>
     );
@@ -182,7 +183,7 @@ type PriorityChoiceProps = { value: TaskPriority; onChange: (value: TaskPriority
 function PriorityChoice({ value, onChange }: PriorityChoiceProps) {
   return (
     <div className="grid gap-2">
-      <span aria-hidden="true" className="text-secondary text-ink font-semibold">
+      <span aria-hidden="true" className={LABEL_CLASSES}>
         {TASK_TEXT.priority}
       </span>
       <SegmentedChoice

@@ -1,8 +1,6 @@
 "use client";
 
-import { UnexpectedError } from "@/components/features/errors/UnexpectedError";
-import { Button } from "@/components/ui/Button";
-import { MESSAGES } from "@/constants/messages";
+import { FailedScreen } from "@/components/features/errors/FailedScreen";
 import { TAB_ICON } from "@/constants/tabIcon";
 
 import "./globals.css";
@@ -14,22 +12,17 @@ type GlobalErrorProps = {
 };
 
 /**
- * The root layout itself failed, so this replaces the whole document: the same banner and
+ * The root layout itself failed, so this replaces the whole document: the same page and
  * reference as the error page (issue 58).
  */
-export default function GlobalError({ error, reset }: GlobalErrorProps) {
+export default function GlobalError({ error }: GlobalErrorProps) {
   return (
     <html lang="en" className="h-full">
       <head>
         <link rel="icon" href={TAB_ICON.path} />
       </head>
       <body className="bg-canvas text-ink min-h-full">
-        <main className="max-w-content mx-auto grid w-full content-center gap-4 px-4 py-16">
-          <UnexpectedError
-            reference={error.digest}
-            action={<Button onClick={reset}>{MESSAGES.tryAgain}</Button>}
-          />
-        </main>
+        <FailedScreen reference={error.digest} />
       </body>
     </html>
   );

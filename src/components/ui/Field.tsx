@@ -40,7 +40,7 @@ type FieldShellProps = FieldProps & {
 };
 
 export const CONTROL_CLASSES =
-  "min-h-control max-phone:min-h-field-phone w-full min-w-0 rounded-control border border-rule-2 bg-paper px-3.5 text-body text-ink focus:border-accent aria-invalid:border-bad";
+  "min-h-control max-phone:min-h-field-phone w-full min-w-0 rounded-control border border-rule-2 bg-paper px-3.5 text-input text-ink focus:border-accent focus:shadow-focus aria-invalid:border-bad";
 
 /** A visible label, the control, and its errors (or else its hint) as the control's description. */
 export function Field({
@@ -125,7 +125,8 @@ function useOnFormSubmit(ref: RefObject<HTMLElement | null>, run: () => void): v
 type FieldLabelProps = { htmlFor: string; label: string; isOptional: boolean; isHidden: boolean };
 
 /** A field's visible label; also an empty spacer's, to line a button up with the controls. */
-export const LABEL_CLASSES = "text-secondary text-ink font-semibold";
+// A label never looks like its value: smaller, quieter and lighter (owner, 2026-11-24).
+export const LABEL_CLASSES = "text-secondary text-ink-2 font-medium";
 
 function FieldLabel({ htmlFor, label, isOptional, isHidden }: FieldLabelProps) {
   if (!isOptional) {

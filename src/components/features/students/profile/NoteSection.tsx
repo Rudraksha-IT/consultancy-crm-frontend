@@ -20,7 +20,10 @@ type NoteSectionProps = {
   onSaved: (profile: StudentProfile) => void;
 };
 
-/** The Student's one Note, at the top. Those who can change the Student edit it in place. */
+/**
+ * The Student's one Note: above the tabs, and from 1280 in a column of its own beside them
+ * (UI revamp 11). Those who can change the Student edit it in place.
+ */
 export function NoteSection({ profile, onSaved }: NoteSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const editButton = profile.canChange && !isEditing && (
@@ -36,7 +39,7 @@ export function NoteSection({ profile, onSaved }: NoteSectionProps) {
   );
 
   return (
-    <NoteCard title={LABELS.note} action={editButton}>
+    <NoteCard title={LABELS.note} action={editButton} sitsBeside>
       {isEditing ? (
         <NoteForm
           profile={profile}
@@ -57,7 +60,7 @@ export function NoteSection({ profile, onSaved }: NoteSectionProps) {
 
 function NoteText({ note }: { note: string }) {
   return (
-    <p className="text-card-title max-w-prose font-normal whitespace-pre-wrap">
+    <p className="text-card-title max-w-prose font-normal wrap-anywhere whitespace-pre-wrap">
       {note === "" ? <span className="text-ink-2">{MESSAGES.nothingWrittenYet}</span> : note}
     </p>
   );

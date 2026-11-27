@@ -1,11 +1,13 @@
 "use client";
 
+import clsx from "clsx";
 import { useId, type SubmitEvent } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
 import { DateField } from "@/components/ui/DateField";
 import { TextField } from "@/components/ui/TextField";
 import { HTTP_STATUS } from "@/constants/api";
+import { DateDisplay } from "@/constants/dates";
 import { APPOINTMENTS, APPOINTMENT_LABELS, VISA_TEXT, type Appointment } from "@/constants/visas";
 import {
   ApiRequestError,
@@ -46,6 +48,9 @@ export function VisaDatesDialog({ profile, visa, onClose, onSaved }: VisaDatesDi
   const { isSaving, fieldErrors, failure, save } = useFormSave(datesFailure);
   const today = todayIso();
   const errors: Refused = fieldErrors;
+  // A BS date is three boxes (day, month, year): they take the whole line and the time goes
+  // under them. An AD date is one box, with the time beside it (ticket 25).
+  const rowClasses = clsx("grid gap-4", dates.display === DateDisplay.AD && "phone:grid-cols-2");
 
   function submit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
@@ -75,7 +80,7 @@ export function VisaDatesDialog({ profile, visa, onClose, onSaved }: VisaDatesDi
           const label = APPOINTMENT_LABELS[kind];
           const booked = bookedParts(bookedAt(visa, kind));
           return (
-            <div key={kind} className="phone:grid-cols-2 grid gap-4">
+            <div key={kind} data-appointment={kind} className={rowClasses}>
               <DateField
                 label={VISA_TEXT.dateOf(label)}
                 name={`${kind}Day`}

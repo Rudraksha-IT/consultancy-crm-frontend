@@ -35,6 +35,8 @@ type StudentFeesProps = {
   canRecordPayment: boolean;
   /** A change History records was made: a Fee or a Payment. */
   onChanged: () => void;
+  /** Bumped by the page when something outside this tab changed the money: read it again. */
+  version?: number;
 };
 
 type Open = { kind: "fee"; fee: Fee | null } | { kind: "payment" } | null;
@@ -46,14 +48,16 @@ type Open = { kind: "fee"; fee: Fee | null } | { kind: "payment" } | null;
 export function StudentFees(props: StudentFeesProps) {
   const [version, setVersion] = useState(0);
   const load = useCallback(() => fetchStudentFees(props.student.id), [props.student.id]);
-  const state = useLoaded(load, version);
+  // What is shown stays while it is read again: nothing jumps and the cursor keeps its place.
+  const shown = version + (props.version ?? 0);
+  const state = useLoaded(load, shown);
   if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{FEE_TEXT.feesFailed}</Banner>;
   return (
     <LoadedFees
       {...props}
       fees={state.data}
-      version={version}
+      version={shown}
       onReload={() => {
         setVersion((current) => current + 1);
         props.onChanged();
@@ -64,7 +68,7 @@ export function StudentFees(props: StudentFeesProps) {
 
 type LoadedFeesProps = StudentFeesProps & {
   fees: Fees;
-  /** Bumped after a change, so the Payments list remounts too. */
+  /** Bumped after a change, so the Payments list is read again too. */
   version: number;
   onReload: () => void;
 };
@@ -84,7 +88,7 @@ function LoadedFees({ student, fees, canChangeFees, canRecordPayment, ...rest }:
       />
       {seesBalance && (
         <StudentPayments
-          key={rest.version}
+          version={rest.version}
           studentId={student.id}
           onChanged={rest.onReload}
           aside={

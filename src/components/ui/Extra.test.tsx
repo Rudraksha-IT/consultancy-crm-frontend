@@ -42,12 +42,14 @@ describe("more ui behaviour", () => {
   it("shows a finished progress bar and a large avatar", () => {
     const { container } = render(
       <>
-        <ProgressBar label="Documents" value={9} max={9} tone="good" />
+        <ProgressBar label="Documents" value={9} max={9} />
         <Avatar name="Ram" size="lg" />
       </>,
     );
 
     expect(screen.getByText("100%")).toBeInTheDocument();
+    // Money and progress bars are green, done or not (ticket 03).
+    expect(screen.getByRole("progressbar").firstElementChild).toHaveClass("bg-good");
     expect(container).toHaveTextContent("R");
   });
 
@@ -65,23 +67,22 @@ describe("more ui behaviour", () => {
     expect(screen.getByRole("button", { name: "New visitor" })).toBeInTheDocument();
   });
 
-  it("reads a missing chart value as 0", async () => {
-    render(
-      <ColumnChart
-        title="Money"
-        categories={[
-          { key: "a", label: "May", shortLabel: "May" },
-          { key: "b", label: "June", shortLabel: "Jun" },
-        ]}
-        series={[{ name: "In", values: [5] }]}
-        axisFormat={(value) => `${String(value)}k`}
-        categoryHeading="Month of year"
-      />,
-    );
+  it("reads a missing chart value as 0", () => {
+    const chart = {
+      title: "Money",
+      categories: [
+        { key: "a", label: "May", shortLabel: "May" },
+        { key: "b", label: "June", shortLabel: "Jun" },
+      ],
+      series: [{ name: "In", values: [5] }],
+      axisFormat: (value: number) => `${String(value)}k`,
+      categoryHeading: "Month of year",
+    };
+    const { rerender } = render(<ColumnChart {...chart} />);
 
     fireEvent.focus(screen.getByRole("button", { name: "June: In 0" }));
     expect(screen.getByRole("tooltip")).toHaveTextContent("June");
-    await userEvent.click(screen.getByText("Show as a table"));
+    rerender(<ColumnChart {...chart} showsTable />);
     expect(screen.getByRole("columnheader", { name: "Month of year" })).toBeInTheDocument();
     expect(screen.getByRole("row", { name: "June 0" })).toBeInTheDocument();
   });

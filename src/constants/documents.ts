@@ -107,7 +107,6 @@ export const BIN_REASON_MAX_LENGTH = 200;
 export const BIN_TEXT = {
   delete: "Delete",
   deleteFor: (name: string) => `Delete ${name}`,
-  deleteFile: (name: string) => `Delete ${name}`,
   deleteTitle: (name: string) => `Delete ${name}?`,
   binBody:
     "It goes to the Bin, and nobody can open or use it. An Admin will check it, then delete it for good or restore it. You can take it out until then.",
@@ -121,9 +120,13 @@ export const BIN_TEXT = {
   putInBinDone: "In the Bin. An Admin will delete it for good or restore it.",
   adminDocumentBody: (student: string) =>
     `This Document and all its files are removed from ${student}'s documents for good. As an Admin, it doesn't go to the Bin.`,
-  adminFileBody: (student: string) =>
-    `This file is removed from ${student}'s documents for good. As an Admin, it doesn't go to the Bin.`,
+  adminChosenBody: (student: string) =>
+    `The chosen files are removed from ${student}'s documents for good. As an Admin, it doesn't go to the Bin.`,
+  whichFiles: "Which files?",
+  whichFilesHint: "All of them deletes the whole Document. Untick the ones to keep.",
+  tickAFile: "Tick at least one file to delete.",
   deleted: (name: string) => `${name} deleted`,
+  filesDeleted: (count: number) => `${String(count)} files deleted`,
   inTheBin: "In the bin",
   inTheBinOf: (type: string) => `${type} in the Bin`,
   note: (reason: string, by: string, at: string) => `${reason}. ${by}, ${at}`,
@@ -159,7 +162,6 @@ export const BIN_TEXT = {
   deleteForGoodTitle: (name: string) => `Delete ${name} for good?`,
   deleteForGoodBody: "The file is removed from storage. This can't be undone.",
   deletedForGood: (name: string) => `${name} deleted for good`,
-  waitingOnHome: "Documents in the Bin",
 } as const;
 
 /** Each Verification as a linked Document shows it, in the checklist's words. */
@@ -193,6 +195,42 @@ export const STUDENT_DOCUMENT_FILE_EXTENSIONS = [
   ...DOCUMENT_FILE_EXTENSIONS,
   ZIP_EXTENSION,
 ] as const;
+
+/**
+ * Where one checklist document stands on the Documents page (UI revamp 12); values match the API,
+ * which uses the words of the page's counts ("missing", not the checklist's "not_received").
+ */
+export const PaperworkItemState = {
+  Rejected: "rejected",
+  Waiting: "waiting",
+  Missing: "missing",
+  Verified: "verified",
+} as const;
+export type PaperworkItemState = (typeof PaperworkItemState)[keyof typeof PaperworkItemState];
+
+/** The order of a row's pills: the ones that need work come first. */
+export const PAPERWORK_PILL_ORDER: readonly PaperworkItemState[] = [
+  PaperworkItemState.Rejected,
+  PaperworkItemState.Waiting,
+  PaperworkItemState.Missing,
+  PaperworkItemState.Verified,
+];
+
+/** The order of the key above the list (prototype `docPillKey`). */
+export const PAPERWORK_KEY_ORDER: readonly PaperworkItemState[] = [
+  PaperworkItemState.Verified,
+  PaperworkItemState.Waiting,
+  PaperworkItemState.Rejected,
+  PaperworkItemState.Missing,
+];
+
+/** Each state's short word (the key) and what a pill says to screen readers and on hover. */
+export const PAPERWORK_STATE_TEXT: Record<PaperworkItemState, { word: string; says: string }> = {
+  rejected: { word: "Rejected", says: "rejected, needs a new copy" },
+  waiting: { word: "To check", says: "received, waiting to be checked" },
+  missing: { word: "Not received", says: "not received yet" },
+  verified: { word: "Checked", says: "checked and correct" },
+};
 
 /** Whose Students the Documents page lists. */
 export const PaperworkScope = { Mine: "mine", Everyone: "everyone" } as const;
@@ -270,9 +308,10 @@ export const DOCUMENT_TEXT = {
   tileVerified: "Checked and correct",
   chipRejected: (count: number) => `${String(count)} rejected`,
   chipWaiting: (count: number) => `${String(count)} to check`,
-  chipMissing: (count: number) => `${String(count)} missing`,
-  chipVerified: (count: number) => `${String(count)} correct`,
-  doneOf: (done: number, total: number) => `${String(done)} of ${String(total)}`,
+  ofTotal: (total: number) => `of ${String(total)}`,
+  receivedWord: "received",
+  pillsFor: (student: string) => `${student}'s documents`,
+  pillKey: "What the colours mean",
   openChecklist: "Open checklist",
   openChecklistFor: (student: string) => `Open checklist for ${student}`,
   dialogTitle: (student: string) => `Documents for ${student}`,

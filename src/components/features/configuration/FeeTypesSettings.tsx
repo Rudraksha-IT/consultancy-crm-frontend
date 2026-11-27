@@ -17,6 +17,7 @@ import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/useToast";
 import { FEE_TYPE_TEXT as TEXT } from "@/constants/feeTypes";
 import { LABELS } from "@/constants/messages";
+import { useFocusAfterChange } from "@/hooks/useFocusAfterChange";
 import { feeTypeRefusal, InvalidFieldsError, type FeeType } from "@/lib/api";
 
 import { useFeeTypes, type FeeTypes } from "./useFeeTypes";
@@ -47,6 +48,7 @@ function Loaded({ types, feeTypes }: { types: readonly FeeType[]; feeTypes: FeeT
   const [renaming, setRenaming] = useState<FeeType | null>(null);
   const [deleting, setDeleting] = useState<FeeType | null>(null);
   const [failure, setFailure] = useState<string | null>(null);
+  const focusAfterChange = useFocusAfterChange();
 
   async function run(action: () => Promise<string>): Promise<void> {
     setFailure(null);
@@ -68,7 +70,7 @@ function Loaded({ types, feeTypes }: { types: readonly FeeType[]; feeTypes: FeeT
     setFailure(null);
     feeTypes.move(feeType, by).then(
       () => {
-        keepFocusOnMoved(feeType.name, by);
+        focusAfterChange(() => movedArrow(feeType.name, by));
       },
       (error: unknown) => {
         setFailure(feeTypeRefusal(error) ?? TEXT.saveFailed);
@@ -352,20 +354,16 @@ function RenameDialog({ feeType, onRename, onClose }: RenameDialogProps) {
  * After a move the cursor stays on the row's arrow; at the top or bottom of the list, where that
  * arrow is turned off, it goes to the other one (design system rule 8: no jumping).
  */
-function keepFocusOnMoved(name: string, by: -1 | 1): void {
+function movedArrow(name: string, by: -1 | 1): HTMLElement | null {
   const labels =
     by === -1 ? [TEXT.moveUp(name), TEXT.moveDown(name)] : [TEXT.moveDown(name), TEXT.moveUp(name)];
-  requestAnimationFrame(() => {
-    for (const label of labels) {
-      const button = document.querySelector<HTMLButtonElement>(
-        `button[aria-label="${CSS.escape(label)}"]:not(:disabled)`,
-      );
-      if (button !== null) {
-        button.focus({ preventScroll: true });
-        return;
-      }
-    }
-  });
+  for (const label of labels) {
+    const button = document.querySelector<HTMLButtonElement>(
+      `button[aria-label="${CSS.escape(label)}"]:not(:disabled)`,
+    );
+    if (button !== null) return button;
+  }
+  return null;
 }
 
 /** The server's words for a refused name, or a general failure. */

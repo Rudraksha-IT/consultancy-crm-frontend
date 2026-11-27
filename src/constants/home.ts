@@ -1,5 +1,6 @@
 /** How many Students each Home's progress list shows (spec 22a). */
-export const ADMIN_PROGRESS_LIMIT = 6;
+/** Five, so the Admin's two columns stay about as tall as each other (UI revamp 07). */
+export const ADMIN_PROGRESS_LIMIT = 5;
 export const COUNSELLOR_PROGRESS_LIMIT = 10;
 /** How many tasks due soon the Counsellor's and Admin's Homes list; Teachers see them grouped. */
 export const TASKS_SHOWN = 4;
@@ -7,10 +8,13 @@ export const TASKS_SHOWN = 4;
 export const HOME_LIST_SHOWN = 3;
 /** How many new visitors without a counsellor the Admin's Home lists. */
 export const UNASSIGNED_SHOWN = HOME_LIST_SHOWN;
-/** How many High priority Students Home shows as boxes in one row. */
+/** How many High priority Students Home shows. */
 export const HIGH_PRIORITY_SHOWN = 4;
 
 const students = (count: number) => (count === 1 ? "1 Student" : `${String(count)} Students`);
+
+/** The words of a "Waiting for you" card, after its count: one, or more. */
+const counted = (one: string, many: string) => (count: number) => (count === 1 ? one : many);
 
 export const HOME_TEXT = {
   greeting: (firstName: string) => `Namaste, ${firstName}`,
@@ -20,10 +24,6 @@ export const HOME_TEXT = {
     (beside === null ? "" : ` (${beside})`),
   yourProgress: "Your Students' progress",
   everyonesProgress: "Students' progress",
-  allStudents: "All Students",
-  seeAllStudents: "See all Students",
-  showingFurthest: (shown: number, count: number) =>
-    `Showing the ${String(shown)} furthest along out of ${String(count)}.`,
   // Finished Students (Visa granted) are left out, so "yet" would be wrong (list tidy-ups 14).
   noStudents: "No Students on their way right now.",
   noCounsellorYet: "no counsellor yet",
@@ -33,7 +33,8 @@ export const HOME_TEXT = {
   pipeline: "Pipeline",
   seeCharts: "See charts",
   pipelineFailed: "We couldn't load the pipeline. Please try again.",
-  unassignedTitle: "New visitors without a counsellor",
+  // Short enough for one line beside "See all" in the desk column and on a phone.
+  unassignedTitle: "New visitors to assign",
   unassignedFailed: "We couldn't load the new visitors. Please try again.",
   everyoneHasCounsellor: "Everyone has a counsellor.",
   wants: (country: string) => `Wants ${country}`,
@@ -46,13 +47,26 @@ export const HOME_TEXT = {
   whenLabels: { overdue: "Overdue", today: "Today", soon: "Next two days" },
   groupTitle: (label: string, count: number) => `${label} ${String(count)}`,
   studentsCount: students,
-  waitingOnYou: "Waiting on you",
-  documentsWaiting: "Documents waiting to be checked",
-  transfersWaiting: "Transfer requests waiting for you",
-  appointmentsSoon: "Visa appointments in the next 7 days",
+  waitingForYou: "Waiting for you",
+  /** What each card says after its count (UI revamp 07). */
+  waiting: {
+    documents: counted("document to check", "documents to check"),
+    workFromHome: counted("work from home request", "work from home requests"),
+    transfers: counted("transfer request", "transfer requests"),
+    inBin: counted("document in the Bin", "documents in the Bin"),
+    appointments: counted(
+      "visa appointment in the next 7 days",
+      "visa appointments in the next 7 days",
+    ),
+  },
+  /** A card's whole phrase, its name for screen readers: "2 documents to check". */
+  waitingCard: (count: number, what: string) => `${String(count)} ${what}`,
+  appointmentsJoin: " · ",
+  inProgress: (count: number) => `${students(count)} in progress`,
+  lostLine: (count: number) => `${String(count)} Lost, not in progress`,
   appointmentLine: (student: string, appointment: string, when: string) =>
     `${student}, ${appointment} ${when}`,
-  andMore: (count: number) => `and ${String(count)} more`,
+  andMore: (count: number) => ` and ${String(count)} more`,
   seeAllCount: (count: number) => `See all (${String(count)})`,
   highPriorityTitle: "High priority Students",
   counsellorLine: (name: string) => `Counsellor: ${name}`,

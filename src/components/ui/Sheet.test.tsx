@@ -40,8 +40,9 @@ describe("a dialog on a phone is a bottom sheet", () => {
       "max-phone:max-w-none",
       "max-phone:rounded-t-sheet",
       "max-phone:rounded-b-none",
-      "max-phone:animate-sheet-up",
     );
+    // How it rises is the stylesheet's (Movement, ticket 22): the panel is marked for it.
+    expect(panel()).toHaveAttribute("data-panel");
   });
 
   it("has a grab handle, hidden from screen readers and above 640 px", () => {
@@ -55,18 +56,14 @@ describe("a dialog on a phone is a bottom sheet", () => {
   it("scrolls its content while the header and the buttons stay in view", () => {
     showDialog();
 
-    expect(panel()).toHaveClass(
-      "max-phone:flex",
-      "max-phone:flex-col",
-      "max-phone:overflow-hidden",
-    );
+    expect(panel()).toHaveClass("flex", "flex-col", "overflow-hidden");
     const body = screen.getByRole("textbox").closest("[data-dialog-body]");
-    expect(body).toHaveClass("max-phone:min-h-0", "max-phone:overflow-y-auto");
+    expect(body).toHaveClass("min-h-0", "overflow-y-auto");
     expect(screen.getByRole("heading", { name: "Add a visitor" }).closest("header")).toHaveClass(
-      "max-phone:flex-none",
+      "flex-none",
     );
     const footer = screen.getByRole("button", { name: "Save visit" }).closest("footer");
-    expect(footer).toHaveClass("max-phone:flex-none", "max-phone:pb-sheet-safe");
+    expect(footer).toHaveClass("flex-none", "max-phone:pb-sheet-safe");
   });
 
   it("shares the width between the buttons", () => {

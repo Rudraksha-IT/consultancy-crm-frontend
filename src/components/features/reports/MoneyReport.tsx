@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 
 import { BarList } from "@/components/ui/BarList";
+import { ChartSection } from "@/components/ui/ChartSection";
 import { ColumnChart } from "@/components/ui/ColumnChart";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { FigureTile } from "@/components/ui/FigureTile";
@@ -59,8 +60,8 @@ function MoneyCharts({ report, months }: { report: MoneyAnswer; months: MonthCou
           {...(isShort && { tone: "bad" as const })}
         />
       </TileGrid>
-      <Section title={TEXT.eachMonth}>
-        <Panel>
+      <ChartSection title={TEXT.eachMonth}>
+        {(showsTable) => (
           <ColumnChart
             title={TEXT.eachMonth}
             categories={monthCategories(rows.map((row) => row.month))}
@@ -73,9 +74,10 @@ function MoneyCharts({ report, months }: { report: MoneyAnswer; months: MonthCou
               },
               { name: TEXT.moneyOut, values: rows.map((row) => row.moneyOut) },
             ]}
+            showsTable={showsTable}
           />
-        </Panel>
-      </Section>
+        )}
+      </ChartSection>
       <div className="wide:grid-cols-2 grid items-start gap-8">
         <Section title={TEXT.cameFrom}>
           <Panel>

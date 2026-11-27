@@ -7,8 +7,6 @@ export const INBOX_CHECK_MS = 30_000;
 /** Everything the Inbox says on screen. Glossary: Inbox, never chat, messages or DMs. */
 export const INBOX_TEXT = {
   title: "Inbox",
-  intro:
-    "Messages between you and one other person in the office. Only the two of you can read them.",
   platformAdmin: "Staff messages are private to the two people. Platform Admins can't read them.",
   newMessage: "New message",
   newMessageTitle: "New message",
@@ -38,8 +36,6 @@ export const INBOX_TEXT = {
   loadFailed: "The Inbox couldn't be loaded. Try again in a moment.",
   conversationFailed: "This conversation couldn't be loaded. Try again in a moment.",
   notFound: "This person isn't in the office.",
-  footnote:
-    "New messages show within about 30 seconds while this page is open. Plain text only, up to 2,000 characters. Messages can't be edited or deleted.",
   unreadCount: (count: number) =>
     count === 1
       ? "1 conversation with unread messages"

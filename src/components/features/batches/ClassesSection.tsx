@@ -98,28 +98,31 @@ function ClassButtons({ state, classes, onPeek }: ClassButtonsProps) {
     );
   }
   return (
-    <div className="tablet:grid-cols-2 wide:grid-cols-3 grid gap-4">
-      {classes.map((batch) => (
-        <button
-          key={batch.id}
-          type="button"
-          onClick={() => {
-            onPeek(batch);
-          }}
-          className="rounded-panel border-rule bg-paper shadow-raise hover:border-accent grid cursor-pointer gap-2 border p-5 text-left"
-        >
-          <span className="text-card-title text-ink">{batch.name}</span>
-          <span className="text-secondary text-ink-2 inline-flex items-center gap-2">
-            <Icon name="clock" size="sm" />
-            {batch.timeSlot}
-          </span>
-          <span className="text-secondary text-ink-2 inline-flex items-center gap-2">
-            <Icon name="users" size="sm" />
-            {BATCH_TEXT.studentCount(batch.studentCount)}
-          </span>
-        </button>
-      ))}
-    </div>
+    <Panel>
+      {/* One sheet; the first row's top line falls outside it and is cut off. */}
+      <div className="tablet:grid-cols-2 wide:grid-cols-3 -mt-px grid">
+        {classes.map((batch) => (
+          <button
+            key={batch.id}
+            type="button"
+            onClick={() => {
+              onPeek(batch);
+            }}
+            className="border-rule hover:bg-fill px-gutter grid cursor-pointer gap-2 border-t py-4 text-left"
+          >
+            <span className="text-card-title text-ink">{batch.name}</span>
+            <span className="text-secondary text-ink-2 inline-flex items-center gap-2">
+              <Icon name="clock" size="sm" />
+              {batch.timeSlot}
+            </span>
+            <span className="text-secondary text-ink-2 inline-flex items-center gap-2">
+              <Icon name="users" size="sm" />
+              {BATCH_TEXT.studentCount(batch.studentCount)}
+            </span>
+          </button>
+        ))}
+      </div>
+    </Panel>
   );
 }
 
@@ -141,7 +144,7 @@ function EnrolledTable({ state, onPeek }: EnrolledTableProps) {
       {students.length === 0 ? (
         <EmptyState>{BATCH_TEXT.nobodyEnrolled}</EmptyState>
       ) : (
-        <table className="text-body w-full border-collapse">
+        <table data-stacks="" className="text-body w-full border-collapse">
           <thead className="max-tablet:sr-only">
             <tr>
               <th scope="col" className={HEAD}>
@@ -161,7 +164,7 @@ function EnrolledTable({ state, onPeek }: EnrolledTableProps) {
                 <td className={CELL}>
                   <Link
                     href={ROUTES.student(student.id)}
-                    className="text-accent font-semibold hover:underline"
+                    className="text-accent min-h-control inline-flex items-center font-semibold hover:underline"
                   >
                     {student.name}
                   </Link>

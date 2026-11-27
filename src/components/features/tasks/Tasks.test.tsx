@@ -7,12 +7,13 @@ import { StudentProfilePage } from "@/components/features/students/profile/Stude
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { SESSION_TEXT } from "@/constants/session";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { PROFILE } from "@/test/studentProfile";
 
 import { TasksPage } from "./TasksPage";
 import { consultancySummary } from "@/test/consultancy";
+import { fakeMatchMedia } from "@/test/matchMedia";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 import { testHost } from "@/test/hosts";
 import { uid } from "@/test/ids";
 
@@ -23,7 +24,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const DESK: StaffContext = {
@@ -329,6 +329,87 @@ describe("Priority and Only me on the list", () => {
         .map((option) => option.textContent),
     ).toEqual(["Any", "High", "Normal", "Low"]);
     expect(filter).toHaveValue("");
+  });
+});
+
+describe("Priority on a phone (UI revamp ticket 25)", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+  });
+
+  const pill = () => screen.findByRole("button", { name: "Priority: Any" });
+
+  it("is a button that opens a menu, never a box an iPhone zooms in on", async () => {
+    backend(on("GET", MINE, pageOf([TASK])));
+    renderTasks();
+
+    const button = await pill();
+    expect(screen.queryByRole("combobox", { name: "Priority" })).toBeNull();
+    expect(button).toHaveClass("min-h-control");
+    expect(button).toHaveTextContent("PriorityAny");
+    await userEvent.click(button);
+
+    const menu = screen.getByRole("menu", { name: "Priority" });
+    expect(
+      within(menu)
+        .getAllByRole("menuitemradio")
+        .map((item) => item.textContent),
+    ).toEqual(["Any", "High", "Normal", "Low"]);
+    expect(within(menu).getByRole("menuitemradio", { name: "Any" })).toBeChecked();
+  });
+
+  it("filters by the Priority chosen, and the cursor is back on the pill", async () => {
+    const fetchFn = backend(
+      on("GET", `${MINE}&priority=high`, pageOf([])),
+      on("GET", MINE, pageOf([TASK])),
+    );
+    renderTasks();
+    await userEvent.click(await pill());
+
+    await userEvent.click(screen.getByRole("menuitemradio", { name: "High" }));
+
+    expect(await screen.findByText("No tasks with this priority.")).toBeInTheDocument();
+    expect(callsTo(fetchFn, "GET", `${MINE}&priority=high`)).toHaveLength(1);
+    expect(screen.queryByRole("menu", { name: "Priority" })).toBeNull();
+    const button = screen.getByRole("button", { name: "Priority: High" });
+    expect(button).toHaveFocus();
+    await userEvent.click(button);
+    expect(screen.getByRole("menuitemradio", { name: "High" })).toBeChecked();
+    expect(screen.getByRole("menuitemradio", { name: "Any" })).not.toBeChecked();
+  });
+
+  it("works from the keyboard and closes with Escape", async () => {
+    backend(on("GET", MINE, pageOf([TASK])));
+    renderTasks();
+    const button = await pill();
+
+    button.focus();
+    await userEvent.keyboard("{Enter}");
+    expect(screen.getByRole("menuitemradio", { name: "Any" })).toHaveFocus();
+    await userEvent.keyboard("{ArrowDown}");
+    expect(screen.getByRole("menuitemradio", { name: "High" })).toHaveFocus();
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.queryByRole("menu", { name: "Priority" })).toBeNull();
+    expect(button).toHaveFocus();
+  });
+
+  it("closes on a press outside it, changing nothing", async () => {
+    const fetchFn = backend(on("GET", MINE, pageOf([TASK])));
+    renderTasks();
+    await userEvent.click(await pill());
+
+    await userEvent.click(screen.getByRole("heading", { level: 1, name: "Tasks" }));
+
+    expect(screen.queryByRole("menu", { name: "Priority" })).toBeNull();
+    expect(callsTo(fetchFn, "GET", `${MINE}&priority=high`)).toHaveLength(0);
+    expect(screen.getByRole("button", { name: "Priority: Any" })).toBeInTheDocument();
   });
 });
 

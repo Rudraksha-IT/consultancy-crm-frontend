@@ -351,22 +351,19 @@ describe("Platform Settings: my account: two-step login (issue 61)", () => {
   });
 });
 
-describe.each(THEME_CASES)(
-  "Platform Settings: my account in the $name Theme",
-  ({ config, mode }) => {
-    beforeEach(() => {
-      applyThemeCase(config, mode);
-    });
-    afterEach(resetTheme);
+describe.each(THEME_CASES)("Platform Settings: my account in the $name Theme", ({ mode }) => {
+  beforeEach(() => {
+    applyThemeCase(mode);
+  });
+  afterEach(resetTheme);
 
-    it("renders both sections with labelled fields", async () => {
-      backend(on("GET", TWO_FACTOR_PATH, ON));
-      renderPage();
+  it("renders both sections with labelled fields", async () => {
+    backend(on("GET", TWO_FACTOR_PATH, ON));
+    renderPage();
 
-      expect(await within(securitySection()).findByText("On")).toBeInTheDocument();
-      expect(detailsSection()).toBeInTheDocument();
-      expect(passwordSection()).toBeInTheDocument();
-      expect(within(passwordSection()).getByLabelText("Current password")).toBeInTheDocument();
-    });
-  },
-);
+    expect(await within(securitySection()).findByText("On")).toBeInTheDocument();
+    expect(detailsSection()).toBeInTheDocument();
+    expect(passwordSection()).toBeInTheDocument();
+    expect(within(passwordSection()).getByLabelText("Current password")).toBeInTheDocument();
+  });
+});

@@ -5,7 +5,7 @@ import { LABELS } from "@/constants/messages";
 import { adToBs, BS_MONTHS, BS_YEARS, bsMonthDays, bsToAd, formatOtherCalendar } from "@/lib/dates";
 
 import { Button } from "./Button";
-import { CONTROL_CLASSES, Field, type FieldProps } from "./Field";
+import { CONTROL_CLASSES, Field, LABEL_CLASSES, type FieldProps } from "./Field";
 import { describeField, FieldNote, type FieldDescription } from "./FieldNote";
 
 /** AD dates ("YYYY-MM-DD"), whatever the calendar shown. */
@@ -287,7 +287,7 @@ type BsLegendProps = { label: string; isOptional: boolean; isHidden: boolean };
 /** The field's label, naming the group of three, like `Field`'s label does for one control. */
 function BsLegend({ label, isOptional, isHidden }: BsLegendProps) {
   return (
-    <legend className={isHidden ? "sr-only" : "text-secondary text-ink mb-2 font-semibold"}>
+    <legend className={isHidden ? "sr-only" : `${LABEL_CLASSES} mb-2`}>
       {isOptional ? `${label} ` : label}
       {isOptional && <span className="text-ink-2 font-normal">{LABELS.optional}</span>}
     </legend>

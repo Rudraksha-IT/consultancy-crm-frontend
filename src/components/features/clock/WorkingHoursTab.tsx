@@ -31,7 +31,7 @@ import { describeFilters } from "@/lib/exports";
 import { formatMonth, todayIso } from "@/lib/dates";
 
 import { StaffMonthDialog } from "./CorrectDayDialogs";
-import { MonthPicker } from "./MonthPicker";
+import { MonthStepper } from "./MonthStepper";
 
 const MONTH_LENGTH = 7;
 
@@ -105,7 +105,7 @@ function TeamNowPanel({ team }: { team: TeamNow }) {
   ] as const;
   return (
     <Panel>
-      <div className="border-rule text-secondary text-ink-2 flex flex-wrap items-center justify-between gap-3 border-b px-6 py-4">
+      <div className="border-rule text-secondary text-ink-2 px-gutter flex flex-wrap items-center justify-between gap-3 border-b py-4">
         <span>
           <b className="text-ink">{TEXT.inNowCount(team.clockedInCount, team.people.length)}</b>
           {TEXT.areClockedIn}
@@ -140,7 +140,7 @@ function PeopleGroup({
 }) {
   const headingId = useId();
   return (
-    <div className="grid min-w-0 content-start gap-3 px-6 py-5">
+    <div className="px-gutter grid min-w-0 content-start gap-3 py-5">
       <h3 id={headingId} className="text-secondary flex items-center gap-2 font-semibold">
         <span
           aria-hidden="true"
@@ -200,8 +200,8 @@ function ByMonth({ month, onMonth, version, onOpen }: ByMonthProps) {
   const monthName = formatMonth(month);
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <MonthPicker value={month} onChange={onMonth} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <MonthStepper value={month} onChange={onMonth} />
         <ExportButton
           list="clock_in"
           count={state.status === "loaded" ? state.data.rows.length : null}
@@ -220,7 +220,12 @@ function ByMonth({ month, onMonth, version, onOpen }: ByMonthProps) {
 
 const HEAD = "text-small text-ink-2 bg-fill px-5 py-3 font-semibold";
 const CELL = "px-5 py-4 align-middle max-tablet:p-0";
-const NUMBER = "tabular-nums tablet:text-right";
+/**
+ * A figure: a right-aligned column above 760; below it a small line with its name at the left
+ * and the figure at the right, two to a row, so a person's month stays short (owner, 2026-11-27).
+ */
+const NUMBER =
+  "tabular-nums tablet:text-right max-tablet:flex max-tablet:items-center max-tablet:justify-between max-tablet:gap-2 max-tablet:text-small";
 
 function TeamMonthTable({
   team,
@@ -233,7 +238,11 @@ function TeamMonthTable({
 }) {
   return (
     <Panel>
-      <table className="text-body w-full border-collapse" aria-label={EXPORT_LIST_LABELS.clock_in}>
+      <table
+        data-stacks=""
+        className="text-body w-full border-collapse"
+        aria-label={EXPORT_LIST_LABELS.clock_in}
+      >
         <thead className="max-tablet:sr-only">
           <tr>
             <th scope="col" className={`${HEAD} text-left`}>
@@ -266,8 +275,8 @@ function TeamRow({ row, onOpen }: { row: TeamMonthRow; onOpen: (person: Person) 
   const { staff } = row;
   const average = row.daysWorked === 0 ? "—" : durationText(row.minutes / row.daysWorked);
   return (
-    <tr className="max-tablet:grid max-tablet:gap-2 max-tablet:p-5">
-      <td className={CELL}>
+    <tr className="max-tablet:grid max-tablet:grid-cols-2 max-tablet:gap-x-6 max-tablet:gap-y-1 max-tablet:px-gutter max-tablet:py-3">
+      <td className={`${CELL} max-tablet:mb-1 max-tablet:min-w-0`}>
         <div className="font-semibold break-words">
           {staff.name}
           {staff.hasLeft && <span className="text-ink-3 font-normal">{` ${TEXT.hasLeft}`}</span>}
@@ -279,7 +288,9 @@ function TeamRow({ row, onOpen }: { row: TeamMonthRow; onOpen: (person: Person) 
       <NumberCell label={TEXT.averageDay} value={average} />
       <CountCell label={TEXT.shortDays} count={row.shortDays} />
       <CountCell label={TEXT.noClockOut} count={row.missingClockOuts} />
-      <td className={`${CELL} tablet:text-right`}>
+      <td
+        className={`${CELL} tablet:text-right max-tablet:col-start-2 max-tablet:row-start-1 max-tablet:justify-self-end`}
+      >
         <Button
           size="sm"
           onClick={() => {
@@ -298,7 +309,7 @@ function TeamRow({ row, onOpen }: { row: TeamMonthRow; onOpen: (person: Person) 
 function NumberCell({ label, value }: { label: string; value: string }) {
   return (
     <td className={`${CELL} ${NUMBER}`}>
-      <span className="text-ink-2 tablet:sr-only">{`${label}: `}</span>
+      <span className="text-ink-2 tablet:sr-only">{label}</span>
       {value}
     </td>
   );
@@ -307,7 +318,7 @@ function NumberCell({ label, value }: { label: string; value: string }) {
 function CountCell({ label, count }: { label: string; count: number }) {
   return (
     <td className={`${CELL} ${NUMBER}`}>
-      <span className="text-ink-2 tablet:sr-only">{`${label}: `}</span>
+      <span className="text-ink-2 tablet:sr-only">{label}</span>
       {count > 0 ? <Chip tone="warn">{String(count)}</Chip> : <span className="text-ink-3">0</span>}
     </td>
   );

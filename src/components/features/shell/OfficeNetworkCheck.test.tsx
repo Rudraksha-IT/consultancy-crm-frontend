@@ -1,5 +1,4 @@
 import { uid } from "@/test/ids";
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
@@ -38,12 +37,6 @@ const ADMIN_CONTEXT = {
   modules: ["students", "tasks", "configuration", "clock_in"],
   date_display: "AD",
   support_access: null,
-  theme: {
-    page: "stone",
-    sidebar: TEST_COLOURS.white,
-    accent: TEST_COLOURS.emerald,
-    dark: { base: "soft", sidebar: "darker", accent: "auto" },
-  },
 };
 
 type Current = { address: string | null; suggested_network: string | null; covered: boolean };
@@ -143,7 +136,10 @@ describe("the Admin's office-network dialog (first live fixes, ticket 03)", () =
       );
       expect(within(dialog).getByRole("button", { name: "Add this network" })).toBeVisible();
       // The safe choice has focus first.
-      expect(within(dialog).getByRole("button", { name: "Not now" })).toHaveFocus();
+      // The popup places the cursor just after it is drawn.
+      await waitFor(() => {
+        expect(within(dialog).getByRole("button", { name: "Not now" })).toHaveFocus();
+      });
       expect(dialog).toHaveAttribute("aria-modal", "true");
     });
 
@@ -312,7 +308,10 @@ describe("the Admin's office-network dialog (first live fixes, ticket 03)", () =
       fakeBackend();
       await renderFrame();
       const dialog = await screen.findByRole("dialog", { name: TITLE });
-      expect(within(dialog).getByRole("button", { name: "Not now" })).toHaveFocus();
+      // The popup places the cursor just after it is drawn.
+      await waitFor(() => {
+        expect(within(dialog).getByRole("button", { name: "Not now" })).toHaveFocus();
+      });
 
       await userEvent.keyboard("{Escape}");
 

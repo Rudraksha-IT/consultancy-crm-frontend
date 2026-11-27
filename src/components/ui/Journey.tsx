@@ -23,27 +23,83 @@ type JourneyProps = {
   isMoving?: boolean;
   /** Shown above the Stages, e.g. the ⓘ for a Student who was Lost before. */
   info?: ReactNode;
+  /**
+   * It is a part of a sheet that holds more (a Student's page, UI revamp 11), so it draws no
+   * sheet of its own.
+   */
+  isOnSheet?: boolean;
 };
 
-const STOP_CLASSES: Record<StopState, string> = {
-  done: "border-accent bg-accent text-accent-ink",
-  current: "border-accent bg-paper ring-5 ring-tint",
-  next: "border-rule-2 bg-paper",
-};
+/** A sheet of its own, unless it sits on one. */
+function ownSheet(isOnSheet: boolean | undefined): string {
+  return isOnSheet === true ? "" : "rounded-panel border-sheet-rule bg-paper shadow-raise border";
+}
 
+/**
+ * The steps are the thread's beads (ticket 21): each Stage a shade deeper, Lead to Visa, light
+ * green to dark green. A done step is filled in its shade (the tick dark on the lighter shades,
+ * `accent-ink` on the two deepest), the
+ * current one is ringed in its shade, and the line from a done step runs into the next shade.
+ */
+const BEADS = [
+  {
+    done: "border-bead-1 bg-bead-1 text-ink",
+    current: "border-bead-1 bg-paper ring-5 ring-bead-1/25",
+    line: "before:from-bead-1 before:to-bead-2 before:bg-linear-to-r",
+  },
+  {
+    done: "border-bead-2 bg-bead-2 text-ink",
+    current: "border-bead-2 bg-paper ring-5 ring-bead-2/25",
+    line: "before:from-bead-2 before:to-bead-3 before:bg-linear-to-r",
+  },
+  {
+    done: "border-bead-3 bg-bead-3 text-bead-3-ink",
+    current: "border-bead-3 bg-paper ring-5 ring-bead-3/25",
+    line: "before:from-bead-3 before:to-bead-4 before:bg-linear-to-r",
+  },
+  {
+    done: "border-bead-4 bg-bead-4 text-accent-ink",
+    current: "border-bead-4 bg-paper ring-5 ring-bead-4/25",
+    line: "before:from-bead-4 before:to-bead-5 before:bg-linear-to-r",
+  },
+  {
+    done: "border-bead-5 bg-bead-5 text-accent-ink",
+    current: "border-bead-5 bg-paper ring-5 ring-bead-5/25",
+    line: "",
+  },
+] as const;
+const NEXT_STOP = "border-rule-2 bg-paper";
+
+/** The line running on from a done step, into the next Stage's shade. */
+function lineClasses(index: number, state: StopState): string {
+  return state === "done" ? (BEADS[index]?.line ?? "") : "";
+}
+
+function stopClasses(index: number, state: StopState): string {
+  if (state === "next") return NEXT_STOP;
+  return BEADS[index]?.[state] ?? NEXT_STOP;
+}
+
+/**
+ * On a phone the names stand alone, with no dots (owner, 2026-11-27): every name keeps room for
+ * a line under it, and only the current Stage's is drawn.
+ */
+const PHONE_NAME = "max-phone:border-b-2 max-phone:pb-0.5";
 const NAME_CLASSES: Record<StopState, string> = {
-  done: "text-ink-2 font-medium",
-  current: "text-ink font-bold",
-  next: "text-ink-3 font-medium",
+  done: "text-ink-2 font-medium max-phone:border-transparent",
+  current: "text-ink font-semibold max-phone:border-good",
+  next: "text-ink-3 font-medium max-phone:border-transparent",
 };
 
 /**
  * A Student's Stage journey: Lead → Counselling → Applying → Offer → Visa; a granted Visa ticks
  * the last step too. A Lost Student's journey is faded with nothing marked. It runs across: above
- * 640 at full size, scrolling inside its panel if it must; at 640 and below as a compact stepper,
- * five dots in a row with the names small under them (design system: Journey).
+ * 640 at full size, scrolling inside its panel if it must; at 640 and below as the five names in
+ * a row, small, with no dots: the current Stage in bold with a line under it (design system:
+ * Journey).
  */
-export function Journey({ stage, nextStep, isDone, onMoveTo, isMoving, info }: JourneyProps) {
+export function Journey(props: JourneyProps) {
+  const { stage, nextStep, isDone, onMoveTo, isMoving, info, isOnSheet } = props;
   const isLost = stage === Stage.Lost;
   const moveTo = MANUAL_STAGES.includes(stage) ? onMoveTo : undefined;
   const at = JOURNEY_STAGES.findIndex((step) => step === stage);
@@ -51,10 +107,14 @@ export function Journey({ stage, nextStep, isDone, onMoveTo, isMoving, info }: J
   return (
     <div
       data-lost={isLost}
-      className="rounded-panel border-rule bg-paper shadow-raise phone:px-6 phone:pt-7 phone:pb-6 max-phone:px-3 max-phone:pt-4 max-phone:pb-3.5 min-w-0 border p-5"
+      className={clsx(
+        "phone:px-6 phone:pt-7 phone:pb-6 max-phone:px-gutter max-phone:pt-4 max-phone:pb-3.5 min-w-0 p-5",
+        ownSheet(isOnSheet),
+      )}
     >
       {info !== undefined && <div className="-mt-2 mb-2 flex items-center gap-1.5">{info}</div>}
-      <div className="phone:overflow-x-auto">
+      {/* A box that scrolls sideways also cuts what pokes out above: room for the bead's ring. */}
+      <div className="phone:-m-2 phone:overflow-x-auto phone:p-2">
         <ol
           aria-label={LABELS.stageIs(STAGE_LABELS[stage])}
           className={clsx(
@@ -67,6 +127,7 @@ export function Journey({ stage, nextStep, isDone, onMoveTo, isMoving, info }: J
             <Stop
               key={step}
               step={step}
+              index={index}
               state={isDone === true ? "done" : stopState(index, at, isLost)}
               isLast={index === JOURNEY_STAGES.length - 1}
               onMove={step === stage || !MANUAL_STAGES.includes(step) ? undefined : moveTo}
@@ -89,6 +150,8 @@ function stopState(index: number, at: number, isLost: boolean): StopState {
 
 type StopProps = {
   step: Stage;
+  /** Where the Stage is on the journey, 0 (Lead) to 4 (Visa): it picks the bead's shade. */
+  index: number;
   state: StopState;
   /** Given, the Stage's name is a button that moves the Student there. */
   onMove: ((stage: Stage) => void) | undefined;
@@ -98,8 +161,8 @@ type StopProps = {
 };
 
 /**
- * A compact stepper on a phone: the stop centred over its small name, the line running from this
- * stop's centre to the next one's.
+ * On a phone: the small name centred in its fifth of the row. The stop and the line from it to
+ * the next one are hidden there.
  */
 const PHONE_STOP =
   "grid-cols-1 content-start items-start justify-items-center gap-1.5 text-center before:top-2.5 before:left-1/2 before:-right-1/2 before:h-0.75";
@@ -107,22 +170,22 @@ const PHONE_STOP =
 const ACROSS_STOP =
   "phone:content-start phone:items-start phone:justify-items-start phone:gap-3 phone:text-left phone:before:top-2.5 phone:before:bottom-auto phone:before:right-1 phone:before:left-5 phone:before:w-auto phone:before:h-0.75";
 
-function Stop({ step, state, onMove, isMoving, isLast }: StopProps) {
+function Stop({ step, index, state, onMove, isMoving, isLast }: StopProps) {
   return (
     <li
       data-state={state}
       className={clsx(
-        "before:bg-fill-2 relative grid before:absolute before:rounded-full",
+        "before:bg-fill-2 max-phone:before:hidden relative grid before:absolute before:rounded-full",
         PHONE_STOP,
         ACROSS_STOP,
-        state === "done" && "before:bg-accent",
+        lineClasses(index, state),
         isLast && "before:hidden",
       )}
     >
       <span
         className={clsx(
-          "relative z-10 grid size-5.5 place-items-center rounded-full border-3",
-          STOP_CLASSES[state],
+          "max-phone:hidden relative z-10 grid size-5.5 place-items-center rounded-full border-3",
+          stopClasses(index, state),
         )}
       >
         {state === "done" && <Icon name="check" size="sm" />}
@@ -131,6 +194,7 @@ function Stop({ step, state, onMove, isMoving, isLast }: StopProps) {
         <span
           className={clsx(
             "text-body max-phone:text-tiny max-phone:truncate max-w-full min-w-0",
+            PHONE_NAME,
             NAME_CLASSES[state],
           )}
         >

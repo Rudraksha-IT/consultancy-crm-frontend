@@ -2,28 +2,24 @@
 
 import { useRef, useState, type ReactNode, type SubmitEvent } from "react";
 
-import { ThemeEditor } from "@/components/features/theme/ThemeEditor";
-import { ThemePreview } from "@/components/features/theme/ThemePreview";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { Dialog } from "@/components/ui/Dialog";
 import { Tabs } from "@/components/ui/Tabs";
 import { TextField } from "@/components/ui/TextField";
 import { ADMIN_TEXT } from "@/constants/consultancyStatus";
-import { LABELS, MESSAGES } from "@/constants/messages";
+import { LABELS } from "@/constants/messages";
 import type { ConsultancyOverview } from "@/lib/api";
-import type { ThemeConfig } from "@/lib/theme";
 
 import { FeatureSwitchList } from "./FeaturesDialog";
 import { useAddAdmin } from "./useAddAdmin";
 import { useSaveFeatures, type FeatureSwitches } from "./useSaveFeatures";
 
-const PART = { features: "features", colours: "colours", admins: "admins" } as const;
+const PART = { features: "features", admins: "admins" } as const;
 type Part = (typeof PART)[keyof typeof PART];
 
 const PARTS = [
   { id: PART.features, label: LABELS.features },
-  { id: PART.colours, label: LABELS.colours },
   { id: PART.admins, label: LABELS.admins },
 ];
 
@@ -32,15 +28,13 @@ type ConfigurationDialogProps = {
   onClose: () => void;
   /** Store the switches; the part shows a problem if it fails. */
   onSaveFeatures: (switches: FeatureSwitches) => Promise<void>;
-  /** Store the colours; the part shows a problem if it fails. */
-  onSaveColours: (theme: ThemeConfig) => Promise<void>;
   /** An Admin was invited; gets their name for the toast. */
   onAdminAdded: (name: string) => void;
 };
 
 /**
- * One Consultancy's Configuration on the Platform (ticket 16): its Features, Colours and Admins as
- * three parts, each saved on its own. The popup stays open after a save, and what was typed in a
+ * One Consultancy's Configuration on the Platform (ticket 16): its Features and Admins as
+ * two parts, each saved on its own. The popup stays open after a save, and what was typed in a
  * part stays while another is open.
  */
 export function ConfigurationDialog(props: ConfigurationDialogProps) {
@@ -65,9 +59,6 @@ export function ConfigurationDialog(props: ConfigurationDialogProps) {
       >
         <Shown when={part === PART.features}>
           <FeaturesPart consultancy={consultancy} onSave={props.onSaveFeatures} />
-        </Shown>
-        <Shown when={part === PART.colours}>
-          <ColoursPart consultancy={consultancy} onSave={props.onSaveColours} />
         </Shown>
         <Shown when={part === PART.admins}>
           <AdminsPart consultancy={consultancy} onAdded={props.onAdminAdded} />
@@ -106,50 +97,6 @@ function FeaturesPart({ consultancy, onSave }: FeaturesPartProps) {
           }}
         >
           {LABELS.saveFeatures}
-        </Button>
-      </SaveRow>
-    </>
-  );
-}
-
-type ColoursPartProps = {
-  consultancy: ConsultancyOverview;
-  onSave: (theme: ThemeConfig) => Promise<void>;
-};
-
-/** The office's colours (its Theme): the editor and a live preview in light and dark. */
-function ColoursPart({ consultancy, onSave }: ColoursPartProps) {
-  const [draft, setDraft] = useState(consultancy.theme);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function save(): Promise<void> {
-    setIsSaving(true);
-    setError(null);
-    try {
-      await onSave(draft);
-    } catch {
-      setError(MESSAGES.saveColoursFailed);
-    }
-    setIsSaving(false);
-  }
-
-  return (
-    <>
-      <p className="text-small text-ink-2">{MESSAGES.coloursHelp}</p>
-      {error !== null && <Banner tone="problem">{error}</Banner>}
-      <ThemeEditor value={draft} onChange={setDraft} />
-      <ThemePreview theme={draft} />
-      <SaveRow>
-        <Button
-          variant="primary"
-          isLoading={isSaving}
-          loadingLabel={LABELS.saving}
-          onClick={() => {
-            void save();
-          }}
-        >
-          {LABELS.saveColours}
         </Button>
       </SaveRow>
     </>

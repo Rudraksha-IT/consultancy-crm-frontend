@@ -106,6 +106,18 @@ export async function sendWithoutBody(
   }
 }
 
+/** DELETE with a JSON body (several records at once), to an endpoint that answers with no content. */
+export async function deleteWithJson(
+  path: string,
+  body: unknown,
+  fetchFn: typeof fetch = fetch,
+): Promise<void> {
+  const response = await sendJson("DELETE", path, JSON.stringify(body), fetchFn);
+  if (!response.ok) {
+    throw await failure(path, response);
+  }
+}
+
 /** POST nothing and take the answer as a file (e.g. a ZIP download). */
 export async function postForBlob(path: string, fetchFn: typeof fetch = fetch): Promise<Blob> {
   const response = await sendJson("POST", path, null, fetchFn);

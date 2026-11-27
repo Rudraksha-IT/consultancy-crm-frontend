@@ -1,7 +1,8 @@
 "use client";
 
+import clsx from "clsx";
 import Link from "next/link";
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 
 import { EmailComposer } from "@/components/features/communication/EmailComposer";
 import { TakePaymentDialog } from "@/components/features/payments/TakePaymentDialog";
@@ -11,6 +12,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Menu, type MenuItem } from "@/components/ui/Menu";
+import { PHONE_LINE_BREAK } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/useToast";
 import { COMMUNICATION_TEXT } from "@/constants/communication";
 import { LABELS } from "@/constants/messages";
@@ -30,14 +32,19 @@ type ProfileHeaderProps = {
   profile: StudentProfile;
   /** A change was saved; History may have a new entry. */
   onSaved: (profile: StudentProfile) => void;
-  /** "Edit details" opens the Profile tab, where each section is edited on its own. */
+  /** The Stage steps, on the same sheet under the name and the actions (UI revamp 11). */
+  children: ReactNode;
 };
 
 type OpenDialog = "assign" | "transfer" | "lost" | "payment" | "message" | null;
 
-/** The way back to the list, the Student's name and contact line, and the actions on them. */
-export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
+/**
+ * The way back to the list, then who and where as one sheet (UI revamp 11): the Student's name
+ * and contact line, the actions on them, and under a thin line the Stage steps.
+ */
+export function ProfileHeader({ profile, onSaved, children }: ProfileHeaderProps) {
   const [open, setOpen] = useState<OpenDialog>(null);
+  const nameId = useId();
 
   return (
     <div className="grid gap-4">
@@ -48,30 +55,44 @@ export function ProfileHeader({ profile, onSaved }: ProfileHeaderProps) {
         <Icon name="left" size="sm" />
         {LABELS.allStudents}
       </Link>
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-5">
-        <div className="flex min-w-0 items-center gap-5">
-          <Avatar name={profile.name} size="lg" />
-          <div className="grid min-w-0 gap-1">
-            <h1 className="text-page-title-sm wide:text-page-title wrap-anywhere">
-              {profile.name}
-            </h1>
-            <div className="text-secondary text-ink-2 flex flex-wrap gap-x-5 gap-y-1">
-              <MetaItem icon="phone">
-                <span className="tabular-nums">{profile.phone}</span>
-              </MetaItem>
-              <MetaItem icon="plane">{COUNTRY_LABELS[profile.country]}</MetaItem>
-              <MetaItem icon="users">
-                {profile.assignedCounsellor?.name ?? LABELS.noCounsellorYet}
-              </MetaItem>
-              <PassportWarningChip profile={profile} />
+      <section
+        aria-labelledby={nameId}
+        className="rounded-panel border-sheet-rule bg-paper shadow-raise min-w-0 border"
+      >
+        {/* Phones (owner, 2026-11-27): More is a small icon beside the name, at the right; Priority
+            and the actions share the next line, all small, the main one a compact pill. */}
+        {/* On phones the row is what the Priority and More menus open from (UI revamp 23). */}
+        <div className="max-phone:relative max-phone:px-gutter max-phone:py-4 max-phone:items-start max-phone:justify-start max-phone:gap-x-2 max-phone:gap-y-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-5 p-5">
+          <div className="max-phone:order-1 max-phone:flex-1 max-phone:gap-3 flex min-w-0 items-center gap-5">
+            <Avatar name={profile.name} size="lg" />
+            <div className="grid min-w-0 gap-1">
+              <h1 id={nameId} className="text-page-title-sm wide:text-page-title wrap-anywhere">
+                {profile.name}
+              </h1>
+              <div className="text-secondary text-ink-2 flex flex-wrap gap-x-5 gap-y-1">
+                <MetaItem icon="phone">
+                  <span className="tabular-nums">{profile.phone}</span>
+                </MetaItem>
+                <MetaItem icon="plane">{COUNTRY_LABELS[profile.country]}</MetaItem>
+                <MetaItem icon="users">
+                  {profile.assignedCounsellor?.name ?? LABELS.noCounsellorYet}
+                </MetaItem>
+                <PassportWarningChip profile={profile} />
+              </div>
             </div>
           </div>
+          <div
+            className={clsx(
+              "max-phone:contents max-phone:*:order-5 flex flex-wrap items-start gap-3",
+              PHONE_LINE_BREAK,
+            )}
+          >
+            <PriorityPicker profile={profile} onSaved={onSaved} />
+            <HeaderActions profile={profile} onOpen={setOpen} />
+          </div>
         </div>
-        <div className="flex flex-wrap items-start gap-3">
-          <PriorityPicker profile={profile} onSaved={onSaved} />
-          <HeaderActions profile={profile} onOpen={setOpen} />
-        </div>
-      </div>
+        {children}
+      </section>
       {open === "message" && (
         <EmailComposer
           recipients={[profile]}
@@ -159,7 +180,14 @@ function HeaderActions({ profile, onOpen }: HeaderActionsProps) {
     onOpen(dialog);
   };
   return (
-    <div className="flex flex-wrap items-center gap-3 empty:hidden">
+    <div
+      className={clsx(
+        "flex flex-wrap items-center gap-3 empty:hidden",
+        "max-phone:contents max-phone:*:order-5 max-phone:*:text-button-sm",
+        PHONE_SMALL,
+        MORE_BESIDE_NAME,
+      )}
+    >
       {profile.canAssign && (
         <Button variant="primary" icon="userplus" onClick={opens("assign")}>
           {LABELS.assignACounsellor}
@@ -175,10 +203,17 @@ function HeaderActions({ profile, onOpen }: HeaderActionsProps) {
           {COMMUNICATION_TEXT.sendEmail}
         </MainOrSecond>
       )}
-      {items.length > 0 && <Menu label={LABELS.more} items={items} />}
+      {items.length > 0 && <Menu label={LABELS.more} items={items} isIconOnPhone />}
     </div>
   );
 }
+
+/** Phones: every action is small, and the main one a compact pill as wide as its words. */
+const PHONE_SMALL =
+  "max-phone:[&>:where([data-variant])]:px-button-sm max-phone:*:data-[variant=primary]:rounded-pill max-phone:*:data-[variant=primary]:flex-none max-phone:*:data-[variant=primary]:px-3.5";
+
+/** Phones: the More menu leaves the line of actions and sits beside the name, at the right. */
+const MORE_BESIDE_NAME = "max-phone:*:data-menu:order-2 max-phone:*:data-menu:flex-none";
 
 type HeaderDialogProps = {
   open: OpenDialog;

@@ -6,7 +6,6 @@ import { StudentProfilePage } from "@/components/features/students/profile/Stude
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import type { RecordId } from "@/lib/recordId";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend as backendOnly, callsTo, on, type Answer } from "@/test/backend";
 import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
@@ -25,7 +24,6 @@ const FRONT_DESK: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const ADMIN: StaffContext = {
@@ -455,6 +453,48 @@ describe("taking a payment", () => {
     await screen.findByRole("heading", { name: "Sita Gurung" });
 
     expect(screen.queryByRole("button", { name: "Take a payment" })).not.toBeInTheDocument();
+  });
+
+  it("on phones is a compact rounded button in the line of actions under the name (owner, 2026-11-27)", async () => {
+    backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
+    renderPage();
+
+    const button = await screen.findByRole("button", { name: "Take a payment" });
+    expect(button).toHaveAttribute("data-variant", "primary");
+    expect(button).toHaveClass("min-h-control");
+    // Priority and every action share one line that wraps, all small; the main one is a pill.
+    expect(button.parentElement).toHaveClass(
+      "max-phone:contents",
+      "max-phone:*:order-5",
+      "max-phone:*:text-button-sm",
+      "max-phone:*:data-[variant=primary]:rounded-pill",
+      "max-phone:*:data-[variant=primary]:flex-none",
+    );
+    expect(button.parentElement).not.toHaveClass("max-phone:*:data-[variant=primary]:order-3");
+    const name = screen.getByRole("heading", { name: "Sita Gurung" });
+    const who = name.closest(".max-phone\\:order-1");
+    expect(who).toHaveClass("max-phone:flex-1", "min-w-0");
+    expect(screen.getByRole("button", { name: /^Priority:/ })).toHaveClass(
+      "max-phone:text-button-sm",
+      "max-phone:rounded-pill",
+      "min-h-control",
+    );
+  });
+
+  it("on phones puts More beside the name, at the right, as a small icon (owner, 2026-11-27)", async () => {
+    backend(on("GET", `/api/students/${uid(7)}/`, { ...DESK_PROFILE, can_edit_details: true }));
+    renderPage();
+
+    const more = await screen.findByRole("button", { name: "More" });
+    // Its word is kept for screen readers; the icon alone is drawn on a phone.
+    expect(within(more).getByText("More")).toHaveClass("max-phone:sr-only");
+    expect(more).toHaveClass("min-h-control", "max-phone:min-w-control");
+    const holder = more.parentElement;
+    expect(holder).toHaveAttribute("data-menu");
+    expect(holder?.parentElement).toHaveClass(
+      "max-phone:*:data-menu:order-2",
+      "max-phone:*:data-menu:flex-none",
+    );
   });
 
   it("sits beside Assign a counsellor for a Student who has none", async () => {

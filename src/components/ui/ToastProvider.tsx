@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 import { ToastContext } from "./toastContext";
+import { useLeaving } from "./useMovement";
 
 const TOAST_DURATION_MS = 3200;
 
@@ -39,12 +40,23 @@ export function ToastProvider({ children }: ToastProviderProps) {
         role="status"
         className="pointer-events-none fixed inset-x-4 bottom-8 z-60 flex justify-center"
       >
-        {toast !== null && (
-          <p className="rounded-control bg-ink text-body text-paper shadow-lift px-5.5 py-3.5 font-medium">
-            {toast.message}
-          </p>
-        )}
+        {toast !== null && <Toast key={toast.id} message={toast.message} />}
       </div>
     </ToastContext>
+  );
+}
+
+/** The message itself: it rises in, and a copy of it fades out when it goes (Movement). */
+function Toast({ message }: { message: string }) {
+  const ref = useRef<HTMLParagraphElement>(null);
+  useLeaving(ref, "toast");
+  return (
+    <p
+      ref={ref}
+      data-move="toast"
+      className="rounded-control bg-ink text-body text-paper shadow-lift px-5.5 py-3.5 font-medium"
+    >
+      {message}
+    </p>
   );
 }

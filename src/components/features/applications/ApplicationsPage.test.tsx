@@ -5,8 +5,9 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
+import { fakeMatchMedia } from "@/test/matchMedia";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 
 import { ApplicationsPage } from "./ApplicationsPage";
 import { uid } from "@/test/ids";
@@ -18,7 +19,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 function as(role: StaffContext["staff"]["role"]): StaffContext {
@@ -225,15 +225,16 @@ describe("ApplicationsPage", () => {
     const fetchFn = backend(listing(), choices, counsellors);
     renderPage();
     await rowFor("Sita Karki");
-    await user.click(screen.getByRole("button", { name: "More filters" }));
-    await screen.findByRole("option", { name: "Feb 2028" });
     await screen.findByRole("option", { name: "Bikash Thapa" });
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Status" }), "Offer");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Counsellor" }), "Bikash Thapa");
+    // The panel under "More filters" stays open while its filters are chosen (UI revamp 06).
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+    await screen.findByRole("option", { name: "Feb 2028" });
     await user.selectOptions(screen.getByRole("combobox", { name: "Intake" }), "Feb 2028");
     await user.selectOptions(screen.getByRole("combobox", { name: "Intake year" }), "2028");
     await user.selectOptions(screen.getByRole("combobox", { name: "Country" }), "Canada");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Counsellor" }), "Bikash Thapa");
 
     await waitFor(() => {
       expect(lastListCall(fetchFn)).toBe(
@@ -394,10 +395,14 @@ describe("ApplicationsPage More filters (list tidy-ups 03)", () => {
 
     await user.click(screen.getByRole("button", { name: "More filters" }));
 
+    const panel = screen.getByRole("dialog", { name: "More filters" });
     for (const name of ["Intake", "Intake year", "Country"]) {
-      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+      expect(within(panel).getByRole("combobox", { name })).toBeInTheDocument();
     }
-    expect(screen.queryByRole("button", { name: "More filters" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More filters" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
   });
 
   it("closes on a press below, the button counting what is set there (list tidy-ups 18)", async () => {
@@ -411,7 +416,76 @@ describe("ApplicationsPage More filters (list tidy-ups 03)", () => {
     await user.click(screen.getByRole("heading", { level: 1, name: "Applications" }));
 
     expect(screen.queryByRole("combobox", { name: "Country" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "More filters · 1" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More filters, 1 set" })).toBeInTheDocument();
+  });
+
+  it("clears every filter with Clear filters, keeping the order (UI revamp 06)", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Status" }), "Offer");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Sort" }), "applied_on");
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+    await user.selectOptions(screen.getByRole("combobox", { name: "Country" }), "australia");
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/applications/?sort=applied_on");
+    });
+    expect(screen.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
+  });
+});
+
+describe("ApplicationsPage search as a set filter (UI revamp ticket 25)", () => {
+  const search = () => screen.getByRole("searchbox", { name: "Search applications" });
+
+  it("counts as a set filter: Clear filters empties it", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+    await user.type(search(), "Deakin");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/applications/?q=Deakin");
+    });
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    expect(search()).toHaveValue("");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/applications/");
+    });
+  });
+
+  it("on a phone, shows the words typed as a chip that empties the search", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await screen.findAllByText("Sita Karki");
+
+    await user.type(search(), "Deakin");
+
+    const chip = screen.getByRole("button", { name: "Deakin, remove the Search filter" });
+    expect(screen.getByRole("button", { name: "Filters, 1 set" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/applications/?q=Deakin");
+    });
+    await user.click(chip);
+
+    expect(search()).toHaveValue("");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/applications/");
+    });
   });
 });
 

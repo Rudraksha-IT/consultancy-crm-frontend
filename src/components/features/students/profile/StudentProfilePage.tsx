@@ -130,6 +130,12 @@ function LoadedProfile({ studentId, role, startTab }: LoadedProfileProps) {
   );
 }
 
+const NOTE_BESIDE_WORK =
+  "desk:grid-cols-[minmax(0,1fr)_var(--spacing-note-side)] desk:items-start grid min-w-0 grid-cols-1 gap-7";
+/** A long Note scrolls inside its column, so its end is never out of reach while it is pinned. */
+const NOTE_SIDE =
+  "desk:sticky desk:top-21 desk:order-2 desk:max-h-note-room desk:overflow-y-auto min-w-0";
+
 type ProfileProps = {
   profile: StudentProfile;
   role: Role;
@@ -159,32 +165,41 @@ function Profile({ profile, role, startTab, onReplace, onUpdate, onRefresh }: Pr
 
   return (
     <div className="grid gap-8">
-      <ProfileHeader profile={profile} onSaved={replaceAndRecord} />
+      <ProfileHeader profile={profile} onSaved={replaceAndRecord}>
+        <StageSection profile={profile} onSaved={replaceAndRecord} />
+      </ProfileHeader>
       <WaitingRequest profile={profile} onChanged={reloadAfterRequest} />
       <ViewOnlyBanner profile={profile} role={role} onSent={reloadAfterRequest} />
-      <StageSection profile={profile} onSaved={replaceAndRecord} />
-      <NoteSection profile={profile} onSaved={replaceAndRecord} />
-      <Tabs
-        label={LABELS.sections}
-        tabs={profileTabs(profile, seesFees, classes.length > 0)}
-        selected={shownTab}
-        onSelect={(id) => {
-          setTab(TAB_IDS.find((known) => known === id) ?? TAB.applications);
-        }}
-      >
-        <TabContent
-          tab={shownTab}
-          profile={profile}
-          classes={classes}
-          historyVersion={historyVersion}
-          onSaved={replaceAndRecord}
-          onHistoryChanged={() => {
-            setHistoryVersion((current) => current + 1);
-          }}
-          onUpdate={onUpdate}
-          onRefresh={onRefresh}
-        />
-      </Tabs>
+      {/* The Note beside the work (UI revamp 11): from 1280 a column of its own on the right that
+          stays in view under the top bar while the page scrolls; below that, above the tabs. */}
+      <div className={NOTE_BESIDE_WORK}>
+        <div data-note-side="" className={NOTE_SIDE}>
+          <NoteSection profile={profile} onSaved={replaceAndRecord} />
+        </div>
+        <div className="grid min-w-0 content-start gap-8">
+          <Tabs
+            label={LABELS.sections}
+            tabs={profileTabs(profile, seesFees, classes.length > 0)}
+            selected={shownTab}
+            onSelect={(id) => {
+              setTab(TAB_IDS.find((known) => known === id) ?? TAB.applications);
+            }}
+          >
+            <TabContent
+              tab={shownTab}
+              profile={profile}
+              classes={classes}
+              historyVersion={historyVersion}
+              onSaved={replaceAndRecord}
+              onHistoryChanged={() => {
+                setHistoryVersion((current) => current + 1);
+              }}
+              onUpdate={onUpdate}
+              onRefresh={onRefresh}
+            />
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 }
@@ -335,10 +350,11 @@ const TAB_CONTENT: Record<Tab, (props: TabContentProps) => ReactNode> = {
     />
   ),
   classes: ({ classes }) => <StudentClasses classes={classes} />,
-  // Remounted after a Payment is taken from the header, so it shows in the list and the Balance.
+  // Read again, in place, after a Payment is taken from the header, so it shows in the list and
+  // the Balance without the tab being taken away (design system rule 8).
   fees: ({ profile, historyVersion, onHistoryChanged }) => (
     <StudentFees
-      key={historyVersion}
+      version={historyVersion}
       student={{ id: profile.id, name: profile.name }}
       canChangeFees={profile.canChangeFees}
       canRecordPayment={profile.canRecordPayment}
@@ -347,8 +363,10 @@ const TAB_CONTENT: Record<Tab, (props: TabContentProps) => ReactNode> = {
   ),
   profile: ({ profile }) => <ProfileTab profile={profile} />,
   activity: ({ profile, historyVersion }) => (
+    // Read again, in place, after the Note or the Priority is saved (ticket 25).
     <ActivityTab
-      key={historyVersion}
+      key={profile.id}
+      version={historyVersion}
       studentId={profile.id}
       createdAt={profile.createdAt}
       stageChanges={profile.stageChanges}

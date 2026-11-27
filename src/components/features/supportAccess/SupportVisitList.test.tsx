@@ -24,9 +24,9 @@ const ENDED: SupportVisit = {
   endedAt: "2026-11-04T08:25:00+00:00",
 };
 
-describe.each(THEME_CASES)("SupportVisitList in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("SupportVisitList in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

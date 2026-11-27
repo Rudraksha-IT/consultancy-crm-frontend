@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Public_Sans } from "next/font/google";
+import { Geist } from "next/font/google";
 
 import { ProductNameProvider } from "@/components/features/brand/ProductName";
 import { TAB_ICON } from "@/constants/tabIcon";
@@ -8,10 +8,10 @@ import { KEEP_TITLE_SCRIPT } from "@/lib/keptTitle";
 
 import "./globals.css";
 
-const publicSans = Public_Sans({
+const geist = Geist({
   subsets: ["latin"],
   display: "swap",
-  variable: "--font-public-sans",
+  variable: "--font-geist",
 });
 
 /** The tab shows the product's saved name until a page sets its own (ticket 15). */
@@ -27,7 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const productName = await getProductName();
   return (
-    <html lang="en" className={`h-full ${publicSans.variable}`}>
+    <html lang="en" className={`h-full ${geist.variable}`}>
       <head>
         {/* The page's own tab title from the start of a reload (list tidy-ups 30). */}
         <script dangerouslySetInnerHTML={{ __html: KEEP_TITLE_SCRIPT }} />

@@ -38,9 +38,9 @@ function renderDialog() {
   return { onClose, onOpened };
 }
 
-describe.each(THEME_CASES)("OpenOfficeDialog in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("OpenOfficeDialog in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

@@ -26,7 +26,6 @@ export const WORK_FROM_HOME_TEXT = {
   title: "Work from home",
   tab: "Work from home",
   // Asking (any Staff member but an Admin)
-  askOnClock: "Work from home",
   askForDates: "Ask for dates",
   askTitle: "Ask to work from home",
   askIntro:
@@ -95,6 +94,4 @@ export const WORK_FROM_HOME_TEXT = {
   // Working hours
   homeTag: "Home",
   homeLabel: "worked from home",
-  // Home: waiting on an Admin
-  requestsWaiting: "Work from home requests",
 } as const;

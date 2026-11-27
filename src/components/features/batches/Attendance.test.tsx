@@ -7,7 +7,6 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { StudentClassSchema } from "@/lib/api/classes/attendance";
 import { formatOtherCalendar } from "@/lib/dates";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 
 import { BatchPage } from "./BatchPage";
@@ -23,7 +22,6 @@ const TEACHER: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const COUNSELLOR: StaffContext = {
@@ -181,10 +179,13 @@ describe("Taking attendance on a class's page", () => {
     await userEvent.clear(dayField);
     await userEvent.type(dayField, "2026-11-07");
 
-    expect(
-      await section.findByText("This is a Saturday. There's usually no class."),
-    ).toBeInTheDocument();
+    const note = await section.findByText("This is a Saturday. There's usually no class.");
     const sita = await section.findByRole("radiogroup", { name: "Attendance for Sita Gurung" });
+    // The note is 16 from the sheet under it, as blocks of a page are (ticket 25).
+    const blocks = note.closest('[role="status"]')?.parentElement;
+    expect(blocks).toHaveClass("grid", "gap-4");
+    expect(blocks).toContainElement(sita);
+    expect(blocks).not.toContainElement(dayField);
     await waitFor(() => {
       expect(within(sita).getByRole("radio", { name: "Leave" })).toBeChecked();
     });

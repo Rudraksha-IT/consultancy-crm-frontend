@@ -5,8 +5,9 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
+import { fakeMatchMedia } from "@/test/matchMedia";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 
 import { VisasPage } from "./VisasPage";
 import { uid } from "@/test/ids";
@@ -18,7 +19,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 function as(role: StaffContext["staff"]["role"]): StaffContext {
@@ -231,14 +231,15 @@ describe("VisasPage", () => {
     const fetchFn = backend(listing(), choices, counsellors);
     renderPage();
     await rowFor("Sita Karki");
-    await user.click(screen.getByRole("button", { name: "More filters" }));
-    await screen.findByRole("option", { name: "Sep 2027" });
     await screen.findByRole("option", { name: "Bikash Thapa" });
 
     await user.selectOptions(screen.getByRole("combobox", { name: "Visa status" }), "Applied");
+    await user.selectOptions(screen.getByRole("combobox", { name: "Counsellor" }), "Bikash Thapa");
+    // The panel under "More filters" stays open while its filters are chosen (UI revamp 06).
+    await user.click(screen.getByRole("button", { name: "More filters" }));
+    await screen.findByRole("option", { name: "Sep 2027" });
     await user.selectOptions(screen.getByRole("combobox", { name: "Country" }), "Canada");
     await user.selectOptions(screen.getByRole("combobox", { name: "Intake" }), "Sep 2027");
-    await user.selectOptions(screen.getByRole("combobox", { name: "Counsellor" }), "Bikash Thapa");
 
     await waitFor(() => {
       expect(lastListCall(fetchFn)).toBe(
@@ -373,6 +374,199 @@ describe("VisasPage", () => {
   });
 });
 
+describe("VisasPage search (UI revamp ticket 24)", () => {
+  const search = () => screen.getByRole("searchbox", { name: "Search visas" });
+
+  it("has the search box first in the filter bar", async () => {
+    backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    const bar = screen.getByRole("group", { name: "Filter the list" });
+    const controls = [...bar.querySelectorAll("input, select")];
+    expect(controls[0]).toBe(search());
+    expect(search()).toHaveAttribute("placeholder", "Search by Student or university");
+  });
+
+  it("searches by Student or University once typing settles, keeping the cursor in the box", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    await user.type(search(), "Deakin");
+
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/visas/?q=Deakin");
+    });
+    await rowFor("Sita Karki");
+    expect(search()).toHaveFocus();
+    expect(search()).toHaveValue("Deakin");
+    // One request for the word, not one for each key.
+    expect(fetchFn.mock.calls.filter(([path]) => path.includes("q=")).length).toBe(1);
+  });
+
+  it("goes back to page 1 when something is typed", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(pageOf([SITA], 30)), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+    await user.click(screen.getByRole("button", { name: "Next page" }));
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/visas/?page=2");
+    });
+
+    await user.type(search(), "sita");
+
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/visas/?q=sita");
+    });
+  });
+
+  it("works together with the other filters", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+
+    await user.selectOptions(screen.getByRole("combobox", { name: "Visa status" }), "Refused");
+    await user.type(search(), "gita");
+
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/visas/?q=gita&status=refused");
+    });
+  });
+
+  it("restores the list when the box is emptied", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+    await user.type(search(), "Deakin");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/visas/?q=Deakin");
+    });
+
+    await user.clear(search());
+
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/visas/");
+    });
+  });
+
+  it("counts as a set filter: Clear filters empties it", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+    await user.type(search(), "Deakin");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/visas/?q=Deakin");
+    });
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    expect(search()).toHaveValue("");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/visas/");
+    });
+  });
+
+  it("says nothing matches when the search finds no visa", async () => {
+    const user = userEvent.setup();
+    backend(
+      (path) => (path.includes("q=") ? jsonResponse(pageOf([])) : undefined),
+      listing(),
+      choices,
+      counsellors,
+    );
+    renderPage();
+    await rowFor("Sita Karki");
+
+    await user.type(search(), "nobody");
+
+    expect(await screen.findByText("No visas match. Try clearing a filter.")).toBeInTheDocument();
+    expect(search()).toHaveFocus();
+  });
+
+  it('follows the count line ("1 visa")', async () => {
+    const user = userEvent.setup();
+    backend(
+      (path) => (path.includes("q=") ? jsonResponse(pageOf([GITA])) : undefined),
+      listing(),
+      choices,
+      counsellors,
+    );
+    renderPage();
+    expect(await screen.findByText("2 visas")).toBeInTheDocument();
+
+    await user.type(search(), "gita");
+
+    expect(await screen.findByText("1 visa")).toBeInTheDocument();
+  });
+
+  it("names the search in the export", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+    await user.type(search(), "Deakin");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/visas/?q=Deakin");
+    });
+
+    await user.click(screen.getByRole("button", { name: "Export" }));
+
+    const dialog = await screen.findByRole("dialog", { name: "Export visas" });
+    expect(within(dialog).getByText("Search: Deakin")).toBeInTheDocument();
+  });
+
+  describe("on a phone", () => {
+    beforeEach(() => {
+      vi.stubGlobal(
+        "matchMedia",
+        fakeMatchMedia(
+          () => false,
+          (query) => query === PHONE_QUERY,
+        ).matchMedia,
+      );
+    });
+
+    it("sits on the first line with the filter button beside it, an icon alone", async () => {
+      backend(listing(), choices, counsellors);
+      renderPage();
+      await screen.findAllByText("Sita Karki");
+
+      expect(search()).toBeInTheDocument();
+      const button = screen.getByRole("button", { name: "Filters" });
+      expect(button).toHaveClass("size-control");
+      expect(button.parentElement).toContainElement(search());
+    });
+
+    it("shows the words typed as a chip that empties the search", async () => {
+      const user = userEvent.setup();
+      const fetchFn = backend(listing(), choices, counsellors);
+      renderPage();
+      await screen.findAllByText("Sita Karki");
+
+      await user.type(search(), "Deakin");
+
+      const chip = screen.getByRole("button", { name: "Deakin, remove the Search filter" });
+      expect(screen.getByRole("button", { name: "Filters, 1 set" })).toBeInTheDocument();
+      await waitFor(() => {
+        expect(lastListCall(fetchFn)).toBe("/api/visas/?q=Deakin");
+      });
+      await user.click(chip);
+
+      expect(search()).toHaveValue("");
+      await waitFor(() => {
+        expect(lastListCall(fetchFn)).toBe("/api/visas/");
+      });
+    });
+  });
+});
+
 describe("VisasPage More filters (list tidy-ups 03)", () => {
   it("shows Visa status, Counsellor and Appointment on one line, and the rest under More filters", async () => {
     const user = userEvent.setup();
@@ -389,10 +583,14 @@ describe("VisasPage More filters (list tidy-ups 03)", () => {
 
     await user.click(screen.getByRole("button", { name: "More filters" }));
 
+    const panel = screen.getByRole("dialog", { name: "More filters" });
     for (const name of ["Country", "Intake", "Sort"]) {
-      expect(screen.getByRole("combobox", { name })).toBeInTheDocument();
+      expect(within(panel).getByRole("combobox", { name })).toBeInTheDocument();
     }
-    expect(screen.queryByRole("button", { name: "More filters" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More filters" })).toHaveAttribute(
+      "aria-expanded",
+      "true",
+    );
   });
 });
 

@@ -8,7 +8,7 @@ export {
 } from "./applications/applications";
 export { fetchStaffContext, logIn, logOut } from "./auth/auth";
 export {
-  addHoliday,
+  addHolidays,
   addMissedTime,
   ClockRefusedError,
   clockIn,
@@ -19,7 +19,7 @@ export {
   fetchTeamMonth,
   fetchTeamNow,
   fetchWorkingDay,
-  removeHoliday,
+  removeHolidays,
   saveWeeklyOff,
   saveWorkingDay,
   setMissingClockOut,
@@ -229,6 +229,7 @@ export type {
   DocumentFile,
   NamedDocumentType,
   PaperworkCounts,
+  PaperworkItem,
   PaperworkPage,
   PaperworkRow,
   StoredDocument,
@@ -305,7 +306,6 @@ export {
   fetchPlatformAdmin,
   logInToPlatform,
   logOutOfPlatform,
-  updateConsultancyTheme,
   updateModules,
 } from "./platform/platform";
 export type { PlatformLoginOutcome, StatusChange, StatusChangeField } from "./platform/platform";
@@ -341,11 +341,13 @@ export {
 } from "./core/restriction";
 export {
   cancelInvite,
+  cancelInviteBack,
   changeEmployeeRole,
   deactivateEmployee,
   fetchAssignedStudents,
   fetchCounsellorChoices,
   fetchEmployees,
+  inviteBack,
   inviteEmployee,
   resendInvite,
   resetEmployeeTwoFactor,
@@ -428,6 +430,7 @@ export type {
 } from "./money/payments";
 export {
   addStudent,
+  fetchBoardStudents,
   fetchHighPriorityStudents,
   fetchStudents,
   fetchStudentsByName,
@@ -495,6 +498,8 @@ export type {
   NewStudent,
   NewStudentField,
   Student,
+  BoardStudent,
+  BoardStudentPage,
   StudentPage,
   StudentRow,
   AcademicRecord,

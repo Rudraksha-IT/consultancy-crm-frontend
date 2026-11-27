@@ -22,30 +22,23 @@ type HolidayCalendarProps = {
   /** The AD days chosen, in the order they fall. */
   chosen: readonly string[];
   onToggle: (iso: string) => void;
-  /** Shown under the calendar instead of its usual help, e.g. "Now tap the last day." */
-  hint?: string | undefined;
   errors?: string[] | undefined;
 };
 
 /**
  * Holidays are chosen by tapping days on a month calendar in the office's calendar, not picked
- * from dropdowns (asked 2026-11-17). Several days can be chosen at once, e.g. all of Dashain. A
+ * from dropdowns (asked 2026-11-17). Each tap chooses a day and a second tap takes it off, so a
+ * holiday of several days (all of Dashain, even with a gap) is chosen at once (UI revamp 17). A
  * day that is already a holiday is marked with its name and can't be chosen again.
  */
-export function HolidayCalendar({
-  holidays,
-  chosen,
-  onToggle,
-  hint,
-  errors,
-}: HolidayCalendarProps) {
+export function HolidayCalendar({ holidays, chosen, onToggle, errors }: HolidayCalendarProps) {
   const dates = useDates();
   const [month, setMonth] = useState<CalendarMonth | null>(() =>
     monthOf(todayIso(), dates.display),
   );
   const grid = month === null ? null : monthGrid(month, dates.display);
   const named = new Map(holidays.map((holiday) => [holiday.date, holiday.name]));
-  const description = describeField(errors, hint ?? TEXT.calendarHelp, false);
+  const description = describeField(errors, TEXT.calendarHelp, false);
   const noteId = useId();
 
   if (month === null || grid === null) return null;
@@ -59,7 +52,7 @@ export function HolidayCalendar({
       role="group"
       aria-label={`${TEXT.calendarLabel}, ${grid.title}`}
       aria-describedby={noteId}
-      className="grid min-w-0 content-start gap-3"
+      className="grid max-w-105 min-w-0 content-start gap-3"
     >
       <div className="flex items-center justify-between gap-2">
         <IconButton
@@ -102,7 +95,12 @@ export function HolidayCalendar({
           />
         ))}
       </div>
-      <FieldNote id={noteId} description={description} />
+      <p className="flex flex-wrap gap-x-1.5">
+        <FieldNote id={noteId} description={description} />
+        <span aria-live="polite" className="text-small text-ink font-semibold">
+          {chosen.length > 0 && TEXT.chosen(chosen.length)}
+        </span>
+      </p>
     </div>
   );
 }

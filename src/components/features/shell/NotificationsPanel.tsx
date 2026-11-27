@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 
 import { datesText } from "@/components/features/clock/WorkFromHomeRows";
 import { Button } from "@/components/ui/Button";
+import { useLeaving } from "@/components/ui/useMovement";
 import { NOTIFICATION_TEXT, NotificationKind } from "@/constants/notifications";
 import { ROUTES } from "@/constants/routes";
 import type { AppNotification } from "@/lib/api";
@@ -21,6 +22,7 @@ type NotificationsPanelProps = {
 export function NotificationsPanel({ notifications, onClose }: NotificationsPanelProps) {
   const { state, unreadCount, hasMarkFailed, markAllRead, markRead } = notifications;
   const panelRef = useRef<HTMLDivElement>(null);
+  useLeaving(panelRef, "pop");
 
   useEffect(() => {
     panelRef.current?.focus();
@@ -31,6 +33,7 @@ export function NotificationsPanel({ notifications, onClose }: NotificationsPane
       ref={panelRef}
       tabIndex={-1}
       role="dialog"
+      data-move="pop"
       aria-label={NOTIFICATION_TEXT.title}
       className="rounded-panel border-rule bg-paper shadow-lift phone:inset-x-auto phone:right-0 phone:w-popover absolute inset-x-4 top-full z-20 mt-3 overflow-hidden border"
     >
@@ -177,6 +180,6 @@ function targetOf(item: AppNotification): { href: string; label: string } | null
   const href =
     item.kind === NotificationKind.WorkFromHomeAsked
       ? ROUTES.employeeWorkFromHome(item.workFromHome.staffId)
-      : ROUTES.clock;
+      : ROUTES.clockWorkFromHome;
   return { href, label: NOTIFICATION_TEXT.open };
 }

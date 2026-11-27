@@ -45,7 +45,7 @@ function PlatformAdminSettings() {
   const { staff } = useCurrentStaff();
   return (
     <div className="grid gap-8">
-      <PageHeader title={MY_SETTINGS_TEXT.title} subtitle={MY_SETTINGS_TEXT.intro} />
+      <PageHeader title={MY_SETTINGS_TEXT.title} />
       <Panel>
         <div className="flex flex-wrap items-center gap-5 p-6">
           <span
@@ -81,20 +81,22 @@ function StaffSettings() {
 
   return (
     <div className="grid gap-8">
-      <PageHeader
-        title={MY_SETTINGS_TEXT.title}
-        subtitle={MY_SETTINGS_TEXT.intro}
-        actions={
-          <ButtonLink href={ROUTES.myProgress} icon="chart">
-            {PROGRESS_TEXT.myProgress}
-          </ButtonLink>
-        }
-      />
       <SectionMenu
         label={MY_SETTINGS_TEXT.menu}
         backLabel={MY_SETTINGS_TEXT.backLabel}
         sections={sections}
         choice={choice}
+        header={(back) => (
+          <PageHeader
+            title={MY_SETTINGS_TEXT.title}
+            leading={back}
+            actions={
+              <ButtonLink href={ROUTES.myProgress} icon="chart">
+                {PROGRESS_TEXT.myProgress}
+              </ButtonLink>
+            }
+          />
+        )}
       />
     </div>
   );

@@ -7,6 +7,16 @@ import { fakeMatchMedia } from "@/test/matchMedia";
 // must not turn a slow render into a failed test. A passing wait still returns at once.
 configure({ asyncUtilTimeout: 5000 });
 
+// A lasting default too, so a test file's own `vi.unstubAllGlobals()` (run before cleanup())
+// falls back to it rather than to nothing: a phone-width check run a moment late then still works.
+if (typeof window !== "undefined") {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    writable: true,
+    value: fakeMatchMedia(() => false).matchMedia,
+  });
+}
+
 beforeEach(() => {
   // jsdom has no matchMedia; by default the device prefers light.
   vi.stubGlobal("matchMedia", fakeMatchMedia(() => false).matchMedia);

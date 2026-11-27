@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import { useState } from "react";
 
 import { Banner } from "@/components/ui/Banner";
@@ -113,24 +114,42 @@ function TypeList({ state, isExtra, ...actions }: TypeListProps) {
 
 type TypeRowProps = TypeActions & { type: DocumentType; isExtra: boolean };
 
-/** How a row looks under each list: the move button, and, under Extra documents, its uses. */
+/**
+ * How a row looks under each list: the move button, and, under Extra documents, its uses. An
+ * Always needed row stays on one line on every width, its buttons small, and a name that does not
+ * fit is cut with "…" (owner, 2026-11-27); an Extra documents row wraps, as it has more to say.
+ */
 const ROW_LOOK = {
-  always: { moveLabel: DOCUMENT_TEXT.moveToOptional, moveVariant: "ghost" },
-  extra: { moveLabel: DOCUMENT_TEXT.moveToEveryone, moveVariant: "secondary" },
+  always: {
+    moveLabel: DOCUMENT_TEXT.moveToOptional,
+    moveVariant: "ghost",
+    row: "flex-nowrap",
+    text: "truncate",
+    buttons: "flex-none flex-nowrap gap-1",
+  },
+  extra: {
+    moveLabel: DOCUMENT_TEXT.moveToEveryone,
+    moveVariant: "secondary",
+    row: "flex-wrap",
+    text: "break-words",
+    buttons: "flex flex-wrap gap-2",
+  },
 } as const;
 
 function TypeRow({ type, isExtra, onMove, onRemove, onExamples }: TypeRowProps) {
-  const { moveLabel, moveVariant } = ROW_LOOK[isExtra ? "extra" : "always"];
+  const look = ROW_LOOK[isExtra ? "extra" : "always"];
   return (
-    <li className="flex min-h-15 flex-wrap items-center justify-between gap-3 px-6 py-3">
+    <li
+      className={clsx("px-gutter flex min-h-15 items-center justify-between gap-3 py-3", look.row)}
+    >
       <div className="grid min-w-0 gap-1">
-        <span className="break-words">{type.name}</span>
+        <span className={look.text}>{type.name}</span>
         {isExtra && <span className="text-small text-ink-2">{usesWords(type.usedBy)}</span>}
-        <span className="text-small text-ink-2">
+        <span className={clsx("text-small text-ink-2", look.text)}>
           {EXAMPLE_TEXT.summary(type.instruction !== "", type.examples.length)}
         </span>
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className={clsx("flex", look.buttons)}>
         <Button
           size="sm"
           icon="file"
@@ -142,13 +161,14 @@ function TypeRow({ type, isExtra, onMove, onRemove, onExamples }: TypeRowProps) 
           <span className="sr-only">{EXAMPLE_TEXT.examplesFor(type.name)}</span>
         </Button>
         <Button
-          variant={moveVariant}
+          variant={look.moveVariant}
+          size="sm"
           onClick={() => {
             void onMove(type);
           }}
         >
-          <span aria-hidden="true">{moveLabel}</span>
-          <span className="sr-only">{`${moveLabel}: ${type.name}`}</span>
+          <span aria-hidden="true">{look.moveLabel}</span>
+          <span className="sr-only">{`${look.moveLabel}: ${type.name}`}</span>
         </Button>
         {isExtra && isUnused(type) && <RemoveButton type={type} onRemove={onRemove} />}
       </div>

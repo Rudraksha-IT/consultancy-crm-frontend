@@ -4,7 +4,16 @@ const INITIALS_COUNT = 2;
 
 type AvatarProps = {
   name: string;
-  size?: "md" | "lg";
+  /** "xs" is the small round on a board card; "sm" the one in an Inbox list row. */
+  size?: "xs" | "sm" | "md" | "lg";
+};
+
+const SIZE_CLASSES = {
+  xs: "text-small size-6",
+  sm: "text-small size-avatar-sm",
+  md: "size-mark text-secondary",
+  // 64, and 52 on phones (design system: Phones, Sizes and look).
+  lg: "text-section-title max-phone:size-13 size-16",
 };
 
 function initialsOf(name: string): string {
@@ -22,8 +31,8 @@ export function Avatar({ name, size = "md" }: AvatarProps) {
     <span
       aria-hidden="true"
       className={clsx(
-        "rounded-pill bg-tint text-accent grid flex-none place-items-center font-bold",
-        size === "lg" ? "text-section-title size-16" : "size-mark text-secondary",
+        "rounded-pill bg-tint text-accent grid flex-none place-items-center font-semibold",
+        SIZE_CLASSES[size],
       )}
     >
       {initialsOf(name)}

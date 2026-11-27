@@ -1,6 +1,6 @@
 import { generateMetadata } from "./layout";
 
-vi.mock("next/font/google", () => ({ Public_Sans: () => ({ variable: "font" }) }));
+vi.mock("next/font/google", () => ({ Geist: () => ({ variable: "font" }) }));
 const getProductName = vi.hoisted(() =>
   vi.fn<() => Promise<string>>(() => Promise.resolve("Acme Office Suite")),
 );

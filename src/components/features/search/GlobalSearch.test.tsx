@@ -99,6 +99,20 @@ describe("GlobalSearch", () => {
     expect(box).toHaveAttribute("aria-controls", results.id);
   });
 
+  it("keeps the name's room: a long Stage and counsellor take half the row at most and are cut with … (ticket 25)", async () => {
+    backend(answer("sa", { students: [SITA], student_count: 1, batches: [MORNING] }));
+    const { user, box } = renderSearch();
+
+    await user.type(box, "sa");
+    await settle();
+
+    const detail = screen.getByText("Counselling, Bikash Thapa");
+    expect(detail).toHaveClass("max-w-1/2", "truncate", "shrink-0");
+    expect(detail).toHaveAttribute("title", "Counselling, Bikash Thapa");
+    expect(screen.getByText("7:00-8:30 AM")).toHaveClass("max-w-1/2", "truncate");
+    expect(screen.getByText("Sita Karki").parentElement).toHaveClass("min-w-0", "truncate");
+  });
+
   it("offers every match on the Student list when there are more than five", async () => {
     backend(answer("sita", { students: [SITA], student_count: 12, batches: [] }));
     const { user, box } = renderSearch();

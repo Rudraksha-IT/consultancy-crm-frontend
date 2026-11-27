@@ -24,6 +24,7 @@ import {
   APPLICATION_STATUS_LABELS,
   APPLICATION_TEXT,
   ApplicationStatus,
+  OFFER_LETTER_TYPE_NAME,
   STATUSES_BY_HAND,
   applicationStatusText,
   type StatusByHand,
@@ -137,7 +138,7 @@ function ApplicationsSection({ profile, onSaved }: ApplicationsTabProps) {
                 <LinkedDocuments
                   studentId={profile.id}
                   record={application.university.name}
-                  documents={application.documents}
+                  documents={withoutOfferLetters(application)}
                 />
                 <ApplicationBrochures
                   application={application}
@@ -175,6 +176,18 @@ function ApplicationsSection({ profile, onSaved }: ApplicationsTabProps) {
         />
       )}
     </Section>
+  );
+}
+
+/**
+ * An Application's linked Documents without its Offer Letters (UI revamp 11): the letter shows
+ * once, in Offer letters below, never again under its university.
+ */
+function withoutOfferLetters(application: Application): Application["documents"] {
+  return application.documents.filter(
+    (document) =>
+      document.id !== application.offerLetter?.id &&
+      document.documentType.name.toLowerCase() !== OFFER_LETTER_TYPE_NAME,
   );
 }
 

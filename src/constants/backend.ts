@@ -1,5 +1,7 @@
 /** How the Next.js server forwards the browser's `/api/...` calls to Django (ADR 0002). */
 
+import { RELAYED_CONTENT_SECURITY_POLICY } from "./securityHeaders";
+
 export { SESSION_ENDED_HEADER } from "./session";
 
 /** The only methods the API answers; anything else is 405. */
@@ -18,11 +20,12 @@ export const RETURNED_RESPONSE_HEADERS = ["content-type"] as const;
 /**
  * Sent with every answer this server relays. The office logo (an SVG perhaps) can be opened on
  * its own: it is never sniffed as another type, and nothing in it may run, load or be framed.
- * JSON answers are read by `fetch`, which ignores both.
+ * JSON answers are read by `fetch`, which ignores both. `next.config.ts` sends the same policy on
+ * these paths, since Next.js replaces a route's own header with the config's.
  */
 export const RELAYED_RESPONSE_HEADERS = {
   "x-content-type-options": "nosniff",
-  "content-security-policy": "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+  "content-security-policy": RELAYED_CONTENT_SECURITY_POLICY,
 } as const;
 
 /** Methods that change something: refused unless the browser's `Origin` is the page's own host. */
@@ -206,6 +209,14 @@ export const LOGIN_STEP_PATH = /^\/api\/(?:platform\/)?auth\/login\/next\/$/;
 export const LOGIN_STEP_TRIES_PER_ADDRESS = 60;
 export const LOGIN_STEP_WINDOW_MS = 15 * 60 * 1000;
 export const LOGIN_STEP_MAX_ADDRESSES = 10_000;
+/**
+ * The password step of the staff and Platform login (security 01): 30 tries per browser address
+ * in 15 minutes, as an office shares one address; Django also limits each email to 10.
+ */
+export const PASSWORD_LOGIN_PATH = /^\/api\/(?:platform\/)?auth\/login\/$/;
+export const PASSWORD_LOGIN_TRIES_PER_ADDRESS = 30;
+export const PASSWORD_LOGIN_WINDOW_MS = 15 * 60 * 1000;
+export const PASSWORD_LOGIN_MAX_ADDRESSES = 10_000;
 export const PLATFORM_RESET_WINDOW_MS = 15 * 60 * 1000;
 export const PLATFORM_RESET_MAX_ADDRESSES = 10_000;
 /** Cloudflare's header with the address the browser called from (ADR 0004). */
@@ -256,7 +267,7 @@ export const CHALLENGE_COOKIE = {
 export const MAX_CHALLENGE_LENGTH = 500;
 
 /** Said when the second step has no usable challenge: the person logs in again. */
-export const START_AGAIN_MESSAGE = "This sign-in has timed out or was already used. Log in again.";
+export const START_AGAIN_MESSAGE = "This login has timed out or was already used. Log in again.";
 
 /** The longest login token accepted from Django (its own limit is the same). */
 export const MAX_TOKEN_LENGTH = 2048;

@@ -16,12 +16,12 @@ export function Switch({ label, description, isOn, onChange }: SwitchProps) {
   const descriptionId = useId();
   return (
     <label className="min-h-control flex cursor-pointer items-center justify-between gap-4 py-3">
-      <span className="grid gap-1">
-        <span id={labelId} className="text-body font-semibold">
+      <span className="grid gap-0.5">
+        <span id={labelId} className="text-body font-medium">
           {label}
         </span>
         {description !== undefined && (
-          <span id={descriptionId} className="text-small text-ink-2">
+          <span id={descriptionId} className="text-small text-ink-3">
             {description}
           </span>
         )}

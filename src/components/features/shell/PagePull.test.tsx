@@ -3,7 +3,6 @@ import { act, fireEvent, render, screen } from "@testing-library/react";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { fakeMatchMedia } from "@/test/matchMedia";
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { holdUnsavedChanges } from "@/lib/unsavedChanges";
 import { resetTheme } from "@/test/themes";
 
@@ -35,12 +34,6 @@ const CONTEXT = {
   // Swipe between pages is off until the person switches it on in Settings (asked 2026-11-17).
   page_swipe: true,
   support_access: null,
-  theme: {
-    page: "stone",
-    sidebar: TEST_COLOURS.white,
-    accent: TEST_COLOURS.emerald,
-    dark: { base: "soft", sidebar: "darker", accent: "auto" },
-  },
 };
 
 const NO_NOTIFICATIONS = { count: 0, page: 1, page_size: 20, unread_count: 0, results: [] };

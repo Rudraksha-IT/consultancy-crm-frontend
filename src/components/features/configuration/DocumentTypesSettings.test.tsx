@@ -71,6 +71,22 @@ describe("DocumentTypesSettings", () => {
     expect(screen.queryByLabelText("Add a document")).toBeNull();
   });
 
+  it("keeps an Always needed row on one line: a long name is cut with an ellipsis (owner)", async () => {
+    backend(on("GET", TYPES_PATH, TYPES));
+    renderSettings("always");
+
+    const row = within(await list(ALWAYS)).getAllByRole("listitem")[0];
+    if (row === undefined) throw new Error("no row");
+    expect(row).toHaveClass("flex-nowrap");
+    expect(within(row).getByText("Passport")).toHaveClass("truncate");
+    const buttons = within(row).getAllByRole("button");
+    expect(buttons.map((button) => button.parentElement)).toEqual([
+      buttons[0]?.parentElement,
+      buttons[0]?.parentElement,
+    ]);
+    expect(buttons[0]?.parentElement).toHaveClass("flex-none", "flex-nowrap");
+  });
+
   it("shows Extra documents alone, with the add form and no usual group to choose", async () => {
     backend(on("GET", TYPES_PATH, TYPES));
     renderSettings("extra");

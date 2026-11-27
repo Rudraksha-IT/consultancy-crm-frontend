@@ -126,18 +126,21 @@ function CommissionBody({ state, failure, addButton, onPage, onStatus }: Commiss
     <>
       <Tiles page={data} />
       <Section title={COMMISSION_TEXT.byStudent} aside={addButton}>
-        {failure !== null && <Banner tone="problem">{failure}</Banner>}
-        <Panel>
-          <CommissionTable page={data} emptyAction={addButton} onStatus={onStatus} />
-          <Pager
-            summary={COMMISSION_TEXT.count(data.count)}
-            count={data.count}
-            page={data.page}
-            pageSize={data.pageSize}
-            onPage={onPage}
-          />
-          <PanelFoot>{COMMISSION_TEXT.footnote}</PanelFoot>
-        </Panel>
+        {/* The banner and the sheet are blocks of the page: 16 apart (rule 10). */}
+        <div className="grid min-w-0 gap-4">
+          {failure !== null && <Banner tone="problem">{failure}</Banner>}
+          <Panel>
+            <CommissionTable page={data} emptyAction={addButton} onStatus={onStatus} />
+            <Pager
+              summary={COMMISSION_TEXT.count(data.count)}
+              count={data.count}
+              page={data.page}
+              pageSize={data.pageSize}
+              onPage={onPage}
+            />
+            <PanelFoot>{COMMISSION_TEXT.footnote}</PanelFoot>
+          </Panel>
+        </div>
       </Section>
     </>
   );
@@ -180,7 +183,7 @@ function CommissionTable({ page, emptyAction, onStatus }: CommissionTableProps) 
     return <EmptyState action={emptyAction}>{COMMISSION_TEXT.noneYet}</EmptyState>;
   }
   return (
-    <table className="text-body w-full border-collapse">
+    <table data-stacks="" className="text-body w-full border-collapse">
       <thead className="max-tablet:sr-only">
         <tr>
           <th scope="col" className={HEAD}>
@@ -211,7 +214,7 @@ type CommissionRowProps = Pick<CommissionTableProps, "onStatus"> & { commission:
 function CommissionRow({ commission, onStatus }: CommissionRowProps) {
   const dates = useDates();
   return (
-    <tr className="hover:bg-fill max-tablet:grid max-tablet:gap-2 max-tablet:p-5">
+    <tr className="max-tablet:grid max-tablet:gap-2 max-tablet:p-5">
       <td className={CELL}>
         <Link
           href={ROUTES.student(commission.student.id)}

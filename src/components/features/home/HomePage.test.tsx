@@ -2,10 +2,12 @@ import type { RecordId } from "@/lib/recordId";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
+import { fakeMatchMedia } from "@/test/matchMedia";
+
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
@@ -20,7 +22,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 const COUNSELLOR: StaffContext = {
   ...ADMIN,
@@ -35,7 +36,7 @@ const DESK: StaffContext = {
   staff: { id: uid(4), name: "Asha Rai", email: "asha@acme.test", role: "front_desk" },
 };
 
-const PROGRESS_ADMIN = "/api/home/progress/?counsellor=any&limit=6";
+const PROGRESS_ADMIN = "/api/home/progress/?counsellor=any&limit=5";
 const PROGRESS_MINE = "/api/home/progress/?counsellor=me&limit=10";
 const PIPELINE = "/api/home/pipeline/";
 const UNASSIGNED = "/api/students/?stage=lead&counsellor=none";
@@ -215,9 +216,9 @@ describe("Every Home", () => {
   });
 });
 
-describe.each(THEME_CASES)("The Homes in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("The Homes in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   it("gives an Admin the pipeline, everyone's progress, new visitors and tasks", async () => {
@@ -226,7 +227,7 @@ describe.each(THEME_CASES)("The Homes in the $name Theme", ({ config, mode }) =>
 
     expect(await region("Pipeline")).toBeInTheDocument();
     expect(await region("Students' progress")).toBeInTheDocument();
-    expect(await region("New visitors without a counsellor")).toBeInTheDocument();
+    expect(await region("New visitors to assign")).toBeInTheDocument();
     expect(await region("Your tasks due soon")).toBeInTheDocument();
     expect(document.documentElement.dataset.theme).toBe(mode);
   });
@@ -279,23 +280,81 @@ describe("The Admin's Home", () => {
     expect(within(await region("Pipeline")).queryByRole("link", { name: "See charts" })).toBeNull();
   });
 
-  it("shows a card per Stage that opens the Student list at that Stage, and the Lost", async () => {
+  it("draws the pipeline as five beads on one thread, each opening the Students at that Stage", async () => {
     backend(...EVERYTHING);
     renderHome(ADMIN);
     const pipeline = within(await region("Pipeline"));
 
-    expect(await pipeline.findByRole("link", { name: "Lead: 4 Students" })).toHaveAttribute(
+    const thread = await pipeline.findByRole("list", { name: "Students at each Stage" });
+    const beads = within(thread).getAllByRole("listitem");
+    expect(beads.map((bead) => bead.textContent)).toEqual([
+      "Lead440%",
+      "Counselling330%",
+      "Applying220%",
+      "Offer110%",
+      "Visa00%",
+    ]);
+    expect(beads.map((bead) => bead.dataset.bead)).toEqual(["1", "2", "3", "4", "5"]);
+    expect(pipeline.getByRole("link", { name: "Lead: 4 Students" })).toHaveAttribute(
       "href",
       "/students?stage=lead",
     );
-    expect(pipeline.getByRole("link", { name: "Applying: 2 Students" })).toHaveTextContent(
-      "20% of Students",
-    );
-    expect(pipeline.getByText("10 Students in progress")).toBeInTheDocument();
-    expect(pipeline.getByRole("link", { name: "2 Lost" })).toHaveAttribute(
+    expect(pipeline.getByRole("link", { name: "Visa: 0 Students" })).toHaveAttribute(
       "href",
-      "/students?stage=lost",
+      "/students?stage=visa",
     );
+  });
+
+  it("writes how many are in progress beside the Pipeline heading, not in it", async () => {
+    backend(...EVERYTHING);
+    renderHome(ADMIN);
+    const pipeline = await region("Pipeline");
+
+    const count = await within(pipeline).findByText("10 Students in progress");
+    expect(within(pipeline).getByRole("heading", { name: "Pipeline" })).not.toContainElement(count);
+    expect(count.parentElement).toContainElement(
+      within(pipeline).getByRole("heading", { name: "Pipeline" }),
+    );
+  });
+
+  it("keeps Lost off the thread, as a quiet line under it", async () => {
+    backend(...EVERYTHING);
+    renderHome(ADMIN);
+    const pipeline = within(await region("Pipeline"));
+
+    const lost = await pipeline.findByRole("link", { name: "2 Lost, not in progress" });
+    expect(lost).toHaveAttribute("href", "/students?stage=lost");
+    expect(pipeline.getByRole("list", { name: "Students at each Stage" })).not.toContainElement(
+      lost,
+    );
+  });
+
+  it("has no Lost line when nobody is Lost", async () => {
+    backend(on("GET", PIPELINE, { counts: { ...COUNTS, lost: 0 } }), ...EVERYTHING);
+    renderHome(ADMIN);
+    const pipeline = within(await region("Pipeline"));
+
+    await pipeline.findByRole("list", { name: "Students at each Stage" });
+    expect(pipeline.queryByText(/Lost/)).toBeNull();
+  });
+
+  it("marks the beads a Student has reached, the current one and those to come", async () => {
+    backend(...EVERYTHING);
+    renderHome(ADMIN);
+    const progress = within(await region("Students' progress"));
+
+    const applying = await progress.findByRole("list", { name: "Stage: Applying" });
+    expect(
+      within(applying)
+        .getAllByRole("listitem")
+        .map((bead) => bead.dataset.state),
+    ).toEqual(["past", "past", "now", "next", "next"]);
+    const lead = progress.getByRole("list", { name: "Stage: Lead" });
+    expect(
+      within(lead)
+        .getAllByRole("listitem")
+        .map((bead) => bead.dataset.state),
+    ).toEqual(["now", "next", "next", "next", "next"]);
   });
 
   it("says Done for a Student whose Visa is granted", async () => {
@@ -315,7 +374,7 @@ describe("The Admin's Home", () => {
     expect(progress.queryByText(/^Next:/)).not.toBeInTheDocument();
   });
 
-  it("shows the furthest along with their counsellor, and how many more there are", async () => {
+  it("shows the furthest along with their counsellor, and one See all beside the title (owner)", async () => {
     backend(...EVERYTHING);
     renderHome(ADMIN);
     const progress = within(await region("Students' progress"));
@@ -328,11 +387,11 @@ describe("The Admin's Home", () => {
     expect(progress.getByText("Australia, no counsellor yet")).toBeInTheDocument();
     expect(progress.getAllByRole("list", { name: "Stage: Applying" })).toHaveLength(1);
     expect(progress.getByText("Next: Waiting for an offer, Deakin University")).toBeInTheDocument();
-    expect(progress.getByText("Showing the 2 furthest along out of 9.")).toBeInTheDocument();
-    expect(progress.getByRole("link", { name: "See all Students" })).toHaveAttribute(
-      "href",
-      "/students",
-    );
+    expect(progress.queryByText(/furthest along/)).toBeNull();
+    const seeAll = progress.getAllByRole("link", { name: "See all (9)" });
+    expect(seeAll).toHaveLength(1);
+    expect(seeAll[0]).toHaveAttribute("href", "/students");
+    expect(progress.queryByRole("link", { name: /All Students/ })).toBeNull();
   });
 
   it("opens a Student's checklist from their documents button", async () => {
@@ -359,6 +418,41 @@ describe("The Admin's Home", () => {
     expect(dialog).not.toBeInTheDocument();
   });
 
+  it("shows the name, the Next line on one line and the documents button on phones, not the thread", async () => {
+    backend(...EVERYTHING);
+    renderHome(ADMIN);
+    const progress = within(await region("Students' progress"));
+
+    const thread = await progress.findByRole("list", { name: "Stage: Applying" });
+    expect(thread.closest("[data-progress-stage]")).toHaveClass("max-phone:hidden");
+    expect(progress.getByText("Next: Waiting for an offer, Deakin University")).toHaveClass(
+      "max-phone:truncate",
+    );
+  });
+
+  it("on a phone shows the Stage at the row's right in place of the documents button (owner, 2026-11-27)", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    backend(...EVERYTHING);
+    renderHome(ADMIN);
+    const progress = within(await region("Students' progress"));
+
+    const name = await progress.findByRole("link", { name: "Sita Gurung" });
+    const row = name.closest("li");
+    if (row === null) throw new Error("no row for Sita Gurung");
+    expect(within(row).queryByRole("button", { name: /Open the checklist/ })).toBeNull();
+    const stage = within(row).getByText("Applying", { selector: "[data-progress-end] *" });
+    expect(stage.closest("[data-progress-end]")).toHaveClass(
+      "max-phone:col-start-2",
+      "max-phone:row-start-1",
+    );
+  });
+
   it("stacks a progress row on phones so the documents button never squeezes the name (issue 91)", async () => {
     backend(...EVERYTHING);
     renderHome(ADMIN);
@@ -375,7 +469,7 @@ describe("The Admin's Home", () => {
   it("lists new visitors without a counsellor, each with Assign", async () => {
     backend(...EVERYTHING);
     renderHome(ADMIN);
-    const visitors = within(await region("New visitors without a counsellor"));
+    const visitors = within(await region("New visitors to assign"));
 
     expect(await visitors.findByRole("link", { name: "Hari Bhandari" })).toHaveAttribute(
       "href",
@@ -535,31 +629,72 @@ describe("The Front Desk's Home", () => {
   });
 });
 
-describe("What's waiting on you", () => {
-  it("shows a Counsellor each item with its count, opening the matching list", async () => {
+describe("Waiting for you, as cards to act on (UI revamp 07)", () => {
+  it("shows a Counsellor each card with its count and words, opening where the work is", async () => {
     backend(...withWaiting(SOME_WAITING));
     renderHome(COUNSELLOR);
-    const waiting = within(await region("Waiting on you"));
+    const waiting = within(await region("Waiting for you"));
 
-    expect(
-      await waiting.findByRole("link", { name: /Documents waiting to be checked\s*3/ }),
-    ).toHaveAttribute("href", "/documents?waiting=true");
-    expect(
-      waiting.getByRole("link", { name: /Transfer requests waiting for you\s*2/ }),
-    ).toHaveAttribute("href", "/transfer-requests");
-    const interviews = waiting.getByRole("link", {
-      name: /Visa appointments in the next 7 days/,
+    expect(await waiting.findByRole("link", { name: "3 documents to check" })).toHaveAttribute(
+      "href",
+      "/documents?waiting=true",
+    );
+    expect(waiting.getByRole("link", { name: "2 transfer requests" })).toHaveAttribute(
+      "href",
+      "/transfer-requests",
+    );
+    const appointments = waiting.getByRole("link", {
+      name: "2 visa appointments in the next 7 days",
     });
-    expect(interviews).toHaveAttribute("href", "/visas?appointment=next_7");
-    expect(
-      within(interviews).getByText("Sita Gurung, Biometrics 4 Nov 2026 at 2:00 PM"),
-    ).toBeVisible();
-    expect(
-      within(interviews).getByText("<b>Ram</b>, Interview 6 Nov 2026 at 9:30 AM"),
-    ).toBeVisible();
+    expect(appointments).toHaveAttribute("href", "/visas?appointment=next_7");
+    expect(appointments).toHaveAccessibleDescription(
+      "Sita Gurung, Biometrics 4 Nov 2026 at 2:00 PM · <b>Ram</b>, Interview 6 Nov 2026 at 9:30 AM",
+    );
   });
 
-  it("says how many more appointments there are than it lists", async () => {
+  it("words one of each in the singular", async () => {
+    backend(
+      ...withWaiting({
+        documents_waiting: 1,
+        transfer_requests_waiting: 1,
+        documents_in_bin: 1,
+        work_from_home_requests: { count: 1, first_staff_id: uid(6) },
+        visa_appointments: {
+          count: 1,
+          results: SOME_WAITING.visa_appointments.results.slice(0, 1),
+        },
+      }),
+    );
+    renderHome(ADMIN);
+    const waiting = within(await region("Waiting for you"));
+
+    expect(
+      (await waiting.findAllByRole("link")).map((card) => card.getAttribute("aria-label")),
+    ).toEqual([
+      "1 document to check",
+      "1 work from home request",
+      "1 transfer request",
+      "1 document in the Bin",
+      "1 visa appointment in the next 7 days",
+    ]);
+  });
+
+  it("is a card with an icon, the count, the words and an arrow; amber for what needs an answer", async () => {
+    backend(...withWaiting({ ...SOME_WAITING, documents_in_bin: 4 }));
+    renderHome(ADMIN);
+    const waiting = within(await region("Waiting for you"));
+
+    const documents = await waiting.findByRole("link", { name: "3 documents to check" });
+    expect(documents).toHaveTextContent(/^3documents to check$/);
+    expect(documents.querySelectorAll("svg")).toHaveLength(2);
+    expect(documents.querySelector("[data-todo-icon]")).toHaveClass("bg-warn-tint", "text-warn");
+    const bin = waiting.getByRole("link", { name: "4 documents in the Bin" });
+    expect(bin.querySelector("[data-todo-icon]")).toHaveClass("bg-fill", "text-ink-2");
+    const appointments = waiting.getByRole("link", { name: /visa appointments/ });
+    expect(appointments.querySelector("[data-todo-icon]")).toHaveClass("bg-fill", "text-ink-2");
+  });
+
+  it("names the first two appointments and says how many more there are", async () => {
     backend(
       ...withWaiting({
         ...NOTHING_WAITING,
@@ -568,27 +703,31 @@ describe("What's waiting on you", () => {
     );
     renderHome(COUNSELLOR);
 
-    expect(await screen.findByText("and 5 more")).toBeVisible();
+    expect(
+      await screen.findByText(
+        "Sita Gurung, Biometrics 4 Nov 2026 at 2:00 PM · <b>Ram</b>, Interview 6 Nov 2026 at 9:30 AM and 5 more",
+      ),
+    ).toBeVisible();
   });
 
-  it("hides items with nothing waiting", async () => {
+  it("shows only what is waiting", async () => {
     backend(...withWaiting({ ...NOTHING_WAITING, transfer_requests_waiting: 1 }));
     renderHome(ADMIN);
-    const waiting = within(await region("Waiting on you"));
+    const waiting = within(await region("Waiting for you"));
 
-    expect(await waiting.findByRole("link", { name: /Transfer requests/ })).toBeVisible();
-    expect(waiting.queryByRole("link", { name: /Documents/ })).toBeNull();
-    expect(waiting.queryByRole("link", { name: /Visa appointments/ })).toBeNull();
+    expect(await waiting.findByRole("link", { name: "1 transfer request" })).toBeVisible();
+    expect(waiting.getAllByRole("link")).toHaveLength(1);
   });
 
   it("tells an Admin how many Documents are in the Bin, opening the Bin tab", async () => {
     backend(...withWaiting({ ...NOTHING_WAITING, documents_in_bin: 2 }));
     renderHome(ADMIN);
-    const waiting = within(await region("Waiting on you"));
+    const waiting = within(await region("Waiting for you"));
 
-    const link = await waiting.findByRole("link", { name: /Documents in the Bin/ });
-    expect(link).toHaveAttribute("href", "/documents?tab=bin");
-    expect(link).toHaveTextContent("2");
+    expect(await waiting.findByRole("link", { name: "2 documents in the Bin" })).toHaveAttribute(
+      "href",
+      "/documents?tab=bin",
+    );
   });
 
   it("tells an Admin how many Work from home requests wait, opening the first", async () => {
@@ -599,11 +738,30 @@ describe("What's waiting on you", () => {
       }),
     );
     renderHome(ADMIN);
-    const waiting = within(await region("Waiting on you"));
+    const waiting = within(await region("Waiting for you"));
 
-    const link = await waiting.findByRole("link", { name: /Work from home requests/ });
-    expect(link).toHaveAttribute("href", `/staff/${uid(6)}?tab=wfh`);
-    expect(link).toHaveTextContent("2");
+    expect(await waiting.findByRole("link", { name: "2 work from home requests" })).toHaveAttribute(
+      "href",
+      `/staff/${uid(6)}?tab=wfh`,
+    );
+  });
+
+  it("sits side by side on computers and is one sheet of rows on phones", async () => {
+    backend(...withWaiting(SOME_WAITING));
+    renderHome(ADMIN);
+    const waiting = await region("Waiting for you");
+
+    expect(waiting).toHaveClass(
+      "phone:grid-cols-[repeat(auto-fit,minmax(var(--spacing-todo),1fr))]",
+      "max-phone:rounded-panel",
+      "max-phone:bg-paper",
+    );
+    const card = await within(waiting).findByRole("link", { name: "3 documents to check" });
+    expect(card).toHaveClass(
+      "phone:min-h-todo-card",
+      "max-phone:min-h-todo-row",
+      "phone:rounded-panel",
+    );
   });
 
   it("shows no row at all when nothing waits", async () => {
@@ -611,7 +769,7 @@ describe("What's waiting on you", () => {
     renderHome(COUNSELLOR);
 
     await region("Your Students' progress");
-    expect(screen.queryByRole("region", { name: "Waiting on you" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Waiting for you" })).toBeNull();
   });
 
   it("shows no row when it can't load, and the rest of the Home still works", async () => {
@@ -619,7 +777,7 @@ describe("What's waiting on you", () => {
     renderHome(ADMIN);
 
     expect(await region("Pipeline")).toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Waiting on you" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Waiting for you" })).toBeNull();
   });
 
   it.each([
@@ -631,7 +789,7 @@ describe("What's waiting on you", () => {
 
     await screen.findByRole("heading", { level: 1 });
     expect(callsTo(fetchFn, "GET", WAITING)).toHaveLength(0);
-    expect(screen.queryByRole("region", { name: "Waiting on you" })).toBeNull();
+    expect(screen.queryByRole("region", { name: "Waiting for you" })).toBeNull();
   });
 });
 
@@ -688,12 +846,12 @@ const TIDY = [
 ];
 
 const SECTION_NAMES = [
-  "Waiting on you",
+  "Waiting for you",
   "High priority Students",
   "Pipeline",
   "This month at a glance",
   "Who still owes fees",
-  "New visitors without a counsellor",
+  "New visitors to assign",
   "Students' progress",
   "Your Students' progress",
   "Classes",
@@ -704,7 +862,7 @@ const SECTION_NAMES = [
 async function sectionOrder(): Promise<string[]> {
   await region("Your tasks due soon");
   await region("High priority Students");
-  await region("Waiting on you");
+  await region("Waiting for you");
   return screen
     .getAllByRole("region")
     .map(
@@ -717,48 +875,66 @@ async function sectionOrder(): Promise<string[]> {
 }
 
 describe("A tidier Home (ticket 12)", () => {
-  it("puts the Admin's sections in the order they work in", async () => {
+  it("puts what waits for the Admin first, then the work, then the money (UI revamp 07)", async () => {
     backend(...TIDY);
     renderHome(ADMIN);
 
     expect(await sectionOrder()).toEqual([
-      "Waiting on you",
+      "Waiting for you",
       "High priority Students",
-      "Pipeline",
-      "This month at a glance",
-      "Students' progress",
-      "Who still owes fees",
-      "New visitors without a counsellor",
       "Your tasks due soon",
+      "New visitors to assign",
+      "Pipeline",
+      "Students' progress",
+      "This month at a glance",
+      "Who still owes fees",
     ]);
   });
 
-  it("keeps the same order without the Accounts Module, the visitors on a row of their own", async () => {
+  it("keeps the same order without the Accounts Module", async () => {
     backend(...TIDY);
     renderHome({ ...ADMIN, modules: ["students", "batches", "reports"] });
 
     expect(await sectionOrder()).toEqual([
-      "Waiting on you",
+      "Waiting for you",
       "High priority Students",
+      "Your tasks due soon",
+      "New visitors to assign",
       "Pipeline",
       "Students' progress",
-      "New visitors without a counsellor",
-      "Your tasks due soon",
     ]);
-    const visitors = await region("New visitors without a counsellor");
-    expect(visitors.parentElement).not.toHaveClass("wide:grid-cols-2");
   });
 
-  it("puts who owes and the new visitors side by side, the same height", async () => {
+  it("is a desk from 1280px: the work on the left, what waits on the right, the money under both", async () => {
     backend(...TIDY);
     renderHome(ADMIN);
 
+    const side = (await region("High priority Students")).parentElement;
+    const main = (await region("Pipeline")).parentElement;
+    expect(side).toContainElement(await region("Your tasks due soon"));
+    expect(side).toContainElement(await region("New visitors to assign"));
+    expect(main).toContainElement(await region("Students' progress"));
+    expect(side).toHaveClass("desk:order-2");
+    const desk = side?.parentElement;
+    expect(desk).toBe(main?.parentElement);
+    expect(desk).toHaveClass("desk:grid-cols-[minmax(0,1fr)_var(--spacing-desk-side)]");
+    // Below 1280px it is one column in this order: the waiting parts come first.
+    expect(desk?.firstElementChild).toBe(side);
+    const glance = await region("This month at a glance");
     const owes = await region("Who still owes fees");
-    const visitors = await region("New visitors without a counsellor");
-    expect(owes.parentElement).toBe(visitors.parentElement);
-    expect(owes.parentElement).toHaveClass("wide:grid-cols-2");
-    expect(owes).toHaveClass("h-full");
-    expect(visitors).toHaveClass("h-full");
+    expect(desk).not.toContainElement(glance);
+    expect(desk).not.toContainElement(owes);
+  });
+
+  it("puts who still owes across the full width, a Student to a column", async () => {
+    backend(...TIDY);
+    renderHome(ADMIN);
+    const owes = within(await region("Who still owes fees"));
+
+    expect(await owes.findByRole("list", { name: "Who still owes fees" })).toHaveClass(
+      "mid:grid-cols-3",
+      "mid:divide-x",
+    );
   });
 
   it("puts the counsellor's sections in order, with their own High Students", async () => {
@@ -766,12 +942,17 @@ describe("A tidier Home (ticket 12)", () => {
     renderHome(COUNSELLOR);
 
     expect(await sectionOrder()).toEqual([
-      "Waiting on you",
+      "Waiting for you",
       "High priority Students",
+      "Your tasks due soon",
       "Your Students' progress",
       "Classes",
-      "Your tasks due soon",
     ]);
+    const side = (await region("High priority Students")).parentElement;
+    expect(side).toContainElement(await region("Your tasks due soon"));
+    expect((await region("Your Students' progress")).parentElement).toContainElement(
+      await region("Classes"),
+    );
     expect(callsTo(fetchFn, "GET", HIGH_MINE)).toHaveLength(1);
     expect(callsTo(fetchFn, "GET", HIGH_ALL)).toHaveLength(0);
   });
@@ -781,21 +962,21 @@ describe("A tidier Home (ticket 12)", () => {
     renderHome({ ...COUNSELLOR, modules: ["students"] });
 
     expect(await sectionOrder()).toEqual([
-      "Waiting on you",
+      "Waiting for you",
       "High priority Students",
-      "Your Students' progress",
       "Your tasks due soon",
+      "Your Students' progress",
     ]);
   });
 
-  it("shows at most 4 High Students as slim boxes in one row, each opening the Student", async () => {
+  it("shows at most 4 High Students on one sheet, each opening the Student", async () => {
     backend(...TIDY);
     renderHome(ADMIN);
     const high = within(await region("High priority Students"));
 
     const asha = await high.findByRole("link", { name: /^Asha Rai/ });
     const boxes = high.getByRole("list", { name: "High priority Students" });
-    expect(boxes).toHaveClass("wide:grid-cols-4");
+    expect(boxes).toHaveClass("wide:grid-cols-4", "desk:grid-cols-1", "bg-paper");
     expect(asha).toHaveAttribute("href", `/students/${uid(41)}`);
     expect(asha).toHaveTextContent("Counsellor: Not assigned");
     expect(asha).toHaveTextContent("Stage: Counselling");
@@ -863,20 +1044,113 @@ describe("A tidier Home (ticket 12)", () => {
 
     expect(await owes.findByRole("link", { name: "Owes 1" })).toBeInTheDocument();
     expect(owes.getAllByRole("listitem")).toHaveLength(3);
-    expect(owes.getByRole("link", { name: "See all (7)" })).toHaveAttribute("href", "/accounts");
+    const seeAll = owes.getByRole("link", { name: "See all (7)" });
+    expect(seeAll).toHaveAttribute("href", "/accounts");
+    expect(seeAll.parentElement?.parentElement).toContainElement(
+      owes.getByRole("heading", { name: "Who still owes fees" }),
+    );
   });
 
   it("shows 3 new visitors and See all opening the list at No counsellor yet", async () => {
     backend(on("GET", UNASSIGNED, SIX_VISITORS), ...TIDY);
     renderHome(ADMIN);
-    const visitors = within(await region("New visitors without a counsellor"));
+    const visitors = within(await region("New visitors to assign"));
 
     expect(await visitors.findByRole("link", { name: "Visitor 1" })).toBeInTheDocument();
     expect(visitors.getAllByRole("listitem")).toHaveLength(3);
-    expect(visitors.getByRole("link", { name: "See all (6)" })).toHaveAttribute(
-      "href",
-      "/students?stage=lead&counsellor=none",
+    const seeAll = visitors.getByRole("link", { name: "See all (6)" });
+    expect(seeAll).toHaveAttribute("href", "/students?stage=lead&counsellor=none");
+    // Beside the title, on its line, never under the sheet.
+    const titleLine = visitors.getByRole("heading", { name: "New visitors to assign" })
+      .parentElement?.parentElement;
+    expect(titleLine).toContainElement(seeAll);
+    expect(titleLine).toHaveClass("flex-nowrap");
+  });
+
+  it("shows at most 4 tasks and 5 Students in progress on the Admin's Home", async () => {
+    const fetchFn = backend(
+      on(
+        "GET",
+        TASKS,
+        pageOf(
+          [1, 2, 3, 4, 5, 6].map((n) => task(uid(n), `Task ${String(n)}`, "2026-11-03", "today")),
+        ),
+      ),
+      ...TIDY,
     );
+    renderHome(ADMIN);
+    const tasks = within(await region("Your tasks due soon"));
+
+    expect(await tasks.findByText("Task 4")).toBeInTheDocument();
+    expect(tasks.getAllByRole("checkbox")).toHaveLength(4);
+    expect(tasks.getByRole("link", { name: "See all tasks" })).toHaveAttribute("href", "/tasks");
+    expect(callsTo(fetchFn, "GET", PROGRESS_ADMIN)).toHaveLength(1);
+  });
+
+  it("clamps a long task title to two lines and keeps who and when on one line in the desk column", async () => {
+    const long = "Call the university about the missing transcript and the deposit ".repeat(4);
+    backend(
+      on("GET", TASKS, pageOf([task(uid(1), long, "2026-11-05", "upcoming", "high")])),
+      ...TIDY,
+    );
+    renderHome(ADMIN);
+    const tasks = within(await region("Your tasks due soon"));
+
+    const title = await tasks.findByText(long.trim());
+    expect(title).toHaveClass("desk:line-clamp-2");
+    const row = title.closest("li");
+    expect(row).toHaveAttribute("data-look", "desk");
+    const due = tasks.getByText("5 Nov 2026");
+    expect(due.closest("[data-task-due]")).toHaveClass("desk:row-start-2", "desk:col-start-3");
+  });
+
+  it("gives a High priority Student a name and one line on the desk, long names cut short", async () => {
+    backend(...TIDY);
+    renderHome(ADMIN);
+    const high = within(await region("High priority Students"));
+
+    const asha = await high.findByRole("link", { name: /^Asha Rai/ });
+    expect(within(asha).getByText("Asha Rai")).toHaveClass("truncate");
+    const line = within(asha).getByText("Counsellor: Not assigned").parentElement;
+    expect(line).toContainElement(within(asha).getByText("Stage: Counselling"));
+    expect(line).toHaveClass("desk:flex", "desk:whitespace-nowrap");
+  });
+
+  it("keeps an empty part of the desk column as tall as two rows", async () => {
+    backend(
+      on("GET", HIGH_ALL, pageOf([])),
+      on("GET", TASKS, pageOf([])),
+      on("GET", UNASSIGNED, pageOf([])),
+      ...TIDY,
+    );
+    renderHome(ADMIN);
+
+    for (const words of [
+      "No Students are High priority right now.",
+      "Nothing due in the next two days.",
+      "Everyone has a counsellor.",
+    ]) {
+      const empty = (await screen.findByText(words)).closest("[data-desk-empty]");
+      expect(empty).toHaveClass("desk:min-h-desk-empty");
+    }
+  });
+
+  it("makes Assign a small pill beside the visitor's name on phones, still 44 tall to tap", async () => {
+    backend(...TIDY);
+    renderHome(ADMIN);
+    const visitors = within(await region("New visitors to assign"));
+
+    const assign = await visitors.findByRole("button", {
+      name: "Assign a counsellor to Hari Bhandari",
+    });
+    expect(assign).toHaveClass("min-h-control", "max-phone:bg-transparent");
+    expect(within(assign).getByText("Assign")).toHaveClass(
+      "max-phone:rounded-pill",
+      "max-phone:bg-accent",
+    );
+    const row = assign.closest("li");
+    expect(row).toHaveClass("max-phone:grid-cols-[minmax(0,1fr)_auto]");
+    expect(visitors.getByRole("link", { name: "Hari Bhandari" })).toHaveClass("desk:truncate");
   });
 
   it("leaves the Front Desk and Teacher Homes as they were", async () => {

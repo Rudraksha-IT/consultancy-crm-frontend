@@ -39,6 +39,23 @@ describe("Pager", () => {
     expect(onPage).toHaveBeenCalledWith(2);
   });
 
+  it("keeps Page 1 of 3, Previous page and Next page on one line on phones", () => {
+    render(<Pager summary="60 rows" count={60} page={1} pageSize={25} onPage={vi.fn()} />);
+
+    // How many match takes its own line; the pages never wrap under it.
+    expect(screen.getByText("60 rows")).toHaveClass("max-phone:basis-full");
+    const pages = screen.getByRole("navigation", { name: "Pages" });
+    expect(pages).toHaveClass(
+      "max-phone:w-full",
+      "max-phone:flex-nowrap",
+      "max-phone:[&>button]:px-1.5",
+      "max-phone:[&>button]:text-button-sm",
+    );
+    expect(screen.getByText("Page 1 of 3")).toHaveClass("max-phone:mr-auto", "whitespace-nowrap");
+    // Still 44 tall to tap.
+    expect(screen.getByRole("button", { name: "Next page" })).toHaveClass("min-h-control");
+  });
+
   it("goes back from the last page", async () => {
     const onPage = vi.fn();
     render(<Pager summary="60 rows" count={60} page={3} pageSize={25} onPage={onPage} />);

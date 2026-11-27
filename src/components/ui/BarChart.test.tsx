@@ -53,8 +53,9 @@ describe("BarChart", () => {
     expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
   });
 
-  it("lists every row in the table view, also those grouped in the bars", async () => {
+  it("lists every row in the table view, also those grouped in the bars", () => {
     renderChart({
+      showsTable: true,
       rows: [...ROWS, { key: "other", label: "Other", value: 3 }],
       tableRows: [
         ...ROWS,
@@ -63,8 +64,7 @@ describe("BarChart", () => {
       ],
     });
 
-    await userEvent.click(screen.getByText("Show as a table"));
-
+    expect(screen.queryByRole("list")).toBeNull();
     const table = screen.getByRole("table");
     expect(
       within(table)
@@ -79,12 +79,17 @@ describe("BarChart", () => {
     ).toEqual(["Canada12", "UK4", "Japan2", "Other1"]);
   });
 
-  it("uses the bars for the table when no other rows are given", async () => {
-    renderChart();
-
-    await userEvent.click(screen.getByText("Show as a table"));
+  it("uses the bars for the table when no other rows are given", () => {
+    renderChart({ showsTable: true });
 
     expect(within(screen.getByRole("table")).getByRole("row", { name: "UK 4" })).toBeVisible();
+  });
+
+  it("has no table while it is a chart", () => {
+    renderChart();
+
+    expect(screen.queryByRole("table")).toBeNull();
+    expect(screen.queryByText("Show as a table")).toBeNull();
   });
 
   it("writes typed names as text, never as markup", () => {

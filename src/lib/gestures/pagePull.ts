@@ -236,15 +236,30 @@ export function pullShift(distance: number): number {
   return MAX_SHIFT * (1 - Math.exp(-distance / MAX_SHIFT));
 }
 
+/** How far (degrees) the logo in the gap turns for each pixel the page has moved. */
+export const TURN_PER_PIXEL = 3;
+
+/**
+ * How far (degrees) the logo in the gap has turned: with how far the page has moved on screen, not
+ * how far the finger or touchpad went, so it slows as the page resists and turns back as the page
+ * returns. Clockwise when the top is pulled down, the other way when the bottom is pulled up.
+ */
+export function pullTurn(edge: PageEdge, shift: number): number {
+  const turn = Math.round(shift * TURN_PER_PIXEL);
+  return edge === "top" || turn === 0 ? turn : -turn;
+}
+
 export type PullHint<Page> = {
   edge: PageEdge;
   /** Where letting go will go. */
   page: Page;
   isReady: boolean;
-  /** How full the bar is, 0 to 1. */
+  /** How far towards the point where letting go changes the page, 0 to 1. */
   progress: number;
   /** How far (px) the page has moved. */
   shift: number;
+  /** How far (degrees) the logo in the gap has turned; negative is anticlockwise. */
+  turn: number;
 };
 
 /** What the gap shows for a pull, or null when that end has no page to go to. */
@@ -255,11 +270,13 @@ export function pullHint<Page>(
   if (pull === null) return null;
   const page = pull.edge === "top" ? neighbours.previous : neighbours.next;
   if (page === null) return null;
+  const shift = pullShift(pull.distance);
   return {
     edge: pull.edge,
     page,
     isReady: pull.distance >= PULL_DISTANCE,
     progress: Math.min(1, pull.distance / PULL_DISTANCE),
-    shift: pullShift(pull.distance),
+    shift,
+    turn: pullTurn(pull.edge, shift),
   };
 }

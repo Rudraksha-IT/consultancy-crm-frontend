@@ -4,9 +4,10 @@ import type { ReactNode } from "react";
 
 import { Icon, type IconName } from "./Icon";
 
-// A container, so the number can shrink to the tile's width on a phone.
+// No card of its own: figures share one sheet with thin lines between them (TileGrid draws both). A
+// container, so the number can shrink to the tile's width on a phone.
 const TILE_CLASSES =
-  "max-phone:@container grid min-w-0 content-start gap-1.5 rounded-panel border border-rule bg-paper p-6 text-ink shadow-raise max-phone:gap-1 max-phone:px-4 max-phone:py-3.5";
+  "max-phone:@container grid min-w-0 content-start gap-1.5 px-5 py-4.5 text-ink max-phone:gap-1 max-phone:px-0 max-phone:py-3";
 
 type FigureTileProps = {
   label: string;
@@ -38,7 +39,7 @@ export function FigureTile({
 }: FigureTileProps) {
   const content = (
     <>
-      <span className="text-secondary text-ink-2 inline-flex items-center gap-2 font-medium">
+      <span className="text-small text-ink-2 inline-flex items-center gap-2 font-medium">
         {icon !== undefined && <Icon name={icon} className="shrink-0" />}
         {label}
       </span>
@@ -63,7 +64,7 @@ export function FigureTile({
       </div>
     );
   return (
-    <Link data-tile="" href={href} className={`${TILE_CLASSES} hover:border-accent no-underline`}>
+    <Link data-tile="" href={href} className={`${TILE_CLASSES} hover:bg-fill no-underline`}>
       {content}
     </Link>
   );

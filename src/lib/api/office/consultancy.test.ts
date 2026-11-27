@@ -1,20 +1,17 @@
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { fetchCurrentConsultancy } from "./consultancy";
-import { DEFAULT_THEME } from "@/lib/theme";
 
 import { ApiRequestError } from "../core/errors";
 
-const GLACIER = { ...DEFAULT_THEME, page: "ice", accent: TEST_COLOURS.arcticTeal };
-
 describe("fetchCurrentConsultancy", () => {
-  it("returns the Consultancy that owns the current subdomain", async () => {
+  it("returns the Consultancy that owns the current subdomain, without any old theme", async () => {
     const fetchFn = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(new Response(JSON.stringify({ name: "Acme Education", theme: GLACIER })));
+      .mockResolvedValue(
+        new Response(JSON.stringify({ name: "Acme Education", theme: { page: "ice" } })),
+      );
 
     await expect(fetchCurrentConsultancy(fetchFn)).resolves.toEqual({
       name: "Acme Education",
-      theme: GLACIER,
       logo: null,
       status: "active",
       statusMessage: null,
@@ -56,7 +53,6 @@ describe("fetchCurrentConsultancy", () => {
 
     await expect(fetchCurrentConsultancy(fetchFn)).resolves.toEqual({
       name: "Acme Education",
-      theme: DEFAULT_THEME,
       logo: null,
       status: "active",
       statusMessage: null,

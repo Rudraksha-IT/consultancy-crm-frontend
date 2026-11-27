@@ -343,9 +343,9 @@ describe("PlatformSettingsPage: saved logos (first live fixes, ticket 07)", () =
   });
 });
 
-describe.each(THEME_CASES)("PlatformSettingsPage in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("PlatformSettingsPage in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
   afterEach(resetTheme);
 

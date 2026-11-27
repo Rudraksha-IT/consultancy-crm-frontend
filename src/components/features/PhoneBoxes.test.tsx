@@ -11,7 +11,6 @@ import { Stage } from "@/constants/stages";
 import { Country } from "@/constants/students";
 import { BatchSchema } from "@/lib/api/classes/batches";
 import type { Message, PaperworkRow, StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 
@@ -22,7 +21,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 function inOffice(node: React.ReactNode) {
@@ -52,6 +50,7 @@ function paperworkRow(counts: Partial<PaperworkRow>): PaperworkRow {
     waiting: 0,
     missing: 0,
     verified: 0,
+    items: [],
     ...counts,
   };
 }
@@ -61,26 +60,34 @@ describe("Documents on a phone", () => {
     render(<PaperworkList rows={[paperworkRow(counts)]} showsCounsellor onOpen={vi.fn()} />);
   }
 
-  it("keep only the to check and rejected chips", () => {
+  it("keep the short counts for what needs someone, only on a phone", () => {
     showRow({ rejected: 1, waiting: 2, missing: 4, verified: 6 });
 
     expect(isHiddenOnPhone(screen.getByText(/1 rejected/i))).toBe(false);
     expect(isHiddenOnPhone(screen.getByText(/2 to check/i))).toBe(false);
-    expect(isHiddenOnPhone(screen.getByText(/4 missing/i))).toBe(true);
-    expect(isHiddenOnPhone(screen.getByText(/6 correct/i))).toBe(true);
+    expect(screen.getByText(/1 rejected/i).closest("[data-counts]")).toHaveClass("phone:hidden");
+    expect(screen.queryByText(/4 missing|6 correct/i)).not.toBeInTheDocument();
   });
 
-  it("drop the chips box when nothing needs anyone", () => {
+  it("have no counts when nothing needs anyone", () => {
     showRow({ missing: 4, verified: 6 });
 
-    expect(isHiddenOnPhone(screen.getByText(/4 missing/i).closest("div"))).toBe(true);
+    expect(document.querySelector("[data-counts]")).toBeNull();
   });
 
-  it("show '5 of 13' without the bar, the name on one line and no Stage line", () => {
+  it("show no pills", () => {
+    showRow({ missing: 1, items: [{ name: "Passport", state: "missing" }] });
+
+    expect(isHiddenOnPhone(screen.getByText("Passport"))).toBe(true);
+  });
+
+  it("show '5 of 13' without 'received', the name on one line and no Stage line", () => {
     showRow({ waiting: 1 });
 
-    expect(isHiddenOnPhone(screen.getByRole("progressbar"))).toBe(true);
-    expect(isHiddenOnPhone(screen.getByText(/5 of 13/))).toBe(false);
+    const received = document.querySelector("[data-received]");
+    expect(received).toHaveTextContent("5 of 13 received");
+    expect(isHiddenOnPhone(received)).toBe(false);
+    expect(isHiddenOnPhone(screen.getByText("received"))).toBe(true);
     expect(screen.getByText("Aarav Sharma")).toHaveClass("max-phone:truncate");
     expect(isHiddenOnPhone(screen.getByText(/Applying, Australia/))).toBe(true);
     expect(isHiddenOnPhone(screen.getByRole("button", { name: /Open checklist/ }))).toBe(false);
@@ -158,22 +165,40 @@ describe("Bar lists on a phone", () => {
 });
 
 describe("The Stage on a phone", () => {
-  it("is the name alone in a list, without the dots", () => {
+  it("is its name alone in a list: the five beads are for wider screens (owner, 2026-11-27)", () => {
     const { container } = render(<StageMeter stage={Stage.Applying} />);
 
-    expect(isHiddenOnPhone(container.querySelector("[data-step]"))).toBe(true);
+    expect(container.querySelectorAll("[data-step]")).toHaveLength(5);
+    expect(container.querySelector("[data-step]")?.parentElement).toHaveClass("max-phone:hidden");
     expect(isHiddenOnPhone(screen.getByText("Applying"))).toBe(false);
   });
 
-  it("is a compact stepper on the Student's page: five dots in a row, small names under them", () => {
+  it("cuts the Stage's name with … in a narrow cell, keeping the beads (ticket 25)", () => {
+    const { container } = render(<StageMeter stage={Stage.Counselling} />);
+
+    const name = screen.getByText("Counselling");
+    expect(name).toHaveClass("min-w-0", "truncate");
+    expect(container.firstElementChild).toHaveClass("max-w-full");
+    expect(container.querySelector("[data-step]")?.parentElement).toHaveClass("flex-none");
+  });
+
+  it("is only the five Stage names in a row on the Student's page: no dots and no line (owner, 2026-11-27)", () => {
     render(<Journey stage={Stage.Applying} nextStep="Add the Offer Letter" />);
 
     const steps = screen.getByRole("list");
     expect(steps).toHaveClass("grid-cols-[repeat(5,minmax(0,1fr))]");
     expect(steps).not.toHaveClass("grid-cols-1");
-    const stop = within(steps).getAllByRole("listitem")[0];
-    expect(stop).toHaveClass("justify-items-center", "before:left-1/2", "phone:before:left-5");
+    const stops = within(steps).getAllByRole("listitem");
+    for (const stop of stops) {
+      // The line between the dots, and the dot itself, are for wider screens.
+      expect(stop).toHaveClass("max-phone:before:hidden", "justify-items-center");
+      expect(stop.firstElementChild).toHaveClass("max-phone:hidden");
+    }
     expect(screen.getByText("Lead")).toHaveClass("max-phone:text-tiny", "max-phone:truncate");
+    // Where the Student is: its name in bold with a line under it; the rest have none.
+    expect(screen.getByText("Applying")).toHaveClass("font-semibold", "max-phone:border-good");
+    expect(screen.getByText("Lead")).toHaveClass("max-phone:border-transparent");
+    expect(screen.getByText("Visa")).toHaveClass("max-phone:border-transparent");
   });
 
   it("cuts the next step to two lines", () => {

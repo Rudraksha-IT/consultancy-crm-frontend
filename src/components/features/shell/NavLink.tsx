@@ -9,7 +9,6 @@ import type { Waiting } from "./navCounts";
 type NavLinkProps = {
   item: NavItem;
   isCurrent: boolean;
-  isCollapsed: boolean;
   /**
    * Something waiting there (e.g. Tasks due today or overdue) and what the number means for
    * screen readers; nothing is shown for 0.
@@ -19,40 +18,42 @@ type NavLinkProps = {
 };
 
 /**
- * One sidebar link. The open page is marked by a line on the left edge, with no fill. A count
- * sits at the right end, or on the icon's corner when the sidebar is collapsed.
+ * One link of the side menu (UI revamp, ticket 05). Above 1024px the icon sits over its label and
+ * the open page has a soft fill; in the slide-out menu the label is beside the icon. The open
+ * page is in the accent colour on every width. A count is a quiet number: at the icon's top
+ * corner in the strip, at the row's end in the slide-out menu.
  */
-export function NavLink(props: NavLinkProps) {
-  const { item, isCurrent, isCollapsed, waiting, onNavigate } = props;
+export function NavLink({ item, isCurrent, waiting, onNavigate }: NavLinkProps) {
   return (
     <Link
       href={item.href}
       title={item.label}
       aria-current={isCurrent ? "page" : undefined}
       onClick={onNavigate}
-      className={linkClasses(isCurrent, isCollapsed)}
+      className={clsx(
+        "min-h-side-item rounded-control text-body relative z-0 flex items-center gap-3.5 px-3.5 no-underline",
+        "wide:min-h-rail-item wide:rounded-menu wide:text-rail wide:flex-col wide:justify-center wide:gap-1 wide:px-1 wide:py-2 wide:text-center",
+        "hover:bg-side-hover max-phone:active:bg-side-hover",
+        isCurrent ? "text-accent font-semibold" : "text-side-muted hover:text-side-ink font-medium",
+      )}
     >
+      {/* The shade behind the open page, an element of its own so it can glide to it (Movement). */}
+      {isCurrent && (
+        <span
+          aria-hidden="true"
+          data-marker=""
+          className="rounded-menu bg-side-active wide:block absolute inset-0 -z-10 hidden"
+        />
+      )}
       <Icon name={item.icon} />
-      <span className={clsx(isCollapsed && "wide:sr-only")}>{item.label}</span>
-      <NavCount waiting={waiting} isCollapsed={isCollapsed} />
+      <span className="wide:max-w-full">{item.label}</span>
+      <NavCount waiting={waiting} />
     </Link>
   );
 }
 
-function linkClasses(isCurrent: boolean, isCollapsed: boolean): string {
-  return clsx(
-    "min-h-side-item rounded-control text-body relative flex items-center gap-3.5 px-3.5 font-medium no-underline",
-    "hover:bg-side-hover hover:text-side-ink max-phone:active:bg-side-hover",
-    isCurrent
-      ? "text-side-active-ink before:w-active-line before:rounded-r-chip font-semibold before:absolute before:inset-y-2 before:-left-4 before:bg-current"
-      : "text-side-muted",
-    isCollapsed && "wide:justify-center wide:px-0",
-  );
-}
-
 /** The number beside the link, with its meaning for screen readers. */
-function NavCount(props: { waiting: Waiting | undefined; isCollapsed: boolean }) {
-  const { waiting, isCollapsed } = props;
+function NavCount({ waiting }: { waiting: Waiting | undefined }) {
   if (waiting === undefined || waiting.count === 0) return null;
   const { count, label } = waiting;
   return (
@@ -60,13 +61,7 @@ function NavCount(props: { waiting: Waiting | undefined; isCollapsed: boolean })
       <span className="sr-only">{`, ${label}`}</span>
       <span
         aria-hidden="true"
-        className={clsx(
-          "rounded-pill text-small ml-auto min-w-6 px-2 text-center leading-6 font-semibold tabular-nums",
-          isCollapsed
-            ? // Beside the icon's top corner in the rail, solid so it reads on any sidebar colour.
-              "bg-side-hover wide:absolute wide:top-0.5 wide:-right-2 wide:min-w-5 wide:px-1.5 wide:leading-5 wide:bg-side-ink wide:text-side-bg"
-            : "bg-side-hover",
-        )}
+        className="text-small text-side-muted wide:text-tiny wide:absolute wide:top-1.5 wide:right-3.5 wide:ml-0 wide:leading-4 ml-auto font-medium tabular-nums"
       >
         {count}
       </span>

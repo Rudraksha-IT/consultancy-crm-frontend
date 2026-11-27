@@ -5,7 +5,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, methodOf, on, type Answer } from "@/test/backend";
 import { PROFILE } from "@/test/studentProfile";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
@@ -21,7 +20,6 @@ const DESK: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const TODAY = "/api/visits/today/";
@@ -445,9 +443,9 @@ describe("A returning visitor", () => {
   });
 });
 
-describe.each(THEME_CASES)("The visitor desk in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("The visitor desk in the $name Theme", ({ mode }) => {
   it("shows the switch, the form and today's visitors", async () => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
     backend(today([NEW_VISIT]), COUNSELLORS);
     renderDesk();
 
