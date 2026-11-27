@@ -35,7 +35,6 @@ import {
 } from "@/constants/students";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useStoredValue } from "@/hooks/useStoredValue";
-import { useWidePage } from "@/hooks/useWidePage";
 import type { CounsellorChoice, StaffContext } from "@/lib/api";
 import { describeFilters, exportFilters } from "@/lib/exports";
 import {
@@ -274,11 +273,9 @@ type ViewBarProps = {
 
 /**
  * How to move a card (on the Board) on the left, the Board / List switch on the right. The page
- * is as wide for the List as for the Board (`useWidePage`), so the switch stays under the pointer
- * when it is pressed (ticket 25).
+ * is the usual width in both views, so the switch stays under the pointer when it is pressed.
  */
 function ViewBar({ view, onChange }: ViewBarProps) {
-  useWidePage(true);
   return (
     <div
       data-swap-bar=""

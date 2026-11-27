@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { z } from "zod";
@@ -439,38 +442,25 @@ describe("Students board (UI revamp 08)", () => {
     expect(await within(lead).findByText("Couldn't load these Students.")).toBeInTheDocument();
   });
 
-  it("keeps the page as wide in the List as on the Board, so the switch stays under the pointer (ticket 25)", async () => {
+  it("is as wide as Applications and Visas, on the Board and on the List, so the switch stays put (owner, 2026-11-27)", async () => {
     office([ANISH]);
     const user = userEvent.setup();
-    renderPage();
+    const { container } = renderPage();
 
+    // Nothing marks the page as wider than any other: five columns fit the usual width.
     await card("Anish Neupane");
-    expect(document.documentElement).toHaveAttribute("data-wide-page");
+    expect(document.documentElement).not.toHaveAttribute("data-wide-page");
+    expect(container.querySelector("[data-wide-page]")).toBeNull();
     await user.click(screen.getByRole("button", { name: "List" }));
     await screen.findByRole("table");
-    expect(document.documentElement).toHaveAttribute("data-wide-page");
+    expect(document.documentElement).not.toHaveAttribute("data-wide-page");
+    expect(container.querySelector("[data-wide-page]")).toBeNull();
   });
 
-  it("is wide only while Students is the page shown: another page opened after it is not", async () => {
-    office([ANISH]);
-    const shown = renderPage();
-    await card("Anish Neupane");
-    // The mark is on the document, set while the page is shown: a page kept hidden in the
-    // background (as Next.js keeps the one just left) can't widen the page opened after it.
-    expect(shown.container.querySelector("[data-wide-page]")).toBeNull();
+  it("has no rule left that widens a page for the board", () => {
+    const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
 
-    shown.unmount();
-
-    expect(document.documentElement).not.toHaveAttribute("data-wide-page");
-  });
-
-  it("on a phone, the page is not marked wide", async () => {
-    onPhone();
-    office([ANISH]);
-    renderPage();
-
-    await screen.findByRole("table");
-    expect(document.documentElement).not.toHaveAttribute("data-wide-page");
+    expect(css).not.toContain("data-wide-page");
   });
 
   it("where the five columns don't fit, shows the List only: no switch, no board and no board calls (owner, 2026-11-27)", async () => {
@@ -488,7 +478,6 @@ describe("Students board (UI revamp 08)", () => {
     expect(screen.queryByRole("group", { name: "Show Students as" })).toBeNull();
     expect(screen.queryByRole("region", { name: /^Lead/ })).toBeNull();
     expect(boardCalls(fetchFn)).toEqual([]);
-    expect(document.documentElement).not.toHaveAttribute("data-wide-page");
   });
 
   it("asks for the board only from a width that holds five columns of 224 without scrolling", () => {
