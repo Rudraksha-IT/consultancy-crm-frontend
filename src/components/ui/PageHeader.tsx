@@ -102,7 +102,7 @@ function Title({ title, leading }: { title: string; leading: ReactNode }) {
   );
   if (!isPresent(leading)) return heading;
   return (
-    <div className="max-phone:order-2 max-phone:flex-1 -ml-2.5 flex min-w-0 items-center gap-0.5">
+    <div className="max-phone:order-2 max-phone:flex-1 flex min-w-0 items-center gap-0.5 [&>:first-child]:-ml-2.5">
       {leading}
       {heading}
     </div>
