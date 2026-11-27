@@ -55,7 +55,9 @@ export function StaffMonthDialog({
   onCorrected,
   onClose,
 }: StaffMonthDialogProps) {
-  const { state, reload } = useClockMonth(month, staffId);
+  // The popup opens on the month of the list behind it; its arrows step to another (owner).
+  const [shown, setShown] = useState(month);
+  const { state, reload } = useClockMonth(shown, staffId);
   const [open, setOpen] = useState<Open>({ kind: "month" });
   // Kept here, so the List is on the same page after a day was opened and closed (rule 8).
   const backToMonth = () => {
@@ -66,8 +68,9 @@ export function StaffMonthDialog({
   if (day === null) {
     return (
       <MonthDialog
-        title={TEXT.personMonth(name, formatMonth(month))}
+        title={TEXT.personMonth(name, formatMonth(shown))}
         state={state}
+        stepper={{ chosen: shown, onMonth: setShown }}
         onOpenDay={(chosen) => {
           setOpen({ kind: "day", date: chosen.date });
         }}
@@ -121,15 +124,17 @@ function openDay(
 type MonthDialogProps = {
   title: string;
   state: ClockMonthState;
+  /** The month shown and how to step to another; the last month stays until the next loads. */
+  stepper: { chosen: string; onMonth: (month: string) => void };
   onOpenDay: (day: ClockDay) => void;
   onClose: () => void;
 };
 
 /**
- * The month in a popup, as a Calendar or a List: the switch and the List's pager redraw it in
+ * The month in a popup, as a Calendar or a List: the switch and the month's arrows redraw it in
  * place, so the popup stays open and the cursor stays on what was pressed (UI revamp 16).
  */
-function MonthDialog({ title, state, onOpenDay, onClose }: MonthDialogProps) {
+function MonthDialog({ title, state, stepper, onOpenDay, onClose }: MonthDialogProps) {
   return (
     <Dialog
       isOpen
@@ -144,7 +149,9 @@ function MonthDialog({ title, state, onOpenDay, onClose }: MonthDialogProps) {
     >
       {state.status === "loading" && <p className="text-ink-2">{TEXT.monthLoading}</p>}
       {state.status === "failed" && <Banner tone="problem">{TEXT.monthFailed}</Banner>}
-      {state.status === "loaded" && <MonthView month={state.month} onOpenDay={onOpenDay} />}
+      {state.status === "loaded" && (
+        <MonthView month={state.month} stepper={stepper} onOpenDay={onOpenDay} />
+      )}
     </Dialog>
   );
 }

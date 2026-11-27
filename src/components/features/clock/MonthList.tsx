@@ -3,6 +3,7 @@
 import clsx from "clsx";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
+import { Button } from "@/components/ui/Button";
 import { Chip, type ChipTone } from "@/components/ui/Chip";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { CLOCK_TEXT as TEXT, DayStatus } from "@/constants/clock";
@@ -11,15 +12,20 @@ import type { ClockDay, ClockMonth } from "@/lib/api";
 import { dayStatus, listedDays, officeTime, shortHours, weekdayName } from "@/lib/clock";
 import { formatMonth } from "@/lib/dates";
 
-type MonthListProps = { month: ClockMonth };
+type MonthListProps = {
+  month: ClockMonth;
+  /** Admins: a day that can be corrected gets a Correct button in its row, which opens it. */
+  onOpenDay?: ((day: ClockDay) => void) | undefined;
+};
 
 /**
  * One person's month as a list (UI revamp 16; made small on 2026-11-27, as the owner asked): every
  * day up to today, newest first, the whole month in view with no pages. From tablet width the days
  * run down two columns, the newer half on the left. A row is the day, its times on one line
- * under it, and what kind of day it was, in words.
+ * under it, and what kind of day it was, in words; for an Admin, a day that can be corrected has
+ * its Correct button at the end of its row (owner: no second list of them under the month).
  */
-export function MonthList({ month }: MonthListProps) {
+export function MonthList({ month, onOpenDay }: MonthListProps) {
   const days = listedDays(month.days);
   const monthName = formatMonth(month.month);
   if (days.length === 0) return <EmptyState>{TEXT.nothingYet}</EmptyState>;
@@ -34,7 +40,12 @@ export function MonthList({ month }: MonthListProps) {
         className="tablet:grid-flow-col tablet:grid-cols-2 grid"
       >
         {days.map((day, index) => (
-          <DayRow key={day.date} day={day} isInFirstColumn={index < perColumn} />
+          <DayRow
+            key={day.date}
+            day={day}
+            isInFirstColumn={index < perColumn}
+            onOpen={day.isCorrectable ? onOpenDay : undefined}
+          />
         ))}
       </ul>
       <p className="text-small text-ink-2 px-gutter py-3">
@@ -46,7 +57,14 @@ export function MonthList({ month }: MonthListProps) {
 
 const COLUMNS = 2;
 
-function DayRow({ day, isInFirstColumn }: { day: ClockDay; isInFirstColumn: boolean }) {
+type DayRowProps = {
+  day: ClockDay;
+  isInFirstColumn: boolean;
+  /** Given for a day an Admin can correct. */
+  onOpen: ((day: ClockDay) => void) | undefined;
+};
+
+function DayRow({ day, isInFirstColumn, onOpen }: DayRowProps) {
   const dates = useDates();
   const line = timesLine(timesOf(day));
   return (
@@ -65,8 +83,26 @@ function DayRow({ day, isInFirstColumn }: { day: ClockDay; isInFirstColumn: bool
         </span>
         {line !== "" && <span className="text-ink-2 truncate tabular-nums">{line}</span>}
       </span>
-      <DayStatusWords day={day} />
+      <span className="flex items-center gap-2">
+        <DayStatusWords day={day} />
+        {onOpen !== undefined && <CorrectButton day={day} onOpen={onOpen} />}
+      </span>
     </li>
+  );
+}
+
+function CorrectButton({ day, onOpen }: { day: ClockDay; onOpen: (day: ClockDay) => void }) {
+  const dates = useDates();
+  return (
+    <Button
+      size="sm"
+      onClick={() => {
+        onOpen(day);
+      }}
+    >
+      <span aria-hidden="true">{TEXT.correct}</span>
+      <span className="sr-only">{TEXT.correctDay(dates.date(day.date))}</span>
+    </Button>
   );
 }
 

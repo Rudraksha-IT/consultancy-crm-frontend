@@ -163,6 +163,23 @@ describe("Employees → Working hours", () => {
     expect(within(now).queryAllByRole("button")).toHaveLength(0);
   });
 
+  it("keeps a person's month small on phones: name left, See days right, figures in two columns", async () => {
+    backend(on("GET", NOW_PATH, TEAM_NOW), on("GET", TEAM_PATH, TEAM));
+    renderPage();
+    const seeDays = await screen.findByRole("button", { name: "Bikash Thapa, Month" });
+    const row = seeDays.closest("tr");
+    if (row === null) throw new Error("no row");
+
+    expect(row).toHaveClass("max-tablet:grid-cols-2", "max-tablet:py-3");
+    expect(seeDays.closest("td")).toHaveClass(
+      "max-tablet:col-start-2",
+      "max-tablet:row-start-1",
+      "max-tablet:justify-self-end",
+    );
+    const days = within(row).getByText("Days worked").closest("td");
+    expect(days).toHaveClass("max-tablet:flex", "max-tablet:justify-between");
+  });
+
   it("says when a group is empty", async () => {
     backend(
       on("GET", NOW_PATH, { ...TEAM_NOW, clocked_in_count: 0, people: [TEAM_NOW.people[2]] }),
@@ -258,6 +275,31 @@ describe("Employees → Working hours", () => {
     ).toBeInTheDocument();
   });
 
+  it("steps to another month of the same person inside the popup (owner)", async () => {
+    const user = userEvent.setup();
+    const october = `/api/clock/month/?month=2026-10&staff=${uid(3)}`;
+    const fetchFn = backend(
+      on("GET", NOW_PATH, TEAM_NOW),
+      on("GET", TEAM_PATH, TEAM),
+      on("GET", BIKASH_MONTH, novemberMonth()),
+      on("GET", october, { ...novemberMonth(), month: "2026-10" }),
+    );
+    renderPage();
+    const dialog = await openBikashsMonth(user);
+    const stepper = await within(dialog).findByRole("group", { name: "Month" });
+    expect(stepper).toHaveTextContent("November 2026");
+    const previous = within(stepper).getByRole("button", { name: "Previous month" });
+
+    await user.click(previous);
+
+    expect(
+      await screen.findByRole("dialog", { name: "Bikash Thapa, October 2026" }),
+    ).toBeInTheDocument();
+    expect(callsTo(fetchFn, "GET", october)).toHaveLength(1);
+    expect(stepper).toHaveTextContent("October 2026");
+    expect(previous).toHaveFocus();
+  });
+
   it("shows a person's month as a Calendar or a List: the switch redraws the popup (UI revamp 16)", async () => {
     const user = userEvent.setup();
     backend(
@@ -281,21 +323,9 @@ describe("Employees → Working hours", () => {
       "true",
     );
     expect(window.localStorage.getItem(CLOCK_VIEW_KEY)).toBe("list");
-    // Beside the List: the days that can be corrected, the date and the reason on two lines.
-    const list = within(dialog).getByRole("list", { name: "Days that can be corrected" });
-    const rows = within(list).getAllByRole("listitem");
-    expect(rows).toHaveLength(3);
-    // Newest first, in the same order as the List above them: 1 Nov is the last row.
-    const oldest = rows.at(-1);
-    if (oldest === undefined) throw new Error("no day to correct");
-    const [date, reason] = [
-      within(oldest).getByText("1 Nov 2026"),
-      within(oldest).getByText("Not in"),
-    ];
-    expect(date).not.toBe(reason);
-    expect(date.contains(reason) || reason.contains(date)).toBe(false);
-    expect(within(list).getByText("No clock-out")).toBeInTheDocument();
-    expect(within(list).getByText("Short day, 4 h")).toBeInTheDocument();
+    // In the List the three days to correct each have a Correct button in their own row.
+    const days = within(dialog).getByRole("list", { name: "Days of November 2026" });
+    expect(within(days).getAllByRole("button", { name: /^Correct / })).toHaveLength(3);
     expect(
       within(dialog).getByText(/Only days that are short of the 8 h working day/),
     ).toBeInTheDocument();
@@ -323,7 +353,13 @@ describe("Employees → Working hours", () => {
     expect(within(list).getByText("25 Nov 2026")).toBeInTheDocument();
     expect(within(list).getByText("1 Nov 2026")).toBeInTheDocument();
     expect(within(dialog).queryByRole("navigation", { name: "Pages" })).toBeNull();
-    expect(within(dialog).queryByRole("group", { name: "Month" })).toBeNull();
+    // A day to correct has its Correct button in its own row; no second list of them (owner).
+    const fourth = within(list).getByText("4 Nov 2026").closest("li");
+    if (fourth === null) throw new Error("no row");
+    expect(within(fourth).getByRole("button", { name: "Correct 4 Nov 2026" })).toBeInTheDocument();
+    const second = within(list).getByText("2 Nov 2026").closest("li");
+    expect(second && within(second).queryByRole("button")).toBeNull();
+    expect(within(dialog).queryByRole("list", { name: "Days that can be corrected" })).toBeNull();
 
     await user.click(within(dialog).getByRole("button", { name: "Correct 4 Nov 2026" }));
     const day = await screen.findByRole("dialog", { name: "Bikash Thapa, 4 Nov 2026" });
