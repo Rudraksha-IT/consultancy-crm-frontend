@@ -73,7 +73,8 @@ export function TasksPage() {
         }
       />
       <div className="grid gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* On a phone the Priority menu opens from this row (`FilterPillMenu`). */}
+        <div className="max-phone:relative flex flex-wrap items-center justify-between gap-4">
           <SegmentedControl
             label={TASK_TEXT.whichTasks}
             options={VIEW_OPTIONS}

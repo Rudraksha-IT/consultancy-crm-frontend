@@ -41,14 +41,22 @@ const SELECT_CLASSES =
  */
 export function FilterSelect(props: FilterSelectProps) {
   const isPhone = usePhoneWidth();
-  if (props.isLabelShown === true && isPhone) {
-    const { label, value, options, onChange } = props;
-    return <FilterPillMenu label={label} value={value} options={options} onChange={onChange} />;
+  if (isPhone) {
+    const { label, isLabelShown = false, value, options, onChange } = props;
+    return (
+      <FilterPillMenu
+        label={label}
+        isLabelShown={isLabelShown}
+        value={value}
+        options={options}
+        onChange={onChange}
+      />
+    );
   }
   return <SelectFilter {...props} />;
 }
 
-/** The filter as a select: on every width but a phone's filter that stands alone. */
+/** The filter as a select, above phone width. */
 function SelectFilter({
   label,
   isLabelShown = false,
