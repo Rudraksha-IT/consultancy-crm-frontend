@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageFooter } from "@/components/ui/CopyrightLine";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { LogoutButton } from "@/components/features/shell/LogoutButton";
@@ -85,12 +86,13 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             </span>
           </div>
         </header>
-        <main className="px-page wide:pt-10 min-w-0 pt-7 pb-30">
-          <div className="max-w-content mx-auto grid grid-cols-1 gap-8">
+        <main className="px-page wide:pt-10 flex min-w-0 flex-1 flex-col pt-7 pb-8">
+          <div className="max-w-content mx-auto grid w-full grid-cols-1 gap-8">
             {/* In the page, above its content, like every other page's tabs (ticket 16). */}
             <PlatformTabs />
             <PageLoadProvider>{children}</PageLoadProvider>
           </div>
+          <PageFooter />
         </main>
       </div>
     </PlatformAdminContext>

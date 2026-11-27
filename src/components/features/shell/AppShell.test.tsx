@@ -1,9 +1,13 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { uid } from "@/test/ids";
 import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { buildThemeTokens } from "@/lib/theme";
+import { copyrightLine, yearInNepal } from "@/lib/brand/copyright";
 import { resetTheme } from "@/test/themes";
 
 import { AppShell } from "./AppShell";
@@ -666,5 +670,25 @@ describe("AppShell during Support Access", () => {
     await renderShellFor({ ...ADMIN_CONTEXT, support_access: null });
 
     expect(screen.queryByRole("button", { name: "Leave this office" })).not.toBeInTheDocument();
+  });
+});
+
+describe("the copyright line at the end of every page (owner, 2026-11-27)", () => {
+  it("sits under the page's content, inside the page, small and quiet", async () => {
+    await renderShellFor(ADMIN_CONTEXT);
+
+    const line = screen.getByText(copyrightLine(yearInNepal(new Date())));
+    const footer = line.closest("footer");
+    expect(footer).toHaveAttribute("data-page-footer");
+    expect(screen.getByRole("main")).toContainElement(footer);
+    expect(line).toHaveClass("text-small", "text-ink-3");
+  });
+
+  it("is left off a page that fills the window (the Inbox)", () => {
+    const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf8");
+
+    expect(css).toMatch(
+      /main:has\(\[data-fills-window\]\) > \[data-page-footer\] \{\s*display: none;/,
+    );
   });
 });

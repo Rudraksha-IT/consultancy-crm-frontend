@@ -7,7 +7,6 @@ import { Banner } from "@/components/ui/Banner";
 import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Chip } from "@/components/ui/Chip";
 import { Icon } from "@/components/ui/Icon";
-import { CopyrightLine } from "@/components/ui/CopyrightLine";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { SectionMenu, useSectionChoice } from "@/components/ui/SectionMenu";
@@ -66,7 +65,6 @@ function PlatformAdminSettings() {
         </div>
         <p className="border-rule text-ink-2 border-t p-6">{SUPPORT_TEXT.noAccountHere}</p>
       </Panel>
-      <CopyrightLine />
     </div>
   );
 }
@@ -100,7 +98,6 @@ function StaffSettings() {
           />
         )}
       />
-      <CopyrightLine />
     </div>
   );
 }

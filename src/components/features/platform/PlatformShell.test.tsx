@@ -1,3 +1,4 @@
+import { copyrightLine, yearInNepal } from "@/lib/brand/copyright";
 import { uid } from "@/test/ids";
 import { LABELS } from "@/constants/messages";
 import { render, screen, waitFor, within } from "@testing-library/react";
@@ -80,6 +81,16 @@ describe("PlatformShell", () => {
     expect(await screen.findByText("page")).toBeInTheDocument();
     expect(screen.queryByText("Platform")).not.toBeInTheDocument();
     expect(screen.getByText("Platform Ops")).toBeInTheDocument();
+  });
+
+  it("ends every page with the copyright line (owner, 2026-11-27)", async () => {
+    answerMeWith(jsonResponse({ platform_admin: ADMIN }));
+
+    render(<PlatformShell>page</PlatformShell>);
+
+    await screen.findByText("page");
+    const line = screen.getByText(copyrightLine(yearInNepal(new Date())));
+    expect(screen.getByRole("main")).toContainElement(line);
   });
 
   it("shows the app's own logo beside the product's name while no upload is in use (ticket 07)", async () => {

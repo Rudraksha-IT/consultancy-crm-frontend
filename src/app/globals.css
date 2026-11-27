@@ -1921,3 +1921,8 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   }
 }
 /* End of small text in a dialog */
+
+/* The copyright line ends every page, except one that fills the window (the Inbox). */
+main:has([data-fills-window]) > [data-page-footer] {
+  display: none;
+}

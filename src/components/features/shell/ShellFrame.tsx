@@ -1,6 +1,7 @@
 "use client";
 
 import clsx from "clsx";
+import { PageFooter } from "@/components/ui/CopyrightLine";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 import { flushSync } from "react-dom";
@@ -163,7 +164,7 @@ function PulledPage({ pull, children }: { pull: PagePullView; children: ReactNod
         style={pulledStyle(pull)}
         className={clsx(
           // On phones it leaves room under the content for the tab bar.
-          "px-page wide:pt-10 max-phone:pt-4 max-phone:pb-tabbar-room relative min-w-0 flex-1 pt-7 pb-30",
+          "px-page wide:pt-10 max-phone:pt-4 max-phone:pb-tabbar-room relative flex min-w-0 flex-1 flex-col pt-7 pb-8",
           // A page that fills the window (the Inbox) sizes itself to its bottom: no spacing under it.
           "has-data-fills-window:pb-0",
           // Snaps back in 0.2 s; while pulled it eases after each scroll step, like the gap.
@@ -172,7 +173,8 @@ function PulledPage({ pull, children }: { pull: PagePullView; children: ReactNod
           "data-[pulled=top]:shadow-edge-top data-[pulled=bottom]:shadow-edge-bottom",
         )}
       >
-        <div className="max-w-content mx-auto grid grid-cols-1 gap-8">{children}</div>
+        <div className="max-w-content mx-auto grid w-full grid-cols-1 gap-8">{children}</div>
+        <PageFooter />
       </main>
       <PullGap edge="bottom" hint={pull.hint} isLeaving={isLeaving} />
     </div>
