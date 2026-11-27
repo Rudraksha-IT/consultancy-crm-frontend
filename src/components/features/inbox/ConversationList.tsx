@@ -21,8 +21,9 @@ type ConversationListProps = {
 };
 
 /**
- * My conversations, newest first: only who, when, and a dot if unread; the messages themselves
- * are in the open conversation (UI revamp 14). The list scrolls inside the Inbox's sheet.
+ * My conversations, newest first: who, the start of the last message under the name, when, and
+ * for an unread one bold words and a dot (owner, 2026-11-27; the last message was left out in UI
+ * revamp 14). The list scrolls inside the Inbox's sheet.
  */
 export function ConversationList({ state, openId, onOpen }: ConversationListProps) {
   if (state.status === "loading") return <Loading />;
@@ -66,14 +67,17 @@ function ConversationRow({ conversation, isOpen, onOpen }: ConversationRowProps)
         onOpen(person.id);
       }}
       className={clsx(
-        "hover:bg-fill px-gutter relative grid min-h-15 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2.5 py-2.5 text-left",
+        "hover:bg-fill px-gutter relative grid min-h-17 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 py-3 text-left",
         isOpen &&
           "bg-fill before:w-active-line before:bg-accent before:absolute before:inset-y-0 before:left-0",
       )}
     >
       <Avatar name={person.name} size="sm" />
-      <PersonName name={person.name} hasLeft={person.hasLeft} />
-      <span className="text-small text-ink-3 grid justify-items-end gap-1.5">
+      <span className="grid min-w-0 gap-0.5">
+        <PersonName name={person.name} hasLeft={person.hasLeft} isUnread={unread} />
+        <LastMessage last={last} isUnread={unread} />
+      </span>
+      <span className="text-small text-ink-3 grid justify-items-end gap-1.5 self-start pt-0.5">
         <WhenSent moment={last.sentAt} />
         {unread && <UnreadMark />}
       </span>
@@ -81,11 +85,37 @@ function ConversationRow({ conversation, isOpen, onOpen }: ConversationRowProps)
   );
 }
 
-function PersonName({ name, hasLeft }: { name: string; hasLeft: boolean }) {
+type PersonNameProps = { name: string; hasLeft: boolean; isUnread: boolean };
+
+/** The name, in bold while something from them is unread. */
+function PersonName({ name, hasLeft, isUnread }: PersonNameProps) {
   return (
-    <span title={name} className="min-w-0 truncate font-semibold">
+    <span
+      title={name}
+      className={clsx("text-ink min-w-0 truncate", isUnread ? "font-semibold" : "font-medium")}
+    >
       {name}
       {hasLeft && <span className="text-ink-2 font-normal"> {INBOX_TEXT.hasLeft}</span>}
+    </span>
+  );
+}
+
+type LastMessageProps = { last: InboxConversation["last"]; isUnread: boolean };
+
+/**
+ * The start of the last message, on one line under the name: mine starts with "You: ". Plain
+ * text, with its line breaks drawn as spaces. Full ink while it is unread.
+ */
+function LastMessage({ last, isUnread }: LastMessageProps) {
+  const words = last.text.replace(/\s+/g, " ").trim();
+  return (
+    <span
+      className={clsx(
+        "text-small min-w-0 truncate",
+        isUnread ? "text-ink font-medium" : "text-ink-2",
+      )}
+    >
+      {last.fromMe ? `${INBOX_TEXT.you}${words}` : words}
     </span>
   );
 }

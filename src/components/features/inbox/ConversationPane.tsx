@@ -1,6 +1,7 @@
 "use client";
 
 import type { RecordId } from "@/lib/recordId";
+import clsx from "clsx";
 import { useEffect, useRef } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -101,7 +102,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
 
 function ThreadHead({ person, onBack }: { person: InboxPerson; onBack: () => void }) {
   return (
-    <div className="border-rule flex min-w-0 items-center gap-3 border-b px-5 py-3.5">
+    <div className="border-rule px-gutter flex min-w-0 items-center gap-3 border-b py-3">
       <span className="wide:hidden -ml-2">
         <IconButton icon="left" label={INBOX_TEXT.backToConversations} onClick={onBack} />
       </span>
@@ -159,7 +160,7 @@ function Messages({ thread }: { thread: InboxThread }) {
       role="log"
       onScroll={handleScroll}
       aria-label={`Conversation with ${thread.person.name}`}
-      className="grid min-h-0 content-start gap-3 overflow-y-auto overscroll-contain p-5"
+      className="px-gutter grid min-h-0 content-start gap-1 overflow-y-auto overscroll-contain py-4"
     >
       {thread.hasMore && (
         <p className="text-small text-ink-2 text-center">{INBOX_TEXT.olderLeftOut}</p>
@@ -169,28 +170,46 @@ function Messages({ thread }: { thread: InboxThread }) {
           {INBOX_TEXT.sayHello(firstName(thread.person.name))}
         </p>
       ) : (
-        thread.messages.map((message) => (
-          <Bubble key={message.id} message={message} name={thread.person.name} />
+        thread.messages.map((message, index) => (
+          <Bubble
+            key={message.id}
+            message={message}
+            name={thread.person.name}
+            startsTurn={index > 0 && thread.messages[index - 1]?.fromMe !== message.fromMe}
+          />
         ))
       )}
     </div>
   );
 }
 
-function Bubble({ message, name }: { message: InboxMessage; name: string }) {
+type BubbleProps = {
+  message: InboxMessage;
+  name: string;
+  /** The other person starts writing here: more room above it than between one person's own. */
+  startsTurn: boolean;
+};
+
+const BUBBLE = "rounded-panel tablet:max-w-3/4 max-w-11/12 px-3.5 py-2";
+
+/**
+ * One message. Messages one person sends in a row sit close together (4 apart); a change of who
+ * is writing gets more room (12).
+ */
+function Bubble({ message, name, startsTurn }: BubbleProps) {
   const dates = useDates();
   return (
     <article
-      className={
-        message.fromMe
-          ? "bg-tint rounded-panel tablet:max-w-3/4 max-w-11/12 justify-self-end px-3.5 py-2.5"
-          : "bg-fill rounded-panel tablet:max-w-3/4 max-w-11/12 justify-self-start px-3.5 py-2.5"
-      }
+      className={clsx(
+        BUBBLE,
+        message.fromMe ? "bg-tint justify-self-end" : "bg-fill justify-self-start",
+        startsTurn && "mt-2",
+      )}
     >
       {/* Who wrote it, for screen readers; the side of the panel says it on screen. */}
       <span className="sr-only">{message.fromMe ? INBOX_TEXT.you : `${name}: `}</span>
       <p className="wrap-anywhere whitespace-pre-wrap">{message.text}</p>
-      <span className="text-small text-ink-2 mt-1 block">{dates.dateTime(message.sentAt)}</span>
+      <span className="text-tiny text-ink-2 block">{dates.dateTime(message.sentAt)}</span>
     </article>
   );
 }

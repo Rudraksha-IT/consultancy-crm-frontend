@@ -106,7 +106,7 @@ afterEach(() => {
 });
 
 describe("The conversation list", () => {
-  it("lists my conversations newest first, with only the name, the time and what is unread", async () => {
+  it("lists my conversations newest first: the name, the start of the last message, the time and what is unread (owner, 2026-11-27)", async () => {
     backend(on("GET", LIST, CONVERSATIONS));
 
     renderInbox();
@@ -120,15 +120,50 @@ describe("The conversation list", () => {
     ]);
     const pooja = within(list).getByRole("button", { name: /Pooja Shrestha/ });
     const nabin = within(list).getByRole("button", { name: /Nabin Adhikari/ });
-    // Only who and when: no start of the last message under the name (UI revamp 14).
-    expect(pooja).not.toHaveTextContent("Shall I send her up?");
-    expect(nabin).not.toHaveTextContent("Yes, after lunch.");
-    expect(nabin).not.toHaveTextContent("You:");
-    expect(pooja).toHaveTextContent("PSPooja Shrestha28 Oct 2026Unread");
+    // The start of the last message is under the name, on one line; mine starts with "You: ".
+    const theirs = within(pooja).getByText("Shall I send her up?");
+    expect(theirs).toHaveClass("truncate");
+    expect(within(nabin).getByText("You: Yes, after lunch.")).toHaveClass("truncate");
+    expect(pooja).toHaveTextContent("PSPooja ShresthaShall I send her up?28 Oct 2026Unread");
     // The dot has its word for screen readers, so it never stands alone.
     expect(within(pooja).getByText("Unread")).toHaveClass("sr-only");
     expect(within(nabin).queryByText("Unread")).not.toBeInTheDocument();
     expect(screen.getByText("Pick a conversation, or start a new one.")).toBeInTheDocument();
+  });
+
+  it("shows an unread conversation in bold, with its dot; a read one is quieter", async () => {
+    backend(on("GET", LIST, CONVERSATIONS));
+
+    renderInbox();
+
+    const list = await screen.findByRole("list", { name: "Conversations" });
+    const pooja = within(list).getByRole("button", { name: /Pooja Shrestha/ });
+    const nabin = within(list).getByRole("button", { name: /Nabin Adhikari/ });
+    expect(within(pooja).getByText("Pooja Shrestha")).toHaveClass("font-semibold", "text-ink");
+    expect(within(pooja).getByText("Shall I send her up?")).toHaveClass("text-ink", "font-medium");
+    expect(within(nabin).getByText("Nabin Adhikari")).toHaveClass("font-medium");
+    expect(within(nabin).getByText("Nabin Adhikari")).not.toHaveClass("font-semibold");
+    expect(within(nabin).getByText("You: Yes, after lunch.")).toHaveClass("text-ink-2");
+  });
+
+  it("shows the last message as text, never as markup, and on one line", async () => {
+    backend(
+      on("GET", LIST, {
+        conversations: [
+          {
+            person: POOJA,
+            last: { text: "<b>Hi</b>\nsecond line", from_me: false, sent_at: LATER },
+            unread: false,
+          },
+        ],
+      }),
+    );
+
+    renderInbox();
+
+    const list = await screen.findByRole("list", { name: "Conversations" });
+    expect(within(list).getByText("<b>Hi</b> second line")).toBeInTheDocument();
+    expect(list.querySelector("b")).toBeNull();
   });
 
   it("says when there are no conversations yet", async () => {
@@ -502,6 +537,20 @@ describe("Writing", () => {
         text: "Line one\nLine two",
       });
     });
+  });
+
+  it("has Send beside the box, on its line (owner, 2026-11-27)", async () => {
+    sendingBackend({ body: SENT, status: 201 });
+    renderInbox({ openId: uid(1) });
+    const box = await screen.findByRole("textbox", { name: "Message to Nabin Adhikari" });
+
+    const send = screen.getByRole("button", { name: "Send" });
+    const line = send.parentElement;
+    expect(line).toHaveClass("grid-cols-[minmax(0,1fr)_auto]", "items-start");
+    expect(line).toContainElement(box);
+    // One line to start with, growing with what is typed.
+    expect(box).toHaveAttribute("rows", "1");
+    expect(box).toHaveClass("field-sizing-content", "resize-none");
   });
 
   it("counts characters and tells the keys", async () => {

@@ -18,8 +18,8 @@ type StageMeterProps = {
 
 /**
  * A compact Stage for lists: five small beads filled up to the Stage, each in its shade of the
- * thread, and its name. The beads are decoration; the name says it in words. They show on phones
- * too, before the name (UI revamp 08).
+ * thread, and its name. The beads are decoration; the name says it in words. On a phone only the
+ * name is shown (owner, 2026-11-27).
  */
 export function StageMeter({ stage }: StageMeterProps) {
   const at = JOURNEY_STAGES.findIndex((step) => step === stage);
@@ -28,7 +28,10 @@ export function StageMeter({ stage }: StageMeterProps) {
   return (
     // Never wider than its cell: in a narrow one the name is cut with "…" and the beads stay.
     <span className="inline-flex max-w-full items-center gap-3 whitespace-nowrap">
-      <span aria-hidden="true" className="inline-flex flex-none items-center gap-0.75">
+      <span
+        aria-hidden="true"
+        className="max-phone:hidden inline-flex flex-none items-center gap-0.75"
+      >
         {JOURNEY_STAGES.map((step, index) => (
           <i
             key={step}

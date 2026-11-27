@@ -66,13 +66,15 @@
   --board-card: var(--paper);
   /*
    * The thread (ticket 21): a Student's journey is five beads, Lead to Visa, each a shade deeper,
-   * the last the brand colour itself.
+   * light green to dark green (owner, 2026-11-27; they were shades of the brand colour).
    */
-  --bead-1: color-mix(in srgb, var(--accent) 30%, var(--paper));
-  --bead-2: color-mix(in srgb, var(--accent) 47.5%, var(--paper));
-  --bead-3: color-mix(in srgb, var(--accent) 65%, var(--paper));
-  --bead-4: color-mix(in srgb, var(--accent) 82.5%, var(--paper));
-  --bead-5: var(--accent);
+  --bead-1: color-mix(in srgb, var(--good) 30%, var(--paper));
+  --bead-2: color-mix(in srgb, var(--good) 47.5%, var(--paper));
+  --bead-3: color-mix(in srgb, var(--good) 65%, var(--paper));
+  --bead-4: color-mix(in srgb, var(--good) 82.5%, var(--paper));
+  --bead-5: var(--good);
+  /* the tick on a done step of the middle shade: dark on it, in light and in dark */
+  --bead-3-ink: var(--ink);
   /* a bead still to come: its hollow ring and the string to the next */
   --bead-string: var(--rule-2);
   --bead-ring: var(--rule-2);
@@ -268,11 +270,12 @@
   /* dark: a sheet has no shadow and a quieter border; every bead starts brighter */
   --sheet-rule: color-mix(in srgb, var(--ink) 13%, var(--paper));
   --board-card: var(--fill-2);
-  --bead-1: color-mix(in srgb, var(--accent) 44%, var(--paper));
-  --bead-2: color-mix(in srgb, var(--accent) 58%, var(--paper));
-  --bead-3: color-mix(in srgb, var(--accent) 72%, var(--paper));
-  --bead-4: color-mix(in srgb, var(--accent) 86%, var(--paper));
-  --bead-5: var(--accent);
+  --bead-1: color-mix(in srgb, var(--good) 44%, var(--paper));
+  --bead-2: color-mix(in srgb, var(--good) 58%, var(--paper));
+  --bead-3: color-mix(in srgb, var(--good) 72%, var(--paper));
+  --bead-4: color-mix(in srgb, var(--good) 86%, var(--paper));
+  --bead-5: var(--good);
+  --bead-3-ink: var(--accent-ink);
   --bead-string: color-mix(in srgb, var(--ink) 22%, var(--paper));
   --bead-ring: color-mix(in srgb, var(--ink) 30%, var(--paper));
   --scrim: rgb(0 0 0 / 0.6);
@@ -329,6 +332,7 @@
   --color-bead-3: var(--bead-3);
   --color-bead-4: var(--bead-4);
   --color-bead-5: var(--bead-5);
+  --color-bead-3-ink: var(--bead-3-ink);
   --color-on-status: var(--on-status);
   --color-qr-dark: var(--qr-dark);
   --color-qr-light: var(--qr-light);

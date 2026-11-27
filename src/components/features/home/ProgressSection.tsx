@@ -9,8 +9,10 @@ import { Banner } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
+import { StageMeter } from "@/components/ui/StageMeter";
 import { Thread } from "@/components/ui/Thread";
 import { Loading } from "@/components/ui/Loading";
+import { usePhoneWidth } from "@/components/ui/usePhoneWidth";
 import { HOME_TEXT } from "@/constants/home";
 import { ROUTES } from "@/constants/routes";
 import { COUNTRY_LABELS } from "@/constants/students";
@@ -116,8 +118,8 @@ type ProgressItemProps = {
 
 /**
  * Name and country, then the Stage on the thread with the next step, then the documents. On a
- * phone: the name and the next step (one line), with the documents button on the right; the
- * thread is on the page the name opens (UI revamp 07).
+ * phone: the name and the next step (one line), with the Stage's name on the right; the thread
+ * and the documents are on the page the name opens (UI revamp 07; owner, 2026-11-27).
  */
 function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
   return (
@@ -144,15 +146,37 @@ function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
           {row.isDone ? HOME_TEXT.done(row.nextStep) : HOME_TEXT.next(row.nextStep)}
         </span>
       </div>
-      <div className="phone:justify-self-end max-phone:col-start-2 max-phone:row-start-1 max-phone:justify-self-end justify-self-start">
-        <DocumentsButton
-          studentName={row.student.name}
-          documents={row.documents}
-          onOpen={() => {
-            onOpen(row);
-          }}
-        />
+      <div
+        data-progress-end=""
+        className="phone:justify-self-end max-phone:col-start-2 max-phone:row-start-1 max-phone:justify-self-end max-phone:min-w-0 justify-self-start"
+      >
+        <RowEnd row={row} onOpen={onOpen} />
       </div>
     </li>
+  );
+}
+
+/**
+ * The end of a row: the documents button, which opens the checklist. On a phone the Stage's name
+ * instead (owner, 2026-11-27): the thread is not drawn there, and the documents are on the
+ * Student's page.
+ */
+function RowEnd({ row, onOpen }: Pick<ProgressItemProps, "row" | "onOpen">) {
+  const isPhone = usePhoneWidth();
+  if (isPhone) {
+    return (
+      <span className="text-secondary text-ink-2">
+        <StageMeter stage={row.student.stage} />
+      </span>
+    );
+  }
+  return (
+    <DocumentsButton
+      studentName={row.student.name}
+      documents={row.documents}
+      onOpen={() => {
+        onOpen(row);
+      }}
+    />
   );
 }

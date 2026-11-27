@@ -165,11 +165,11 @@ describe("Bar lists on a phone", () => {
 });
 
 describe("The Stage on a phone", () => {
-  it("shows five small beads before the name in a list (UI revamp 08)", () => {
+  it("is its name alone in a list: the five beads are for wider screens (owner, 2026-11-27)", () => {
     const { container } = render(<StageMeter stage={Stage.Applying} />);
 
     expect(container.querySelectorAll("[data-step]")).toHaveLength(5);
-    expect(isHiddenOnPhone(container.querySelector("[data-step]"))).toBe(false);
+    expect(container.querySelector("[data-step]")?.parentElement).toHaveClass("max-phone:hidden");
     expect(isHiddenOnPhone(screen.getByText("Applying"))).toBe(false);
   });
 
@@ -196,7 +196,7 @@ describe("The Stage on a phone", () => {
     }
     expect(screen.getByText("Lead")).toHaveClass("max-phone:text-tiny", "max-phone:truncate");
     // Where the Student is: its name in bold with a line under it; the rest have none.
-    expect(screen.getByText("Applying")).toHaveClass("font-semibold", "max-phone:border-accent");
+    expect(screen.getByText("Applying")).toHaveClass("font-semibold", "max-phone:border-good");
     expect(screen.getByText("Lead")).toHaveClass("max-phone:border-transparent");
     expect(screen.getByText("Visa")).toHaveClass("max-phone:border-transparent");
   });

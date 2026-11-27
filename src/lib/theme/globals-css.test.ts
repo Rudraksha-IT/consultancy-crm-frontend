@@ -74,25 +74,25 @@ describe("globals.css", () => {
     );
   });
 
-  it("deepens the five beads of the thread from Lead to Visa, brighter in dark", () => {
+  it("deepens the five beads of the thread from Lead to Visa, light green to dark green, brighter in dark", () => {
     const mixes = (block: Map<string, string>): (string | undefined)[] =>
       [1, 2, 3, 4, 5].map((bead) => block.get(`bead-${String(bead)}`));
     const mix = (amount: string): string =>
-      `color-mix(in srgb, var(--accent) ${amount}, var(--paper))`;
+      `color-mix(in srgb, var(--good) ${amount}, var(--paper))`;
 
     expect(mixes(declarations(":root"))).toEqual([
       mix("30%"),
       mix("47.5%"),
       mix("65%"),
       mix("82.5%"),
-      "var(--accent)",
+      "var(--good)",
     ]);
     expect(mixes(declarations(':root[data-theme="dark"]'))).toEqual([
       mix("44%"),
       mix("58%"),
       mix("72%"),
       mix("86%"),
-      "var(--accent)",
+      "var(--good)",
     ]);
   });
 });

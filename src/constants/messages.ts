@@ -54,7 +54,15 @@ export const MESSAGES = {
   passwordSavedTwoStepNext:
     "Your password is saved. Two-step login is on for you, so there's one more step.",
   enterEmail: "Enter your email.",
-  pageNotFound: "That page doesn't exist. Taking you back…",
+  /** The page for an address that doesn't exist (owner, 2026-11-27). */
+  notFoundCode: "404",
+  notFoundTitle: "We can't find that page",
+  notFoundHelp: "The address may be wrong, or the page may have been moved or removed.",
+  goBack: "Go back",
+  goToPlatform: "Go to the Platform",
+  /** The page for a screen that failed (owner, 2026-11-27). */
+  errorHelp: "Reload the page to carry on. If it keeps happening, tell your Admin.",
+  reloadPage: "Reload the page",
   enterValidEmail: "Enter a valid email, like name@example.com.",
   enterCode: "Enter the 6-digit code.",
   codeRefused: "That code isn't right or has run out. Check the email, or send yourself a new one.",

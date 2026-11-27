@@ -53,34 +53,32 @@ export function ComposeForm({ person, onSent }: ComposeFormProps) {
   }
 
   return (
-    <form
-      noValidate
-      onSubmit={handleSubmit}
-      className="border-rule grid gap-3 border-t px-5 py-3.5"
-    >
-      <Field
-        label={INBOX_TEXT.messageTo(person.name)}
-        isLabelHidden
-        hint={`${INBOX_TEXT.characters(text.length)}. ${INBOX_TEXT.keysHint}`}
-        errors={errors}
-      >
-        {({ className, ...control }) => (
-          <textarea
-            {...control}
-            name="text"
-            rows={2}
-            maxLength={INBOX_MESSAGE_MAX_LENGTH}
-            placeholder={INBOX_TEXT.placeholder}
-            value={text}
-            onChange={(event) => {
-              setText(event.target.value);
-            }}
-            onKeyDown={handleKeyDown}
-            className={`${className} resize-y py-3`}
-          />
-        )}
-      </Field>
-      <div className="flex justify-end">
+    <form noValidate onSubmit={handleSubmit} className="border-rule px-gutter border-t py-3">
+      {/* Send sits beside the box, on its line (owner, 2026-11-27). */}
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2.5">
+        <Field
+          label={INBOX_TEXT.messageTo(person.name)}
+          isLabelHidden
+          hint={`${INBOX_TEXT.characters(text.length)}. ${INBOX_TEXT.keysHint}`}
+          errors={errors}
+        >
+          {({ className, ...control }) => (
+            <textarea
+              {...control}
+              name="text"
+              // One line to start with; it grows with what is typed, then scrolls.
+              rows={1}
+              maxLength={INBOX_MESSAGE_MAX_LENGTH}
+              placeholder={INBOX_TEXT.placeholder}
+              value={text}
+              onChange={(event) => {
+                setText(event.target.value);
+              }}
+              onKeyDown={handleKeyDown}
+              className={`${className} field-sizing-content max-h-40 resize-none py-2.5`}
+            />
+          )}
+        </Field>
         <Button
           type="submit"
           variant="primary"

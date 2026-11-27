@@ -36,8 +36,9 @@ function ownSheet(isOnSheet: boolean | undefined): string {
 }
 
 /**
- * The steps are the thread's beads (ticket 21): each Stage a shade deeper, Lead to Visa. A done
- * step is filled in its shade (the tick dark on the two light shades, light on the rest), the
+ * The steps are the thread's beads (ticket 21): each Stage a shade deeper, Lead to Visa, light
+ * green to dark green. A done step is filled in its shade (the tick dark on the lighter shades,
+ * `accent-ink` on the two deepest), the
  * current one is ringed in its shade, and the line from a done step runs into the next shade.
  */
 const BEADS = [
@@ -52,7 +53,7 @@ const BEADS = [
     line: "before:from-bead-2 before:to-bead-3 before:bg-linear-to-r",
   },
   {
-    done: "border-bead-3 bg-bead-3 text-accent-ink",
+    done: "border-bead-3 bg-bead-3 text-bead-3-ink",
     current: "border-bead-3 bg-paper ring-5 ring-bead-3/25",
     line: "before:from-bead-3 before:to-bead-4 before:bg-linear-to-r",
   },
@@ -86,7 +87,7 @@ function stopClasses(index: number, state: StopState): string {
 const PHONE_NAME = "max-phone:border-b-2 max-phone:pb-0.5";
 const NAME_CLASSES: Record<StopState, string> = {
   done: "text-ink-2 font-medium max-phone:border-transparent",
-  current: "text-ink font-semibold max-phone:border-accent",
+  current: "text-ink font-semibold max-phone:border-good",
   next: "text-ink-3 font-medium max-phone:border-transparent",
 };
 

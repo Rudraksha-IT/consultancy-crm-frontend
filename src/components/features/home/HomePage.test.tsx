@@ -2,6 +2,9 @@ import type { RecordId } from "@/lib/recordId";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
+import { fakeMatchMedia } from "@/test/matchMedia";
+
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
@@ -424,6 +427,29 @@ describe("The Admin's Home", () => {
     expect(thread.closest("[data-progress-stage]")).toHaveClass("max-phone:hidden");
     expect(progress.getByText("Next: Waiting for an offer, Deakin University")).toHaveClass(
       "max-phone:truncate",
+    );
+  });
+
+  it("on a phone shows the Stage at the row's right in place of the documents button (owner, 2026-11-27)", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    backend(...EVERYTHING);
+    renderHome(ADMIN);
+    const progress = within(await region("Students' progress"));
+
+    const name = await progress.findByRole("link", { name: "Sita Gurung" });
+    const row = name.closest("li");
+    if (row === null) throw new Error("no row for Sita Gurung");
+    expect(within(row).queryByRole("button", { name: /Open the checklist/ })).toBeNull();
+    const stage = within(row).getByText("Applying", { selector: "[data-progress-end] *" });
+    expect(stage.closest("[data-progress-end]")).toHaveClass(
+      "max-phone:col-start-2",
+      "max-phone:row-start-1",
     );
   });
 
