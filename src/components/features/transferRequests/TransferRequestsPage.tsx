@@ -97,7 +97,13 @@ type BoxBodyProps = {
 
 function BoxBody({ state, box, onPage, onChanged }: BoxBodyProps) {
   if (state.status === "loading") return <Loading />;
-  if (state.status === "failed") return <Banner tone="problem">{TRANSFER_TEXT.loadFailed}</Banner>;
+  if (state.status === "failed") {
+    return (
+      <div className="px-gutter py-5">
+        <Banner tone="problem">{TRANSFER_TEXT.loadFailed}</Banner>
+      </div>
+    );
+  }
   const { page } = state;
   if (page.requests.length === 0) return <EmptyState>{TRANSFER_TEXT.empty[box]}</EmptyState>;
   return (

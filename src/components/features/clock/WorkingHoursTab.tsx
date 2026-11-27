@@ -233,7 +233,11 @@ function TeamMonthTable({
 }) {
   return (
     <Panel>
-      <table className="text-body w-full border-collapse" aria-label={EXPORT_LIST_LABELS.clock_in}>
+      <table
+        data-stacks=""
+        className="text-body w-full border-collapse"
+        aria-label={EXPORT_LIST_LABELS.clock_in}
+      >
         <thead className="max-tablet:sr-only">
           <tr>
             <th scope="col" className={`${HEAD} text-left`}>

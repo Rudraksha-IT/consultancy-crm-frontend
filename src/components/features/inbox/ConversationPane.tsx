@@ -54,7 +54,9 @@ function Unavailable({ message, onBack }: { message: string; onBack: () => void 
   return (
     <div className="grid content-start">
       <BackButton onBack={onBack} />
-      <Banner tone="problem">{message}</Banner>
+      <div className="px-gutter py-5">
+        <Banner tone="problem">{message}</Banner>
+      </div>
     </div>
   );
 }

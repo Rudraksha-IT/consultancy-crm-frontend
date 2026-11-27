@@ -164,7 +164,7 @@ function GapRow({ gap }: { gap: TimelineGap }) {
 
 function TextBox({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-control bg-fill text-secondary text-ink-2 mt-1.5 max-w-prose px-3.5 py-2.5 whitespace-pre-wrap">
+    <div className="rounded-control bg-fill text-secondary text-ink-2 mt-1.5 max-w-prose px-3.5 py-2.5 wrap-anywhere whitespace-pre-wrap">
       {children}
     </div>
   );

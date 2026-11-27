@@ -1,7 +1,7 @@
 "use client";
 
 import type { RecordId } from "@/lib/recordId";
-import { useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode, type RefObject } from "react";
 
 import { WorkingHoursTab } from "@/components/features/clock/WorkingHoursTab";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
@@ -19,6 +19,7 @@ import { LABELS, MESSAGES } from "@/constants/messages";
 import { Module } from "@/constants/modules";
 import { Role, ROLE_LABELS } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
+import { useFocusAfterChange } from "@/hooks/useFocusAfterChange";
 import { StaffStatus, type Employee } from "@/lib/api";
 
 import { AddEmployeeDialog } from "./AddEmployeeDialog";
@@ -66,23 +67,58 @@ export function EmployeesPage({ initialTab = "people" }: { initialTab?: Employee
       onChange={setTab}
     />
   );
-  if (tab === "hours") {
-    return (
-      <div className="grid gap-6">
-        <PageHeader title={LABELS.employees} subtitle={CLOCK_TEXT.workingHoursIntro} />
-        {tabs}
-        <WorkingHoursTab />
-      </div>
-    );
-  }
-  return <AdminEmployeesPage myId={staff.id} tabs={tabs} />;
+  // One page for both tabs: the strip stays where it is and keeps the cursor, and the people
+  // are not read again on the way back (design system rule 8).
+  return <AdminEmployeesPage myId={staff.id} tabs={tabs} showsHours={tab === "hours"} />;
 }
 
-function AdminEmployeesPage({ myId, tabs }: { myId: RecordId; tabs?: ReactNode }) {
+type PeopleProps = {
+  areaRef: RefObject<HTMLDivElement | null>;
+  myId: RecordId;
+  employees: ReturnType<typeof useEmployees>;
+  invites: ReturnType<typeof useInviteActions>;
+  onOpen: (dialog: OpenDialog) => void;
+};
+
+/** The People tab's body: what went wrong with an invite, then everyone in the Employees order. */
+function People({ areaRef, myId, employees, invites, onOpen }: PeopleProps) {
+  return (
+    <>
+      {invites.error !== null && <Banner tone="problem">{invites.error}</Banner>}
+      <div ref={areaRef}>
+        <ListContent
+          list={employees.list}
+          render={(list) => (
+            <EmployeeTable
+              employees={inEmployeesOrder(list)}
+              myId={myId}
+              busyId={invites.busyId}
+              onManage={(employee) => {
+                onOpen({ kind: "manage", employee });
+              }}
+              onResend={(employee) => void invites.resend(employee)}
+              onCancelInvite={(employee) => {
+                onOpen({ kind: "cancelInvite", employee });
+              }}
+              onInviteBack={(employee) => {
+                onOpen({ kind: "inviteBack", employee });
+              }}
+            />
+          )}
+        />
+      </div>
+    </>
+  );
+}
+
+type AdminEmployeesPageProps = { myId: RecordId; tabs?: ReactNode; showsHours?: boolean };
+
+function AdminEmployeesPage({ myId, tabs, showsHours = false }: AdminEmployeesPageProps) {
   const employees = useEmployees();
   const invites = useInviteActions(employees);
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const areaRef = useRef<HTMLDivElement>(null);
+  const focusAfterChange = useFocusAfterChange();
   const close = () => {
     setDialog(null);
   };
@@ -94,50 +130,40 @@ function AdminEmployeesPage({ myId, tabs }: { myId: RecordId; tabs?: ReactNode }
   ) => {
     await change(employee);
     close();
-    focusRowActions(areaRef.current, employee.id);
+    focusAfterChange(() => rowActions(areaRef.current, employee.id));
   };
 
   return (
     <>
       <PageHeader
         title={LABELS.employees}
-        subtitle={subtitleOf(employees.list)}
+        subtitle={showsHours ? CLOCK_TEXT.workingHoursIntro : subtitleOf(employees.list)}
         actions={
-          <Button
-            variant="primary"
-            icon="plus"
-            onClick={() => {
-              setDialog({ kind: "add" });
-            }}
-          >
-            {LABELS.addEmployee}
-          </Button>
+          showsHours ? undefined : (
+            <Button
+              variant="primary"
+              icon="plus"
+              onClick={() => {
+                setDialog({ kind: "add" });
+              }}
+            >
+              {LABELS.addEmployee}
+            </Button>
+          )
         }
       />
       {tabs}
-      {invites.error !== null && <Banner tone="problem">{invites.error}</Banner>}
-      <div ref={areaRef}>
-        <ListContent
-          list={employees.list}
-          render={(list) => (
-            <EmployeeTable
-              employees={inEmployeesOrder(list)}
-              myId={myId}
-              busyId={invites.busyId}
-              onManage={(employee) => {
-                setDialog({ kind: "manage", employee });
-              }}
-              onResend={(employee) => void invites.resend(employee)}
-              onCancelInvite={(employee) => {
-                setDialog({ kind: "cancelInvite", employee });
-              }}
-              onInviteBack={(employee) => {
-                setDialog({ kind: "inviteBack", employee });
-              }}
-            />
-          )}
+      {showsHours ? (
+        <WorkingHoursTab />
+      ) : (
+        <People
+          areaRef={areaRef}
+          myId={myId}
+          employees={employees}
+          invites={invites}
+          onOpen={setDialog}
         />
-      </div>
+      )}
       <EmployeeDialog
         dialog={dialog}
         onClose={close}
@@ -161,13 +187,9 @@ type EmployeeDialogProps = {
   onInviteBack: (employee: Employee) => Promise<void>;
 };
 
-/** After a dialog has given focus back to its opener, which may be gone by then. */
-function focusRowActions(area: HTMLElement | null, id: RecordId): void {
-  window.setTimeout(() => {
-    area
-      ?.querySelector<HTMLElement>(`[${EMPLOYEE_ACTIONS_ATTRIBUTE}="${id}"] button`)
-      ?.focus({ preventScroll: true });
-  }, 0);
+/** The first button now on that employee's row. */
+function rowActions(area: HTMLElement | null, id: RecordId): HTMLElement | null {
+  return area?.querySelector<HTMLElement>(`[${EMPLOYEE_ACTIONS_ATTRIBUTE}="${id}"] button`) ?? null;
 }
 
 /** The open dialog, if any; each closes itself once its change is saved. */

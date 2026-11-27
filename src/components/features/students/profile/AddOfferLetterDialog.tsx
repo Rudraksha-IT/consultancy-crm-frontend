@@ -16,6 +16,7 @@ import { documentFileProblem } from "@/lib/documents";
 import { SaveDialog } from "./SaveDialog";
 import { statusSavedMessage } from "./statusSaved";
 import { useFormSave } from "./useFormSave";
+import { LABEL_CLASSES } from "@/components/ui/Field";
 
 const KIND_OPTIONS = OFFER_KINDS.map((kind) => ({
   value: kind,
@@ -124,7 +125,7 @@ function KindField({ value, onChange, errors }: KindFieldProps) {
   const noteId = useId();
   return (
     <div className="grid gap-2">
-      <span aria-hidden="true" className="text-secondary text-ink font-semibold">
+      <span aria-hidden="true" className={LABEL_CLASSES}>
         {OFFER_TEXT.kind}
       </span>
       <SegmentedChoice

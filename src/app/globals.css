@@ -460,7 +460,7 @@
   /* A two-step login QR code (issue 61): large enough for any phone camera to read. */
   --spacing-qr: 15rem;
   /* above 600 px the Stage journey keeps its steps readable and scrolls sideways below this */
-  --spacing-journey: 47.5rem;
+  --spacing-journey: 37.5rem;
   /* one round stop on the Stage journey */
   --spacing-stop: 1.375rem;
   /* the round "Received" stamp on a receipt */
@@ -1042,6 +1042,15 @@ main[data-page-move="in-from-bottom"] {
     animation: move-fade var(--move-open) ease both;
     mix-blend-mode: normal;
   }
+}
+
+/*
+ * A chart's tooltip stands over the middle of its columns (`--tip-at`), but never past the
+ * chart's sides: half of its least width (14rem) always stays inside, so the first and last
+ * months are not cut off.
+ */
+[data-chart-tip] {
+  left: clamp(7rem, var(--tip-at), calc(100% - 7rem));
 }
 
 /*

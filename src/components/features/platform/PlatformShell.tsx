@@ -71,7 +71,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             className="min-h-control flex min-w-0 items-center gap-3"
           >
             <BrandMark name={productName} logo={productLogo} />
-            <b className="text-body font-semibold">{productName}</b>
+            <b className="text-body min-w-0 truncate font-semibold">{productName}</b>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle mode={colourMode.mode} onToggle={colourMode.toggleMode} tone="sidebar" />

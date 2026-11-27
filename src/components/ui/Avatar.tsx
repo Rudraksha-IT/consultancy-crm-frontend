@@ -12,7 +12,8 @@ const SIZE_CLASSES = {
   xs: "text-small size-6",
   sm: "text-small size-avatar-sm",
   md: "size-mark text-secondary",
-  lg: "text-section-title size-16",
+  // 64, and 52 on phones (design system: Phones, Sizes and look).
+  lg: "text-section-title max-phone:size-13 size-16",
 };
 
 function initialsOf(name: string): string {

@@ -467,6 +467,20 @@ describe("the Bin tab (Admins, issue 79)", () => {
     expect(await itemFor("Passport")).toBeVisible();
   });
 
+  it("keeps the cursor on the tab that was pressed, both ways", async () => {
+    backend(
+      on("GET", BIN_PATH, BIN),
+      on("GET", "/api/documents/students/?scope=everyone&page=1", PAPERWORK),
+    );
+    renderPage("admin", "students");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Bin, 2" }));
+    expect(screen.getByRole("button", { name: "Bin, 2" })).toHaveFocus();
+
+    await userEvent.click(screen.getByRole("button", { name: "Students" }));
+    expect(screen.getByRole("button", { name: "Students" })).toHaveFocus();
+  });
+
   it("is never shown to a Counsellor", async () => {
     const fetchFn = backend(on("GET", "/api/documents/students/?scope=mine&page=1", PAPERWORK));
     renderPage("counsellor");

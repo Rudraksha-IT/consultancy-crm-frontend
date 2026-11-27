@@ -26,7 +26,13 @@ type ConversationListProps = {
  */
 export function ConversationList({ state, openId, onOpen }: ConversationListProps) {
   if (state.status === "loading") return <Loading />;
-  if (state.status === "failed") return <Banner tone="problem">{INBOX_TEXT.loadFailed}</Banner>;
+  if (state.status === "failed") {
+    return (
+      <div className="px-gutter py-5">
+        <Banner tone="problem">{INBOX_TEXT.loadFailed}</Banner>
+      </div>
+    );
+  }
   if (state.conversations.length === 0)
     return <EmptyState>{INBOX_TEXT.noConversations}</EmptyState>;
   return (

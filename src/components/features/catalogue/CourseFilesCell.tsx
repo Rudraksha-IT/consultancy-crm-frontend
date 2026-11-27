@@ -14,6 +14,7 @@ import { IconButton } from "@/components/ui/IconButton";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/useToast";
 import { CATALOGUE_TEXT as TEXT } from "@/constants/catalogue";
+import { useFocusAfterChange } from "@/hooks/useFocusAfterChange";
 import {
   binCourseFile,
   CatalogueRefusedError,
@@ -49,6 +50,7 @@ type Naming = { kind: "new"; file: File } | { kind: "rename"; courseFile: Course
 export function CourseFilesCell({ course, isLive, onChanged }: CourseFilesCellProps) {
   const { showToast } = useToast();
   const listRef = useRef<HTMLDivElement>(null);
+  const focusAfterChange = useFocusAfterChange();
   const { files, setFiles } = useShownFiles(course.files);
   const [problem, setProblem] = useState<string | null>(null);
   const [naming, setNaming] = useState<Naming>(null);
@@ -106,7 +108,7 @@ export function CourseFilesCell({ course, isLive, onChanged }: CourseFilesCellPr
             setFiles((current) => current.filter((one) => one.id !== binning.id));
             setBinning(null);
             showToast(TEXT.fileInBin(binning.name));
-            focusAfterDelete(listRef.current, place);
+            focusAfterChange(() => nextFocus(listRef.current, place));
             onChanged();
           }}
           onClose={() => {
@@ -149,15 +151,8 @@ function problemWith(file: File): string | null {
 }
 
 /** After a delete: the file now in its place, else the one before, else Upload PDF. */
-function focusAfterDelete(cell: HTMLElement | null, place: number): void {
-  if (cell === null) return;
-  // The dialog gives focus back to its opener when it closes; this runs after that.
-  window.setTimeout(() => {
-    nextFocus(cell, place)?.focus();
-  }, 0);
-}
-
-function nextFocus(cell: HTMLElement, place: number): HTMLElement | null {
+function nextFocus(cell: HTMLElement | null, place: number): HTMLElement | null {
+  if (cell === null) return null;
   const opens = [...cell.querySelectorAll<HTMLElement>("[data-file-open]")];
   return opens[place] ?? opens[place - 1] ?? cell.querySelector<HTMLElement>("input");
 }

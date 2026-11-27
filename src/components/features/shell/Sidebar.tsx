@@ -33,11 +33,12 @@ export function Sidebar({ context, sidebar, colourMode, ref }: SidebarProps) {
       ref={ref}
       id={SIDEBAR_ID}
       className={clsx(
-        "w-drawer border-side-rule bg-side-bg text-side-ink fixed inset-y-0 left-0 z-40 flex max-w-[86vw] flex-col overflow-hidden border-r transition-transform",
+        "w-drawer border-side-rule bg-side-bg text-side-ink fixed inset-y-0 left-0 z-40 flex max-w-[86vw] flex-col overflow-hidden border-r transition-[translate,visibility]",
         // The slide-out menu comes in and goes back, carrying on from where a finger left it.
+        // Closed, it is also out of reach of the keyboard and screen readers (not while dragged).
         sidebar.isDrawerOpen
           ? "shadow-lift ease-arrive translate-x-0 duration-(--move-marker)"
-          : "ease-leave -translate-x-full duration-(--move-sink)",
+          : "ease-leave max-wide:not-data-dragging:invisible -translate-x-full duration-(--move-sink)",
         // While a finger moves it, it follows the finger with no slide of its own.
         "data-dragging:shadow-lift data-dragging:transition-none",
         "wide:sticky wide:top-0 wide:z-10 wide:h-screen wide:w-auto wide:max-w-none wide:translate-x-0 wide:shadow-none",

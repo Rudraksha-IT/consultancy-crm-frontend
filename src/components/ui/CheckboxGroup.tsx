@@ -4,6 +4,7 @@ import { LABELS } from "@/constants/messages";
 
 import { describeField, FieldNote, type FieldDescription } from "./FieldNote";
 import type { SelectOption } from "./SelectField";
+import { LABEL_CLASSES } from "./Field";
 
 type CheckboxGroupProps = {
   label: string;
@@ -69,7 +70,7 @@ export function CheckboxGroup({
 
 function GroupLegend({ label, isOptional }: { label: string; isOptional: boolean }) {
   return (
-    <legend className="text-secondary text-ink mb-2 font-semibold">
+    <legend className={`${LABEL_CLASSES} mb-2`}>
       {label}
       {isOptional && <span className="text-ink-2 font-normal"> {LABELS.optional}</span>}
     </legend>

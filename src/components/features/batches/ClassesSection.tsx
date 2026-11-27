@@ -144,7 +144,7 @@ function EnrolledTable({ state, onPeek }: EnrolledTableProps) {
       {students.length === 0 ? (
         <EmptyState>{BATCH_TEXT.nobodyEnrolled}</EmptyState>
       ) : (
-        <table className="text-body w-full border-collapse">
+        <table data-stacks="" className="text-body w-full border-collapse">
           <thead className="max-tablet:sr-only">
             <tr>
               <th scope="col" className={HEAD}>
@@ -164,7 +164,7 @@ function EnrolledTable({ state, onPeek }: EnrolledTableProps) {
                 <td className={CELL}>
                   <Link
                     href={ROUTES.student(student.id)}
-                    className="text-accent font-semibold hover:underline"
+                    className="text-accent min-h-control inline-flex items-center font-semibold hover:underline"
                   >
                     {student.name}
                   </Link>

@@ -28,6 +28,7 @@ import { formatMonth } from "@/lib/dates";
 
 import { MonthView } from "./MonthView";
 import { useClockMonth, type ClockMonthState } from "./useClockMonth";
+import { LABEL_CLASSES } from "@/components/ui/Field";
 
 type Open =
   | { kind: "month" }
@@ -330,8 +331,8 @@ function TimeFields({ session, errors }: { session: ClockSession | null; errors:
   return (
     <div className="tablet:grid-cols-2 grid gap-5">
       <div className="grid content-start gap-2">
-        <span className="text-secondary font-semibold">{TEXT.clockedInField}</span>
-        <span className="min-h-control text-ink-2 grid items-center">
+        <span className={LABEL_CLASSES}>{TEXT.clockedInField}</span>
+        <span className="min-h-control text-ink grid items-center">
           {TEXT.clockedInValue(officeTime(session.clockedInAt))}
         </span>
       </div>

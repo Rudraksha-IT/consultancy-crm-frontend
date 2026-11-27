@@ -83,7 +83,9 @@ function TaskRow({ task, showsStudent, onChanged, look }: TaskRowProps) {
       data-row=""
       data-look={look}
       className={clsx(
-        "pr-gutter grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-2 pl-0",
+        "pr-gutter grid grid-cols-[auto_minmax(0,1fr)] items-start gap-x-3 gap-y-1 py-2",
+        // The 20px box sits in a 44px square: this keeps it the sheet's padding from the side.
+        "max-phone:pl-0.5 pl-1.5",
         "phone:grid-cols-[auto_minmax(0,1fr)_auto]",
         desk(look, "row"),
         task.timing === TaskTiming.Overdue && "bg-bad-tint",

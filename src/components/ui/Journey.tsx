@@ -106,7 +106,8 @@ export function Journey(props: JourneyProps) {
       )}
     >
       {info !== undefined && <div className="-mt-2 mb-2 flex items-center gap-1.5">{info}</div>}
-      <div className="phone:overflow-x-auto">
+      {/* A box that scrolls sideways also cuts what pokes out above: room for the bead's ring. */}
+      <div className="phone:-m-2 phone:overflow-x-auto phone:p-2">
         <ol
           aria-label={LABELS.stageIs(STAGE_LABELS[stage])}
           className={clsx(

@@ -888,4 +888,29 @@ describe("EmployeesPage for a Platform Admin inside the office", () => {
       screen.queryByRole("button", { name: "Send a password reset code" }),
     ).not.toBeInTheDocument();
   });
+
+  describe("with Clock-in on", () => {
+    const WITH_CLOCK: StaffContext = { ...ADMIN, modules: ["staff", "clock_in"] };
+
+    it("keeps the cursor on the tab that was pressed, and the people as they were", async () => {
+      const fetchFn = listing();
+      const user = userEvent.setup();
+      renderPage(WITH_CLOCK);
+      await screen.findByText("Ram Thapa");
+
+      await user.click(screen.getByRole("button", { name: "Working hours" }));
+
+      expect(screen.getByRole("button", { name: "Working hours" })).toHaveFocus();
+      expect(screen.queryByText("Ram Thapa")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Add employee" })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "People" }));
+
+      expect(screen.getByRole("button", { name: "People" })).toHaveFocus();
+      // The list is still there: nothing is asked for again and no loader shows.
+      expect(screen.getByText("Ram Thapa")).toBeInTheDocument();
+      const asked = fetchFn.mock.calls.filter(([path]) => path === "/api/staff/");
+      expect(asked).toHaveLength(1);
+    });
+  });
 });

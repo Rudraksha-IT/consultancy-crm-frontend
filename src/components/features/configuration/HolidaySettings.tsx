@@ -14,6 +14,7 @@ import { Section } from "@/components/ui/Section";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/useToast";
 import { HOLIDAY_TEXT as TEXT } from "@/constants/clock";
+import { useFocusAfterChange } from "@/hooks/useFocusAfterChange";
 import {
   addHolidays,
   fetchHolidays,
@@ -92,6 +93,7 @@ function ComingHolidays({ holidays, areaRef, onRemoved }: ComingHolidaysProps) {
   const dates = useDates();
   const { showToast } = useToast();
   const [removing, setRemoving] = useState<HolidayGroup | null>(null);
+  const focusAfterChange = useFocusAfterChange();
   const { coming } = splitHolidays(holidayGroups(holidays), todayIso());
 
   async function remove(group: HolidayGroup): Promise<void> {
@@ -101,7 +103,7 @@ function ComingHolidays({ holidays, areaRef, onRemoved }: ComingHolidaysProps) {
     setRemoving(null);
     showToast(TEXT.removed(group.name));
     onRemoved(ids);
-    focusAfterRemoval(areaRef.current, place);
+    focusAfterChange(() => afterRemoval(areaRef.current, place));
   }
 
   return (
@@ -147,17 +149,14 @@ function removalWords(group: HolidayGroup, formatDay: (iso: string) => string): 
  * The removed card is gone, so the cursor goes to the Remove now in its place, else the one
  * before, else the name of a new holiday (design system rule 8).
  */
-function focusAfterRemoval(area: HTMLElement | null, place: number): void {
-  if (area === null) return;
-  // A dialog gives focus back to its opener when it closes; this runs after that.
-  window.setTimeout(() => {
-    const buttons = [...area.querySelectorAll<HTMLElement>(HOLIDAY_CARD_BUTTONS)];
-    const next =
-      buttons[place] ??
-      buttons[place - 1] ??
-      area.querySelector<HTMLElement>(`input[name="${NAME_FIELD}"]`);
-    next?.focus({ preventScroll: true });
-  }, 0);
+function afterRemoval(area: HTMLElement | null, place: number): HTMLElement | null {
+  if (area === null) return null;
+  const buttons = [...area.querySelectorAll<HTMLElement>(HOLIDAY_CARD_BUTTONS)];
+  return (
+    buttons[place] ??
+    buttons[place - 1] ??
+    area.querySelector<HTMLElement>(`input[name="${NAME_FIELD}"]`)
+  );
 }
 
 type FieldErrors = { dates?: string[] | undefined; name?: string[] | undefined };

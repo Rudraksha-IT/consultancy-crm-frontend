@@ -91,7 +91,7 @@ type PaymentRowProps = {
 function PaymentRow({ payment, showsStudent, onOpen }: PaymentRowProps) {
   const paidOn = useDates().moneyDate(payment.paidOn);
   return (
-    <DataRow className="hover:bg-fill max-tablet:grid max-tablet:gap-2 max-tablet:p-5">
+    <DataRow className="max-tablet:grid max-tablet:gap-2 max-tablet:p-5">
       <DataCell part="title" className={CELL}>
         <div className="tablet:whitespace-nowrap max-phone:font-semibold tabular-nums">
           {paidOn.date}

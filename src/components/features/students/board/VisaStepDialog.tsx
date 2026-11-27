@@ -13,6 +13,7 @@ import { SaveDialog } from "../profile/SaveDialog";
 import { statusSavedMessage } from "../profile/statusSaved";
 import { useFormSave } from "../profile/useFormSave";
 import { firstNameOf } from "./moveSteps";
+import { LABEL_CLASSES } from "@/components/ui/Field";
 
 type VisaStepDialogProps = {
   profile: StudentProfile;
@@ -88,7 +89,7 @@ function OfferChoices({ offers, pickedId, onPick }: OfferChoicesProps) {
   const legendId = useId();
   return (
     <fieldset role="radiogroup" aria-labelledby={legendId} className="grid min-w-0 gap-1">
-      <legend id={legendId} className="text-secondary text-ink mb-1 font-semibold">
+      <legend id={legendId} className={`${LABEL_CLASSES} mb-1`}>
         {BOARD_TEXT.goAheadWith}
       </legend>
       {offers.map((offer) => (

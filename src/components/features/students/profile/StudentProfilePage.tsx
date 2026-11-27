@@ -350,10 +350,11 @@ const TAB_CONTENT: Record<Tab, (props: TabContentProps) => ReactNode> = {
     />
   ),
   classes: ({ classes }) => <StudentClasses classes={classes} />,
-  // Remounted after a Payment is taken from the header, so it shows in the list and the Balance.
+  // Read again, in place, after a Payment is taken from the header, so it shows in the list and
+  // the Balance without the tab being taken away (design system rule 8).
   fees: ({ profile, historyVersion, onHistoryChanged }) => (
     <StudentFees
-      key={historyVersion}
+      version={historyVersion}
       student={{ id: profile.id, name: profile.name }}
       canChangeFees={profile.canChangeFees}
       canRecordPayment={profile.canRecordPayment}

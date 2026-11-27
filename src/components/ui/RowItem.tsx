@@ -39,7 +39,10 @@ type RowLook = Pick<RowItemProps, "isMarked" | "hidesMetaOnPhone" | "keepsRightB
 function rowClasses({ isMarked = false, keepsRightBesideOnPhone = false }: RowLook): string {
   return clsx(
     "phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-3 pr-gutter grid grid-cols-[minmax(0,1fr)] items-center gap-4 py-3.25",
-    isMarked ? "border-l-good bg-good-tint/45 border-l-3 pl-2.25" : "pl-gutter",
+    // The marked row keeps the sheet's padding: its line is drawn over the edge, not beside it.
+    "pl-gutter",
+    isMarked &&
+      "bg-good-tint/45 before:bg-good relative before:absolute before:inset-y-0 before:left-0 before:w-0.75",
     keepsRightBesideOnPhone && "max-phone:grid-cols-[minmax(0,1fr)_auto]",
   );
 }

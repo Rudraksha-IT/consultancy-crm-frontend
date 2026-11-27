@@ -269,7 +269,7 @@ function MenuItem({ title, isCurrent, isListRow, onChoose }: MenuItemProps) {
       className={clsx(
         "relative flex items-center text-left",
         isListRow
-          ? "min-h-row border-rule text-ink active:bg-fill justify-between gap-3 border-b pr-3 pl-4 font-medium last:border-b-0"
+          ? "min-h-row border-rule text-name text-ink active:bg-fill justify-between gap-3 border-b pr-3 pl-4 font-medium last:border-b-0"
           : [
               "min-h-control rounded-control flex-none px-3.5 font-semibold whitespace-nowrap",
               isCurrent

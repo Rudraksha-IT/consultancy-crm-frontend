@@ -180,7 +180,7 @@ function CommissionTable({ page, emptyAction, onStatus }: CommissionTableProps) 
     return <EmptyState action={emptyAction}>{COMMISSION_TEXT.noneYet}</EmptyState>;
   }
   return (
-    <table className="text-body w-full border-collapse">
+    <table data-stacks="" className="text-body w-full border-collapse">
       <thead className="max-tablet:sr-only">
         <tr>
           <th scope="col" className={HEAD}>
@@ -211,7 +211,7 @@ type CommissionRowProps = Pick<CommissionTableProps, "onStatus"> & { commission:
 function CommissionRow({ commission, onStatus }: CommissionRowProps) {
   const dates = useDates();
   return (
-    <tr className="hover:bg-fill max-tablet:grid max-tablet:gap-2 max-tablet:p-5">
+    <tr className="max-tablet:grid max-tablet:gap-2 max-tablet:p-5">
       <td className={CELL}>
         <Link
           href={ROUTES.student(commission.student.id)}

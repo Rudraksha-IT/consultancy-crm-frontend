@@ -21,6 +21,7 @@ import {
   type WorkingDay,
 } from "@/lib/api";
 import { hoursText } from "@/lib/clock";
+import { LABEL_CLASSES } from "@/components/ui/Field";
 
 const MINUTES_PER_HOUR = 60;
 /** Whole or half hours as typed, e.g. "8" or "7.5". */
@@ -179,7 +180,7 @@ function WeeklyOffChoice({ saved }: { saved: WeeklyOff }) {
 
   return (
     <div role="group" aria-label={TEXT.weeklyOff} className="grid content-start gap-3">
-      <p className="text-secondary text-ink font-semibold">{TEXT.weeklyOff}</p>
+      <p className={LABEL_CLASSES}>{TEXT.weeklyOff}</p>
       <div className="grid grid-cols-2 gap-3">
         {WEEK_DAYS.map((day) => (
           <DayTile

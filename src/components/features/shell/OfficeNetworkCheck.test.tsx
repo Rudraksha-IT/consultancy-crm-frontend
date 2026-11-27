@@ -136,7 +136,10 @@ describe("the Admin's office-network dialog (first live fixes, ticket 03)", () =
       );
       expect(within(dialog).getByRole("button", { name: "Add this network" })).toBeVisible();
       // The safe choice has focus first.
-      expect(within(dialog).getByRole("button", { name: "Not now" })).toHaveFocus();
+      // The popup places the cursor just after it is drawn.
+      await waitFor(() => {
+        expect(within(dialog).getByRole("button", { name: "Not now" })).toHaveFocus();
+      });
       expect(dialog).toHaveAttribute("aria-modal", "true");
     });
 
@@ -305,7 +308,10 @@ describe("the Admin's office-network dialog (first live fixes, ticket 03)", () =
       fakeBackend();
       await renderFrame();
       const dialog = await screen.findByRole("dialog", { name: TITLE });
-      expect(within(dialog).getByRole("button", { name: "Not now" })).toHaveFocus();
+      // The popup places the cursor just after it is drawn.
+      await waitFor(() => {
+        expect(within(dialog).getByRole("button", { name: "Not now" })).toHaveFocus();
+      });
 
       await userEvent.keyboard("{Escape}");
 

@@ -22,6 +22,7 @@ import { SaveDialog } from "./SaveDialog";
 import { VisaFinalDialog } from "./VisaFinalDialog";
 import { statusSavedMessage } from "./statusSaved";
 import { useFormSave } from "./useFormSave";
+import { LABEL_CLASSES } from "@/components/ui/Field";
 
 const RESULT_TONES: Record<VisaResult, ChoiceTone> = { granted: "good", refused: "bad" };
 const RESULT_OPTIONS = VISA_RESULTS.map((result) => ({
@@ -200,7 +201,7 @@ function ResultField({ value, onChange, errors }: ResultFieldProps) {
   const noteId = useId();
   return (
     <div className="grid gap-2">
-      <span aria-hidden="true" className="text-secondary text-ink font-semibold">
+      <span aria-hidden="true" className={LABEL_CLASSES}>
         {VISA_TEXT.whatItSays}
       </span>
       <SegmentedChoice

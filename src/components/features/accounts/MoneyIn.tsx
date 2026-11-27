@@ -108,14 +108,20 @@ function Tiles({ state, filters }: { state: PaymentPageState; filters: PaymentFi
   const { page } = state;
   const days = period(filters, dates);
   return (
-    <TileGrid>
-      <FigureTile
-        label={ACCOUNTS_TEXT.fromStudents}
-        value={formatNpr(page.total)}
-        footnote={`${PAYMENT_TEXT.paymentsCount(page.count)}, ${days}`}
-      />
-      <CommissionTiles commission={commission} fromStudents={page.total} days={days} />
-    </TileGrid>
+    <div className="grid gap-4">
+      <TileGrid>
+        <FigureTile
+          label={ACCOUNTS_TEXT.fromStudents}
+          value={formatNpr(page.total)}
+          footnote={`${PAYMENT_TEXT.paymentsCount(page.count)}, ${days}`}
+        />
+        <CommissionTiles commission={commission} fromStudents={page.total} days={days} />
+      </TileGrid>
+      {/* Under the figures, never one of them: a banner in a figure's place touches the sheet. */}
+      {commission.status === "failed" && (
+        <Banner tone="problem">{COMMISSION_TEXT.listFailed}</Banner>
+      )}
+    </div>
   );
 }
 
@@ -127,10 +133,7 @@ type CommissionTilesProps = {
 
 /** Commission Received on the same days, and everything that came in. */
 function CommissionTiles({ commission, fromStudents, days }: CommissionTilesProps) {
-  if (commission.status === "loading") return null;
-  if (commission.status === "failed") {
-    return <Banner tone="problem">{COMMISSION_TEXT.listFailed}</Banner>;
-  }
+  if (commission.status !== "loaded") return null;
   const received = commission.data;
   return (
     <>

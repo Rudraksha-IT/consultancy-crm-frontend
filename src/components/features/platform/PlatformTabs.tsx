@@ -21,7 +21,7 @@ export function PlatformTabs() {
   const pathname = usePathname();
   return (
     <nav aria-label={LABELS.platform} className="border-rule min-w-0 overflow-x-auto border-b-2">
-      <ul className="flex gap-2">
+      <ul className="max-phone:gap-0 flex gap-2">
         {TABS.map((tab) => {
           const isCurrent = tab.isExact ? pathname === tab.href : pathname.startsWith(tab.href);
           return (
@@ -30,7 +30,7 @@ export function PlatformTabs() {
                 href={tab.href}
                 aria-current={isCurrent ? "page" : undefined}
                 className={clsx(
-                  "min-h-control-lg text-body -mb-0.5 flex items-center border-b-3 px-4 font-semibold whitespace-nowrap",
+                  "min-h-control-lg text-body max-phone:px-3 -mb-0.5 flex items-center border-b-3 px-4 font-semibold whitespace-nowrap",
                   isCurrent
                     ? "border-accent text-accent"
                     : "text-ink-2 hover:text-ink border-transparent",

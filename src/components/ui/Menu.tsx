@@ -54,7 +54,7 @@ export function Menu({ label, items }: MenuProps) {
         {label}
       </button>
       {menu.isOpen && (
-        <MenuList id={menu.menuId} label={label} items={ordered} onChosen={menu.dismiss} isInRow />
+        <MenuList id={menu.menuId} label={label} items={ordered} onChosen={menu.close} isInRow />
       )}
     </div>
   );

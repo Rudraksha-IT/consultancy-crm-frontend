@@ -17,19 +17,22 @@ import { usePaymentPage } from "./usePaymentPage";
 
 type StudentPaymentsProps = {
   studentId: RecordId;
-  /** A Payment was changed or deleted: History has a new entry, and this list remounts. */
+  /** A Payment was changed or deleted: History has a new entry. */
   onChanged: () => void;
+  /** Bumped when the Payments changed: the list is read again, in place. */
+  version?: number;
   /** Shown beside the title, e.g. "Take a payment". */
   aside?: ReactNode;
 };
 
 /** The Payments one Student has made, on their Fees tab (Admins only; spec 74-75). */
-export function StudentPayments({ studentId, onChanged, aside }: StudentPaymentsProps) {
+export function StudentPayments(props: StudentPaymentsProps) {
+  const { studentId, onChanged, aside, version = 0 } = props;
   const [page, setPage] = useState(1);
   const state = usePaymentPage(
     { from: "", to: "", search: "", feeTypeId: null, studentId },
     page,
-    0,
+    version,
   );
 
   return (

@@ -66,7 +66,8 @@ export function StageSection({ profile, onSaved }: StageSectionProps) {
               )
             }
           >
-            <b>{LABELS.lost}</b> <span className="whitespace-pre-wrap">{profile.lostReason}</span>
+            <b>{LABELS.lost}</b>{" "}
+            <span className="wrap-anywhere whitespace-pre-wrap">{profile.lostReason}</span>
           </Banner>
         </div>
       )}

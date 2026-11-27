@@ -153,7 +153,7 @@ function OpenDialog(props: DialogProps) {
             look.header,
           )}
         >
-          <h2 id={titleId} className="text-dialog-title min-w-0 truncate">
+          <h2 id={titleId} className="text-dialog-title max-phone:flex-1 min-w-0 truncate">
             {title}
           </h2>
           {headerAside !== undefined && <div className={look.aside}>{headerAside}</div>}
@@ -184,7 +184,8 @@ type Look = { header: string; aside: string; body: string; footer: string };
  * from the body that scrolls over them (UI revamp 23).
  */
 const LOOK: Look = {
-  header: "phone:pb-3 max-phone:pt-3 pt-7 pb-1",
+  // On phones what sits between the title and the close button takes its own second line.
+  header: "phone:pb-3 max-phone:flex-wrap max-phone:pt-3 pt-7 pb-1",
   aside: "max-phone:order-last max-phone:basis-full ml-auto",
   body: "phone:px-8 max-phone:px-4 max-phone:pb-5 grid min-h-0 flex-1 gap-5 overflow-y-auto overscroll-contain px-5 pt-5 pb-7 print:overflow-visible print:p-0",
   footer: "phone:border-t border-rule phone:pt-3.5 phone:pb-4.5 gap-2",

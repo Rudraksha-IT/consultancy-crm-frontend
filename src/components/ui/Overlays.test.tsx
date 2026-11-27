@@ -144,6 +144,21 @@ describe("Menu", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
+  it("puts the cursor back on its button before the item runs, so a popup it opens can give it back", async () => {
+    const { handleEdit } = renderMenu();
+    const more = screen.getByRole("button", { name: "More" });
+    handleEdit.mockImplementation(() => {
+      // What a dialog opened by the item would remember as its opener.
+      expect(more).toHaveFocus();
+    });
+    await userEvent.click(more);
+
+    await userEvent.click(screen.getByRole("menuitem", { name: "Edit payment" }));
+
+    expect(handleEdit).toHaveBeenCalledOnce();
+    expect(more).toHaveFocus();
+  });
+
   it("moves with the arrow keys and closes with Escape, back on its button", async () => {
     renderMenu();
     await userEvent.click(screen.getByRole("button", { name: "More" }));
