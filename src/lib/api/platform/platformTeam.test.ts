@@ -176,7 +176,7 @@ describe("the product logo (issue 65)", () => {
   it("reads where the logo is, or null", async () => {
     await expect(
       fetchProductLogo(answering(jsonResponse({ logo: { url: "/api/platform/brand/logo/3/" } }))),
-    ).resolves.toEqual({ url: "/api/platform/brand/logo/3/", showName: true });
+    ).resolves.toEqual({ url: "/api/platform/brand/logo/3/" });
     await expect(fetchProductLogo(answering(jsonResponse({ logo: null })))).resolves.toBeNull();
   });
 
@@ -192,7 +192,6 @@ describe("the product logo (issue 65)", () => {
 
     await expect(uploadProductLogo(file, upload)).resolves.toEqual({
       url: "/api/platform/brand/logo/1/",
-      showName: true,
     });
     const sent = call(upload);
     expect(sent.path).toBe("/api/platform/brand/logo/");

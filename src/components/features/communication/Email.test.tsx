@@ -697,7 +697,7 @@ describe("When things go wrong", () => {
     backend();
     const withLogo: StaffContext = {
       ...COUNSELLOR,
-      consultancy: { ...OFFICE, logo: { url: "/api/consultancy/logo/3/", showName: true } },
+      consultancy: { ...OFFICE, logo: { url: "/api/consultancy/logo/3/" } },
     };
     renderIn(withLogo, <EmailComposer recipients={[SITA]} isBulk={false} onClose={vi.fn()} />);
 

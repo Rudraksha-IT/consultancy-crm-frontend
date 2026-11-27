@@ -10,14 +10,13 @@ import { Icon } from "@/components/ui/Icon";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
 import { LOGO_ACCEPT, LOGO_TEXT } from "@/constants/logo";
-import type { OfficeLogo } from "@/lib/api";
 
 import { RemoveLogoButton } from "./RemoveLogoButton";
 import { useOfficeLogoChanges } from "./useOfficeLogoChanges";
 
 /**
- * Configuration → Office logo (spec 99c): upload or change the logo, remove it, and choose
- * whether the office name shows beside it. Every change shows across the app at once.
+ * Configuration → Office logo (spec 99c): upload or change the logo, or remove it. The office
+ * name always shows beside it (owner, 2026-11-27). Every change shows across the app at once.
  */
 export function OfficeLogoSettings() {
   const { consultancy } = useCurrentStaff();
@@ -42,13 +41,6 @@ export function OfficeLogoSettings() {
               onChoose={changes.upload}
               onRemove={changes.remove}
             />
-            {logo !== null && (
-              <ShowNameChoice
-                logo={logo}
-                isBusy={changes.isBusy}
-                onChoose={changes.chooseShowName}
-              />
-            )}
             {changes.problem !== null && <Banner tone="problem">{changes.problem}</Banner>}
           </div>
         </Panel>
@@ -100,29 +92,5 @@ function LogoPicker({ hasLogo, isBusy, onChoose, onRemove }: LogoPickerProps) {
         />
       )}
     </div>
-  );
-}
-
-type ShowNameChoiceProps = {
-  logo: OfficeLogo;
-  isBusy: boolean;
-  onChoose: (showName: boolean) => Promise<void>;
-};
-
-/** "Show the office name next to the logo", saved as soon as it is ticked or cleared. */
-function ShowNameChoice({ logo, isBusy, onChoose }: ShowNameChoiceProps) {
-  return (
-    <label className="min-h-control rounded-control hover:bg-fill -mx-2 flex cursor-pointer items-center gap-3 px-2">
-      <input
-        type="checkbox"
-        checked={logo.showName}
-        disabled={isBusy}
-        onChange={(event) => {
-          void onChoose(event.target.checked);
-        }}
-        className="accent-accent size-5 flex-none"
-      />
-      {LOGO_TEXT.showName}
-    </label>
   );
 }

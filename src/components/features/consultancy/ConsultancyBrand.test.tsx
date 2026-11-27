@@ -32,7 +32,7 @@ describe("ConsultancyBrand", () => {
   });
 
   it("shows the office logo large and centred, with the name", async () => {
-    const logo = { url: "/api/consultancy/logo/2/", show_name: false };
+    const logo = { url: "/api/consultancy/logo/2/" };
     answerWith(new Response(JSON.stringify({ name: "Acme Education", logo })));
 
     const { container } = render(<ConsultancyBrand />);

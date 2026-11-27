@@ -3,7 +3,7 @@ import { render, screen } from "@testing-library/react";
 import { BrandLockup } from "./BrandLockup";
 import { BrandMark } from "./BrandMark";
 
-const LOGO = { url: "/api/consultancy/logo/3/", showName: true };
+const LOGO = { url: "/api/consultancy/logo/3/" };
 
 describe("BrandMark", () => {
   it("shows the initials without a logo", () => {
@@ -20,12 +20,6 @@ describe("BrandMark", () => {
     expect(image).toHaveAttribute("src", "/api/consultancy/logo/3/");
     expect(image).toHaveAttribute("alt", "");
     expect(container).not.toHaveTextContent("AE");
-  });
-
-  it("names the office when the logo stands alone", () => {
-    render(<BrandMark name="Acme Education" logo={{ ...LOGO, showName: false }} />);
-
-    expect(screen.getByRole("img", { name: "Acme Education" })).toBeInTheDocument();
   });
 
   it("is sized by tokens only, wide logos kept within their space", () => {
@@ -48,16 +42,10 @@ describe("BrandLockup", () => {
     expect(screen.queryByText("Education consultancy")).toBeNull();
   });
 
-  it("writes the name beside a logo when chosen", () => {
-    render(<BrandLockup name="Acme Education" logo={LOGO} />);
+  it("always writes the name beside a logo, with no way to hide it (owner, 2026-11-27)", () => {
+    const { container } = render(<BrandLockup name="Acme Education" logo={LOGO} />);
 
     expect(screen.getByText("Acme Education")).toBeInTheDocument();
-  });
-
-  it("shows the logo alone when the name is switched off, still named for screen readers", () => {
-    render(<BrandLockup name="Acme Education" logo={{ ...LOGO, showName: false }} />);
-
-    expect(screen.queryByText("Acme Education")).toBeNull();
-    expect(screen.getByRole("img", { name: "Acme Education" })).toBeInTheDocument();
+    expect(container.querySelector("img")).toHaveAttribute("alt", "");
   });
 });

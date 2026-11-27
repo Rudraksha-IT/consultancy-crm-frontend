@@ -5,13 +5,7 @@ import { useState } from "react";
 import { useSetOfficeLogo } from "@/components/features/shell/officeLogo";
 import { useToast } from "@/components/ui/useToast";
 import { LOGO_FILE_TYPES, LOGO_TEXT, MAX_LOGO_BYTES } from "@/constants/logo";
-import {
-  InvalidFieldsError,
-  removeLogo,
-  setShowNameBesideLogo,
-  uploadLogo,
-  type OfficeLogo,
-} from "@/lib/api";
+import { InvalidFieldsError, removeLogo, uploadLogo, type OfficeLogo } from "@/lib/api";
 
 const FILE_TYPES: readonly string[] = LOGO_FILE_TYPES;
 
@@ -21,7 +15,6 @@ export type OfficeLogoChanges = {
   isBusy: boolean;
   upload: (file: File) => Promise<void>;
   remove: () => Promise<void>;
-  chooseShowName: (showName: boolean) => Promise<void>;
 };
 
 /** Why a chosen file can't be the logo, checked before sending; the server checks it again. */
@@ -84,12 +77,5 @@ export function useOfficeLogoChanges(): OfficeLogoChanges {
     }
   }
 
-  async function chooseShowName(showName: boolean): Promise<void> {
-    await change(
-      () => setShowNameBesideLogo(showName),
-      () => LOGO_TEXT.showNameFailed,
-    );
-  }
-
-  return { problem, isBusy, upload, remove, chooseShowName };
+  return { problem, isBusy, upload, remove };
 }
