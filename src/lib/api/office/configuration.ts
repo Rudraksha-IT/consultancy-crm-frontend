@@ -3,7 +3,7 @@ import { z } from "zod";
 import { API_PATHS } from "@/constants/api";
 import { DATE_DISPLAYS, type DateDisplay } from "@/constants/dates";
 
-import { patchJson, postForm, putJson, sendWithoutBody } from "../core/client";
+import { postForm, putJson, sendWithoutBody } from "../core/client";
 import { toFieldErrors } from "../core/fieldErrors";
 import {
   LogoSchema,
@@ -44,14 +44,6 @@ export async function uploadLogo(file: File, fetchFn: typeof fetch = fetch): Pro
   } catch (error) {
     throw toFieldErrors(error, LOGO_FIELDS) ?? error;
   }
-}
-
-/** Choose whether the office name shows beside its logo; returns the logo as shown now. */
-export function setShowNameBesideLogo(
-  showName: boolean,
-  fetchFn: typeof fetch = fetch,
-): Promise<OfficeLogo> {
-  return patchJson(API_PATHS.configurationLogo, { show_name: showName }, LogoAnswerSchema, fetchFn);
 }
 
 /** Remove the office logo; the initials show again. */

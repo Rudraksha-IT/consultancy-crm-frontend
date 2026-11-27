@@ -13,8 +13,8 @@ import { OfficeLogoSettings } from "./OfficeLogoSettings";
 import { consultancySummary } from "@/test/consultancy";
 
 const LOGO_PATH = "/api/configuration/logo/";
-const LOGO = { url: "/api/consultancy/logo/1/", showName: true };
-const LOGO_ANSWER = { logo: { url: "/api/consultancy/logo/1/", show_name: true } };
+const LOGO = { url: "/api/consultancy/logo/1/" };
+const LOGO_ANSWER = { logo: { url: "/api/consultancy/logo/1/" } };
 const MB = 1024 * 1024;
 
 const ADMIN: StaffContext = {
@@ -98,9 +98,9 @@ describe("OfficeLogoSettings", () => {
     expect(preview.querySelector("img")).toHaveAttribute("src", "/api/consultancy/logo/1/");
     expect(within(section).getByLabelText("Change logo")).toBeInTheDocument();
     expect(within(section).getByRole("button", { name: "Remove" })).toBeInTheDocument();
-    expect(
-      within(section).getByRole("checkbox", { name: "Show the office name next to the logo" }),
-    ).toBeChecked();
+    // The name always shows beside the logo: there is no choice to make (owner, 2026-11-27).
+    expect(within(section).queryByRole("checkbox")).toBeNull();
+    expect(preview).toHaveTextContent("Acme Education");
   });
 
   it("refuses a file over 1 MB without sending it", async () => {
@@ -208,44 +208,5 @@ describe("OfficeLogoSettings", () => {
       "The logo couldn't be removed. Check your connection and try again.",
     );
     expect(onSet).not.toHaveBeenCalled();
-  });
-
-  it("hides the office name beside the logo", async () => {
-    const fetchFn = backend(
-      on("PATCH", LOGO_PATH, { logo: { url: "/api/consultancy/logo/1/", show_name: false } }),
-    );
-    const { onSet, section } = renderSection(LOGO);
-
-    await userEvent.click(
-      within(section).getByRole("checkbox", { name: "Show the office name next to the logo" }),
-    );
-
-    expect(callsTo(fetchFn, "PATCH", LOGO_PATH)[0]?.[1]?.body).toBe(
-      JSON.stringify({ show_name: false }),
-    );
-    expect(onSet).toHaveBeenCalledWith({ ...LOGO, showName: false });
-    const preview = within(section).getByTestId("logo-preview");
-    expect(preview).not.toHaveTextContent("Acme Education");
-    expect(within(preview).getByRole("img", { name: "Acme Education" })).toBeInTheDocument();
-    expect(
-      within(section).getByRole("checkbox", { name: "Show the office name next to the logo" }),
-    ).not.toBeChecked();
-  });
-
-  it("keeps the choice and says so when saving it fails", async () => {
-    backend(on("PATCH", LOGO_PATH, { detail: "Forbidden." }, 403));
-    const { onSet, section } = renderSection(LOGO);
-
-    await userEvent.click(
-      within(section).getByRole("checkbox", { name: "Show the office name next to the logo" }),
-    );
-
-    expect(await within(section).findByRole("alert")).toHaveTextContent(
-      "The choice couldn't be saved. Check your connection and try again.",
-    );
-    expect(onSet).not.toHaveBeenCalled();
-    expect(
-      within(section).getByRole("checkbox", { name: "Show the office name next to the logo" }),
-    ).toBeChecked();
   });
 });

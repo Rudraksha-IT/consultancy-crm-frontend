@@ -62,7 +62,7 @@ export function useProductLogo(): BrandLogo | null {
 }
 
 /** The app's own logo (ticket 07), with the product's name always beside it. */
-const APP_LOGO: BrandLogo = { url: APP_LOGO_URL, showName: true };
+const APP_LOGO: BrandLogo = { url: APP_LOGO_URL };
 
 /**
  * The product's mark for the Platform's header and the login screens: the uploaded logo in use,

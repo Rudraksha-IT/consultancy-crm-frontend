@@ -145,7 +145,7 @@ describe("AppShell dates", () => {
   });
 });
 
-const LOGO = { url: "/api/consultancy/logo/4/", show_name: true };
+const LOGO = { url: "/api/consultancy/logo/4/" };
 
 /** The office's logo wherever the side menu shows it (the product's own mark is not one). */
 function sidebarImages(): HTMLImageElement[] {
@@ -166,7 +166,7 @@ function LogoChangingPage() {
       <button
         type="button"
         onClick={() => {
-          setOfficeLogo({ url: "/api/consultancy/logo/5/", showName: false });
+          setOfficeLogo({ url: "/api/consultancy/logo/5/" });
         }}
       >
         New logo
@@ -208,21 +208,16 @@ describe("AppShell's office logo", () => {
     expect(within(topBar).getByText("Acme Education")).toBeVisible();
   });
 
-  it("shows the logo alone when the name is switched off", async () => {
+  it("always writes the name beside the logo, even if an older answer says to hide it (owner)", async () => {
     await renderShellFor({
       ...TEACHER_CONTEXT,
       consultancy: { name: "Acme Education", logo: { ...LOGO, show_name: false } },
     });
 
-    const sidebar = document.getElementById("side-nav");
-    expect(sidebar).not.toHaveTextContent("Acme Education");
-    // Too wide for the strip: it is at the top of the slide-out menu and in the top bar only.
-    expect(
-      within(sidebar ?? document.body).getAllByRole("img", { name: "Acme Education" }),
-    ).toHaveLength(1);
-    const topBar = screen.getByRole("banner");
-    expect(within(topBar).getByRole("img", { name: "Acme Education" })).toBeVisible();
-    expect(within(topBar).queryByText("Acme Education")).not.toBeInTheDocument();
+    expect(document.getElementById("side-nav")).toHaveTextContent("Acme Education");
+    expect(sidebarImages()).toHaveLength(2);
+    expect(within(screen.getByRole("banner")).getByText("Acme Education")).toBeVisible();
+    expect(screen.queryByRole("img", { name: "Acme Education" })).toBeNull();
   });
 
   it("changes the logo everywhere at once, e.g. after an Admin uploads one", async () => {
@@ -235,7 +230,7 @@ describe("AppShell's office logo", () => {
     await userEvent.click(await screen.findByRole("button", { name: "New logo" }));
 
     expect(sidebarImages()[0]).toHaveAttribute("src", "/api/consultancy/logo/5/");
-    expect(document.getElementById("side-nav")).not.toHaveTextContent("Acme Education");
+    expect(document.getElementById("side-nav")).toHaveTextContent("Acme Education");
 
     await userEvent.click(screen.getByRole("button", { name: "No logo" }));
 

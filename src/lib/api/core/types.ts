@@ -37,10 +37,13 @@ import { TransferRequestSchema } from "../students/transferRequestTypes";
 /** Where the office logo is served from: only ever our own logo address (issue 39). */
 const LOGO_URL = /^\/api\/consultancy\/logo\/[0-9]{1,10}\/$/;
 
-/** The office logo, in frontend naming. */
+/**
+ * The office logo: where it is. The office name always shows beside it (owner, 2026-11-27); a
+ * `show_name` an older backend may still send is left out.
+ */
 export const LogoSchema = z
-  .object({ url: z.string().regex(LOGO_URL), show_name: z.boolean() })
-  .transform(({ url, show_name }) => ({ url, showName: show_name }));
+  .object({ url: z.string().regex(LOGO_URL) })
+  .transform(({ url }) => ({ url }));
 
 export type OfficeLogo = z.infer<typeof LogoSchema>;
 

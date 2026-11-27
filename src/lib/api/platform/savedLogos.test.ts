@@ -51,7 +51,6 @@ describe("saved product logos (first live fixes, ticket 07)", () => {
 
     await expect(pickSavedLogo(uid(1), pick)).resolves.toEqual({
       url: "/api/platform/brand/logo/3/",
-      showName: true,
     });
     expect(call(pick)).toEqual({
       path: "/api/platform/brand/in-use/",

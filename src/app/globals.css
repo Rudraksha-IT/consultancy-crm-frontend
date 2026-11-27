@@ -1044,7 +1044,9 @@ main[data-page-move="in-from-bottom"] {
   }
 
   /* Meanwhile no element runs its own colour fade, which would flicker under the screen's. */
-  html[data-theme-fade] :is(*, *::before, *::after) {
+  html[data-theme-fade] *,
+  html[data-theme-fade] *::before,
+  html[data-theme-fade] *::after {
     transition: none !important;
   }
 }

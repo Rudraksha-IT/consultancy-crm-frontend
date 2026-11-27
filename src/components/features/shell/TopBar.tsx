@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type RefObject } fro
 
 import { GlobalSearch } from "@/components/features/search/GlobalSearch";
 import { ThemeToggle } from "@/components/features/theme/ThemeToggle";
-import { BrandMark, showsOfficeName } from "@/components/ui/BrandMark";
+import { BrandMark } from "@/components/ui/BrandMark";
 import { IconButton } from "@/components/ui/IconButton";
 import { usePhoneWidth } from "@/components/ui/usePhoneWidth";
 import { LABELS } from "@/constants/messages";
@@ -116,17 +116,15 @@ type OfficeProps = { consultancy: StaffContext["consultancy"]; hasName: boolean 
 
 /**
  * Which office this is: its mark and its name, a label and never a link. Above 1024px the mark is
- * at the top of the side menu, so only the name is here; a logo that carries the name itself
- * stays here at every width, since the side menu is too narrow for it.
+ * at the top of the side menu, so only the name is here.
  */
 function Office({ consultancy: { name, logo }, hasName }: OfficeProps) {
-  const isNamed = showsOfficeName(logo);
   return (
     <span className="wide:px-0 flex min-w-0 items-center gap-3 px-2">
-      <span className={clsx("contents", isNamed && "wide:hidden")}>
+      <span className="wide:hidden contents">
         <BrandMark name={name} logo={logo} />
       </span>
-      {hasName && isNamed && (
+      {hasName && (
         <b className="text-body wide:text-section-title truncate font-semibold">{name}</b>
       )}
     </span>
