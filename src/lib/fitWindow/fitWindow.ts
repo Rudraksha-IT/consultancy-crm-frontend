@@ -1,8 +1,11 @@
 /** The least a box that fills the window is tall, however short the window (prototype: 380). */
 export const FIT_LEAST_PX = 380;
 
-/** The room left between the box and the bottom of the window, or the phone tab bar. */
-export const FIT_GAP_PX = 16;
+/**
+ * The room left between the box and the bottom of the window, or the phone tab bar: 24, so the
+ * sheet clearly ends above the edge of the screen (owner, 2026-11-27; was 16).
+ */
+export const FIT_GAP_PX = 24;
 
 type FitMeasures = {
   /** The window's inner height. */

@@ -100,7 +100,9 @@ function PersonMenu({ name, role, badge, hasWorkingHours, wayOut }: PersonMenuPr
   const menu = useMenu(rootRef, buttonRef);
 
   return (
-    <div ref={rootRef} onKeyDown={menu.handleKeyDown} className="relative">
+    // More room before the initials than between the icon buttons: the round fills its button,
+    // an icon does not, so this makes the top bar's buttons look evenly spaced.
+    <div ref={rootRef} onKeyDown={menu.handleKeyDown} className="relative ml-2.5">
       <InitialsButton
         ref={buttonRef}
         name={name}

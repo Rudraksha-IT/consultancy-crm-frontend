@@ -58,6 +58,14 @@ describe("Your menu", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
+  it("stands as far from the bell as the bell does from the button before it (owner, 2026-11-27)", () => {
+    renderMenu({});
+
+    // The initials fill their round button, while an icon button has empty room round its icon:
+    // a little more room before the initials makes the three look evenly spaced.
+    expect(menuButton().parentElement).toHaveClass("ml-2.5");
+  });
+
   it("shows my name and Role, then My working hours, Settings and Log out", async () => {
     renderMenu({});
 
