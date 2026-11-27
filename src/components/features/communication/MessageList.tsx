@@ -1,5 +1,6 @@
 "use client";
 
+import clsx from "clsx";
 import Link from "next/link";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
@@ -45,7 +46,7 @@ function MessageRow({ message, showsStudent }: { message: Message; showsStudent:
           className="max-phone:block flex min-w-0 flex-wrap items-baseline gap-x-3.5 gap-y-0.5"
         >
           {showsStudent ? <StudentLink student={message.student} /> : <span>{channel}</span>}
-          <p data-details className={DETAILS}>
+          <p data-details className={detailsClasses(showsStudent)}>
             {showsStudent && (
               <>
                 <span>{channel}</span>
@@ -78,6 +79,16 @@ function MessageRow({ message, showsStudent }: { message: Message; showsStudent:
 /** Small and muted beside the name on computers; the line under the name on a phone. */
 const DETAILS =
   "text-small text-ink-3 max-phone:text-secondary max-phone:text-ink-2 max-phone:truncate min-w-0 font-normal";
+
+/**
+ * On a phone the line is pulled up close under the Student's name (ticket 25): the name is 44
+ * tall to tap, which leaves 10 of empty room under its words.
+ */
+const CLOSE_UNDER_NAME = "max-phone:-mt-2";
+
+function detailsClasses(isUnderName: boolean): string {
+  return clsx(DETAILS, isUnderName && CLOSE_UNDER_NAME);
+}
 
 /** The dot between two details: drawn, never read out. */
 function Dot() {

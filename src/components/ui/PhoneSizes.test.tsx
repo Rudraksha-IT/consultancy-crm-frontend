@@ -54,7 +54,7 @@ describe("phone page actions", () => {
       "max-phone:*:data-[variant=primary]:flex-none",
       "max-phone:*:data-[variant=primary]:rounded-pill",
       "max-phone:*:data-[variant=primary]:px-3.5",
-      "max-phone:*:text-button-sm",
+      "max-phone:[&>:where([data-variant])]:text-button-sm",
     );
     // No full-width bar, and 44 tall as every button is.
     expect(actions).not.toHaveClass("max-phone:*:data-[variant=primary]:basis-full");
@@ -64,7 +64,13 @@ describe("phone page actions", () => {
   it("put the other actions on the next line as small text buttons, from the left", () => {
     const actions = showHeader();
 
-    expect(actions).toHaveClass("max-phone:*:order-5", "max-phone:*:px-button-sm");
+    expect(actions).toHaveClass(
+      "max-phone:*:order-5",
+      "max-phone:[&>:where([data-variant])]:px-button-sm",
+    );
+    // Only buttons are made small: Home's clock card and a month box keep their own padding and
+    // text (ticket 25).
+    expect(actions).not.toHaveClass("max-phone:*:px-button-sm", "max-phone:*:text-button-sm");
     // A full-width break between the title's line and theirs, so they never join the title.
     expect(actions).toHaveClass(
       "max-phone:before:order-4",

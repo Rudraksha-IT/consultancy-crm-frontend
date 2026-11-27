@@ -26,8 +26,9 @@ export function StageMeter({ stage }: StageMeterProps) {
   const stateOf = (index: number): StepState => (at >= 0 && index <= at ? "on" : "off");
 
   return (
-    <span className="inline-flex items-center gap-3 whitespace-nowrap">
-      <span aria-hidden="true" className="inline-flex items-center gap-0.75">
+    // Never wider than its cell: in a narrow one the name is cut with "…" and the beads stay.
+    <span className="inline-flex max-w-full items-center gap-3 whitespace-nowrap">
+      <span aria-hidden="true" className="inline-flex flex-none items-center gap-0.75">
         {JOURNEY_STAGES.map((step, index) => (
           <i
             key={step}
@@ -39,7 +40,9 @@ export function StageMeter({ stage }: StageMeterProps) {
           />
         ))}
       </span>
-      <span className={clsx("font-medium", NAME_CLASSES[stage])}>{STAGE_LABELS[stage]}</span>
+      <span className={clsx("min-w-0 truncate font-medium", NAME_CLASSES[stage])}>
+        {STAGE_LABELS[stage]}
+      </span>
     </span>
   );
 }

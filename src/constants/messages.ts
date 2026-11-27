@@ -302,6 +302,8 @@ export const LABELS = {
   filtersSet: (count: number) => `Filters, ${String(count)} set`,
   setFilters: "Filters that are set",
   removeFilter: (name: string, chosen: string) => `${chosen}, remove the ${name} filter`,
+  /** A filter drawn as a button on a phone: its name, then what is chosen ("Priority: Any"). */
+  filterChoice: (name: string, chosen: string) => `${name}: ${chosen}`,
   clear: "Clear",
   clearAll: "Clear all",
   clearFilters: "Clear filters",

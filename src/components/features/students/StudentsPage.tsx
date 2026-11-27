@@ -267,11 +267,16 @@ type ViewBarProps = {
   onChange: (view: StudentsView) => void;
 };
 
-/** How to move a card (on the Board) on the left, the Board / List switch on the right. */
+/**
+ * How to move a card (on the Board) on the left, the Board / List switch on the right. The page
+ * is as wide for the List as for the Board (`data-wide-page`), so the switch stays under the
+ * pointer when it is pressed (ticket 25).
+ */
 function ViewBar({ view, onChange }: ViewBarProps) {
   return (
     <div
       data-swap-bar=""
+      data-wide-page=""
       className="px-gutter flex flex-wrap items-center justify-between gap-3 py-3"
     >
       {view === StudentsView.Board && (

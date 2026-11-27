@@ -25,7 +25,7 @@ export type TwoFactorState = {
 };
 export type WrongNumberField = "code" | "recoveryCode";
 
-/** The sign-in has timed out, was used, or ended after wrong tries: log in again. */
+/** The login has timed out, was used, or ended after wrong tries: log in again. */
 export class StartAgainError extends Error {
   constructor() {
     super("Log in again");

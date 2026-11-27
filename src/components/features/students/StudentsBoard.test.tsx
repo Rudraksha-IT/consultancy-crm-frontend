@@ -438,7 +438,7 @@ describe("Students board (UI revamp 08)", () => {
     expect(await within(lead).findByText("Couldn't load these Students.")).toBeInTheDocument();
   });
 
-  it("marks the page as wide while the board is shown", async () => {
+  it("keeps the page as wide in the List as on the Board, so the switch stays under the pointer (ticket 25)", async () => {
     office([ANISH]);
     const user = userEvent.setup();
     const { container } = renderPage();
@@ -446,6 +446,15 @@ describe("Students board (UI revamp 08)", () => {
     await card("Anish Neupane");
     expect(container.querySelector("[data-wide-page]")).not.toBeNull();
     await user.click(screen.getByRole("button", { name: "List" }));
+    await screen.findByRole("table");
+    expect(container.querySelector("[data-wide-page]")).not.toBeNull();
+  });
+
+  it("on a phone, the page is not marked wide", async () => {
+    onPhone();
+    office([ANISH]);
+    const { container } = renderPage();
+
     await screen.findByRole("table");
     expect(container.querySelector("[data-wide-page]")).toBeNull();
   });

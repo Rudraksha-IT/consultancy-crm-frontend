@@ -126,18 +126,21 @@ function CommissionBody({ state, failure, addButton, onPage, onStatus }: Commiss
     <>
       <Tiles page={data} />
       <Section title={COMMISSION_TEXT.byStudent} aside={addButton}>
-        {failure !== null && <Banner tone="problem">{failure}</Banner>}
-        <Panel>
-          <CommissionTable page={data} emptyAction={addButton} onStatus={onStatus} />
-          <Pager
-            summary={COMMISSION_TEXT.count(data.count)}
-            count={data.count}
-            page={data.page}
-            pageSize={data.pageSize}
-            onPage={onPage}
-          />
-          <PanelFoot>{COMMISSION_TEXT.footnote}</PanelFoot>
-        </Panel>
+        {/* The banner and the sheet are blocks of the page: 16 apart (rule 10). */}
+        <div className="grid min-w-0 gap-4">
+          {failure !== null && <Banner tone="problem">{failure}</Banner>}
+          <Panel>
+            <CommissionTable page={data} emptyAction={addButton} onStatus={onStatus} />
+            <Pager
+              summary={COMMISSION_TEXT.count(data.count)}
+              count={data.count}
+              page={data.page}
+              pageSize={data.pageSize}
+              onPage={onPage}
+            />
+            <PanelFoot>{COMMISSION_TEXT.footnote}</PanelFoot>
+          </Panel>
+        </div>
       </Section>
     </>
   );

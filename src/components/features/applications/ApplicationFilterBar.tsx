@@ -2,6 +2,7 @@
 
 import { FilterBar, type ListFilter } from "@/components/ui/FilterBar";
 import { SearchBox } from "@/components/ui/SearchBox";
+import { EXPORT_TEXT } from "@/constants/exports";
 import { counsellorFilterOptions } from "@/components/features/students/counsellorFilter";
 import type { SelectOption } from "@/components/ui/SelectField";
 import {
@@ -50,7 +51,8 @@ const SORT_OPTIONS: SelectOption[] = APPLICATION_SORTS.map((sort) => ({
 
 /**
  * Search, Status, counsellor and the order on one line; Intake, intake year and country under
- * More filters, as on Students (spec 57a, list tidy-ups 03).
+ * More filters, as on Students (spec 57a, list tidy-ups 03). The search counts as a filter that is
+ * set, as on Visas (UI revamp ticket 25).
  */
 export function ApplicationFilterBar(props: ApplicationFilterBarProps) {
   const { filters, onChange, choices } = props;
@@ -138,6 +140,13 @@ export function ApplicationFilterBar(props: ApplicationFilterBarProps) {
           onChange={props.onSearch}
         />
       }
+      searchFilter={{
+        label: EXPORT_TEXT.search,
+        value: props.search,
+        onClear: () => {
+          props.onSearch("");
+        },
+      }}
       filters={listFilters}
       resultText={props.resultText}
     />

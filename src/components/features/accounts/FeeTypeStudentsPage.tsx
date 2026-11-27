@@ -135,19 +135,22 @@ function FeeTypeView({ shown, hasFailed, onPage, lost }: FeeTypeViewProps) {
         />
       </TileGrid>
       <Section title={TEXT.students}>
-        {hasFailed && <Banner tone="problem">{TEXT.failed}</Banner>}
-        <Panel>
-          <CountedTable page={shown} />
-          <Pager
-            summary={TEXT.count(shown.count)}
-            note={TEXT.openToAct}
-            count={shown.count}
-            page={shown.page}
-            pageSize={shown.pageSize}
-            onPage={onPage}
-          />
-        </Panel>
-        <p className="text-small text-ink-2 max-w-prose">{TEXT.wholeBalance}</p>
+        {/* The banner, the sheet and the note are blocks of the page: 16 apart (rule 10). */}
+        <div className="grid min-w-0 gap-4">
+          {hasFailed && <Banner tone="problem">{TEXT.failed}</Banner>}
+          <Panel>
+            <CountedTable page={shown} />
+            <Pager
+              summary={TEXT.count(shown.count)}
+              note={TEXT.openToAct}
+              count={shown.count}
+              page={shown.page}
+              pageSize={shown.pageSize}
+              onPage={onPage}
+            />
+          </Panel>
+          <p className="text-small text-ink-2 max-w-prose">{TEXT.wholeBalance}</p>
+        </div>
       </Section>
       {lost}
     </div>
@@ -248,48 +251,50 @@ function LostPart({ state, onPage }: LostPartProps) {
   const { page } = state.data;
   return (
     <Section title={TEXT.lostTitle}>
-      <p className="text-small text-ink-2 max-w-prose">{TEXT.lostIntro}</p>
-      <Panel>
-        <DataTable phone="list" label={TEXT.lostTitle}>
-          <thead>
-            <tr>
-              <th scope="col" className={HEAD}>
-                {TEXT.student}
-              </th>
-              <th scope="col" className={`${HEAD} text-right`}>
-                {TEXT.paidForIt}
-              </th>
-              <th scope="col" className={`${HEAD} text-right`}>
-                {TEXT.leftNotCounted}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-rule divide-y">
-            {page.rows.map((row) => (
-              <DataRow key={row.student.id} opensPage className="hover:bg-fill max-phone:p-5">
-                <DataCell part="title" shrinks className={CELL}>
-                  <StudentLink row={row} />
-                  <span className="text-small text-ink-2 flex min-w-0 flex-wrap items-center gap-2">
-                    <Chip tone="bad">{TEXT.lost}</Chip>
-                    <span className="wrap-anywhere">{row.lostReason}</span>
-                  </span>
-                </DataCell>
-                <Money label={TEXT.paidForIt} amount={row.paid} />
-                <DataCell part="fact" label={TEXT.leftNotCounted} className={`${CELL} ${NUMBER}`}>
-                  {formatNpr(row.stillToPay)}
-                </DataCell>
-              </DataRow>
-            ))}
-          </tbody>
-        </DataTable>
-        <Pager
-          summary={TEXT.count(page.count)}
-          count={page.count}
-          page={page.page}
-          pageSize={page.pageSize}
-          onPage={onPage}
-        />
-      </Panel>
+      <div className="grid min-w-0 gap-4">
+        <p className="text-small text-ink-2 max-w-prose">{TEXT.lostIntro}</p>
+        <Panel>
+          <DataTable phone="list" label={TEXT.lostTitle}>
+            <thead>
+              <tr>
+                <th scope="col" className={HEAD}>
+                  {TEXT.student}
+                </th>
+                <th scope="col" className={`${HEAD} text-right`}>
+                  {TEXT.paidForIt}
+                </th>
+                <th scope="col" className={`${HEAD} text-right`}>
+                  {TEXT.leftNotCounted}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-rule divide-y">
+              {page.rows.map((row) => (
+                <DataRow key={row.student.id} opensPage className="hover:bg-fill max-phone:p-5">
+                  <DataCell part="title" shrinks className={CELL}>
+                    <StudentLink row={row} />
+                    <span className="text-small text-ink-2 flex min-w-0 flex-wrap items-center gap-2">
+                      <Chip tone="bad">{TEXT.lost}</Chip>
+                      <span className="wrap-anywhere">{row.lostReason}</span>
+                    </span>
+                  </DataCell>
+                  <Money label={TEXT.paidForIt} amount={row.paid} />
+                  <DataCell part="fact" label={TEXT.leftNotCounted} className={`${CELL} ${NUMBER}`}>
+                    {formatNpr(row.stillToPay)}
+                  </DataCell>
+                </DataRow>
+              ))}
+            </tbody>
+          </DataTable>
+          <Pager
+            summary={TEXT.count(page.count)}
+            count={page.count}
+            page={page.page}
+            pageSize={page.pageSize}
+            onPage={onPage}
+          />
+        </Panel>
+      </div>
     </Section>
   );
 }

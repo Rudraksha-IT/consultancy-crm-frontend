@@ -93,6 +93,10 @@ describe("An Email list row (ticket 13)", () => {
     const details = detailsOf(row);
     expect(details).toHaveClass("max-phone:text-secondary", "max-phone:text-ink-2");
     expect(details).toHaveClass("max-phone:truncate");
+    // Close under the name (ticket 25): the name stays 44 tall to tap, so the line is pulled up
+    // over the empty room under its words.
+    expect(details).toHaveClass("max-phone:-mt-2");
+    expect(within(row).getByRole("link", { name: /./ })).toHaveClass("min-h-control");
     const by = within(details).getByText(/By Anita Gurung/);
     expect(by).toHaveClass("max-phone:hidden");
     expect(by).toHaveTextContent(/^· By Anita Gurung$/);
@@ -167,5 +171,7 @@ describe("An Email list row (ticket 13)", () => {
     expect(within(row).queryByRole("link")).not.toBeInTheDocument();
     expect(topOf(row).firstElementChild).toHaveTextContent(/^Email$/);
     expect(detailsOf(row)).toHaveTextContent(/^9 Oct 2026, 15:20 · By Anita Gurung$/);
+    // No 44 tall name above it here, so the line is not pulled up.
+    expect(detailsOf(row)).not.toHaveClass("max-phone:-mt-2");
   });
 });

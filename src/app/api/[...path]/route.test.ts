@@ -2274,7 +2274,10 @@ describe("two-step login (issue 61)", () => {
       );
 
       expect(response.status).toBe(400);
-      expect(await response.json()).toMatchObject({ start_again: true });
+      expect(await response.json()).toEqual({
+        detail: "This login has timed out or was already used. Log in again.",
+        start_again: true,
+      });
       expect(fetchFn).not.toHaveBeenCalled();
     });
 

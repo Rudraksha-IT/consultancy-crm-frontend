@@ -81,10 +81,11 @@ export function AttendanceSection({ batch, onSaved }: AttendanceSectionProps) {
       aside={<DayPicker batch={batch} day={day} isClassDay={shownDay !== null} onChange={setDay} />}
     >
       {shownDay !== null && (
-        <>
+        // The note and the sheet are blocks of the page: 16 apart (rule 10).
+        <div className="grid min-w-0 gap-4">
           {isSaturday(shownDay) && <Banner tone="info">{BATCH_TEXT.saturday}</Banner>}
           <LoadedDay key={shownDay} batch={batch} day={shownDay} onSaved={onSaved} />
-        </>
+        </div>
       )}
     </Section>
   );

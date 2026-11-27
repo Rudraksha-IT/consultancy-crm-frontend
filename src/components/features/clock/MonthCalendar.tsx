@@ -34,7 +34,7 @@ export function MonthCalendar({ month, onOpenDay }: MonthCalendarProps) {
           <div
             key={weekday}
             aria-hidden="true"
-            className="text-tiny text-ink-3 pb-0.5 text-center font-semibold"
+            className="text-cal text-ink-3 pb-0.5 text-center font-semibold"
           >
             {weekday}
           </div>
@@ -52,7 +52,7 @@ export function MonthCalendar({ month, onOpenDay }: MonthCalendarProps) {
 }
 
 const CELL =
-  "min-h-cal-day-sm phone:min-h-cal-day rounded-control border-rule bg-paper text-tiny text-ink-2 grid min-w-0 content-start gap-px border p-1 phone:p-2 text-left";
+  "min-h-cal-day-sm phone:min-h-cal-day rounded-control border-rule bg-paper text-cal text-ink-2 grid min-w-0 content-start gap-px border p-1 phone:p-2 text-left";
 
 function cellClasses(day: ClockDay, isButton: boolean): string {
   return clsx(CELL, {
@@ -161,10 +161,13 @@ function WorkedDayWords({ day }: { day: ClockDay }) {
   );
 }
 
+/** The small Home and Corrected marks: 12, a step under the calendar's 13, so they fit a day. */
+const MARK = "text-tiny text-accent inline-flex items-center gap-0.5 font-semibold";
+
 /** Worked on Approved Work From Home dates (issue 87): taken from the dates, never the address. */
 function HomeMark() {
   return (
-    <span className={clsx("text-accent inline-flex items-center gap-0.5 font-semibold", LINE)}>
+    <span className={clsx(MARK, LINE)}>
       <Icon name="home" size="sm" />
       {WORK_FROM_HOME_TEXT.homeTag}
     </span>
@@ -173,7 +176,7 @@ function HomeMark() {
 
 function CorrectedMark() {
   return (
-    <span className={clsx("text-accent inline-flex items-center gap-0.5 font-semibold", LINE)}>
+    <span className={clsx(MARK, LINE)}>
       <Icon name="edit" size="sm" />
       {TEXT.corrected}
     </span>

@@ -121,6 +121,10 @@ describe("MyWorkingHoursPage", () => {
     expect(within(calendar).getByText("9:02 AM –")).toBeInTheDocument();
     expect(within(calendar).getByText("5:26 PM")).toBeInTheDocument();
     expect(within(calendar).getByText("Corrected")).toBeInTheDocument();
+    // The calendar's text is 13 (ticket 25); the small Corrected and Home marks stay 12.
+    expect(within(calendar).getByText("Sun")).toHaveClass("text-cal");
+    expect(within(calendar).getByText("9:02 AM –").closest(".text-cal")).not.toBeNull();
+    expect(within(calendar).getByText("Corrected")).toHaveClass("text-tiny");
     expect(within(calendar).getByText("Short day")).toBeInTheDocument();
     expect(within(calendar).getByText("No out")).toBeInTheDocument();
     expect(within(calendar).getByText("no clock-out")).toBeInTheDocument();

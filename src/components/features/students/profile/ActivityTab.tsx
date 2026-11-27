@@ -35,6 +35,8 @@ import {
   buildTimeline,
   durationText,
   mergeActivity,
+  olderAdded,
+  readAgain,
   sourcesToLoadNext,
   type ActivitySource,
   type MergedActivity,
@@ -63,6 +65,11 @@ type ActivityTabProps = {
   createdAt: string;
   /** Every Stage change, from the profile, so the time in each Stage is known from the start. */
   stageChanges: readonly HistoryEntry[];
+  /**
+   * Goes up when something was saved on the page (the Note, the Priority): the first pages are
+   * read again and what is new is added in place, the timeline staying where it is (ticket 25).
+   */
+  version?: number;
 };
 
 /** Where the Student's Stages come from, for working out the timeline. */
@@ -73,7 +80,7 @@ type StageStory = Pick<ActivityTabProps, "createdAt" | "stageChanges">;
  * 123): each Stage change a big dot with the time spent between them, and along the line their
  * Visits, the messages sent to them while the Communication Module is on, and the rest of History.
  */
-export function ActivityTab({ studentId, createdAt, stageChanges }: ActivityTabProps) {
+export function ActivityTab({ studentId, createdAt, stageChanges, version }: ActivityTabProps) {
   const { modules } = useCurrentStaff();
   const withMessages = modules.includes(Module.Communication);
   const loaders = useMemo(() => loadersFor(studentId, withMessages), [studentId, withMessages]);
@@ -83,17 +90,20 @@ export function ActivityTab({ studentId, createdAt, stageChanges }: ActivityTabP
   useEffect(() => {
     let isCancelled = false;
     Promise.all(loaders.map((load) => load(1))).then(
-      (sources) => {
-        if (!isCancelled) setState({ status: "loaded", sources });
+      (fresh) => {
+        if (!isCancelled) setState((shown) => ({ status: "loaded", sources: added(shown, fresh) }));
       },
       () => {
-        if (!isCancelled) setState({ status: "failed" });
+        // What is already shown stays when it can't be read again.
+        if (!isCancelled) {
+          setState((shown) => (shown.status === "loaded" ? shown : { status: "failed" }));
+        }
       },
     );
     return () => {
       isCancelled = true;
     };
-  }, [loaders]);
+  }, [loaders, version]);
 
   async function loadOlder(sources: Source[]): Promise<void> {
     setIsLoadingMore(true);
@@ -105,7 +115,7 @@ export function ActivityTab({ studentId, createdAt, stageChanges }: ActivityTabP
           const load = loaders[index];
           if (current === undefined || load === undefined) return;
           const older = await load(current.page + 1);
-          next[index] = { ...older, items: [...current.items, ...older.items] };
+          next[index] = olderAdded(current, older);
         }),
       );
       setState({ status: "loaded", sources: next });
@@ -132,6 +142,12 @@ export function ActivityTab({ studentId, createdAt, stageChanges }: ActivityTabP
       </Panel>
     </Section>
   );
+}
+
+/** The first pages just read, added to what is shown (or all there is, the first time). */
+function added(shown: ActivityState, fresh: Source[]): Source[] {
+  if (shown.status !== "loaded") return fresh;
+  return fresh.map((one, index) => readAgain(shown.sources[index], one));
 }
 
 function loadersFor(studentId: RecordId, withMessages: boolean): LoadPage[] {

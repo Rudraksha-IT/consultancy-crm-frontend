@@ -125,14 +125,19 @@ describe("TwoFactorVerifyForm", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/Wait 15 minutes/);
   });
 
-  it("offers the way back to the password when the sign-in has timed out", async () => {
+  it("offers the way back to the password when the login has timed out", async () => {
     backend(on("POST", VERIFY, { detail: "Log in again.", start_again: true }, 400));
     const { onStartAgain } = renderVerify();
     const user = userEvent.setup();
 
     await user.type(screen.getByLabelText("6-digit number"), "123456");
     await user.click(screen.getByRole("button", { name: "Continue" }));
-    await user.click(await screen.findByRole("button", { name: "Back to log in" }));
+    const back = await screen.findByRole("button", { name: "Back to log in" });
+    // "login", the word the rest of the app uses, never "sign-in" (ticket 25).
+    expect(
+      screen.getByText("This login has timed out or was already used. Log in again."),
+    ).toBeInTheDocument();
+    await user.click(back);
 
     expect(onStartAgain).toHaveBeenCalled();
   });
@@ -193,7 +198,7 @@ describe("TwoFactorSetup", () => {
     expect(screen.getByRole("img", { name: /QR code/ })).toBeInTheDocument();
   });
 
-  it("sends the person back to the password when the sign-in has timed out", async () => {
+  it("sends the person back to the password when the login has timed out", async () => {
     backend(on("POST", SETUP, { detail: "Log in again.", start_again: true }, 400));
     const { onStartAgain } = renderSetup();
     const user = userEvent.setup();

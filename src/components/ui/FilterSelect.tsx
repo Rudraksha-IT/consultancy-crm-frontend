@@ -4,7 +4,9 @@ import clsx from "clsx";
 import type { ChangeEvent } from "react";
 
 import { SET_CLASSES, setMark } from "./FilterField";
+import { FilterPillMenu } from "./FilterPillMenu";
 import type { SelectOption } from "./SelectField";
+import { usePhoneWidth } from "./usePhoneWidth";
 
 export type FilterSelectProps = {
   label: string;
@@ -34,9 +36,20 @@ const SELECT_CLASSES =
 
 /**
  * A list filter: a select named by its label, or by its first option when the label is hidden.
- * On a phone it is a small pill; with its label shown, the name is grey before the choice.
+ * On a phone it is a small pill; with its label shown (a filter that stands alone), the name is
+ * grey before the choice and the pill opens a menu (`FilterPillMenu`).
  */
-export function FilterSelect({
+export function FilterSelect(props: FilterSelectProps) {
+  const isPhone = usePhoneWidth();
+  if (props.isLabelShown === true && isPhone) {
+    const { label, value, options, onChange } = props;
+    return <FilterPillMenu label={label} value={value} options={options} onChange={onChange} />;
+  }
+  return <SelectFilter {...props} />;
+}
+
+/** The filter as a select: on every width but a phone's filter that stands alone. */
+function SelectFilter({
   label,
   isLabelShown = false,
   value,

@@ -450,6 +450,57 @@ describe("StudentsPage", () => {
   });
 });
 
+describe("StudentsPage search as a set filter (UI revamp ticket 25)", () => {
+  const search = () => screen.getByRole("searchbox", { name: "Search Students" });
+
+  it("counts as a set filter: Clear filters empties it", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+    await user.type(search(), "9841");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/?q=9841");
+    });
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    expect(search()).toHaveValue("");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/");
+    });
+  });
+
+  it("on a phone, shows the words typed as a chip that empties the search", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), counsellors);
+    renderPage();
+    await screen.findAllByText("Sita Karki");
+
+    await user.type(search(), "9841");
+
+    const chip = screen.getByRole("button", { name: "9841, remove the Search filter" });
+    expect(screen.getByRole("button", { name: "Filters, 1 set" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/?q=9841");
+    });
+    await user.click(chip);
+
+    expect(search()).toHaveValue("");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/");
+    });
+  });
+});
+
 describe("adding a visitor", () => {
   const STORED = {
     ...student({ id: uid(9), name: "Nisha Tamang", phone: "9818877665", country: "japan" }),

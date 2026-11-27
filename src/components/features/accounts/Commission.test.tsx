@@ -288,10 +288,12 @@ describe("Accounts -> Commission", () => {
     });
     await userEvent.selectOptions(picker, "Received");
 
-    expect(
-      await screen.findByText("We couldn't change the status. Please try again."),
-    ).toBeInTheDocument();
+    const failure = await screen.findByText("We couldn't change the status. Please try again.");
     expect(picker).toHaveValue("claim_sent");
+    // The banner is 16 from the sheet under it, as blocks of a page are (ticket 25).
+    const blocks = failure.closest('[role="alert"]')?.parentElement;
+    expect(blocks).toHaveClass("grid", "gap-4");
+    expect(blocks).toContainElement(picker);
   });
 
   it("shows typed HTML as text", async () => {

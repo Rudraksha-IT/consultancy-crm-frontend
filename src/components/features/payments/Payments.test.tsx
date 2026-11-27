@@ -455,14 +455,15 @@ describe("taking a payment", () => {
     expect(screen.queryByRole("button", { name: "Take a payment" })).not.toBeInTheDocument();
   });
 
-  it("is a compact rounded button on the name's line on phones (UI revamp 06)", async () => {
+  it("is a compact rounded button on its own line under the name on phones (ticket 25)", async () => {
     backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage();
 
     const button = await screen.findByRole("button", { name: "Take a payment" });
     expect(button).toHaveAttribute("data-variant", "primary");
     expect(button).toHaveClass("min-h-control");
-    // The name takes the line's room and the main action follows it; the rest go underneath.
+    // The name takes its whole line, however long; the main action is on the next line and the
+    // rest go underneath.
     expect(button.parentElement).toHaveClass(
       "max-phone:contents",
       "max-phone:*:order-5",
@@ -471,7 +472,9 @@ describe("taking a payment", () => {
       "max-phone:*:data-[variant=primary]:flex-none",
     );
     const name = screen.getByRole("heading", { name: "Sita Gurung" });
-    expect(name.closest(".max-phone\\:order-1")).toHaveClass("max-phone:flex-1", "min-w-0");
+    const who = name.closest(".max-phone\\:order-1");
+    expect(who).toHaveClass("max-phone:basis-full", "min-w-0");
+    expect(who).not.toHaveClass("max-phone:flex-1");
   });
 
   it("sits beside Assign a counsellor for a Student who has none", async () => {

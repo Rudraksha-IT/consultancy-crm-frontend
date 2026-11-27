@@ -99,9 +99,9 @@ function sentBody(fetchFn: ReturnType<typeof backend>, verb: string, path: strin
   return typeof body === "string" ? JSON.parse(body) : undefined;
 }
 
-function renderPage() {
+function renderPage(context: StaffContext = COUNSELLOR) {
   return render(
-    <StaffContextContext value={COUNSELLOR}>
+    <StaffContextContext value={context}>
       <ToastProvider>
         <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
@@ -496,6 +496,24 @@ describe("the visa dates", () => {
     expect(
       within(row).getByRole("button", { name: "Change dates for the Deakin University visa" }),
     ).toBeInTheDocument();
+  });
+
+  it("puts the time beside an AD date, and on its own line under a BS date (ticket 25)", async () => {
+    backend(profile(APPLIED));
+    const shown = renderPage();
+    const add = "Add dates for the Deakin University visa";
+    const rowOf = (dialog: HTMLElement) =>
+      within(dialog).getByLabelText("Medical time").closest("[data-appointment]");
+
+    // An AD date is one box: the time fits on its line.
+    expect(rowOf(await openDates(add))).toHaveClass("phone:grid-cols-2");
+
+    shown.unmount();
+    renderPage({ ...COUNSELLOR, dateDisplay: "BS" });
+    const row = rowOf(await openDates(add));
+    // A BS date is three boxes (day, month, year), so they take the whole line.
+    expect(row).not.toHaveClass("phone:grid-cols-2");
+    expect(row).toHaveClass("grid", "gap-4");
   });
 
   it("books dates: only what changed is sent, then a toast and the card shows them", async () => {

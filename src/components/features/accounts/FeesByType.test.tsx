@@ -189,6 +189,11 @@ describe("One Fee Type's Students", () => {
     expect(within(aarav).getByText("NPR 30,000")).toHaveClass("text-warn");
     expect(screen.getByText("2 Students")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Lost, not counted" })).not.toBeInTheDocument();
+    // The note is 16 from the sheet above it, as blocks of a page are (ticket 25).
+    expect(screen.getByText(/whole balance/).closest(".gap-4")).toContainElement(table);
+    expect(screen.getByText(/whole balance/).closest(".gap-4")).not.toContainElement(
+      screen.getByRole("heading", { level: 1, name: "Visa fee" }),
+    );
   });
 
   it("shows Lost Students apart, with their reason", async () => {
@@ -200,6 +205,9 @@ describe("One Fee Type's Students", () => {
 
     const lost = await screen.findByRole("region", { name: "Lost, not counted" });
     const row = within(lost).getByRole("row", { name: /Hari Lama/ });
+    const intro = within(lost).getByText(/These Students stopped their process/);
+    expect(intro.closest(".gap-4")).toContainElement(row);
+    expect(lost).toContainElement(intro.closest<HTMLElement>(".gap-4"));
     expect(within(row).getByText("Lost")).toBeInTheDocument();
     expect(within(row).getByText("Went with another office")).toBeInTheDocument();
     expect(within(row).getByText("NPR 25,000")).toBeInTheDocument();

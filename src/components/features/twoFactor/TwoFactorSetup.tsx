@@ -50,7 +50,7 @@ export function TwoFactorSetup({
   const hasStarted = useRef(false);
 
   useEffect(() => {
-    // The secret is shown once per sign-in, so it is asked for only once.
+    // The secret is shown once per login, so it is asked for only once.
     if (hasStarted.current) return;
     hasStarted.current = true;
     async function start(): Promise<void> {
@@ -129,7 +129,7 @@ function SetupPhase({
   }
 }
 
-/** Setup shows the key once per sign-in: after a failure, the person logs in again. */
+/** Setup shows the key once per login: after a failure, the person logs in again. */
 function SetupFailed({ onStartAgain }: { onStartAgain: () => void }) {
   return (
     <div className="grid gap-5">

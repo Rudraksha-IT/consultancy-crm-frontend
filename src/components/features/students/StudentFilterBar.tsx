@@ -2,6 +2,7 @@
 
 import { FilterBar, type ListFilter } from "@/components/ui/FilterBar";
 import { SearchBox } from "@/components/ui/SearchBox";
+import { EXPORT_TEXT } from "@/constants/exports";
 import { LABELS } from "@/constants/messages";
 import { PRIORITIES, PRIORITY_LABELS } from "@/constants/priority";
 import { Stage } from "@/constants/stages";
@@ -46,7 +47,7 @@ type StudentFilterBarProps = {
 
 /**
  * Search, Stage, Priority and counsellor, with "How they found us", "Wants to study in" and "Target level"
- * under More filters.
+ * under More filters. The search counts as a filter that is set, as on Visas (UI revamp ticket 25).
  */
 export function StudentFilterBar(props: StudentFilterBarProps) {
   const { filters, onChange } = props;
@@ -125,6 +126,13 @@ export function StudentFilterBar(props: StudentFilterBarProps) {
           onChange={props.onSearch}
         />
       }
+      searchFilter={{
+        label: EXPORT_TEXT.search,
+        value: props.search,
+        onClear: () => {
+          props.onSearch("");
+        },
+      }}
       filters={listFilters}
       resultText={props.resultText}
     />

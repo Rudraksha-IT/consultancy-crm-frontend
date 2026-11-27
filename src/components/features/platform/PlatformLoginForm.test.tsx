@@ -130,7 +130,7 @@ describe("PlatformLoginForm", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
-  it("goes back to the password when the sign-in has timed out", async () => {
+  it("goes back to the password when the login has timed out", async () => {
     backend(
       on("POST", "/api/platform/auth/login/", { two_factor: "verify" }),
       on(

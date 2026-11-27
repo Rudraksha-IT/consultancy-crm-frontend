@@ -363,8 +363,10 @@ const TAB_CONTENT: Record<Tab, (props: TabContentProps) => ReactNode> = {
   ),
   profile: ({ profile }) => <ProfileTab profile={profile} />,
   activity: ({ profile, historyVersion }) => (
+    // Read again, in place, after the Note or the Priority is saved (ticket 25).
     <ActivityTab
-      key={historyVersion}
+      key={profile.id}
+      version={historyVersion}
       studentId={profile.id}
       createdAt={profile.createdAt}
       stageChanges={profile.stageChanges}

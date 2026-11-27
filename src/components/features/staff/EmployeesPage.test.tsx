@@ -8,6 +8,8 @@ import { jsonResponse } from "@/lib/api/core/test-helpers";
 
 import { EmployeesPage } from "./EmployeesPage";
 import { consultancySummary } from "@/test/consultancy";
+import { fakeMatchMedia } from "@/test/matchMedia";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 import { testHost } from "@/test/hosts";
 import { uid } from "@/test/ids";
 
@@ -717,6 +719,48 @@ describe("EmployeesPage: order and Invite back (UI revamp, ticket 18)", () => {
     const dialog = await askToInviteBack("<img src=x onerror=alert(1)>");
 
     expect(dialog.querySelector("img")).toBeNull();
+  });
+});
+
+describe("EmployeesPage on a phone (UI revamp ticket 25)", () => {
+  const titleCell = async (name: string): Promise<HTMLElement> => {
+    const cell = (await rowFor(name)).querySelector<HTMLElement>('td[data-part="title"]');
+    if (cell === null) throw new Error(`No name cell for ${name}`);
+    return cell;
+  };
+
+  function onPhone(): void {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+  }
+
+  it("says Has left and Invited in words under the name, never by grey alone", async () => {
+    onPhone();
+    listing();
+    renderPage();
+
+    const left = within(await titleCell("Hari KC")).getByText("Has left");
+    // The word itself is not greyed with the name.
+    expect(left.closest("[data-left]")).toBeNull();
+    expect(
+      within(await titleCell("Sita Sharma")).getByText("Invited, not joined yet"),
+    ).toBeInTheDocument();
+    const ram = await titleCell("Ram Thapa");
+    expect(within(ram).queryByText("Has left")).toBeNull();
+    expect(within(ram).queryByText("Invited, not joined yet")).toBeNull();
+  });
+
+  it("keeps the words in the Role column on a computer, said once", async () => {
+    listing();
+    renderPage();
+
+    expect(within(await titleCell("Hari KC")).queryByText("Has left")).toBeNull();
+    expect(within(await rowFor("Hari KC")).getAllByText("Has left")).toHaveLength(1);
   });
 });
 

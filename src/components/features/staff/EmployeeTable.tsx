@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Chip } from "@/components/ui/Chip";
 import { DataCell, DataRow, DataTable } from "@/components/ui/DataTable";
 import { OneLine } from "@/components/ui/OneLine";
+import { usePhoneWidth } from "@/components/ui/usePhoneWidth";
 import { LABELS } from "@/constants/messages";
 import { ROLE_LABELS } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
@@ -39,7 +40,8 @@ const CELL = "px-5 py-4 align-middle max-tablet:p-0";
 /**
  * The office's staff list: who, how to reach them, their Role and since when. Below tablet width
  * each row stacks into a card, so the page never scrolls sideways. On a phone a row is the name,
- * the job title and Manage; an invited person's two buttons go on their own line.
+ * the job title and Manage; an invited person's two buttons go on their own line, and "Invited,
+ * not joined yet" or "Has left" is said in words under the job title.
  */
 export function EmployeeTable(props: EmployeeTableProps) {
   return (
@@ -102,6 +104,7 @@ function EmployeeRow({ employee, ...props }: EmployeeRowProps) {
             <OneLine block className="text-secondary text-ink-2">
               {employee.jobTitle}
             </OneLine>
+            <PhoneStatus status={employee.status} />
           </div>
         </div>
       </DataCell>
@@ -135,10 +138,26 @@ function EmployeeRow({ employee, ...props }: EmployeeRowProps) {
   );
 }
 
-function StatusChip({ status }: { status: StaffStatus }) {
+/**
+ * A phone row has no Role column, so the status is said under the job title: grey never stands
+ * alone (ticket 25). Nothing on wider screens, where the Role column says it.
+ */
+function PhoneStatus({ status }: { status: StaffStatus }) {
+  const isPhone = usePhoneWidth();
+  return isPhone ? <StatusChip status={status} isClose /> : null;
+}
+
+type StatusChipProps = {
+  status: StaffStatus;
+  /** Right under the line above it, with no gap (under the job title on a phone). */
+  isClose?: boolean;
+};
+
+/** "Invited, not joined yet" or "Has left", in words; nothing for someone working here. */
+function StatusChip({ status, isClose = false }: StatusChipProps) {
   if (status === StaffStatus.Active) return null;
   return (
-    <div className="mt-1.5">
+    <div className={isClose ? undefined : "mt-1.5"}>
       {status === StaffStatus.Invited ? (
         <Chip tone="warn">{LABELS.invitedNotJoined}</Chip>
       ) : (

@@ -6,6 +6,8 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { consultancySummary } from "@/test/consultancy";
+import { fakeMatchMedia } from "@/test/matchMedia";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 
 import { ApplicationsPage } from "./ApplicationsPage";
 import { uid } from "@/test/ids";
@@ -433,6 +435,57 @@ describe("ApplicationsPage More filters (list tidy-ups 03)", () => {
       expect(lastListCall(fetchFn)).toBe("/api/applications/?sort=applied_on");
     });
     expect(screen.queryByRole("button", { name: "Clear filters" })).not.toBeInTheDocument();
+  });
+});
+
+describe("ApplicationsPage search as a set filter (UI revamp ticket 25)", () => {
+  const search = () => screen.getByRole("searchbox", { name: "Search applications" });
+
+  it("counts as a set filter: Clear filters empties it", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+    await user.type(search(), "Deakin");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/applications/?q=Deakin");
+    });
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    expect(search()).toHaveValue("");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/applications/");
+    });
+  });
+
+  it("on a phone, shows the words typed as a chip that empties the search", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), choices, counsellors);
+    renderPage();
+    await screen.findAllByText("Sita Karki");
+
+    await user.type(search(), "Deakin");
+
+    const chip = screen.getByRole("button", { name: "Deakin, remove the Search filter" });
+    expect(screen.getByRole("button", { name: "Filters, 1 set" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/applications/?q=Deakin");
+    });
+    await user.click(chip);
+
+    expect(search()).toHaveValue("");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/applications/");
+    });
   });
 });
 

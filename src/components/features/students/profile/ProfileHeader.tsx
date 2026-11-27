@@ -59,11 +59,12 @@ export function ProfileHeader({ profile, onSaved, children }: ProfileHeaderProps
         aria-labelledby={nameId}
         className="rounded-panel border-sheet-rule bg-paper shadow-raise min-w-0 border"
       >
-        {/* Phones (UI revamp 06): the main action is a compact rounded button on the name's line;
-            Priority and the other actions follow on the next line. */}
+        {/* Phones (ticket 25): the name takes its whole line, so a long one is never squeezed; the
+            main action is a compact rounded button on the next line, and Priority and the other
+            actions follow on the line after. */}
         {/* On phones the row is what the Priority and More menus open from (UI revamp 23). */}
         <div className="max-phone:relative max-phone:px-gutter max-phone:py-4 max-phone:items-start max-phone:justify-start max-phone:gap-x-2 max-phone:gap-y-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-5 p-5">
-          <div className="max-phone:order-1 max-phone:flex-1 max-phone:gap-3 flex min-w-0 items-center gap-5">
+          <div className="max-phone:order-1 max-phone:basis-full max-phone:gap-3 flex min-w-0 items-center gap-5">
             <Avatar name={profile.name} size="lg" />
             <div className="grid min-w-0 gap-1">
               <h1 id={nameId} className="text-page-title-sm wide:text-page-title wrap-anywhere">

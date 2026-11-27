@@ -26,13 +26,22 @@ export const PHONE_LINE_BREAK =
   "max-phone:before:order-4 max-phone:before:basis-full max-phone:before:content-['']";
 
 /**
+ * Small padding and text for the buttons of the row, and only its buttons (ticket 25): something
+ * that is not a button (Home's clock card, the month box of Working hours) keeps its own. Written
+ * with `:where` so it weighs what `*:` weighs, and the padding of the main action still wins.
+ */
+const PHONE_SMALL_BUTTONS =
+  "max-phone:[&>:where([data-variant])]:px-button-sm max-phone:[&>:where([data-variant])]:text-button-sm";
+
+/**
  * Phones (ticket 06): the header is one wrapping row. The title takes its line with the main
  * (primary) action beside it; the line under the title follows; the other actions are small text
  * buttons on the next line, from the left. Something that is not a button (Home's clock card)
  * takes the whole width.
  */
 const PHONE_ACTIONS = clsx(
-  "max-phone:contents max-phone:*:order-5 max-phone:*:px-button-sm max-phone:*:text-button-sm",
+  "max-phone:contents max-phone:*:order-5",
+  PHONE_SMALL_BUTTONS,
   "max-phone:*:not-data-variant:basis-full",
   PHONE_LINE_BREAK,
   PHONE_MAIN_ACTION,

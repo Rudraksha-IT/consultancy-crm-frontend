@@ -568,7 +568,11 @@ describe("StudentProfilePage", () => {
     });
 
     it("loads older changes on request", async () => {
-      const fetchFn = backend(profile(), visits(), history([ENTRY], 51));
+      // The second page holds another, older entry (an entry is never shown twice, ticket 25).
+      const older = { ...ENTRY, id: uid(3), at: "2026-10-20T09:00:00+05:45" };
+      const fetchFn = backend(profile(), visits(), (path, init) =>
+        history([path.endsWith("page=2") ? older : ENTRY], 51)(path, init),
+      );
       renderPage();
 
       await userEvent.click(await screen.findByRole("tab", { name: "Activity" }));

@@ -173,6 +173,15 @@ describe("The Stage on a phone", () => {
     expect(isHiddenOnPhone(screen.getByText("Applying"))).toBe(false);
   });
 
+  it("cuts the Stage's name with … in a narrow cell, keeping the beads (ticket 25)", () => {
+    const { container } = render(<StageMeter stage={Stage.Counselling} />);
+
+    const name = screen.getByText("Counselling");
+    expect(name).toHaveClass("min-w-0", "truncate");
+    expect(container.firstElementChild).toHaveClass("max-w-full");
+    expect(container.querySelector("[data-step]")?.parentElement).toHaveClass("flex-none");
+  });
+
   it("is a compact stepper on the Student's page: five dots in a row, small names under them", () => {
     render(<Journey stage={Stage.Applying} nextStep="Add the Offer Letter" />);
 

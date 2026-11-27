@@ -90,7 +90,6 @@ export function StudentBoard({ board, viewer }: StudentBoardProps) {
         tabIndex={-1}
         role="group"
         aria-label={BOARD_TEXT.boardLabel}
-        data-wide-page=""
         className="px-gutter pb-gutter overflow-x-auto outline-none"
       >
         <div data-board="" data-cols={board.columns.length}>

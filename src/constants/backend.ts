@@ -267,7 +267,7 @@ export const CHALLENGE_COOKIE = {
 export const MAX_CHALLENGE_LENGTH = 500;
 
 /** Said when the second step has no usable challenge: the person logs in again. */
-export const START_AGAIN_MESSAGE = "This sign-in has timed out or was already used. Log in again.";
+export const START_AGAIN_MESSAGE = "This login has timed out or was already used. Log in again.";
 
 /** The longest login token accepted from Django (its own limit is the same). */
 export const MAX_TOKEN_LENGTH = 2048;

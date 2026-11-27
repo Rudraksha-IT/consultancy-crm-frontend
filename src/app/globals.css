@@ -176,7 +176,10 @@
   }
 }
 
-/* A page holding the Students board grows further, so five columns need no sideways scroll. */
+/*
+ * The Students page (its Board and its List alike, so the switch between them never moves) grows
+ * further, so the board's five columns need no sideways scroll.
+ */
 @media (width >= 100rem) {
   :root:has([data-wide-page]) {
     --size-content: 105rem;
@@ -400,6 +403,9 @@
   --text-rail--line-height: 1rem;
   --text-tiny: 0.75rem;
   --text-tiny--line-height: 1.25rem;
+  /* a day of the month calendar (the prototype's 13; computers and tablets only) */
+  --text-cal: 0.8125rem;
+  --text-cal--line-height: 1.125rem;
 
   /* sizes: spacing classes keep Tailwind's 4px steps (p-4 is 16); these are the named ones */
   --spacing-control: 2.75rem;
@@ -1250,10 +1256,11 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   }
 
   /* lists */
+  /* The fact takes half the row at most, so a long one never squeezes the name (ticket 25). */
   table[data-phone="list"] > tbody > tr {
     position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-columns: minmax(0, 1fr) fit-content(50%) auto;
     column-gap: 0.75rem;
     row-gap: 0.125rem;
     align-items: center;
@@ -1325,6 +1332,8 @@ tr[data-opens-page] :is(button, input, label, select, a):not(td[data-part="title
   table[data-phone="list"] td[data-part="fact"] {
     grid-column: 2;
     grid-row: 1 / span 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: var(--size-secondary);
     font-weight: 600;
     text-align: right;

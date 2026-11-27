@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { uid } from "@/test/ids";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
@@ -52,8 +52,15 @@ async function renderShell({ isNarrow }: { isNarrow: boolean }): Promise<void> {
       return Promise.resolve(new Response(null, { status: 204 }));
     }),
   );
+  const listens = vi.spyOn(document, "addEventListener");
   render(<AppShell>page</AppShell>);
   await screen.findByText("page");
+  // The shell starts listening for touches in an effect, and React may run it a moment after the
+  // page is drawn. A touch fired before that reaches nobody, which failed this file about one run
+  // in fifteen (ticket 25); so wait until it listens.
+  await waitFor(() => {
+    expect(listens).toHaveBeenCalledWith("touchstart", expect.any(Function), expect.anything());
+  });
   Object.defineProperty(menu(), "offsetWidth", { configurable: true, value: MENU_WIDTH });
   // A swipe is one burst of events by their times (Date.now in jsdom). Freeze the date, so a slow
   // machine can't split one swipe into two; timers stay real.
