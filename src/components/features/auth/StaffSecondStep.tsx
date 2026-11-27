@@ -11,7 +11,7 @@ type StaffSecondStepProps = {
   step: TwoFactorStep;
   /** Where to go once it passes: Home, or the page the person was on (ticket 14). */
   homePath?: string;
-  /** Back to the password (or the login page), after the sign-in has timed out or was used. */
+  /** Back to the password (or the login page), after the login has timed out or was used. */
   onStartAgain: () => void;
 };
 

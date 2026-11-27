@@ -7,7 +7,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { reportServerAnswer, type StaffContext } from "@/lib/api";
 import { formatAdDate } from "@/lib/dates";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 import { backend, callsTo, on, onEach } from "@/test/backend";
@@ -24,7 +23,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const ME = {

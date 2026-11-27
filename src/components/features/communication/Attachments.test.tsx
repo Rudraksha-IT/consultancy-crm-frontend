@@ -5,7 +5,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { Attachable, StaffContext } from "@/lib/api";
 import type { RecordId } from "@/lib/recordId";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
@@ -30,7 +29,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const SITA = { id: uid(7), name: "Sita Gurung", email: "sita@example.test" };
@@ -391,9 +389,9 @@ function fileOf(file: typeof BROCHURE): Attachable {
   };
 }
 
-describe.each(THEME_CASES)("Attachments in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Attachments in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

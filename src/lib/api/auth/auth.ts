@@ -6,6 +6,7 @@ import {
   InvalidCredentialsError,
   isNotLoggedInFailure,
   notLoggedInErrorOf,
+  TooManyPasswordTriesError,
 } from "../core/errors";
 import { StaffLoginOutcomeSchema, type StaffLoginOutcome } from "./staffLogin";
 import { StaffContextSchema, type Credentials, type StaffContext } from "../core/types";
@@ -22,10 +23,19 @@ export async function logIn(
   try {
     return await postJson(API_PATHS.login, credentials, StaffLoginOutcomeSchema, fetchFn);
   } catch (error) {
-    throw error instanceof ApiRequestError && error.status === HTTP_STATUS.badRequest
-      ? new InvalidCredentialsError()
-      : error;
+    throw loginErrorOf(error);
   }
+}
+
+/**
+ * The error a failed password login stands for: wrong credentials, or the wrong passwords used up
+ * for the email or the browser's address (security 01); anything else as it was.
+ */
+export function loginErrorOf(error: unknown): unknown {
+  if (!(error instanceof ApiRequestError)) return error;
+  if (error.status === HTTP_STATUS.badRequest) return new InvalidCredentialsError();
+  if (error.status === HTTP_STATUS.tooManyRequests) return new TooManyPasswordTriesError();
+  return error;
 }
 
 /** End the current session. */

@@ -13,7 +13,7 @@ type TabsRowProps = {
  */
 export function TabsRow({ tabs, note }: TabsRowProps) {
   return (
-    <div data-tabs-row="" className="flex flex-wrap items-center gap-x-6 gap-y-2">
+    <div data-tabs-row="" data-swap-bar="" className="flex flex-wrap items-center gap-x-6 gap-y-2">
       {tabs}
       {note !== undefined && (
         <p className="text-small text-ink-3 max-w-prose min-w-0 flex-1 basis-80">{note}</p>

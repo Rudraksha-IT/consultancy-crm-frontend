@@ -381,9 +381,9 @@ describe("Document Examples in Configuration → Documents (ticket 11)", () => {
   });
 });
 
-describe.each(THEME_CASES)("Document Examples in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Document Examples in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

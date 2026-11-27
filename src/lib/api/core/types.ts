@@ -29,14 +29,10 @@ import {
 } from "@/constants/students";
 import { PASSWORD_RULE_IDS, type PasswordRuleId } from "@/lib/password";
 import { RecordIdSchema, type RecordId } from "@/lib/recordId";
-import { normaliseThemeConfig, type ThemeConfig } from "@/lib/theme";
 
 import { CourseFileSchema } from "../catalogue/courseFileTypes";
 import { LinkedDocumentSchema, NamedFileSchema } from "../documents/documentsTypes";
 import { TransferRequestSchema } from "../students/transferRequestTypes";
-
-/** A Consultancy's Theme. A missing or damaged value falls back on the defaults, never failing. */
-export const ThemeSchema = z.unknown().optional().transform(normaliseThemeConfig);
 
 /** Where the office logo is served from: only ever our own logo address (issue 39). */
 const LOGO_URL = /^\/api\/consultancy\/logo\/[0-9]{1,10}\/$/;
@@ -96,7 +92,6 @@ export const HostSchema = z
 export const ConsultancySchema = z
   .object({
     name: z.string().min(1),
-    theme: ThemeSchema,
     logo: OptionalLogoSchema,
     status: ShownStatusSchema,
     status_message: StatusMessageSchema,
@@ -139,7 +134,6 @@ export const StaffContextSchema = z
     date_display: z.enum(DATE_DISPLAYS),
     // Swipe between pages (asked 2026-11-16): off unless the server clearly says it is on.
     page_swipe: z.boolean().catch(false),
-    theme: ThemeSchema,
     // Set while a Platform Admin is inside the office as themselves (issue 27); null for Staff.
     support_access: z
       .object({ platform_admin_name: z.string().min(1), platform_host: HostSchema })
@@ -215,7 +209,6 @@ export const ConsultancyOverviewSchema = z
     evaluation_ends_at: MomentSchema.nullable(),
     paid_until: z.iso.date().nullable(),
     modules: z.array(z.enum(MODULES)),
-    theme: ThemeSchema,
     setup_state: z.enum(SETUP_STATES),
   })
   .transform(({ status_reason, evaluation_ends_at, paid_until, setup_state, ...rest }) => ({
@@ -238,13 +231,12 @@ export type NewConsultancy = {
   subdomain: string;
   /** Where replies to the office's emails go (spec 119); required. */
   contactEmail: string;
-  theme: ThemeConfig;
   /** Evaluation (14 days), or Active paid up to `paidUntil` ("YYYY-MM-DD"). */
   status: typeof ConsultancyStatus.Evaluation | typeof ConsultancyStatus.Active;
   paidUntil: string;
 };
 
-export type NewConsultancyField = Exclude<keyof NewConsultancy, "theme">;
+export type NewConsultancyField = keyof NewConsultancy;
 
 /** The API's field names for each `NewConsultancy` field. */
 export const NEW_CONSULTANCY_API_FIELDS = {
@@ -282,17 +274,22 @@ export const EmployeeSchema = z
     role: z.enum(ROLES),
     joined_on: z.iso.date(),
     status: z.enum(StaffStatus),
+    // Someone who left and was invited back: cancelling their invite keeps them (ticket 18).
+    invited_back: z.boolean(),
     // Two-step login (issue 62): on or off, and whether their app is set up; never the secret.
     two_factor_required: z.boolean(),
     two_factor_set_up: z.boolean(),
   })
-  .transform(({ job_title, joined_on, two_factor_required, two_factor_set_up, ...rest }) => ({
-    ...rest,
-    jobTitle: job_title,
-    joinedOn: joined_on,
-    twoFactorRequired: two_factor_required,
-    twoFactorSetUp: two_factor_set_up,
-  }));
+  .transform(
+    ({ job_title, joined_on, invited_back, two_factor_required, two_factor_set_up, ...rest }) => ({
+      ...rest,
+      jobTitle: job_title,
+      joinedOn: joined_on,
+      invitedBack: invited_back,
+      twoFactorRequired: two_factor_required,
+      twoFactorSetUp: two_factor_set_up,
+    }),
+  );
 
 export type Employee = z.infer<typeof EmployeeSchema>;
 
@@ -368,6 +365,41 @@ export const StudentPageSchema = z
   }));
 
 export type StudentPage = z.infer<typeof StudentPageSchema>;
+
+/** One Student on the Students board: a list row with their next step and document counts. */
+export const BoardStudentSchema = z
+  .object({
+    ...StudentRowFields,
+    next_step: z.string(),
+    documents: z.object({
+      done: z.number().int().nonnegative(),
+      total: z.number().int().nonnegative(),
+    }),
+  })
+  .transform(({ assigned_counsellor, next_step, ...rest }) => ({
+    ...rest,
+    assignedCounsellor: assigned_counsellor,
+    nextStep: next_step,
+  }));
+
+export type BoardStudent = z.infer<typeof BoardStudentSchema>;
+
+/** One page of a column of the Students board. */
+export const BoardStudentPageSchema = z
+  .object({
+    count: z.number().int().nonnegative(),
+    page: z.number().int().positive(),
+    page_size: z.number().int().positive(),
+    results: z.array(BoardStudentSchema),
+  })
+  .transform(({ count, page, page_size, results }) => ({
+    count,
+    page,
+    pageSize: page_size,
+    students: results,
+  }));
+
+export type BoardStudentPage = z.infer<typeof BoardStudentPageSchema>;
 
 const StudentFields = {
   ...StudentRowFields,

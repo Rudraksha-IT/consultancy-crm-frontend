@@ -15,13 +15,14 @@ const RAM: Employee = {
   role: "counsellor",
   joinedOn: "2026-01-01",
   status: "active",
+  invitedBack: false,
   twoFactorRequired: true,
   twoFactorSetUp: false,
 };
 
-describe.each(THEME_CASES)("EmployeeTwoFactorChip in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("EmployeeTwoFactorChip in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
   afterEach(resetTheme);
 

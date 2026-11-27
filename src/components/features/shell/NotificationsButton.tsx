@@ -53,7 +53,7 @@ export function NotificationsButton() {
           unreadCount > 0 && (
             <span
               aria-hidden="true"
-              className="bg-bad text-on-status text-small ring-paper absolute top-1 right-0.5 h-5 min-w-5 rounded-full px-1.5 leading-5 font-bold ring-2"
+              className="bg-bad text-on-status text-small ring-canvas absolute top-1 right-0.5 h-5 min-w-5 rounded-full px-1.5 leading-5 font-semibold ring-2"
             >
               {NOTIFICATION_TEXT.badge(unreadCount)}
             </span>

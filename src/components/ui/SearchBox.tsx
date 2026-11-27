@@ -32,7 +32,7 @@ export function SearchBox({ label, placeholder, value, onChange }: SearchBoxProp
         onChange={(event: ChangeEvent<HTMLInputElement>) => {
           onChange(event.target.value);
         }}
-        className="min-h-control rounded-control bg-fill text-body text-ink focus:border-accent focus:bg-paper w-full border border-transparent pr-3.5 pl-11.5"
+        className="min-h-control rounded-control bg-fill text-input text-ink focus:border-accent focus:bg-paper w-full border border-transparent pr-3.5 pl-11.5"
       />
     </div>
   );

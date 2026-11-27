@@ -18,6 +18,7 @@ import {
   EXAMPLES_MAX,
 } from "@/constants/documents";
 import { LABELS } from "@/constants/messages";
+import { useFocusAfterChange } from "@/hooks/useFocusAfterChange";
 import {
   addDocumentExample,
   ExampleRefusedError,
@@ -50,6 +51,7 @@ export function DocumentExamplesDialog({ type, onClose, onChanged }: DocumentExa
   const formId = useId();
   const { showToast } = useToast();
   const listRef = useRef<HTMLDivElement>(null);
+  const focusAfterChange = useFocusAfterChange();
   const [instruction, setInstruction] = useState(type.instruction);
   const [instructionErrors, setInstructionErrors] = useState<string[] | undefined>();
   const [failure, setFailure] = useState<string | null>(null);
@@ -73,14 +75,16 @@ export function DocumentExamplesDialog({ type, onClose, onChanged }: DocumentExa
     const added = await files.add(file);
     showToast(TEXT.added(added.fileName));
     // Add an example file is gone once the type is full: the new file's Open takes focus.
-    if (files.examples.length + 1 >= EXAMPLES_MAX) focusOpenAt(listRef.current, EXAMPLES_MAX - 1);
+    if (files.examples.length + 1 >= EXAMPLES_MAX) {
+      focusAfterChange(() => openAt(listRef.current, EXAMPLES_MAX - 1));
+    }
   }
 
   async function putInPlace(old: DocumentExample, file: File): Promise<void> {
     const place = files.examples.indexOf(old);
     await files.replace(old, file);
     showToast(TEXT.replaced(old.fileName));
-    focusOpenAt(listRef.current, place);
+    focusAfterChange(() => openAt(listRef.current, place));
   }
 
   async function handleSubmit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
@@ -156,7 +160,7 @@ export function DocumentExamplesDialog({ type, onClose, onChanged }: DocumentExa
             await files.remove(removing);
             setRemoving(null);
             showToast(TEXT.removed(removing.fileName));
-            focusOpenAt(listRef.current, place);
+            focusAfterChange(() => openAt(listRef.current, place));
           }}
           onClose={() => {
             setRemoving(null);
@@ -357,12 +361,8 @@ function oneLine(text: string): string {
 }
 
 /** After a change: the Open button now at `place`, else the one before, else Add a file. */
-function focusOpenAt(list: HTMLElement | null, place: number): void {
-  if (list === null) return;
-  // A dialog gives focus back to its opener when it closes; this runs after that.
-  window.setTimeout(() => {
-    const opens = [...list.querySelectorAll<HTMLElement>("[data-example-row] button")];
-    const next = opens[place] ?? opens[place - 1] ?? list.querySelector<HTMLElement>("input");
-    next?.focus();
-  }, 0);
+function openAt(list: HTMLElement | null, place: number): HTMLElement | null {
+  if (list === null) return null;
+  const opens = [...list.querySelectorAll<HTMLElement>("[data-example-row] button")];
+  return opens[place] ?? opens[place - 1] ?? list.querySelector<HTMLElement>("input");
 }

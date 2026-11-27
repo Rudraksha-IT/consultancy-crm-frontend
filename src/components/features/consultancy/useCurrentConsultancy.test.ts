@@ -1,7 +1,5 @@
 import { renderHook, waitFor } from "@testing-library/react";
 
-import { DEFAULT_THEME } from "@/lib/theme";
-
 import { useCurrentConsultancy } from "./useCurrentConsultancy";
 
 describe("useCurrentConsultancy", () => {
@@ -26,7 +24,6 @@ describe("useCurrentConsultancy", () => {
         status: "loaded",
         consultancy: {
           name: "Acme",
-          theme: DEFAULT_THEME,
           logo: null,
           status: "active",
           statusMessage: null,

@@ -60,4 +60,45 @@ describe("SegmentedChoice", () => {
 
     expect(onChange).toHaveBeenCalledWith("absent");
   });
+
+  it("keeps up to four choices as equal buttons on one line on phones", () => {
+    render(
+      <SegmentedChoice
+        label="Attendance"
+        name="sita"
+        options={OPTIONS}
+        value={null}
+        onChange={vi.fn()}
+      />,
+    );
+
+    const group = screen.getByRole("radiogroup", { name: "Attendance" });
+    expect(group).toHaveClass(
+      "max-phone:grid",
+      "max-phone:grid-flow-col",
+      "max-phone:auto-cols-fr",
+    );
+  });
+
+  it("wraps five or more choices onto more lines on phones, so their words never overlap", () => {
+    const reasons = ["Uploaded twice", "Wrong document", "Wrong Student", "Out of date", "Other"];
+    render(
+      <SegmentedChoice
+        label="Why should it be deleted?"
+        name="why"
+        options={reasons.map((reason) => ({ value: reason, label: reason }))}
+        value="Other"
+        onChange={vi.fn()}
+      />,
+    );
+
+    const group = screen.getByRole("radiogroup", { name: "Why should it be deleted?" });
+    expect(group).toHaveClass("flex-wrap", "max-phone:w-full");
+    expect(group).not.toHaveClass("max-phone:grid");
+    const word = screen.getByText("Wrong document");
+    expect(word).toHaveClass("max-phone:px-3");
+    expect(word).not.toHaveClass("max-phone:px-1");
+    // Each takes the room its words need and shares what is left of its line.
+    expect(word.closest("label")).toHaveClass("max-phone:flex-auto");
+  });
 });

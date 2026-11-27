@@ -4,6 +4,7 @@ import { useState, type SubmitEvent } from "react";
 
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
+import { LABEL_CLASSES } from "@/components/ui/Field";
 import { Panel } from "@/components/ui/Panel";
 import { TextField } from "@/components/ui/TextField";
 import { useToast } from "@/components/ui/useToast";
@@ -62,7 +63,7 @@ export function AccountDetailsForm() {
             errors={nameErrors}
           />
           <div className="grid content-start gap-2">
-            <span className="text-secondary text-ink font-semibold">{TEXT.email}</span>
+            <span className={LABEL_CLASSES}>{TEXT.email}</span>
             <span className="min-h-control text-body text-ink flex items-center break-all">
               {admin.email}
             </span>

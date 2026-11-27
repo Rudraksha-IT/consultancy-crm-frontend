@@ -67,6 +67,7 @@ function ApplicationList({ role }: { role: Role }) {
       <PageHeader
         title={TEXT.title}
         subtitle={TEXT.subtitle}
+        isActionBesideTitle
         actions={
           <ApplicationsExport role={role} list={list} filters={applied} counsellors={counsellors} />
         }
@@ -86,6 +87,7 @@ function ApplicationList({ role }: { role: Role }) {
           choices={choices}
           counsellors={counsellors}
           canBeAssigned={canBeAssignedStudents(role)}
+          resultText={list.status === "loaded" ? TEXT.count(list.page.count) : undefined}
         />
         <ListContent list={list} isFiltered={hasAnyApplicationFilter(applied)} onPage={setPage} />
       </Panel>

@@ -211,9 +211,9 @@ describe("a Document Type's examples on the checklist (ticket 11)", () => {
   });
 });
 
-describe.each(THEME_CASES)("examples on the checklist in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("examples on the checklist in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

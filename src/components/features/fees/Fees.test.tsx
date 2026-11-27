@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { AccountsPage } from "@/components/features/accounts/AccountsPage";
@@ -8,7 +8,6 @@ import { StudentProfilePage } from "@/components/features/students/profile/Stude
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { HOME_AMOUNTS_KEY } from "@/constants/home";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend as backendOnly, callsTo, on, onEach, type Answer } from "@/test/backend";
 import { feeTypeRef, onFeeTypes } from "@/test/feeTypes";
 import { PROFILE } from "@/test/studentProfile";
@@ -36,7 +35,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const COUNSELLOR: StaffContext = {
@@ -448,6 +446,30 @@ describe("changing and deleting a fee", () => {
     expect(await screen.findByText("NPR 45,000")).toBeInTheDocument();
   });
 
+  it("keeps the tab on screen and the cursor on Edit after a save (rule 8)", async () => {
+    const changed = { ...VISA_FEE, amount: 45000 };
+    backend(
+      changingAfter(FEES_URL, ADMIN_FEES, feesOf([changed, APPLICATION_FEE], ADMIN_FEES.balance)),
+      on("GET", `/api/students/${uid(7)}/`, PROFILE),
+      on("PUT", `/api/fees/${uid(31)}/`, ADMIN_FEES),
+      on("GET", STUDENT_PAYMENTS, NO_PAYMENTS),
+    );
+    await openFeesTab();
+    const dialog = await openEdit();
+    const edit = screen.getByRole("button", { name: "Edit fee: Visa fee (processing)" });
+    const payments = await screen.findByText("No payments yet.");
+
+    await userEvent.clear(within(dialog).getByLabelText("Amount (NPR)"));
+    await userEvent.type(within(dialog).getByLabelText("Amount (NPR)"), "45000");
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+
+    expect(await screen.findByText("NPR 45,000")).toBeInTheDocument();
+    // The same button and the same Payments list: nothing was taken away and drawn again.
+    expect(edit).toBeInTheDocument();
+    expect(edit).toHaveFocus();
+    expect(payments).toBeInTheDocument();
+  });
+
   it("asks first, then deletes it and says so", async () => {
     const fetchFn = backend(
       changingAfter(FEES_URL, ADMIN_FEES, AFTER),
@@ -470,7 +492,10 @@ describe("changing and deleting a fee", () => {
 
     expect(await screen.findByText("Fee deleted")).toBeInTheDocument();
     expect(callsTo(fetchFn, "DELETE", `/api/fees/${uid(31)}/`)).toHaveLength(1);
-    expect(screen.queryByText("Visa fee (processing)")).not.toBeInTheDocument();
+    // The list is read again in place, so the fee goes once the answer is back.
+    await waitFor(() => {
+      expect(screen.queryByText("Visa fee (processing)")).not.toBeInTheDocument();
+    });
   });
 
   it("deletes nothing when the confirmation is cancelled", async () => {
@@ -921,9 +946,9 @@ describe("Fee changes in Activity", () => {
   });
 });
 
-describe.each(THEME_CASES)("Fees in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Fees in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

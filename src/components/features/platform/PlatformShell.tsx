@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { PageFooter } from "@/components/ui/CopyrightLine";
 import { useMemo, useState, type ReactNode } from "react";
 
 import { LogoutButton } from "@/components/features/shell/LogoutButton";
@@ -15,7 +16,6 @@ import { PageLoadProvider } from "@/components/ui/pageLoad";
 import { LABELS, MESSAGES } from "@/constants/messages";
 import { ROUTES } from "@/constants/routes";
 import { logOutOfPlatform, type PlatformAdmin } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 
 import { PlatformTabs } from "./PlatformTabs";
 import { usePlatformTabTitle } from "@/hooks/usePlatformTabTitle";
@@ -59,7 +59,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
   const current = useMemo(() => ({ admin, setAdmin }), [admin]);
   const colourMode = useColourMode(`platform-${admin.id}`);
   const productLogo = useProductMark();
-  useAppliedTheme(DEFAULT_THEME, colourMode.mode);
+  useAppliedTheme(colourMode.mode);
   const productName = useProductName();
   usePlatformTabTitle();
 
@@ -72,7 +72,7 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             className="min-h-control flex min-w-0 items-center gap-3"
           >
             <BrandMark name={productName} logo={productLogo} />
-            <b className="text-body font-bold">{productName}</b>
+            <b className="text-body min-w-0 truncate font-semibold">{productName}</b>
           </Link>
           <div className="flex items-center gap-2">
             <ThemeToggle mode={colourMode.mode} onToggle={colourMode.toggleMode} tone="sidebar" />
@@ -86,12 +86,13 @@ function PlatformFrame({ admin: loaded, children }: PlatformFrameProps) {
             </span>
           </div>
         </header>
-        <main className="px-page wide:pt-10 min-w-0 pt-7 pb-30">
-          <div className="max-w-content mx-auto grid grid-cols-1 gap-8">
+        <main className="px-page wide:pt-10 flex min-w-0 flex-1 flex-col pt-7 pb-8">
+          <div className="max-w-content mx-auto grid w-full grid-cols-1 gap-8">
             {/* In the page, above its content, like every other page's tabs (ticket 16). */}
             <PlatformTabs />
             <PageLoadProvider>{children}</PageLoadProvider>
           </div>
+          <PageFooter />
         </main>
       </div>
     </PlatformAdminContext>

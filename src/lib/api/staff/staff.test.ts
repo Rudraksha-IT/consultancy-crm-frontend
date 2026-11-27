@@ -1,11 +1,13 @@
 import { ApiRequestError, InvalidFieldsError, TooManyCodesError } from "../core/errors";
 import {
   cancelInvite,
+  cancelInviteBack,
   changeEmployeeRole,
   deactivateEmployee,
   fetchAssignedStudents,
   fetchCounsellorChoices,
   fetchEmployees,
+  inviteBack,
   inviteEmployee,
   resendInvite,
   resetEmployeeTwoFactor,
@@ -25,6 +27,7 @@ const SITA = {
   two_factor_required: false,
   two_factor_set_up: false,
   status: "invited",
+  invited_back: false,
 };
 
 const NEW_SITA = {
@@ -54,6 +57,7 @@ describe("fetchEmployees", () => {
         role: "counsellor",
         joinedOn: "2026-11-01",
         status: "invited",
+        invitedBack: false,
         twoFactorRequired: false,
         twoFactorSetUp: false,
       },
@@ -65,6 +69,8 @@ describe("fetchEmployees", () => {
     { ...SITA, status: "paused" },
     { ...SITA, two_factor_required: "yes" },
     { ...SITA, two_factor_set_up: undefined },
+    { ...SITA, invited_back: "yes" },
+    { ...SITA, invited_back: undefined },
     { ...SITA, joined_on: "1 Nov 2026" },
     { ...SITA, id: "7" },
   ])("refuses an answer of the wrong shape", async (row) => {
@@ -187,6 +193,64 @@ describe("invites", () => {
     await expect(cancelInvite(uid(7), answering(jsonResponse({}, 400)))).rejects.toBeInstanceOf(
       ApiRequestError,
     );
+  });
+});
+
+describe("inviting back", () => {
+  const BACK = { ...SITA, invited_back: true };
+  const LEFT = { ...SITA, status: "deactivated" };
+
+  it("posts nothing to the invite-back address and returns them as invited again", async () => {
+    const fetchFn = answering(jsonResponse(BACK, 202));
+
+    const employee = await inviteBack(uid(7), fetchFn);
+
+    expect(fetchFn).toHaveBeenCalledWith(
+      `/api/staff/${uid(7)}/invite-back/`,
+      expect.objectContaining({ method: "POST", body: "{}" }),
+    );
+    expect(employee.status).toBe("invited");
+    expect(employee.invitedBack).toBe(true);
+  });
+
+  it("rejects with TooManyCodesError at the hourly limit", async () => {
+    await expect(inviteBack(uid(7), answering(jsonResponse({}, 429)))).rejects.toBeInstanceOf(
+      TooManyCodesError,
+    );
+  });
+
+  it("passes other failures on", async () => {
+    await expect(inviteBack(uid(7), answering(jsonResponse({}, 400)))).rejects.toBeInstanceOf(
+      ApiRequestError,
+    );
+  });
+
+  it("refuses an answer of the wrong shape", async () => {
+    await expect(
+      inviteBack(uid(7), answering(jsonResponse({ ...BACK, status: "back" }, 202))),
+    ).rejects.toBeInstanceOf(ApiRequestError);
+  });
+
+  it("cancels with DELETE and returns them as having left", async () => {
+    const fetchFn = answering(jsonResponse(LEFT));
+
+    const employee = await cancelInviteBack(uid(7), fetchFn);
+
+    expect(fetchFn).toHaveBeenCalledWith(
+      `/api/staff/${uid(7)}/invite/`,
+      expect.objectContaining({ method: "DELETE" }),
+    );
+    expect(employee.status).toBe("deactivated");
+    expect(employee.invitedBack).toBe(false);
+  });
+
+  it("fails a refused cancel, and an answer that is not the person", async () => {
+    await expect(cancelInviteBack(uid(7), answering(jsonResponse({}, 400)))).rejects.toBeInstanceOf(
+      ApiRequestError,
+    );
+    await expect(
+      cancelInviteBack(uid(7), answering(new Response(null, { status: 204 }))),
+    ).rejects.toBeInstanceOf(ApiRequestError);
   });
 });
 

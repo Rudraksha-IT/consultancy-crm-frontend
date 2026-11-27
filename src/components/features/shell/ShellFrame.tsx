@@ -1,13 +1,15 @@
 "use client";
 
 import clsx from "clsx";
+import { PageFooter } from "@/components/ui/CopyrightLine";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 
 import { SupportAccessBanner } from "@/components/features/supportAccess/SupportAccessBanner";
 import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
 import { useSavedColourMode } from "@/components/features/theme/useSavedColourMode";
 import { PageLoadProvider } from "@/components/ui/pageLoad";
+import { useArrival, useRowWash } from "@/components/ui/useMovement";
 import { LABELS } from "@/constants/messages";
 import { useTabTitle } from "@/hooks/useTabTitle";
 import { saveColourMode, type StaffContext } from "@/lib/api";
@@ -16,7 +18,6 @@ import { buildNavigation } from "@/lib/navigation";
 import { ConsultancyStatusBanner } from "./ConsultancyStatusBanner";
 import { OfficeNetworkCheck } from "./OfficeNetworkCheck";
 import { PullGap } from "./PullGap";
-import { ShellThemeContext } from "./shellTheme";
 import { Sidebar } from "./Sidebar";
 import { TabBar } from "./TabBar";
 import { TopBar } from "./TopBar";
@@ -37,8 +38,9 @@ type ShellFrameProps = {
 };
 
 /**
- * The logged-in layout in the Consultancy's Theme: sidebar, top bar and the page, with the tab bar
- * at the bottom on phones (design system: Phones).
+ * The logged-in layout, the Journey frame in the Porcelain theme (UI revamp, ticket 05): the narrow
+ * side menu, the top bar and the page, with the tab bar at the bottom on phones (design system:
+ * Phones). It stays in place from page to page, so the side menu keeps its own scroll.
  */
 export function ShellFrame({ context, children }: ShellFrameProps) {
   useTabTitle(context.consultancy.name, context.staff.role);
@@ -51,22 +53,13 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
   const menuRef = useRef<HTMLElement>(null);
   useSidebarSwipe(sidebar, menuRef);
   const pull = useShellPagePull(context, sidebar.isDrawerOpen);
-  const [theme, setTheme] = useState(context.theme);
-  const shellTheme = useMemo(() => ({ theme, setTheme }), [theme]);
-  useAppliedTheme(theme, colourMode.mode);
+  useAppliedTheme(colourMode.mode);
 
   return (
-    <ShellThemeContext value={shellTheme}>
+    <>
       {/* A reload covers the whole app with one loader (list tidy-ups 27). */}
       <PageLoadProvider>
-        <div
-          className={clsx(
-            "grid min-h-full transition-[grid-template-columns]",
-            sidebar.isCollapsed
-              ? "wide:grid-cols-[var(--spacing-rail)_minmax(0,1fr)]"
-              : "wide:grid-cols-[var(--spacing-sidebar)_minmax(0,1fr)]",
-          )}
-        >
+        <div className="wide:grid-cols-[var(--spacing-rail)_minmax(0,1fr)] grid min-h-full">
           <a
             href={`#${MAIN_ID}`}
             className="rounded-control bg-paper sr-only z-50 focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:p-3"
@@ -77,6 +70,7 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
           {sidebar.isDrawerOpen && (
             <div
               aria-hidden="true"
+              data-move="fade"
               onClick={sidebar.closeDrawer}
               className="bg-scrim wide:hidden fixed inset-0 z-39"
             />
@@ -109,7 +103,7 @@ export function ShellFrame({ context, children }: ShellFrameProps) {
         </div>
         <OfficeNetworkCheck context={context} />
       </PageLoadProvider>
-    </ShellThemeContext>
+    </>
   );
 }
 
@@ -143,24 +137,33 @@ function pulledStyle({ hint }: PagePullView): CSSProperties | undefined {
  */
 function PulledPage({ pull, children }: { pull: PagePullView; children: ReactNode }) {
   const isLeaving = pull.move !== null;
+  const mainRef = useRef<HTMLElement>(null);
+  // A page's blocks rise in when it opens, never again for an action on it; after that only a
+  // row that is new or changed shows itself (design system: Movement, and rule 8).
+  useArrival(mainRef, usePathname());
+  useRowWash(mainRef);
   return (
     <div className="relative flex min-w-0 flex-1 flex-col">
       <PullGap edge="top" hint={pull.hint} isLeaving={isLeaving} />
       <main
+        ref={mainRef}
         id={MAIN_ID}
         data-pulled={pull.hint?.edge}
         data-page-move={pull.move ?? undefined}
         style={pulledStyle(pull)}
         className={clsx(
           // On phones it leaves room under the content for the tab bar.
-          "px-page wide:pt-10 max-phone:pt-4 max-phone:pb-tabbar-room relative min-w-0 flex-1 pt-7 pb-30",
+          "px-page wide:pt-10 max-phone:pt-4 max-phone:pb-tabbar-room relative flex min-w-0 flex-1 flex-col pt-7 pb-8",
+          // A page that fills the window (the Inbox) sizes itself to its bottom: no spacing under it.
+          "has-data-fills-window:pb-0",
           // Snaps back in 0.2 s; while pulled it eases after each scroll step, like the gap.
-          "transition-[translate] duration-200 ease-in-out",
-          "data-pulled:bg-canvas data-pulled:duration-150 data-pulled:ease-out",
+          "transition-[translate] duration-(--move-sink) ease-in-out",
+          "data-pulled:bg-canvas data-pulled:duration-(--move-quick) data-pulled:ease-out",
           "data-[pulled=top]:shadow-edge-top data-[pulled=bottom]:shadow-edge-bottom",
         )}
       >
-        <div className="max-w-content mx-auto grid grid-cols-1 gap-8">{children}</div>
+        <div className="max-w-content mx-auto grid w-full grid-cols-1 gap-8">{children}</div>
+        <PageFooter />
       </main>
       <PullGap edge="bottom" hint={pull.hint} isLeaving={isLeaving} />
     </div>

@@ -1,14 +1,15 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 
 import { EmployeesPage } from "./EmployeesPage";
 import { consultancySummary } from "@/test/consultancy";
+import { fakeMatchMedia } from "@/test/matchMedia";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 import { testHost } from "@/test/hosts";
 import { uid } from "@/test/ids";
 
@@ -19,7 +20,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 function row(overrides: Record<string, unknown>) {
@@ -34,6 +34,7 @@ function row(overrides: Record<string, unknown>) {
     two_factor_required: false,
     two_factor_set_up: false,
     status: "active",
+    invited_back: false,
     ...overrides,
   };
 }
@@ -142,7 +143,7 @@ describe("EmployeesPage", () => {
       within(await rowFor("Ram Thapa")).getByRole("button", { name: "Manage Ram Thapa" }),
     ).toBeInTheDocument();
     expect(within(await rowFor("Asha Admin")).queryByRole("button")).toBeNull();
-    expect(within(await rowFor("Hari KC")).queryByRole("button")).toBeNull();
+    expect(within(await rowFor("Hari KC")).queryByRole("button", { name: /Manage/ })).toBeNull();
   });
 
   it("is not available to other Roles", () => {
@@ -532,6 +533,237 @@ describe("EmployeesPage", () => {
   });
 });
 
+describe("EmployeesPage: order and Invite back (UI revamp, ticket 18)", () => {
+  const ZARA = row({ id: uid(5), name: "Zara Lama", email: "zara@acme.test" });
+  const BINA = row({ id: uid(6), name: "Bina Rai", email: "bina@acme.test", status: "invited" });
+  const ANIL = row({
+    id: uid(7),
+    name: "Anil Basnet",
+    email: "anil@acme.test",
+    role: "counsellor",
+    status: "deactivated",
+  });
+  const HARI_BACK = { ...HARI, status: "invited", invited_back: true };
+  const INVITE_BACK = `POST /api/staff/${uid(4)}/invite-back/`;
+
+  function names(): string[] {
+    return screen
+      .getAllByRole("row")
+      .slice(1)
+      .map((one) => one.querySelector("td")?.textContent ?? "");
+  }
+
+  async function askToInviteBack(name = "Hari KC"): Promise<HTMLElement> {
+    await userEvent.click(
+      within(await rowFor(name)).getByRole("button", { name: `Invite ${name} back` }),
+    );
+    return screen.getByRole("dialog", { name: `Invite ${name} back?` });
+  }
+
+  it("lists people working here A to Z, then the invited, then those who left", async () => {
+    backend({ "GET /api/staff/": jsonResponse([HARI, SITA, ZARA, ANIL, RAM, BINA, ME]) });
+    renderPage();
+    await rowFor("Ram Thapa");
+
+    expect(names()).toEqual([
+      expect.stringContaining("Asha Admin"),
+      expect.stringContaining("Ram Thapa"),
+      expect.stringContaining("Zara Lama"),
+      expect.stringContaining("Bina Rai"),
+      expect.stringContaining("Sita Sharma"),
+      expect.stringContaining("Anil Basnet"),
+      expect.stringContaining("Hari KC"),
+    ]);
+    expect(screen.getByText("3 people work at the office.")).toBeInTheDocument();
+  });
+
+  it("greys someone who left and offers only Invite back", async () => {
+    listing();
+    renderPage();
+
+    const hari = await rowFor("Hari KC");
+    expect(hari.querySelectorAll("[data-left]")).toHaveLength(3);
+    expect(within(hari).getByText("Hari KC").closest("[data-left]")).not.toBeNull();
+    expect(within(hari).getByText("9800000001").closest("[data-left]")).not.toBeNull();
+    expect(within(hari).getByText("hari@acme.test").closest("[data-left]")).toBeNull();
+    expect((await rowFor("Ram Thapa")).querySelector("[data-left]")).toBeNull();
+    expect(within(hari).getAllByRole("button")).toHaveLength(1);
+    expect(within(hari).getByRole("button", { name: "Invite Hari KC back" })).toHaveTextContent(
+      "Invite back",
+    );
+    expect(
+      within(await rowFor("Ram Thapa")).queryByRole("button", { name: /Invite .* back/ }),
+    ).toBeNull();
+  });
+
+  it("asks first, saying where the code goes and what they join as", async () => {
+    const fetchFn = listing();
+    renderPage();
+
+    const dialog = await askToInviteBack();
+
+    expect(dialog).toHaveTextContent(
+      "A new code goes to hari@acme.test. They join again as Admin, and their past History stays as it is. You can change their Role after they join.",
+    );
+    expect(within(dialog).getByRole("button", { name: "Send the code" })).toBeInTheDocument();
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+  });
+
+  it("sends nothing when the popup is cancelled, and the cursor is back on Invite back", async () => {
+    const fetchFn = listing();
+    renderPage();
+
+    const dialog = await askToInviteBack();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(fetchFn.mock.calls.some(([, init]) => init?.method === "POST")).toBe(false);
+    expect(within(await rowFor("Hari KC")).getByText("Has left")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Invite Hari KC back" })).toHaveFocus();
+  });
+
+  it("sends the code, says so, and shows them as invited with their two buttons", async () => {
+    const fetchFn = listing({ [INVITE_BACK]: jsonResponse(HARI_BACK, 202) });
+    renderPage();
+
+    const dialog = await askToInviteBack();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Send the code" }));
+
+    expect(
+      await screen.findByText("Hari KC is invited back. Code sent to hari@acme.test."),
+    ).toBeInTheDocument();
+    expect(sentBody(fetchFn, INVITE_BACK)).toEqual({});
+    expect(screen.queryByRole("dialog")).toBeNull();
+    const hari = await rowFor("Hari KC");
+    expect(within(hari).getByText("Invited, not joined yet")).toBeInTheDocument();
+    expect(within(hari).queryByText("Has left")).toBeNull();
+    expect(hari.querySelector("[data-left]")).toBeNull();
+    expect(within(hari).getByRole("button", { name: "Cancel invite" })).toBeInTheDocument();
+    expect(within(hari).queryByRole("button", { name: /Invite .* back/ })).toBeNull();
+    expect(screen.getByText("2 people work at the office.")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(within(hari).getByRole("button", { name: "Send the code again" })).toHaveFocus();
+    });
+  });
+
+  it("moves them up among the invited", async () => {
+    backend({
+      "GET /api/staff/": jsonResponse([ME, RAM, SITA, ANIL, HARI]),
+      [INVITE_BACK]: jsonResponse(HARI_BACK, 202),
+    });
+    renderPage();
+
+    const dialog = await askToInviteBack();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Send the code" }));
+    await screen.findByText(/is invited back/);
+
+    const order = names();
+    const place = (name: string) => order.findIndex((text) => text.includes(name));
+    expect(place("Ram Thapa")).toBeLessThan(place("Hari KC"));
+    expect(place("Hari KC")).toBeLessThan(place("Sita Sharma"));
+    expect(place("Sita Sharma")).toBeLessThan(place("Anil Basnet"));
+  });
+
+  it("explains the hourly limit in the popup and changes nothing", async () => {
+    listing({ [INVITE_BACK]: jsonResponse({}, 429) });
+    renderPage();
+
+    const dialog = await askToInviteBack();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Send the code" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("Too many codes");
+    expect(within(await rowFor("Hari KC")).getByText("Has left")).toBeInTheDocument();
+  });
+
+  it("says when inviting back fails", async () => {
+    listing({ [INVITE_BACK]: jsonResponse({ detail: "<b>No</b>" }, 400) });
+    renderPage();
+
+    const dialog = await askToInviteBack();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Send the code" }));
+
+    expect(await within(dialog).findByRole("alert")).toHaveTextContent("We couldn't save that.");
+    expect(dialog).not.toHaveTextContent("<b>No</b>");
+  });
+
+  it("cancelling the invite of someone invited back returns them to Has left, never removed", async () => {
+    backend({
+      "GET /api/staff/": jsonResponse([ME, RAM, SITA, HARI_BACK]),
+      [`DELETE /api/staff/${uid(4)}/invite/`]: jsonResponse(HARI),
+    });
+    renderPage();
+
+    await userEvent.click(
+      within(await rowFor("Hari KC")).getByRole("button", { name: "Cancel invite" }),
+    );
+    await userEvent.click(
+      within(screen.getByRole("dialog")).getByRole("button", { name: "Cancel invite" }),
+    );
+
+    expect(
+      await screen.findByText("Invite for Hari KC cancelled. The code no longer works."),
+    ).toBeInTheDocument();
+    const hari = await rowFor("Hari KC");
+    expect(within(hari).getByText("Has left")).toBeInTheDocument();
+    expect(hari.querySelector("[data-left]")).not.toBeNull();
+    await waitFor(() => {
+      expect(within(hari).getByRole("button", { name: "Invite Hari KC back" })).toHaveFocus();
+    });
+  });
+
+  it("shows a name with markup in it as plain text in the popup", async () => {
+    const odd = { ...HARI, name: "<img src=x onerror=alert(1)>" };
+    backend({ "GET /api/staff/": jsonResponse([ME, odd]) });
+    renderPage();
+
+    const dialog = await askToInviteBack("<img src=x onerror=alert(1)>");
+
+    expect(dialog.querySelector("img")).toBeNull();
+  });
+});
+
+describe("EmployeesPage on a phone (UI revamp ticket 25)", () => {
+  const titleCell = async (name: string): Promise<HTMLElement> => {
+    const cell = (await rowFor(name)).querySelector<HTMLElement>('td[data-part="title"]');
+    if (cell === null) throw new Error(`No name cell for ${name}`);
+    return cell;
+  };
+
+  function onPhone(): void {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+  }
+
+  it("says Has left and Invited in words under the name, never by grey alone", async () => {
+    onPhone();
+    listing();
+    renderPage();
+
+    const left = within(await titleCell("Hari KC")).getByText("Has left");
+    // The word itself is not greyed with the name.
+    expect(left.closest("[data-left]")).toBeNull();
+    expect(
+      within(await titleCell("Sita Sharma")).getByText("Invited, not joined yet"),
+    ).toBeInTheDocument();
+    const ram = await titleCell("Ram Thapa");
+    expect(within(ram).queryByText("Has left")).toBeNull();
+    expect(within(ram).queryByText("Invited, not joined yet")).toBeNull();
+  });
+
+  it("keeps the words in the Role column on a computer, said once", async () => {
+    listing();
+    renderPage();
+
+    expect(within(await titleCell("Hari KC")).queryByText("Has left")).toBeNull();
+    expect(within(await rowFor("Hari KC")).getAllByText("Has left")).toHaveLength(1);
+  });
+});
+
 describe("EmployeesPage: two-step login (issue 62)", () => {
   const RAM_ON = { ...RAM, two_factor_required: true, two_factor_set_up: true };
 
@@ -699,5 +931,30 @@ describe("EmployeesPage for a Platform Admin inside the office", () => {
     expect(
       screen.queryByRole("button", { name: "Send a password reset code" }),
     ).not.toBeInTheDocument();
+  });
+
+  describe("with Clock-in on", () => {
+    const WITH_CLOCK: StaffContext = { ...ADMIN, modules: ["staff", "clock_in"] };
+
+    it("keeps the cursor on the tab that was pressed, and the people as they were", async () => {
+      const fetchFn = listing();
+      const user = userEvent.setup();
+      renderPage(WITH_CLOCK);
+      await screen.findByText("Ram Thapa");
+
+      await user.click(screen.getByRole("button", { name: "Working hours" }));
+
+      expect(screen.getByRole("button", { name: "Working hours" })).toHaveFocus();
+      expect(screen.queryByText("Ram Thapa")).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Add employee" })).not.toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: "People" }));
+
+      expect(screen.getByRole("button", { name: "People" })).toHaveFocus();
+      // The list is still there: nothing is asked for again and no loader shows.
+      expect(screen.getByText("Ram Thapa")).toBeInTheDocument();
+      const asked = fetchFn.mock.calls.filter(([path]) => path === "/api/staff/");
+      expect(asked).toHaveLength(1);
+    });
   });
 });

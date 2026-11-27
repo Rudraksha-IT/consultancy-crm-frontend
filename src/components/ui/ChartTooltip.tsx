@@ -1,8 +1,17 @@
+import type { CSSProperties } from "react";
+
 import { CHART_BOX } from "@/lib/charts";
 
 import { seriesColour, type ChartSeries, type ValueFormat } from "./chartTypes";
 
 const PERCENT = 100;
+
+type TipPlace = CSSProperties & { "--tip-at": string };
+
+/** Where the tooltip's middle belongs: over the middle of its columns. */
+function tipPlace(centre: number): TipPlace {
+  return { "--tip-at": `${String((centre / CHART_BOX.width) * PERCENT)}%` };
+}
 
 type ChartTooltipProps = {
   label: string;
@@ -18,7 +27,9 @@ export function ChartTooltip({ label, index, centre, series, format }: ChartTool
     <div
       role="tooltip"
       className="rounded-control border-rule-2 bg-paper text-small text-ink shadow-lift pointer-events-none absolute top-0 z-10 grid min-w-56 -translate-x-1/2 -translate-y-full gap-1.5 border px-3.5 py-3"
-      style={{ left: `${String((centre / CHART_BOX.width) * PERCENT)}%` }}
+      // Over its columns, but never past the chart's sides (`[data-chart-tip]` in globals.css).
+      data-chart-tip=""
+      style={tipPlace(centre)}
     >
       <b>{label}</b>
       {series.map((item, seriesIndex) => (

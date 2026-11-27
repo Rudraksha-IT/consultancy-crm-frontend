@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
@@ -29,7 +28,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const SITA = { id: uid(7), name: "Sita Gurung", email: "sita@example.test" };
@@ -469,9 +467,9 @@ describe("Ready-made emails to many Students", () => {
   });
 });
 
-describe.each(THEME_CASES)("Ready-made emails in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Ready-made emails in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {

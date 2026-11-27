@@ -14,6 +14,9 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { Loading } from "@/components/ui/Loading";
+import { usePhoneWidth } from "@/components/ui/usePhoneWidth";
+import { useScreenQuery } from "@/components/ui/useScreenQuery";
+import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { COMMUNICATION_TEXT } from "@/constants/communication";
 import { EXPORT_TEXT } from "@/constants/exports";
 import { LABELS, MESSAGES } from "@/constants/messages";
@@ -22,18 +25,30 @@ import { ROUTES } from "@/constants/routes";
 import { PRIORITY_LABELS } from "@/constants/priority";
 import { STAGE_LABELS } from "@/constants/stages";
 import { PROFILE_TEXT } from "@/constants/studentProfile";
-import { COUNTRY_LABELS, SOURCE_LABELS, TARGET_LEVEL_LABELS } from "@/constants/students";
+import {
+  BOARD_TEXT,
+  COUNTRY_LABELS,
+  SOURCE_LABELS,
+  STUDENTS_VIEW_KEY,
+  StudentsView,
+  TARGET_LEVEL_LABELS,
+} from "@/constants/students";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import type { CounsellorChoice } from "@/lib/api";
+import { useStoredValue } from "@/hooks/useStoredValue";
+import type { CounsellorChoice, StaffContext } from "@/lib/api";
 import { describeFilters, exportFilters } from "@/lib/exports";
 import {
+  BOARD_TOO_NARROW_QUERY,
   defaultStudentFilters,
   hasAnyFilter,
   studentListQuery,
+  studentsViewFrom,
   type StudentFilters,
 } from "@/lib/students";
 
 import { AddVisitorDialog } from "./AddVisitorDialog";
+import { StudentBoard } from "./board/StudentBoard";
+import { useStudentBoard } from "./board/useStudentBoard";
 import { StudentFilterBar } from "./StudentFilterBar";
 import { StudentPager } from "./StudentPager";
 import { StudentTable } from "./StudentTable";
@@ -42,6 +57,11 @@ import { useCounsellorChoices } from "./useCounsellorChoices";
 import { useStudentList, type StudentListState } from "./useStudentList";
 
 const SEARCH_DELAY_MS = 300;
+
+const VIEW_OPTIONS = [
+  { value: StudentsView.Board, label: BOARD_TEXT.board, icon: "batches" },
+  { value: StudentsView.List, label: BOARD_TEXT.list, icon: "list" },
+] as const;
 
 type StudentsPageProps = {
   /** A search typed in the top bar, which looks through every Student. */
@@ -73,7 +93,7 @@ export function StudentsPage({
   }
   return (
     <StudentList
-      role={staff.role}
+      viewer={staff}
       initialSearch={initialSearch}
       initialStage={initialStage}
       initialPriority={initialPriority}
@@ -83,7 +103,7 @@ export function StudentsPage({
 }
 
 type StudentListProps = {
-  role: Role;
+  viewer: StaffContext["staff"];
   initialSearch: string;
   initialStage: string;
   initialPriority: string;
@@ -91,12 +111,13 @@ type StudentListProps = {
 };
 
 function StudentList({
-  role,
+  viewer,
   initialSearch,
   initialStage,
   initialPriority,
   initialCounsellor,
 }: StudentListProps) {
+  const { role } = viewer;
   const [filters, setFilters] = useState<StudentFilters>(() =>
     defaultStudentFilters(role, {
       search: initialSearch,
@@ -115,6 +136,8 @@ function StudentList({
   const counsellors = useCounsellorChoices();
   const applied = { ...filters, search: settledSearch };
   const list = useStudentList(applied, page, version);
+  const { view, isBoard, storeView } = useStudentsView();
+  const board = useStudentBoard(applied, isBoard);
 
   function change(next: Partial<StudentFilters>): void {
     setFilters((current) => ({ ...current, ...next }));
@@ -168,12 +191,20 @@ function StudentList({
           onChange={change}
           counsellors={counsellors}
           canBeAssigned={canBeAssignedStudents(role)}
+          resultText={list.status === "loaded" ? LABELS.studentCount(list.page.count) : undefined}
         />
-        <ListContent
-          list={list}
-          isFiltered={hasAnyFilter(applied)}
-          addButton={addButton}
-          onPage={setPage}
+        <StudentsContent
+          view={view}
+          onView={storeView}
+          board={<StudentBoard board={board} viewer={viewer} />}
+          list={
+            <ListContent
+              list={list}
+              isFiltered={hasAnyFilter(applied)}
+              addButton={addButton}
+              onPage={setPage}
+            />
+          }
         />
       </Panel>
       {isMessaging && (
@@ -194,10 +225,77 @@ function StudentList({
             setIsAdding(false);
             setPage(1);
             setVersion((current) => current + 1);
+            void board.refresh();
           }}
         />
       )}
     </>
+  );
+}
+
+/**
+ * How Students are shown: the List alone on a phone and wherever the board's five columns don't
+ * fit (it would scroll sideways); on a wider screen what this device remembers, the Board first
+ * (UI revamp 08; owner, 2026-11-27).
+ */
+function useStudentsView() {
+  const isPhone = usePhoneWidth();
+  const isTooNarrow = useScreenQuery(BOARD_TOO_NARROW_QUERY);
+  const [stored, storeView] = useStoredValue(STUDENTS_VIEW_KEY);
+  /** Null where there is no board: the List, with no switch. */
+  const view = isPhone || isTooNarrow ? null : studentsViewFrom(stored);
+  return { view, isBoard: view === StudentsView.Board, storeView };
+}
+
+type StudentsContentProps = {
+  /** The view shown, or null where there is no board: the List, with no switch. */
+  view: StudentsView | null;
+  onView: (view: StudentsView) => void;
+  board: ReactNode;
+  list: ReactNode;
+};
+
+/** The Board / List switch (only where the board fits) and the view it chooses. */
+function StudentsContent({ view, onView, board, list }: StudentsContentProps) {
+  if (view === null) return list;
+  return (
+    <>
+      <ViewBar view={view} onChange={onView} />
+      {view === StudentsView.Board ? board : list}
+    </>
+  );
+}
+
+type ViewBarProps = {
+  view: StudentsView;
+  onChange: (view: StudentsView) => void;
+};
+
+/**
+ * How to move a card (on the Board) on the left, the Board / List switch on the right. The page
+ * is the usual width in both views, so the switch stays under the pointer when it is pressed.
+ */
+function ViewBar({ view, onChange }: ViewBarProps) {
+  return (
+    <div
+      data-swap-bar=""
+      className="px-gutter flex flex-wrap items-center justify-between gap-3 py-3"
+    >
+      {view === StudentsView.Board && (
+        <p className="text-small text-ink-2">
+          <span data-hint="drag">{BOARD_TEXT.hintDrag}</span>
+          <span data-hint="touch">{BOARD_TEXT.hintTouch}</span>
+        </p>
+      )}
+      <span className="ml-auto">
+        <ViewSwitch
+          label={BOARD_TEXT.showAs}
+          options={VIEW_OPTIONS}
+          value={view}
+          onChange={onChange}
+        />
+      </span>
+    </div>
   );
 }
 

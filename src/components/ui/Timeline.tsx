@@ -67,7 +67,7 @@ const TAG_CLASSES: Record<TimelineTone, string> = {
 /** Events down a line, newest first, such as a Student's Activity. */
 export function Timeline({ label, items }: TimelineProps) {
   return (
-    <ul aria-label={label} className="px-6 py-3">
+    <ul aria-label={label} className="px-gutter py-3">
       {items.map((item) => {
         if (item.kind === "gap") return <GapRow key={item.id} gap={item} />;
         if (item.kind === "stage") return <StageRow key={item.id} stage={item} />;
@@ -164,7 +164,7 @@ function GapRow({ gap }: { gap: TimelineGap }) {
 
 function TextBox({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-control bg-fill text-secondary text-ink-2 mt-1.5 max-w-prose px-3.5 py-2.5 whitespace-pre-wrap">
+    <div className="rounded-control bg-fill text-secondary text-ink-2 mt-1.5 max-w-prose px-3.5 py-2.5 wrap-anywhere whitespace-pre-wrap">
       {children}
     </div>
   );

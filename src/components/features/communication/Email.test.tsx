@@ -11,7 +11,6 @@ import { StudentProfilePage } from "@/components/features/students/profile/Stude
 import { StudentsPage } from "@/components/features/students/StudentsPage";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 import { PROFILE } from "@/test/studentProfile";
@@ -39,7 +38,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 const ADMIN: StaffContext = {
   ...COUNSELLOR,

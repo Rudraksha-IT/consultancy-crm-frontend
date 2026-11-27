@@ -73,7 +73,8 @@ export function TasksPage() {
         }
       />
       <div className="grid gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        {/* On a phone the Priority menu opens from this row (`FilterPillMenu`). */}
+        <div className="max-phone:relative flex flex-wrap items-center justify-between gap-4">
           <SegmentedControl
             label={TASK_TEXT.whichTasks}
             options={VIEW_OPTIONS}
@@ -138,7 +139,7 @@ export function TaskPanelBody({
   if (state.status === "loading") return <Loading />;
   if (state.status === "failed") {
     return (
-      <div className="px-6 py-5">
+      <div className="px-gutter py-5">
         <Banner tone="problem">{TASK_TEXT.listFailed}</Banner>
       </div>
     );

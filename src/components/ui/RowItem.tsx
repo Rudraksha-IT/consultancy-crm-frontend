@@ -23,9 +23,9 @@ type RowItemProps = {
 /** The standard list row. Use inside a `RowList`. */
 export function RowItem({ title, meta, children, right, ...look }: RowItemProps) {
   return (
-    <li className={rowClasses(look)}>
+    <li data-row="" className={rowClasses(look)}>
       <div className="grid min-w-0 gap-1">
-        <div className="text-body text-ink min-w-0 font-semibold">{title}</div>
+        <div className="text-name text-ink min-w-0 font-semibold">{title}</div>
         {meta !== undefined && <div className={metaClasses(look)}>{meta}</div>}
         {children}
       </div>
@@ -38,8 +38,11 @@ type RowLook = Pick<RowItemProps, "isMarked" | "hidesMetaOnPhone" | "keepsRightB
 
 function rowClasses({ isMarked = false, keepsRightBesideOnPhone = false }: RowLook): string {
   return clsx(
-    "phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-3 max-phone:py-3.5 max-phone:pr-4 grid grid-cols-[minmax(0,1fr)] items-center gap-5 py-5 pr-6",
-    isMarked ? "border-l-good max-phone:pl-3 border-l-4 pl-5" : "max-phone:pl-4 pl-6",
+    "phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-3 pr-gutter grid grid-cols-[minmax(0,1fr)] items-center gap-4 py-3.25",
+    // The marked row keeps the sheet's padding: its line is drawn over the edge, not beside it.
+    "pl-gutter",
+    isMarked &&
+      "bg-good-tint/45 before:bg-good relative before:absolute before:inset-y-0 before:left-0 before:w-0.75",
     keepsRightBesideOnPhone && "max-phone:grid-cols-[minmax(0,1fr)_auto]",
   );
 }

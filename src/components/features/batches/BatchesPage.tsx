@@ -106,7 +106,7 @@ function ListBody({ state, emptyText, onPeek, onPage }: ListBodyProps) {
   if (state.status === "loading") return <Loading />;
   if (state.status !== "loaded") {
     return (
-      <div className="px-6 py-5">
+      <div className="px-gutter py-5">
         <Banner tone="problem">{BATCH_TEXT.listFailed}</Banner>
       </div>
     );

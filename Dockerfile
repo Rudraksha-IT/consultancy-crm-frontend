@@ -37,8 +37,11 @@ WORKDIR /app
 # Owned by root: the node user can read the server but never change it.
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
-# The one place Next.js may write at run time.
-RUN mkdir -p .next/cache && chown node:node .next/cache
+# The only places Next.js may write at run time: its cache, and the pages it draws again after
+# their minute is up (Next.js 16.4.5 and later keep those in `server/route-cache`; without it every
+# redraw logged "Failed to update prerender cache ... EACCES").
+RUN mkdir -p .next/cache .next/server/route-cache \
+    && chown node:node .next/cache .next/server/route-cache
 USER node
 EXPOSE 3000
 CMD ["node", "server.js"]

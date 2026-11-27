@@ -3,7 +3,6 @@
 import { useEffect, useRef, type RefObject } from "react";
 
 import {
-  NO_TOUCHPAD_SWIPE,
   canStartFingerSwipe,
   drawerOpensOnRelease,
   drawerShownWidth,
@@ -11,7 +10,6 @@ import {
   isDialogOpen,
   isInSidewaysScroller,
   isNarrowScreen,
-  readTouchpadStep,
   type FingerDirection,
 } from "@/lib/gestures";
 
@@ -21,9 +19,10 @@ type LatestSidebar = RefObject<SidebarState>;
 type MenuRef = RefObject<HTMLElement | null>;
 
 /**
- * Gestures for the sidebar (design system, Gestures; issue 89): a finger swipe opens and closes
- * the slide-out menu, and one two-finger touchpad swipe collapses or opens the sidebar. They only
- * press the same switches as the buttons, which stay for the keyboard and screen readers.
+ * The gesture for the side menu (design system, Gestures; issue 89): a finger swipe opens and
+ * closes the slide-out menu. It only presses the same switches as the buttons, which stay for the
+ * keyboard and screen readers. The side menu above 1024px has nothing to collapse since the UI
+ * revamp (ticket 05), so a touchpad swipe does nothing there.
  */
 export function useSidebarSwipe(sidebar: SidebarState, menuRef: MenuRef): void {
   const latest = useRef(sidebar);
@@ -31,7 +30,6 @@ export function useSidebarSwipe(sidebar: SidebarState, menuRef: MenuRef): void {
     latest.current = sidebar;
   });
   useFingerSwipe(latest, menuRef);
-  useTouchpadSwipe(latest);
 }
 
 type Drag = {
@@ -139,35 +137,4 @@ function useFingerSwipe(latest: LatestSidebar, menuRef: MenuRef): void {
 function setDrawer(sidebar: SidebarState, isOpen: boolean): void {
   if (isOpen) sidebar.openDrawer();
   else sidebar.closeDrawer();
-}
-
-function useTouchpadSwipe(latest: LatestSidebar): void {
-  useEffect(() => {
-    let swipe = NO_TOUCHPAD_SWIPE;
-
-    function handleWheel(event: WheelEvent): void {
-      // Up-and-down scrolling never touches the sidebar; skip reading the page for it.
-      if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
-      const answer = readTouchpadStep(swipe, {
-        deltaX: event.deltaX,
-        deltaY: event.deltaY,
-        deltaMode: event.deltaMode,
-        timeStamp: event.timeStamp,
-        shiftKey: event.shiftKey,
-        ctrlKey: event.ctrlKey,
-        isNarrow: isNarrowScreen(),
-        startsInSidewaysScroller: isInSidewaysScroller(event.target),
-        isDialogOpen: isDialogOpen(),
-      });
-      swipe = answer.swipe;
-      if (answer.blocksBrowser) event.preventDefault();
-      if (answer.collapse === null || answer.collapse === latest.current.isCollapsed) return;
-      latest.current.setIsCollapsed(answer.collapse);
-    }
-
-    window.addEventListener("wheel", handleWheel, { passive: false });
-    return () => {
-      window.removeEventListener("wheel", handleWheel);
-    };
-  }, [latest]);
 }

@@ -50,7 +50,7 @@ export function BarList({ label, rows, format = formatPlainNumber }: BarListProp
               style={{ width: `${String((row.value / max) * PERCENT)}%` }}
             />
           </span>
-          <span className="max-phone:col-start-2 max-phone:row-start-1 text-right font-bold whitespace-nowrap">
+          <span className="max-phone:col-start-2 max-phone:row-start-1 text-right font-semibold whitespace-nowrap">
             {row.valueText ?? format(row.value)}
           </span>
         </li>

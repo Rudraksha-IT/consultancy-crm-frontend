@@ -1,12 +1,14 @@
 import { uid } from "@/test/ids";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { EmployeesPage } from "@/components/features/staff/EmployeesPage";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
+import { CLOCK_VIEW_KEY } from "@/constants/clock";
+import { fakeMatchMedia } from "@/test/matchMedia";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 
@@ -19,7 +21,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const NOW_PATH = "/api/clock/team/now/";
@@ -107,6 +108,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Unmount first: the month follows the screen's width, which needs the stubbed matchMedia.
+  cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
@@ -160,6 +163,23 @@ describe("Employees → Working hours", () => {
     expect(within(now).queryAllByRole("button")).toHaveLength(0);
   });
 
+  it("keeps a person's month small on phones: name left, See days right, figures in two columns", async () => {
+    backend(on("GET", NOW_PATH, TEAM_NOW), on("GET", TEAM_PATH, TEAM));
+    renderPage();
+    const seeDays = await screen.findByRole("button", { name: "Bikash Thapa, Month" });
+    const row = seeDays.closest("tr");
+    if (row === null) throw new Error("no row");
+
+    expect(row).toHaveClass("max-tablet:grid-cols-2", "max-tablet:py-3");
+    expect(seeDays.closest("td")).toHaveClass(
+      "max-tablet:col-start-2",
+      "max-tablet:row-start-1",
+      "max-tablet:justify-self-end",
+    );
+    const days = within(row).getByText("Days worked").closest("td");
+    expect(days).toHaveClass("max-tablet:flex", "max-tablet:justify-between");
+  });
+
   it("says when a group is empty", async () => {
     backend(
       on("GET", NOW_PATH, { ...TEAM_NOW, clocked_in_count: 0, people: [TEAM_NOW.people[2]] }),
@@ -179,7 +199,14 @@ describe("Employees → Working hours", () => {
     expect(await within(now).findByText("1 of 3")).toBeInTheDocument();
     const month = screen.getByRole("region", { name: "Hours by month" });
     expect(await within(month).findByRole("table", { name: "Clock-in" })).toBeInTheDocument();
-    expect(within(month).getByRole("combobox", { name: "Month" })).toBeInTheDocument();
+    // The month is its name between two arrows, as a calendar has it.
+    const stepper = within(month).getByRole("group", { name: "Month" });
+    expect(stepper).toHaveTextContent("November 2026");
+    expect(within(stepper).getByRole("button", { name: "Previous month" })).toBeInTheDocument();
+    expect(within(stepper).getByRole("button", { name: "Next month" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
     expect(within(month).getByRole("button", { name: "Export" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Who's in now" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "By month" })).not.toBeInTheDocument();
@@ -238,15 +265,133 @@ describe("Employees → Working hours", () => {
     expect(
       within(dialog).getByText(/Only days that are short of the 8 h working day/),
     ).toBeInTheDocument();
-    // On phones the same days are listed as full-size rows under the calendar.
-    const list = within(dialog).getByRole("list", { name: "Days that can be corrected" });
-    expect(within(list).getByRole("button", { name: "Correct 4 Nov 2026" })).toBeInTheDocument();
-    expect(within(list).getByText("No clock-out")).toBeInTheDocument();
-    expect(within(list).getByText("Short day, 4 h")).toBeInTheDocument();
-    await user.click(within(list).getByRole("button", { name: "Correct 1 Nov 2026" }));
+    // The days open from the Calendar itself; they are listed beside the List only.
+    expect(within(dialog).queryByRole("list", { name: "Days that can be corrected" })).toBeNull();
+    await user.click(
+      within(dialog).getByRole("button", { name: /^1 Nov 2026, not in\. Open to correct\.$/ }),
+    );
     expect(
       await screen.findByRole("dialog", { name: "Bikash Thapa, 1 Nov 2026" }),
     ).toBeInTheDocument();
+  });
+
+  it("steps to another month of the same person inside the popup (owner)", async () => {
+    const user = userEvent.setup();
+    const october = `/api/clock/month/?month=2026-10&staff=${uid(3)}`;
+    const fetchFn = backend(
+      on("GET", NOW_PATH, TEAM_NOW),
+      on("GET", TEAM_PATH, TEAM),
+      on("GET", BIKASH_MONTH, novemberMonth()),
+      on("GET", october, { ...novemberMonth(), month: "2026-10" }),
+    );
+    renderPage();
+    const dialog = await openBikashsMonth(user);
+    const stepper = await within(dialog).findByRole("group", { name: "Month" });
+    expect(stepper).toHaveTextContent("November 2026");
+    const previous = within(stepper).getByRole("button", { name: "Previous month" });
+
+    await user.click(previous);
+
+    expect(
+      await screen.findByRole("dialog", { name: "Bikash Thapa, October 2026" }),
+    ).toBeInTheDocument();
+    expect(callsTo(fetchFn, "GET", october)).toHaveLength(1);
+    expect(stepper).toHaveTextContent("October 2026");
+    expect(previous).toHaveFocus();
+  });
+
+  it("shows a person's month as a Calendar or a List: the switch redraws the popup (UI revamp 16)", async () => {
+    const user = userEvent.setup();
+    backend(
+      on("GET", NOW_PATH, TEAM_NOW),
+      on("GET", TEAM_PATH, TEAM),
+      on("GET", BIKASH_MONTH, novemberMonth()),
+    );
+    renderPage();
+    const dialog = await openBikashsMonth(user);
+    await within(dialog).findByRole("group", { name: "Clock-ins, November 2026" });
+
+    await user.click(within(dialog).getByRole("button", { name: "List" }));
+
+    // The same popup, now with the List, and the cursor still on the switch.
+    expect(screen.getByRole("dialog", { name: "Bikash Thapa, November 2026" })).toBe(dialog);
+    expect(within(dialog).getByRole("list", { name: "Days of November 2026" })).toBeVisible();
+    expect(within(dialog).queryByRole("group", { name: "Clock-ins, November 2026" })).toBeNull();
+    expect(within(dialog).getByRole("button", { name: "List" })).toHaveFocus();
+    expect(within(dialog).getByRole("button", { name: "List" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    expect(window.localStorage.getItem(CLOCK_VIEW_KEY)).toBe("list");
+    // In the List the three days to correct each have a Correct button in their own row.
+    const days = within(dialog).getByRole("list", { name: "Days of November 2026" });
+    expect(within(days).getAllByRole("button", { name: /^Correct / })).toHaveLength(3);
+    expect(
+      within(dialog).getByText(/Only days that are short of the 8 h working day/),
+    ).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Calendar" }));
+
+    expect(within(dialog).getByRole("group", { name: "Clock-ins, November 2026" })).toBeVisible();
+    expect(within(dialog).queryByRole("table")).toBeNull();
+    expect(within(dialog).getByRole("button", { name: "Calendar" })).toHaveFocus();
+  });
+
+  it("shows a person's whole month in the List inside the popup, and comes back to it after a day was opened", async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(CLOCK_VIEW_KEY, "list");
+    backend(
+      on("GET", NOW_PATH, TEAM_NOW),
+      on("GET", TEAM_PATH, TEAM),
+      on("GET", BIKASH_MONTH, novemberMonth(undefined, {}, 25)),
+    );
+    renderPage();
+    const dialog = await openBikashsMonth(user);
+    const list = await within(dialog).findByRole("list", { name: "Days of November 2026" });
+    // Every day up to today, with no pages; the popup has no arrows of its own for the month.
+    expect(within(list).getAllByRole("listitem")).toHaveLength(25);
+    expect(within(list).getByText("25 Nov 2026")).toBeInTheDocument();
+    expect(within(list).getByText("1 Nov 2026")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("navigation", { name: "Pages" })).toBeNull();
+    // A day to correct has its Correct button in its own row; no second list of them (owner).
+    const fourth = within(list).getByText("4 Nov 2026").closest("li");
+    if (fourth === null) throw new Error("no row");
+    expect(within(fourth).getByRole("button", { name: "Correct 4 Nov 2026" })).toBeInTheDocument();
+    const second = within(list).getByText("2 Nov 2026").closest("li");
+    expect(second && within(second).queryByRole("button")).toBeNull();
+    expect(within(dialog).queryByRole("list", { name: "Days that can be corrected" })).toBeNull();
+
+    await user.click(within(dialog).getByRole("button", { name: "Correct 4 Nov 2026" }));
+    const day = await screen.findByRole("dialog", { name: "Bikash Thapa, 4 Nov 2026" });
+    await user.click(within(day).getByRole("button", { name: "Back to the month" }));
+
+    const month = await screen.findByRole("dialog", { name: "Bikash Thapa, November 2026" });
+    expect(within(month).getByRole("list", { name: "Days of November 2026" })).toBeInTheDocument();
+  });
+
+  it("on a phone shows a person's month as the List only, with the days to correct", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    const user = userEvent.setup();
+    backend(
+      on("GET", NOW_PATH, TEAM_NOW),
+      on("GET", TEAM_PATH, TEAM),
+      on("GET", BIKASH_MONTH, novemberMonth()),
+    );
+    renderPage();
+    const dialog = await openBikashsMonth(user);
+
+    expect(
+      await within(dialog).findByRole("list", { name: "Days of November 2026" }),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByRole("group", { name: "Show the month as" })).toBeNull();
+    expect(within(dialog).queryByRole("group", { name: "Clock-ins, November 2026" })).toBeNull();
+    expect(within(dialog).getByRole("button", { name: "Correct 4 Nov 2026" })).toBeInTheDocument();
   });
 
   it("sets a forgotten clock-out with a reason, and the month is read again", async () => {

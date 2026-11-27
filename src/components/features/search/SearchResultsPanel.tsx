@@ -142,8 +142,19 @@ function ResultLink({
   );
 }
 
-function Detail({ children }: { children: ReactNode }) {
-  return <small className="text-small text-ink-2 shrink-0 text-right">{children}</small>;
+/**
+ * What is on a result's right. It takes half the row at most and is cut with "…" (whole on
+ * hover), so a long Stage and counsellor never squeeze the name (ticket 25).
+ */
+function Detail({ children }: { children: string }) {
+  return (
+    <small
+      title={children}
+      className="text-small text-ink-2 max-w-1/2 shrink-0 truncate text-right"
+    >
+      {children}
+    </small>
+  );
 }
 
 function StudentLink({ found, onChosen }: { found: FoundStudent; onChosen: () => void }) {

@@ -1,14 +1,12 @@
 import { render, screen } from "@testing-library/react";
 
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { OfficeGate } from "./OfficeGate";
 
 const OFFICE = {
   name: "Acme Education",
-  theme: DEFAULT_THEME,
   logo: null,
   status: "active",
   status_message: null,
@@ -85,9 +83,9 @@ describe("OfficeGate (issue 66)", () => {
   });
 });
 
-describe.each(THEME_CASES)("OfficeGate in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("OfficeGate in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
   afterEach(resetTheme);
 

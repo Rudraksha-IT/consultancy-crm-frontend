@@ -80,8 +80,15 @@ export const VISA_TEXT = {
   statusFollows: "The visa's status changes to match.",
   refusedGoesBack:
     "Refused takes the Student back to Offer, or to Counselling if no offers are left.",
-  statusStays: (status: string) =>
-    `The visa stays ${status}. To change it, set its status by hand.`,
+  statusStays: (status: string) => `The visa stays ${status}. Only the letter is added.`,
+  /** Granted and Refused are final (UI revamp ticket 10): asked before either is saved. */
+  finalTitle: (status: string) => `Mark this visa as ${status}?`,
+  finalBody: (university: string, status: string) =>
+    `The ${university} visa will be ${status}. This can't be changed later.`,
+  finalNewTry: "A new try is a new visa application.",
+  finalButton: (status: string) => `Mark as ${status}`,
+  /** The server's answer when the visa was decided in the meantime. */
+  decided: "This visa is decided. A new try is a new visa application.",
   saveLetter: "Save",
   letterSaved: "Visa letter saved",
 } as const;
@@ -137,6 +144,8 @@ export const APPOINTMENT_WHEN_LABELS: Record<AppointmentWhen, string> = {
 /** The words of the office-wide Visas page (prototype `#visas`, issues 48 and 75). */
 export const VISA_LIST_TEXT = {
   filters: "Filter the list",
+  search: "Search visas",
+  searchPlaceholder: "Search by Student or university",
   title: "Visas",
   subtitle: "Every visa, waiting or decided. Appointments coming up are at the top.",
   status: "Visa status",

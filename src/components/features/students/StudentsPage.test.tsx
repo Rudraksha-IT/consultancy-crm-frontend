@@ -1,14 +1,16 @@
+import { STUDENTS_VIEW_KEY } from "@/constants/students";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 
 import { StudentsPage } from "./StudentsPage";
 import { consultancySummary } from "@/test/consultancy";
+import { fakeMatchMedia } from "@/test/matchMedia";
 import { uid } from "@/test/ids";
 
 const ADMIN: StaffContext = {
@@ -18,8 +20,12 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
+
+// These tests are about the List; the Board (the first view on a computer) has its own file.
+beforeEach(() => {
+  window.localStorage.setItem(STUDENTS_VIEW_KEY, "list");
+});
 
 function as(role: StaffContext["staff"]["role"]): StaffContext {
   return { ...ADMIN, staff: { ...ADMIN.staff, role } };
@@ -328,7 +334,9 @@ describe("StudentsPage", () => {
     await waitFor(() => {
       expect(lastListCall(fetchFn)).toBe("/api/students/?source=sub_agent");
     });
-    expect(screen.queryByRole("button", { name: "More filters" })).toBeNull();
+    // The panel stays open and its button counts what is set there (UI revamp 06).
+    expect(screen.getByRole("dialog", { name: "More filters" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "More filters, 1 set" })).toBeInTheDocument();
   });
 
   it("filters by the country they want and their target level under More filters", async () => {
@@ -345,6 +353,42 @@ describe("StudentsPage", () => {
     await waitFor(() => {
       expect(lastListCall(fetchFn)).toBe("/api/students/?country=canada&target_level=phd");
     });
+  });
+
+  it("on a phone, folds the filters into a sheet that says what it will show, and keeps a chip (UI revamp 06)", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    const fetchFn = backend(listing(), counsellors);
+    renderPage();
+    await screen.findAllByText("Sita Karki");
+    expect(screen.queryByRole("combobox", { name: "Stage" })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "Filters" }));
+    const sheet = screen.getByRole("dialog", { name: "Filters" });
+    await userEvent.selectOptions(
+      within(sheet).getByRole("combobox", { name: "How they found us" }),
+      "Sub-agent",
+    );
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/?source=sub_agent");
+    });
+    await userEvent.click(
+      await within(sheet).findByRole("button", { name: /^Show \d+ Students?$/ }),
+    );
+
+    const chip = screen.getByRole("button", {
+      name: "Sub-agent, remove the How they found us filter",
+    });
+    await userEvent.click(chip);
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/");
+    });
+    expect(screen.getByRole("button", { name: "Filters" })).toHaveFocus();
   });
 
   it("says when no Student matches", async () => {
@@ -403,6 +447,57 @@ describe("StudentsPage", () => {
 
     await rowFor("Sita Karki");
     expect(screen.queryByRole("button", { name: "Next page" })).toBeNull();
+  });
+});
+
+describe("StudentsPage search as a set filter (UI revamp ticket 25)", () => {
+  const search = () => screen.getByRole("searchbox", { name: "Search Students" });
+
+  it("counts as a set filter: Clear filters empties it", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), counsellors);
+    renderPage();
+    await rowFor("Sita Karki");
+    expect(screen.queryByRole("button", { name: "Clear filters" })).toBeNull();
+    await user.type(search(), "9841");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/?q=9841");
+    });
+
+    await user.click(screen.getByRole("button", { name: "Clear filters" }));
+
+    expect(search()).toHaveValue("");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/");
+    });
+  });
+
+  it("on a phone, shows the words typed as a chip that empties the search", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    const user = userEvent.setup();
+    const fetchFn = backend(listing(), counsellors);
+    renderPage();
+    await screen.findAllByText("Sita Karki");
+
+    await user.type(search(), "9841");
+
+    const chip = screen.getByRole("button", { name: "9841, remove the Search filter" });
+    expect(screen.getByRole("button", { name: "Filters, 1 set" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/?q=9841");
+    });
+    await user.click(chip);
+
+    expect(search()).toHaveValue("");
+    await waitFor(() => {
+      expect(lastListCall(fetchFn)).toBe("/api/students/");
+    });
   });
 });
 

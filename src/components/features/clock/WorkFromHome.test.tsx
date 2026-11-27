@@ -1,11 +1,10 @@
 import { uid } from "@/test/ids";
-import { render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 
@@ -20,7 +19,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 const ADMIN: StaffContext = {
   ...COUNSELLOR,
@@ -65,11 +63,13 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  // Unmount first: the month follows the screen's width, which needs the stubbed matchMedia.
+  cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
-describe("My working hours: my Work from home dates", () => {
+describe("Working hours: the Work from home tab", () => {
   it("lists my dates with their status in words", async () => {
     backend(
       on("GET", MONTH, novemberMonth()),
@@ -91,10 +91,13 @@ describe("My working hours: my Work from home dates", () => {
       }),
     );
 
-    render(inContext(COUNSELLOR, <MyWorkingHoursPage />));
+    render(inContext(COUNSELLOR, <MyWorkingHoursPage askedTab="wfh" />));
 
-    expect(await screen.findByRole("heading", { name: "Work from home" })).toBeInTheDocument();
-    expect(screen.getByText("6 Nov 2026 to 12 Nov 2026")).toBeInTheDocument();
+    expect(await screen.findByText("6 Nov 2026 to 12 Nov 2026")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Work from home" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
     expect(screen.getByText("28 Oct 2026")).toBeInTheDocument();
     expect(screen.getByText("1 Oct 2026 onwards, no end date")).toBeInTheDocument();
     expect(screen.getByText("Waiting")).toBeInTheDocument();
@@ -122,7 +125,7 @@ describe("My working hours: my Work from home dates", () => {
         return new Response(JSON.stringify(dates()), { status: 201 });
       },
     );
-    render(inContext(COUNSELLOR, <MyWorkingHoursPage />));
+    render(inContext(COUNSELLOR, <MyWorkingHoursPage askedTab="wfh" />));
     expect(await screen.findByText("No work from home dates yet.")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Ask for dates" }));
@@ -152,7 +155,7 @@ describe("My working hours: my Work from home dates", () => {
       on("GET", MINE, { can_ask: true, results: [] }),
       on("POST", MINE, { starts_on: ["The start can't be before today."] }, 400),
     );
-    render(inContext(COUNSELLOR, <MyWorkingHoursPage />));
+    render(inContext(COUNSELLOR, <MyWorkingHoursPage askedTab="wfh" />));
     await user.click(await screen.findByRole("button", { name: "Ask for dates" }));
     const dialog = screen.getByRole("dialog", { name: "Ask to work from home" });
 
@@ -179,7 +182,7 @@ describe("My working hours: my Work from home dates", () => {
       on("GET", MINE, { can_ask: true, results: [dates()] }),
       on("POST", `/api/clock/work-from-home/${uid(7)}/cancel/`, dates({ status: "cancelled" })),
     );
-    render(inContext(COUNSELLOR, <MyWorkingHoursPage />));
+    render(inContext(COUNSELLOR, <MyWorkingHoursPage askedTab="wfh" />));
 
     await user.click(await screen.findByRole("button", { name: "Cancel" }));
     const confirm = screen.getByRole("dialog", { name: "Cancel this request?" });
@@ -199,7 +202,8 @@ describe("My working hours: my Work from home dates", () => {
     render(inContext(ADMIN, <MyWorkingHoursPage />));
 
     await screen.findByRole("group", { name: "Clock-ins, November 2026" });
-    expect(screen.queryByRole("heading", { name: "Work from home" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "Work from home" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Ask for dates" })).not.toBeInTheDocument();
     expect(callsTo(fetchFn, "GET", MINE)).toHaveLength(0);
   });
 
@@ -209,7 +213,7 @@ describe("My working hours: my Work from home dates", () => {
       on("GET", MINE, { can_ask: true, results: [dates({ status: "maybe" })] }),
     );
 
-    render(inContext(COUNSELLOR, <MyWorkingHoursPage />));
+    render(inContext(COUNSELLOR, <MyWorkingHoursPage askedTab="wfh" />));
 
     expect(
       await screen.findByText("The work from home dates couldn't be loaded. Try again later."),

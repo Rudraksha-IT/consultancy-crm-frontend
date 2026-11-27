@@ -5,7 +5,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { PROFILE } from "@/test/studentProfile";
 
 import { StudentProfilePage } from "./StudentProfilePage";
@@ -19,7 +18,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const FRONT_DESK: StaffContext = {
@@ -218,5 +216,85 @@ describe("a Student's Priority (ticket 10)", () => {
     await userEvent.click(await screen.findByRole("tab", { name: "Activity" }));
 
     expect(await screen.findByText("Priority changed from Normal to High")).toBeInTheDocument();
+  });
+
+  describe("with Activity open (ticket 25)", () => {
+    const EMPTY = { count: 0, page: 1, page_size: 50, results: [] };
+    const change = (id: number, before: string, after: string, at: string) => ({
+      id: uid(id),
+      kind: "priority_changed",
+      at,
+      by: { name: "Bikash Thapa", is_platform_admin: false },
+      before,
+      after,
+      detail: "",
+    });
+    const OLD = change(90, "Low", "Normal", "2026-11-20T10:00:00+05:45");
+    const NEW = change(91, "Normal", "High", "2026-11-23T10:00:00+05:45");
+
+    /** History answers with one more entry once the Priority has been saved. */
+    function office(historyAfterSave: Answer) {
+      let isSaved = false;
+      return backend(
+        profile(),
+        (path, init) => {
+          if (method(init) !== "PUT" || path !== PRIORITY_PATH) return undefined;
+          isSaved = true;
+          return jsonResponse({ ...PROFILE, priority: "high" });
+        },
+        on("GET", `/api/students/${uid(7)}/visits/`, EMPTY),
+        (path, init) => {
+          if (method(init) !== "GET" || !path.startsWith(`/api/students/${uid(7)}/history/`)) {
+            return undefined;
+          }
+          if (isSaved) return historyAfterSave(path, init);
+          return jsonResponse({ ...EMPTY, count: 1, results: [OLD] });
+        },
+      );
+    }
+
+    async function setHigh() {
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Priority: Normal. Change it" }),
+      );
+      await userEvent.click(screen.getByRole("menuitemradio", { name: /^High/ }));
+    }
+
+    it("adds the change to the timeline in place: the timeline is never taken away", async () => {
+      office(() => jsonResponse({ ...EMPTY, count: 2, results: [NEW, OLD] }));
+      renderPage();
+      await userEvent.click(await screen.findByRole("tab", { name: "Activity" }));
+      const timeline = await screen.findByRole("list", { name: "Activity" });
+      const old = screen.getByText("Priority changed from Low to Normal");
+      const gone = vi.fn();
+      const watch = new MutationObserver((records) => {
+        if (records.some((record) => [...record.removedNodes].some((node) => node.contains(old))))
+          gone();
+      });
+      watch.observe(document.body, { childList: true, subtree: true });
+
+      await setHigh();
+
+      expect(await screen.findByText("Priority changed from Normal to High")).toBeInTheDocument();
+      watch.disconnect();
+      expect(gone).not.toHaveBeenCalled();
+      expect(screen.getByRole("list", { name: "Activity" })).toBe(timeline);
+      expect(old).toBeInTheDocument();
+      expect(screen.queryByText("Loading…")).toBeNull();
+    });
+
+    it("keeps what it shows when it can't be read again", async () => {
+      office(() => jsonResponse({ detail: "Server error" }, 500));
+      renderPage();
+      await userEvent.click(await screen.findByRole("tab", { name: "Activity" }));
+      await screen.findByText("Priority changed from Low to Normal");
+
+      await setHigh();
+
+      await screen.findByText("Priority set to High");
+      await screen.findByRole("button", { name: "Priority: High. Change it" });
+      expect(screen.getByText("Priority changed from Low to Normal")).toBeInTheDocument();
+      expect(screen.queryByText("We couldn't load the Activity.")).toBeNull();
+    });
   });
 });

@@ -108,7 +108,7 @@ export function UniversityEditForm({ university }: { university: University }) {
           }}
         />
         <CoursesSection draft={draft} rows={saving.problems.rows} change={change} />
-        <div className="bg-canvas border-rule sticky bottom-0 z-10 grid gap-4 border-t py-4">
+        <div className="bg-canvas border-rule max-phone:bottom-above-tabbar sticky bottom-0 z-10 grid gap-4 border-t py-4">
           {saving.failure !== null && <Banner tone="problem">{saving.failure}</Banner>}
           <div className="flex flex-wrap items-center gap-3">
             <Button

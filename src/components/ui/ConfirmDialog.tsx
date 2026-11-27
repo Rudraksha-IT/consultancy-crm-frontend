@@ -7,6 +7,7 @@ import { LABELS, MESSAGES } from "@/constants/messages";
 import { Banner } from "./Banner";
 import { Button } from "./Button";
 import { Dialog } from "./Dialog";
+import { LABEL_CLASSES } from "./Field";
 import { SegmentedChoice } from "./SegmentedChoice";
 import { TextField } from "./TextField";
 
@@ -194,7 +195,7 @@ function ReasonFields({ reason, choice }: { reason: ConfirmReason; choice: Reaso
   return (
     <div className="grid gap-4">
       <div className="grid gap-2">
-        <span className="text-small text-ink font-semibold">{reason.legend}</span>
+        <span className={LABEL_CLASSES}>{reason.legend}</span>
         <SegmentedChoice
           label={reason.legend}
           name={name}

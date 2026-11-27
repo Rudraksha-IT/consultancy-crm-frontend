@@ -82,3 +82,13 @@ export function leadingBlanks(month: string): number {
   if (year === undefined || number === undefined) return 0;
   return new Date(Date.UTC(year, number - 1, 1)).getUTCDay();
 }
+
+export {
+  clockTabFrom,
+  clockViewFrom,
+  correctableDays,
+  dayStatus,
+  listedDays,
+  monthBeside,
+  weekdayName,
+} from "./monthList";

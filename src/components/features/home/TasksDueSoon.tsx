@@ -16,6 +16,7 @@ import { fetchMyTasks, type Task } from "@/lib/api";
 import { todayIso } from "@/lib/dates";
 import { groupTasksByWhen, lastDueSoonDay, tasksDueSoon } from "@/lib/home";
 
+import { DeskEmpty } from "./DeskEmpty";
 import { useLoaded, type Loaded } from "./useLoaded";
 
 type TasksDueSoonProps = {
@@ -42,6 +43,7 @@ export function TasksDueSoon({ isGrouped }: TasksDueSoonProps) {
   return (
     <Section
       title={HOME_TEXT.tasksDueSoon}
+      keepsAsideOnLine
       aside={
         <Link href={ROUTES.tasks} className="min-h-control inline-flex items-center">
           {HOME_TEXT.seeAllTasks}
@@ -58,17 +60,28 @@ type TasksBodyProps = { state: Loaded<Task[]>; isGrouped: boolean; onChanged: ()
 function TasksBody({ state, isGrouped, onChanged }: TasksBodyProps) {
   if (state.status === "loading") return <Loading />;
   if (state.status === "failed") return <Banner tone="problem">{HOME_TEXT.tasksFailed}</Banner>;
-  if (state.data.length === 0) {
-    return (
-      <Panel>
-        <EmptyState>{HOME_TEXT.nothingDueSoon}</EmptyState>
-      </Panel>
-    );
-  }
-  if (isGrouped) return <TaskGroups tasks={state.data} onChanged={onChanged} />;
+  if (isGrouped) return <GroupedBody tasks={state.data} onChanged={onChanged} />;
+  if (state.data.length === 0) return <DeskEmpty>{HOME_TEXT.nothingDueSoon}</DeskEmpty>;
+  // On the Counsellor's and Admin's Homes this is a part of the desk column: at most 4, each a
+  // row of a set height (UI revamp 07).
   return (
     <Panel>
-      <TaskList tasks={state.data.slice(0, TASKS_SHOWN)} showsStudent onChanged={onChanged} />
+      <TaskList
+        tasks={state.data.slice(0, TASKS_SHOWN)}
+        showsStudent
+        onChanged={onChanged}
+        look="desk"
+      />
+    </Panel>
+  );
+}
+
+/** The Teacher's Home is one column, not a desk: the usual empty state and rows. */
+function GroupedBody({ tasks, onChanged }: { tasks: Task[]; onChanged: () => void }) {
+  if (tasks.length > 0) return <TaskGroups tasks={tasks} onChanged={onChanged} />;
+  return (
+    <Panel>
+      <EmptyState>{HOME_TEXT.nothingDueSoon}</EmptyState>
     </Panel>
   );
 }

@@ -82,8 +82,9 @@ describe("RowItem", () => {
     );
 
     const [marked, plain] = screen.getAllByRole("listitem");
-    expect(marked).toHaveClass("border-l-good", "border-l-4", "pl-5");
-    expect(plain).toHaveClass("pl-6");
-    expect(plain).not.toHaveClass("border-l-4");
+    // Its text starts where every other row's does; the line is drawn on the edge.
+    expect(marked).toHaveClass("pl-gutter", "before:bg-good", "before:w-0.75", "before:absolute");
+    expect(plain).toHaveClass("pl-gutter");
+    expect(plain).not.toHaveClass("before:bg-good");
   });
 });

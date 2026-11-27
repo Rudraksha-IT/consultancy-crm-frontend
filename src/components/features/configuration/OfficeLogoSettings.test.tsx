@@ -7,7 +7,6 @@ import { SetOfficeLogoContext } from "@/components/features/shell/officeLogo";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { OfficeLogo, StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 
 import { OfficeLogoSettings } from "./OfficeLogoSettings";
@@ -25,7 +24,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 /** The section inside a shell whose logo really changes, as the AppShell's does. */

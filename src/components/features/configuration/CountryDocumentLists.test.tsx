@@ -4,7 +4,9 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { ToastProvider } from "@/components/ui/ToastProvider";
+import { PHONE_QUERY } from "@/components/ui/usePhoneWidth";
 import { backend, callsTo, on } from "@/test/backend";
+import { fakeMatchMedia } from "@/test/matchMedia";
 
 import { CountryDocumentLists } from "./CountryDocumentLists";
 
@@ -337,6 +339,43 @@ describe("CountryDocumentLists", () => {
     });
     await openGroup(/^Applying/);
     expect(rowsOf("Applying")).toEqual(["Bank Statement"]);
+  });
+
+  it("on a phone, moves a type from a menu, never a box an iPhone zooms in on (ticket 25)", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === PHONE_QUERY,
+      ).matchMedia,
+    );
+    const fetchFn = backend(
+      on("GET", LISTS_PATH, LISTS),
+      on("GET", TYPES_PATH, TYPES),
+      on("PUT", `${LISTS_PATH}australia/`, {
+        ...AUSTRALIA,
+        documents: [row(uid(7), "Bank Statement", "applying"), AUSTRALIA.documents[1]],
+      }),
+    );
+    renderLists();
+    await openGroup(/^Visa/);
+    expect(screen.queryByRole("combobox", { name: "Group for Bank Statement" })).toBeNull();
+
+    const pill = screen.getByRole("button", { name: "Group for Bank Statement: Visa" });
+    // The pill shows the choice alone; its name is for screen readers.
+    expect(pill).toHaveTextContent(/^Visa$/);
+    await userEvent.click(pill);
+    const menu = screen.getByRole("menu", { name: "Group for Bank Statement" });
+    expect(within(menu).getByRole("menuitemradio", { name: "Visa" })).toBeChecked();
+    await userEvent.click(within(menu).getByRole("menuitemradio", { name: "Applying" }));
+
+    expect(await screen.findByText("Moved to Applying")).toBeVisible();
+    expect(sentRows(fetchFn, "australia")).toEqual({
+      documents: [
+        { document_type: uid(7), group: "applying" },
+        { document_type: uid(26), group: "statements" },
+      ],
+    });
   });
 
   it("takes a type off after asking, and Escape keeps it", async () => {

@@ -1,16 +1,13 @@
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { render, screen, waitFor } from "@testing-library/react";
 
 import { APP_LOGO_URL } from "@/lib/brand/appLogo";
-import { buildThemeTokens, normaliseThemeConfig } from "@/lib/theme";
+import { buildThemeTokens } from "@/lib/theme";
 import { resetTheme } from "@/test/themes";
 
 import { ConsultancyBrand } from "./ConsultancyBrand";
 
 const pathname = vi.hoisted(() => ({ current: "/login" }));
 vi.mock("next/navigation", () => ({ usePathname: () => pathname.current }));
-
-const CRIMSON = { page: "ice", sidebar: TEST_COLOURS.white, accent: TEST_COLOURS.crimson };
 
 function answerWith(response: Response): void {
   vi.stubGlobal("fetch", vi.fn<typeof fetch>().mockResolvedValue(response));
@@ -24,7 +21,7 @@ afterEach(() => {
 
 describe("ConsultancyBrand", () => {
   it("shows the current Consultancy's mark and name, large and centred", async () => {
-    answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON })));
+    answerWith(new Response(JSON.stringify({ name: "Acme Education" })));
 
     render(<ConsultancyBrand />);
 
@@ -36,7 +33,7 @@ describe("ConsultancyBrand", () => {
 
   it("shows the office logo large and centred, with the name", async () => {
     const logo = { url: "/api/consultancy/logo/2/", show_name: false };
-    answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON, logo })));
+    answerWith(new Response(JSON.stringify({ name: "Acme Education", logo })));
 
     const { container } = render(<ConsultancyBrand />);
 
@@ -48,14 +45,14 @@ describe("ConsultancyBrand", () => {
     expect(image).toHaveClass("h-mark-lg");
   });
 
-  it("colours the page with the Consultancy's Theme, following the device's light or dark", async () => {
-    answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON })));
+  it("shows the Porcelain theme whatever colours the office once had (one look for every office)", async () => {
+    answerWith(new Response(JSON.stringify({ name: "Acme Education" })));
 
     render(<ConsultancyBrand />);
     await screen.findByRole("heading", { level: 2 });
 
-    const expected = buildThemeTokens(normaliseThemeConfig(CRIMSON)).light.accent;
-    // The Theme is applied in an effect after the name shows.
+    const expected = buildThemeTokens().light.accent;
+    // The theme is applied in an effect.
     await waitFor(() => {
       expect(document.documentElement.style.getPropertyValue("--accent")).toBe(expected);
     });
@@ -112,7 +109,7 @@ describe("ConsultancyBrand", () => {
 
 describe("ConsultancyBrand: the welcome and the tab (first live fixes, ticket 08)", () => {
   it("welcomes people back by the office's name on the login page", async () => {
-    answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON })));
+    answerWith(new Response(JSON.stringify({ name: "Acme Education" })));
 
     render(<ConsultancyBrand isWelcome />);
 
@@ -122,7 +119,7 @@ describe("ConsultancyBrand: the welcome and the tab (first live fixes, ticket 08
   });
 
   it("shows the app's own logo, never initials, when the office has no logo", async () => {
-    answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON })));
+    answerWith(new Response(JSON.stringify({ name: "Acme Education" })));
 
     const { container } = render(<ConsultancyBrand isWelcome />);
 
@@ -137,7 +134,7 @@ describe("ConsultancyBrand: the welcome and the tab (first live fixes, ticket 08
     ["/join", "Join | Acme Education"],
   ])("names the page and the office in the tab on %s", async (path, title) => {
     pathname.current = path;
-    answerWith(new Response(JSON.stringify({ name: "Acme Education", theme: CRIMSON })));
+    answerWith(new Response(JSON.stringify({ name: "Acme Education" })));
 
     render(<ConsultancyBrand />);
 

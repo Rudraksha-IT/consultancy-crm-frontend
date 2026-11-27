@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { useState, type SubmitEvent } from "react";
 
-import { ThemeEditor } from "@/components/features/theme/ThemeEditor";
-import { ThemePreview } from "@/components/features/theme/ThemePreview";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { ButtonLink } from "@/components/ui/ButtonLink";
@@ -20,21 +18,19 @@ import { OFFICE_DETAILS_TEXT } from "@/constants/officeDetails";
 import type { NewConsultancy } from "@/lib/api";
 import { tomorrowIso } from "@/lib/dates";
 import { contactEmailRefusal } from "@/lib/officeDetails/officeDetails";
-import { DEFAULT_THEME, type ThemeConfig } from "@/lib/theme";
 
 import { useCreateConsultancy } from "./useCreateConsultancy";
 import { useProductDomain } from "./useProductDomain";
 
 /**
  * Create a Consultancy: its name, the front part of its address (the rest is the backend's
- * product domain), its contact email (where replies to its emails go, spec 119), starting Status
- * and colours. No Admin: they are added from its row once it is set up (issue 64).
+ * product domain), its contact email (where replies to its emails go, spec 119) and starting
+ * Status. No Admin: they are added from its row once it is set up (issue 64).
  */
 export function NewConsultancyForm() {
   const { isSubmitting, fieldErrors, error, submit } = useCreateConsultancy();
   const productDomain = useProductDomain();
   const [subdomain, setSubdomain] = useState("");
-  const [theme, setTheme] = useState<ThemeConfig>(DEFAULT_THEME);
   const [status, setStatus] = useState<StartingStatus>(ConsultancyStatus.Evaluation);
   const [tomorrow] = useState(() => tomorrowIso());
   const [emailRefusal, setEmailRefusal] = useState<string | null>(null);
@@ -42,7 +38,7 @@ export function NewConsultancyForm() {
   function handleSubmit(event: SubmitEvent<HTMLFormElement>): void {
     event.preventDefault();
     const form = event.currentTarget;
-    const consultancy = readConsultancy(new FormData(form), theme, status);
+    const consultancy = readConsultancy(new FormData(form), status);
     const refusal = contactEmailRefusal(consultancy.contactEmail);
     setEmailRefusal(refusal);
     if (refusal === null) {
@@ -126,11 +122,6 @@ export function NewConsultancyForm() {
             )}
           </fieldset>
         </Panel>
-        <Panel isPadded>
-          <h2 className="text-section-title">{LABELS.colours}</h2>
-          <ThemeEditor value={theme} onChange={setTheme} />
-          <ThemePreview theme={theme} />
-        </Panel>
         {error !== null && <Banner tone="problem">{error}</Banner>}
         <div className="flex flex-wrap items-center gap-3">
           <Button
@@ -159,16 +150,11 @@ const STARTING_STATUSES = [
   { value: ConsultancyStatus.Active, label: STATUS_TEXT.startActive },
 ] as const;
 
-function readConsultancy(
-  form: FormData,
-  theme: ThemeConfig,
-  status: StartingStatus,
-): NewConsultancy {
+function readConsultancy(form: FormData, status: StartingStatus): NewConsultancy {
   return {
     name: readField(form, "name"),
     subdomain: readField(form, "subdomain"),
     contactEmail: readField(form, CONTACT_EMAIL).trim(),
-    theme,
     status,
     paidUntil: readField(form, "paidUntil"),
   };

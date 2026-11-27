@@ -5,7 +5,7 @@ import { ROUTES } from "./routes";
 /** Pages not in the sidebar, by where they start; the longest match wins. */
 export const OTHER_PAGE_NAMES: Readonly<Record<string, string>> = {
   [ROUTES.feesByType]: "Fees by type",
-  [ROUTES.clock]: "My working hours",
+  [ROUTES.clock]: "Working hours",
   [ROUTES.mySettings]: "My settings",
   [ROUTES.myProgress]: "My progress",
   [ROUTES.login]: "Log in",

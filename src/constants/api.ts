@@ -29,6 +29,7 @@ export const API_PATHS = {
   staffProgress: (id: RecordId) => `/api/staff/${id}/progress/`,
   employeeDeactivate: (id: RecordId) => `/api/staff/${id}/deactivate/`,
   employeeInvite: (id: RecordId) => `/api/staff/${id}/invite/`,
+  employeeInviteBack: (id: RecordId) => `/api/staff/${id}/invite-back/`,
   employeeAssignedStudents: (id: RecordId) => `/api/staff/${id}/assigned-students/`,
   /** An Admin switches someone's two-step login on or off, or resets it (issue 62). */
   employeeTwoFactor: (id: RecordId) => `/api/staff/${id}/two-factor/`,
@@ -198,9 +199,8 @@ export const API_PATHS = {
   clockTeamNow: "/api/clock/team/now/",
   clockWorkingDay: "/api/clock/working-day/",
   clockDaysOff: "/api/clock/days-off/",
-  /** The office's holidays (asked 2026-11-16): the list, and one to remove. */
+  /** The office's holidays (asked 2026-11-16): the list, a new one, and a group to remove. */
   clockHolidays: "/api/clock/holidays/",
-  clockHoliday: (id: RecordId) => `/api/clock/holidays/${id}/`,
   clockSetClockOut: (sessionId: RecordId) => `/api/clock/sessions/${sessionId}/clock-out/`,
   clockMissedTime: (staffId: RecordId) => `/api/clock/staff/${staffId}/missed-time/`,
   /** Work From Home dates (issue 87): mine, one person's (Admins), and changing one set. */
@@ -247,8 +247,6 @@ export const API_PATHS = {
   platformConsultancyModules: (id: RecordId) => `/api/platform/consultancies/${id}/modules/`,
   /** Try again: set up an office whose setup failed (issue 60). */
   platformConsultancyRetrySetup: (id: RecordId) => `/api/platform/consultancies/${id}/retry-setup/`,
-  /** An office's colours: only a Platform Admin chooses them, only here. */
-  platformConsultancyTheme: (id: RecordId) => `/api/platform/consultancies/${id}/theme/`,
   /** Open a Consultancy as Platform Admin (issue 27), and the Platform record of every visit. */
   platformSupportVisitStart: (id: RecordId) => `/api/platform/consultancies/${id}/support-visits/`,
   platformSupportVisits: "/api/platform/support-visits/",

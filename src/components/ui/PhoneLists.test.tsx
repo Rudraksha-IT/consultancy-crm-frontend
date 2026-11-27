@@ -87,6 +87,17 @@ describe("a phone list row shows only what the list declares", () => {
     );
   });
 
+  it("keeps the name's room: the fact takes half the row at most and is cut with … (ticket 25)", () => {
+    const rules = phoneTableRules();
+
+    expect(rules).toMatch(
+      /table\[data-phone="list"\] > tbody > tr \{[^}]*grid-template-columns: minmax\(0, 1fr\) fit-content\(50%\) auto/,
+    );
+    expect(rules).toMatch(
+      /td\[data-part="fact"\] \{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis/,
+    );
+  });
+
   it("puts one button at the right, and two buttons on their own line", () => {
     render(
       <DataTable phone="list" label="Employees">

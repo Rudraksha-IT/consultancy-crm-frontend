@@ -63,7 +63,10 @@ export class WrongCurrentPasswordError extends Error {
   }
 }
 
-/** Too many wrong current passwords on the Platform's Account page; wait, then try again. */
+/**
+ * Too many wrong passwords: at login (security 01) or for the current password on the Platform's
+ * Account page. Wait, then try again.
+ */
 export class TooManyPasswordTriesError extends Error {
   constructor() {
     super("Too many wrong passwords");

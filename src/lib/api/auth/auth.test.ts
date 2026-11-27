@@ -1,16 +1,13 @@
 import { uid } from "@/test/ids";
-import { TEST_COLOURS } from "@/lib/theme/testColours";
 import { fetchStaffContext, logIn, logOut } from "./auth";
-import { ApiRequestError, InvalidCredentialsError, NotLoggedInError } from "../core/errors";
+import {
+  ApiRequestError,
+  InvalidCredentialsError,
+  NotLoggedInError,
+  TooManyPasswordTriesError,
+} from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 import { NO_OFFICE_DETAILS } from "../core/types";
-
-const THEME = {
-  page: "ice",
-  sidebar: TEST_COLOURS.deepTeal,
-  accent: TEST_COLOURS.arcticTeal,
-  dark: { base: "teal", sidebar: "brand", accent: "auto" },
-};
 
 const CONTEXT = {
   staff: {
@@ -38,7 +35,6 @@ const CONTEXT = {
   modules: ["students", "tasks"],
   date_display: "AD",
   support_access: null,
-  theme: THEME,
 };
 
 const SESSION = {
@@ -63,7 +59,6 @@ const SESSION = {
   colourMode: "light",
   pageSwipe: false,
   supportAccess: null,
-  theme: THEME,
 };
 
 describe("logIn", () => {
@@ -116,6 +111,14 @@ describe("logIn", () => {
 
     await expect(logIn({ email: "x@y.z", password: "bad" }, fetchFn)).rejects.toBeInstanceOf(
       InvalidCredentialsError,
+    );
+  });
+
+  it("rejects with TooManyPasswordTriesError once the wrong passwords are used up", async () => {
+    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ detail: "x" }, 429));
+
+    await expect(logIn({ email: "x@y.z", password: "pw" }, fetchFn)).rejects.toBeInstanceOf(
+      TooManyPasswordTriesError,
     );
   });
 
@@ -207,15 +210,14 @@ describe("fetchStaffContext", () => {
   });
 });
 
-describe("the Theme in the context", () => {
-  it("falls back on the default for a damaged Theme instead of failing", async () => {
+describe("office colours are gone (ticket 04)", () => {
+  it("drops a theme an old answer still carries", async () => {
     const fetchFn = vi
       .fn<typeof fetch>()
       .mockResolvedValue(jsonResponse({ ...CONTEXT, theme: { page: "purple" } }));
 
     const context = await fetchStaffContext(fetchFn);
 
-    expect(context.theme.page).toBe("stone");
-    expect(context.theme.dark).toEqual({ base: "soft", sidebar: "darker", accent: "auto" });
+    expect(context).not.toHaveProperty("theme");
   });
 });

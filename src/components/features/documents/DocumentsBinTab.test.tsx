@@ -6,7 +6,6 @@ import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import type { BlankTab } from "@/lib/documents";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on, onEach } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 import { CHECKLIST } from "@/test/documents";
@@ -26,7 +25,6 @@ function contextFor(role: StaffContext["staff"]["role"]): StaffContext {
     dateDisplay: "AD",
     colourMode: "light",
     supportAccess: null,
-    theme: DEFAULT_THEME,
   };
 }
 
@@ -467,6 +465,20 @@ describe("the Bin tab (Admins, issue 79)", () => {
     await userEvent.click(binTab);
 
     expect(await itemFor("Passport")).toBeVisible();
+  });
+
+  it("keeps the cursor on the tab that was pressed, both ways", async () => {
+    backend(
+      on("GET", BIN_PATH, BIN),
+      on("GET", "/api/documents/students/?scope=everyone&page=1", PAPERWORK),
+    );
+    renderPage("admin", "students");
+
+    await userEvent.click(await screen.findByRole("button", { name: "Bin, 2" }));
+    expect(screen.getByRole("button", { name: "Bin, 2" })).toHaveFocus();
+
+    await userEvent.click(screen.getByRole("button", { name: "Students" }));
+    expect(screen.getByRole("button", { name: "Students" })).toHaveFocus();
   });
 
   it("is never shown to a Counsellor", async () => {

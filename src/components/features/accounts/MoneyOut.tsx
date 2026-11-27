@@ -208,7 +208,7 @@ function ExpenseRows({ rows, onEdit }: { rows: Expense[]; onEdit: (expense: Expe
             }
             right={
               <div className="flex items-center gap-3">
-                <span className="font-bold whitespace-nowrap tabular-nums">
+                <span className="font-semibold whitespace-nowrap tabular-nums">
                   {formatNpr(expense.amount)}
                 </span>
                 <Button

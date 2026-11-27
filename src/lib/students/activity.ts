@@ -37,6 +37,33 @@ export function sourcesToLoadNext<Item extends Dated>(
   return sources.flatMap((one, index) => (hasMore(one) && oldest(one) >= cutoff ? [index] : []));
 }
 
+/**
+ * A source after its first page was read again (something was just saved): what is new comes
+ * first, and everything already shown stays, the older pages too, so the timeline is never taken
+ * away (design system rule 8).
+ */
+export function readAgain<Item extends Dated>(
+  shown: ActivitySource<Item> | undefined,
+  fresh: ActivitySource<Item>,
+): ActivitySource<Item> {
+  if (shown === undefined) return fresh;
+  return { items: withoutRepeats(fresh.items, shown.items), count: fresh.count, page: shown.page };
+}
+
+/** A source with its next older page added. An item already shown is not added twice. */
+export function olderAdded<Item extends Dated>(
+  shown: ActivitySource<Item>,
+  older: ActivitySource<Item>,
+): ActivitySource<Item> {
+  return { ...older, items: withoutRepeats(shown.items, older.items) };
+}
+
+/** The first list, then what the second has that the first has not. */
+function withoutRepeats<Item extends Dated>(first: readonly Item[], second: readonly Item[]) {
+  const keys = new Set(first.map((item) => item.key));
+  return [...first, ...second.filter((item) => !keys.has(item.key))];
+}
+
 /** The moment every source is complete down to, or null when every source is fully loaded. */
 function loadedUntil<Item extends Dated>(sources: readonly ActivitySource<Item>[]): number | null {
   const limits = sources.filter(hasMore).map(oldest);

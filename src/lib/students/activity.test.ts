@@ -1,4 +1,10 @@
-import { mergeActivity, sourcesToLoadNext, type ActivitySource } from "./activity";
+import {
+  mergeActivity,
+  olderAdded,
+  readAgain,
+  sourcesToLoadNext,
+  type ActivitySource,
+} from "./activity";
 
 type Item = { key: string; at: string };
 
@@ -57,5 +63,62 @@ describe("sourcesToLoadNext", () => {
 
   it("names none when everything is loaded", () => {
     expect(sourcesToLoadNext([source(["2026-11-01T10:00:00Z"])])).toEqual([]);
+  });
+});
+
+describe("readAgain (ticket 25)", () => {
+  const item = (key: string, at: string): Item => ({ key, at });
+  const A = item("a", "2026-11-01T10:00:00Z");
+  const B = item("b", "2026-11-02T10:00:00Z");
+  const C = item("c", "2026-11-03T10:00:00Z");
+  const D = item("d", "2026-11-04T10:00:00Z");
+
+  it("puts what is new first and keeps everything already shown", () => {
+    const shown: ActivitySource<Item> = { items: [C, B, A], count: 3, page: 1 };
+    const fresh: ActivitySource<Item> = { items: [D, C, B, A], count: 4, page: 1 };
+
+    expect(readAgain(shown, fresh)).toEqual({ items: [D, C, B, A], count: 4, page: 1 });
+  });
+
+  it("keeps the older pages already loaded, and how far they go", () => {
+    // Two pages of two were loaded; the first page read again holds the new one and one old one.
+    const shown: ActivitySource<Item> = { items: [C, B, A], count: 5, page: 2 };
+    const fresh: ActivitySource<Item> = { items: [D, C], count: 6, page: 1 };
+
+    expect(readAgain(shown, fresh)).toEqual({ items: [D, C, B, A], count: 6, page: 2 });
+  });
+
+  it("takes the newer copy of an item both have", () => {
+    const shown: ActivitySource<Item> = { items: [B], count: 1, page: 1 };
+    const changed = { ...B, at: "2026-11-02T11:00:00Z" };
+
+    expect(readAgain(shown, { items: [changed], count: 1, page: 1 }).items).toEqual([changed]);
+  });
+
+  it("is the fresh page when nothing was shown yet", () => {
+    const fresh: ActivitySource<Item> = { items: [B, A], count: 2, page: 1 };
+
+    expect(readAgain(undefined, fresh)).toEqual(fresh);
+  });
+});
+
+describe("olderAdded (ticket 25)", () => {
+  const item = (key: string, at: string): Item => ({ key, at });
+  const A = item("a", "2026-11-01T10:00:00Z");
+  const B = item("b", "2026-11-02T10:00:00Z");
+  const C = item("c", "2026-11-03T10:00:00Z");
+
+  it("adds the older page after what is shown", () => {
+    const shown: ActivitySource<Item> = { items: [C], count: 3, page: 1 };
+    const older: ActivitySource<Item> = { items: [B, A], count: 3, page: 2 };
+
+    expect(olderAdded(shown, older)).toEqual({ items: [C, B, A], count: 3, page: 2 });
+  });
+
+  it("never shows an item twice when a new entry pushed one onto the next page", () => {
+    const shown: ActivitySource<Item> = { items: [C, B], count: 3, page: 1 };
+    const older: ActivitySource<Item> = { items: [B, A], count: 3, page: 2 };
+
+    expect(olderAdded(shown, older).items).toEqual([C, B, A]);
   });
 });

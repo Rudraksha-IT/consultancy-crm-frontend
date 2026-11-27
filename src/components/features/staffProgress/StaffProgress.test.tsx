@@ -7,7 +7,6 @@ import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { consultancySummary } from "@/test/consultancy";
 import { testHost } from "@/test/hosts";
-import { DEFAULT_THEME } from "@/lib/theme";
 
 import { EmployeeProgressPage } from "./EmployeeProgressPage";
 import { MyProgressPage } from "./MyProgressPage";
@@ -24,7 +23,6 @@ function context(
     dateDisplay: "AD",
     colourMode: "light",
     supportAccess: null,
-    theme: DEFAULT_THEME,
     ...extra,
   } satisfies StaffContext;
 }

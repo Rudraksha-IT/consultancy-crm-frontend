@@ -100,6 +100,19 @@ export function studentListQuery(filters: StudentFilters, page: number): string 
   return query === "" ? "" : `?${query}`;
 }
 
+/**
+ * The query string for one column of the Students board: these filters at `stage`, with each
+ * Student's next step and document counts (UI revamp 08).
+ */
+export function studentBoardQuery(filters: StudentFilters, stage: Stage, page: number): string {
+  const values = {
+    ...studentFilterValues({ ...filters, stage }),
+    progress: "true",
+    ...(page > 1 ? { page: String(page) } : {}),
+  };
+  return `?${new URLSearchParams(values).toString()}`;
+}
+
 /** The filters as the API names them, leaving out any that are "any". */
 export function studentFilterValues(filters: StudentFilters): Record<string, string> {
   const sent: [string, string][] = [

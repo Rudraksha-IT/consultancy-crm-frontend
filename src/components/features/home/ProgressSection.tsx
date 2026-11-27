@@ -5,19 +5,21 @@ import { useCallback, useState } from "react";
 
 import { ChecklistDialog } from "@/components/features/documents/ChecklistDialog";
 import { DocumentsButton } from "@/components/features/documents/DocumentsButton";
-import { ArrowSteps } from "@/components/ui/ArrowSteps";
 import { Banner } from "@/components/ui/Banner";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Panel } from "@/components/ui/Panel";
 import { Section } from "@/components/ui/Section";
+import { StageMeter } from "@/components/ui/StageMeter";
+import { Thread } from "@/components/ui/Thread";
 import { Loading } from "@/components/ui/Loading";
+import { usePhoneWidth } from "@/components/ui/usePhoneWidth";
 import { HOME_TEXT } from "@/constants/home";
 import { ROUTES } from "@/constants/routes";
-import { STAGE_LABELS } from "@/constants/stages";
 import { COUNTRY_LABELS } from "@/constants/students";
 import { fetchProgress, type ProgressList, type ProgressRow } from "@/lib/api";
 
-import { useLoaded } from "./useLoaded";
+import { SeeAllLink } from "./SeeAllLink";
+import { useLoaded, type Loaded } from "./useLoaded";
 
 type ProgressSectionProps = {
   title: string;
@@ -29,7 +31,7 @@ type ProgressSectionProps = {
 };
 
 /**
- * Students furthest along first, each with their Stage as arrow steps, the next step and a
+ * Students furthest along first, each with their Stage on the thread, the next step and a
  * documents button that opens their checklist (spec 22a).
  */
 export function ProgressSection({ title, mine, limit, showsCounsellor }: ProgressSectionProps) {
@@ -39,14 +41,7 @@ export function ProgressSection({ title, mine, limit, showsCounsellor }: Progres
   const state = useLoaded(load, version);
 
   return (
-    <Section
-      title={title}
-      aside={
-        <Link href={ROUTES.students} className="min-h-control inline-flex items-center">
-          {HOME_TEXT.allStudents}
-        </Link>
-      }
-    >
+    <Section title={title} keepsAsideOnLine {...seeAllAside(state)}>
       {state.status === "loading" && <Loading />}
       {state.status === "failed" && <Banner tone="problem">{HOME_TEXT.progressFailed}</Banner>}
       {state.status === "loaded" && (
@@ -63,6 +58,12 @@ export function ProgressSection({ title, mine, limit, showsCounsellor }: Progres
       )}
     </Section>
   );
+}
+
+/** The one way to the full list, beside the title, like every Home section (owner, 2026-11-27). */
+function seeAllAside(state: Loaded<ProgressList>) {
+  if (state.status !== "loaded") return {};
+  return { aside: <SeeAllLink href={ROUTES.students} count={state.data.count} /> };
 }
 
 type ProgressPanelProps = {
@@ -91,14 +92,6 @@ function ProgressPanel({ list, showsCounsellor, onOpen }: ProgressPanelProps) {
           />
         ))}
       </ul>
-      {list.count > list.rows.length && (
-        <div className="border-rule bg-fill text-secondary text-ink-2 flex flex-wrap items-center justify-between gap-x-4 border-t px-6 py-2">
-          <span>{HOME_TEXT.showingFurthest(list.rows.length, list.count)}</span>
-          <Link href={ROUTES.students} className="min-h-control inline-flex items-center">
-            {HOME_TEXT.seeAllStudents}
-          </Link>
-        </div>
-      )}
     </Panel>
   );
 }
@@ -116,12 +109,16 @@ type ProgressItemProps = {
 };
 
 /**
- * Name and country, then the Stage and arrow steps with the next step, then the documents. On a
- * phone: the name, the Stage and the next step, with the documents button on the right.
+ * Name and country, then the Stage on the thread with the next step, then the documents. On a
+ * phone: the name and the next step (one line), with the Stage's name on the right; the thread
+ * and the documents are on the page the name opens (UI revamp 07; owner, 2026-11-27).
  */
 function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
   return (
-    <li className="phone:grid-cols-[minmax(0,1fr)_auto] wide:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] max-phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-x-3 max-phone:gap-y-0.5 max-phone:px-4 max-phone:py-3.5 grid grid-cols-1 items-center gap-x-6 gap-y-3 px-6 py-5">
+    <li
+      data-row=""
+      className="phone:grid-cols-[minmax(0,1fr)_auto] wide:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_auto] max-phone:grid-cols-[minmax(0,1fr)_auto] max-phone:gap-x-3 max-phone:gap-y-0.5 max-phone:px-4 max-phone:py-3.5 px-gutter grid grid-cols-1 items-center gap-x-6 gap-y-3 py-5"
+    >
       <div className="max-phone:col-start-1 max-phone:row-start-1 grid min-w-0 gap-1">
         <Link
           href={ROUTES.student(row.student.id)}
@@ -133,26 +130,45 @@ function ProgressItem({ row, showsCounsellor, onOpen }: ProgressItemProps) {
           {whoLine(row, showsCounsellor)}
         </span>
       </div>
-      <div className="wide:order-none wide:col-span-1 phone:col-span-2 max-phone:col-start-1 max-phone:row-start-2 max-phone:gap-0.5 order-last grid min-w-0 gap-1.5">
-        <b className="text-small text-ink-2 tablet:hidden max-phone:text-secondary max-phone:text-accent">
-          {STAGE_LABELS[row.student.stage]}
-        </b>
-        <div className="max-phone:hidden">
-          <ArrowSteps stage={row.student.stage} isDone={row.isDone} />
-        </div>
+      <div className="wide:order-none wide:col-span-1 phone:col-span-2 max-phone:col-span-2 max-phone:col-start-1 max-phone:row-start-2 max-phone:gap-1 order-last grid min-w-0 gap-1.5">
+        <span data-progress-stage="" className="max-phone:hidden grid min-w-0">
+          <Thread stage={row.student.stage} isDone={row.isDone} />
+        </span>
         <span className="text-secondary text-ink-2 max-phone:truncate">
           {row.isDone ? HOME_TEXT.done(row.nextStep) : HOME_TEXT.next(row.nextStep)}
         </span>
       </div>
-      <div className="phone:justify-self-end max-phone:col-start-2 max-phone:row-span-2 max-phone:row-start-1 max-phone:justify-self-end justify-self-start">
-        <DocumentsButton
-          studentName={row.student.name}
-          documents={row.documents}
-          onOpen={() => {
-            onOpen(row);
-          }}
-        />
+      <div
+        data-progress-end=""
+        className="phone:justify-self-end max-phone:col-start-2 max-phone:row-start-1 max-phone:justify-self-end max-phone:min-w-0 justify-self-start"
+      >
+        <RowEnd row={row} onOpen={onOpen} />
       </div>
     </li>
+  );
+}
+
+/**
+ * The end of a row: the documents button, which opens the checklist. On a phone the Stage's name
+ * instead (owner, 2026-11-27): the thread is not drawn there, and the documents are on the
+ * Student's page.
+ */
+function RowEnd({ row, onOpen }: Pick<ProgressItemProps, "row" | "onOpen">) {
+  const isPhone = usePhoneWidth();
+  if (isPhone) {
+    return (
+      <span className="text-secondary text-ink-2">
+        <StageMeter stage={row.student.stage} />
+      </span>
+    );
+  }
+  return (
+    <DocumentsButton
+      studentName={row.student.name}
+      documents={row.documents}
+      onOpen={() => {
+        onOpen(row);
+      }}
+    />
   );
 }

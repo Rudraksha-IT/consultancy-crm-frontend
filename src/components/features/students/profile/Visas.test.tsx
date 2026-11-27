@@ -6,7 +6,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
 import { jsonResponse } from "@/lib/api/core/test-helpers";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { PROFILE } from "@/test/studentProfile";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
@@ -21,7 +20,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const DEAKIN = {
@@ -101,9 +99,9 @@ function sentBody(fetchFn: ReturnType<typeof backend>, verb: string, path: strin
   return typeof body === "string" ? JSON.parse(body) : undefined;
 }
 
-function renderPage() {
+function renderPage(context: StaffContext = COUNSELLOR) {
   return render(
-    <StaffContextContext value={COUNSELLOR}>
+    <StaffContextContext value={context}>
       <ToastProvider>
         <StudentProfilePage studentId={uid(7)} />
       </ToastProvider>
@@ -126,6 +124,24 @@ async function applicationRow(university: string): Promise<HTMLElement> {
     .find((item) => within(item).queryByText(university) !== null);
   if (row === undefined) throw new Error(`No row for ${university}`);
   return row;
+}
+
+const STATUS_LIST = "Status of Deakin University visa";
+const UPLOAD_LETTER = "Upload visa letter for the Deakin University visa";
+
+/** Choose Granted or Refused in the visa's status list; the asking popup that opens. */
+async function choose(result: "Granted" | "Refused"): Promise<HTMLElement> {
+  await userEvent.selectOptions(
+    within(await visaList()).getByRole("combobox", { name: STATUS_LIST }),
+    result.toLowerCase(),
+  );
+  return screen.findByRole("dialog", { name: `Mark this visa as ${result}?` });
+}
+
+/** Choose it and say yes. */
+async function decide(result: "Granted" | "Refused"): Promise<void> {
+  const asking = await choose(result);
+  await userEvent.click(within(asking).getByRole("button", { name: `Mark as ${result}` }));
 }
 
 afterEach(() => {
@@ -272,55 +288,121 @@ describe("Visa applied", () => {
 });
 
 describe("changing a Visa's Status", () => {
-  it("saves it, and the journey follows when the Stage moves", async () => {
-    const refused = { ...APPLIED, stage: "offer", visas: [visa(uid(21), "refused")] };
-    const fetchFn = backend(
-      profile(APPLIED),
-      on("PATCH", `/api/students/${uid(7)}/visas/${uid(21)}/`, refused),
-    );
+  const VISA_URL = `/api/students/${uid(7)}/visas/${uid(21)}/`;
+
+  it("asks first, saying it is final, with the cursor on Cancel", async () => {
+    const fetchFn = backend(profile(APPLIED));
     renderPage();
 
-    await userEvent.selectOptions(
-      within(await visaList()).getByRole("combobox", { name: "Status of Deakin University visa" }),
-      "refused",
+    const asking = await choose("Granted");
+
+    expect(
+      within(asking).getByText(
+        "The Deakin University visa will be Granted. This can't be changed later.",
+      ),
+    ).toBeVisible();
+    expect(within(asking).getByText("A new try is a new visa application.")).toBeVisible();
+    expect(within(asking).getByRole("button", { name: "Cancel" })).toHaveFocus();
+    expect(fetchFn.mock.calls.some(([, init]) => method(init) === "PATCH")).toBe(false);
+  });
+
+  it("says where a refusal takes a Student at Visa", async () => {
+    backend(profile(APPLIED));
+    renderPage();
+
+    const asking = await choose("Refused");
+
+    expect(
+      within(asking).getByText(
+        "A new try is a new visa application. Refused takes the Student back to Offer, or to Counselling if no offers are left.",
+      ),
+    ).toBeVisible();
+  });
+
+  it.each(["Cancel", "Close"])("%s keeps it Applied and sends nothing", async (button) => {
+    const fetchFn = backend(profile(APPLIED));
+    renderPage();
+
+    const asking = await choose("Refused");
+    await userEvent.click(within(asking).getByRole("button", { name: button }));
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    const select = within(await visaList()).getByRole("combobox", { name: STATUS_LIST });
+    expect(select).toHaveValue("applied");
+    expect(select).toHaveFocus();
+    expect(fetchFn.mock.calls.some(([, init]) => method(init) === "PATCH")).toBe(false);
+  });
+
+  it("Escape keeps it Applied too", async () => {
+    const fetchFn = backend(profile(APPLIED));
+    renderPage();
+
+    await choose("Granted");
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(within(await visaList()).getByRole("combobox", { name: STATUS_LIST })).toHaveValue(
+      "applied",
     );
+    expect(fetchFn.mock.calls.some(([, init]) => method(init) === "PATCH")).toBe(false);
+  });
+
+  it("saves it once confirmed, and the journey follows when the Stage moves", async () => {
+    const refused = { ...APPLIED, stage: "offer", visas: [visa(uid(21), "refused")] };
+    const fetchFn = backend(profile(APPLIED), on("PATCH", VISA_URL, refused));
+    renderPage();
+
+    await decide("Refused");
 
     expect(
       await screen.findByText("Deakin University visa: Refused. Stage is now Offer."),
     ).toBeInTheDocument();
     expect(screen.getByRole("list", { name: "Stage: Offer" })).toBeInTheDocument();
-    expect(sentBody(fetchFn, "PATCH", `/api/students/${uid(7)}/visas/${uid(21)}/`)).toEqual({
-      status: "refused",
-    });
+    expect(sentBody(fetchFn, "PATCH", VISA_URL)).toEqual({ status: "refused" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
-  it("says only the Status when the Stage stays, and Granted ticks the whole journey", async () => {
+  it("then shows the Status as a word, with no list, and keeps the cursor on that visa", async () => {
     const saved = {
       ...APPLIED,
       visas: [visa(uid(21), "granted")],
       progress: { percent: 100, next_step: "Visa granted.", is_done: true },
     };
-    backend(profile(APPLIED), on("PATCH", `/api/students/${uid(7)}/visas/${uid(21)}/`, saved));
+    backend(profile(APPLIED), on("PATCH", VISA_URL, saved));
     renderPage();
 
-    await userEvent.selectOptions(
-      within(await visaList()).getByRole("combobox", { name: "Status of Deakin University visa" }),
-      "granted",
-    );
+    await decide("Granted");
 
     expect(await screen.findByText("Deakin University visa: Granted")).toBeInTheDocument();
+    const row = within(await visaList()).getByRole("listitem");
+    expect(within(row).getByText("Granted")).toBeVisible();
+    expect(within(row).queryByRole("combobox")).not.toBeInTheDocument();
+    expect(within(row).getByRole("button", { name: UPLOAD_LETTER })).toHaveFocus();
+  });
+
+  it("shows a visa that is already decided as a word, with no list", async () => {
+    backend(
+      profile({
+        ...AT_VISA,
+        visas: [visa(uid(22), "applied"), visa(uid(21), "refused", "2026-06-02")],
+      }),
+    );
+    renderPage();
+
+    const [waiting, decided] = within(await visaList()).getAllByRole("listitem");
+    if (waiting === undefined || decided === undefined) throw new Error("expected two visas");
+    expect(within(waiting).getByRole("combobox", { name: STATUS_LIST })).toHaveValue("applied");
+    expect(within(decided).getByText("Refused")).toBeVisible();
+    expect(within(decided).queryByRole("combobox")).not.toBeInTheDocument();
   });
 
   it("says a Lost Student's Stage wasn't moved", async () => {
     const lost = { ...APPLIED, stage: "lost", lost_reason: "Moved away." };
     const saved = { ...lost, visas: [visa(uid(21), "refused")] };
-    backend(profile(lost), on("PATCH", `/api/students/${uid(7)}/visas/${uid(21)}/`, saved));
+    backend(profile(lost), on("PATCH", VISA_URL, saved));
     renderPage();
 
-    await userEvent.selectOptions(
-      within(await visaList()).getByRole("combobox", { name: "Status of Deakin University visa" }),
-      "refused",
-    );
+    await decide("Refused");
 
     expect(
       await screen.findByText(
@@ -330,26 +412,51 @@ describe("changing a Visa's Status", () => {
   });
 
   it("says when the change is no longer allowed, and keeps the stored Status", async () => {
+    backend(profile(APPLIED), on("PATCH", VISA_URL, { detail: "Not your Student." }, 403));
+    renderPage();
+
+    await decide("Granted");
+
+    const asking = screen.getByRole("dialog", { name: "Mark this visa as Granted?" });
+    expect(await within(asking).findByRole("alert")).toHaveTextContent(
+      "You can't change this Student any more.",
+    );
+    await userEvent.click(within(asking).getByRole("button", { name: "Cancel" }));
+    expect(within(await visaList()).getByRole("combobox", { name: STATUS_LIST })).toHaveValue(
+      "applied",
+    );
+  });
+
+  it("says the visa is decided when someone else decided it first", async () => {
     backend(
       profile(APPLIED),
       on(
         "PATCH",
-        `/api/students/${uid(7)}/visas/${uid(21)}/`,
-        { detail: "Not your Student." },
-        403,
+        VISA_URL,
+        { detail: "This visa is decided. A new try is a new visa application." },
+        409,
       ),
     );
     renderPage();
-    const select = within(await visaList()).getByRole("combobox", {
-      name: "Status of Deakin University visa",
-    });
 
-    await userEvent.selectOptions(select, "granted");
+    await decide("Refused");
 
-    expect(await screen.findByRole("alert")).toHaveTextContent(
-      "You can't change this Student any more.",
+    const asking = screen.getByRole("dialog", { name: "Mark this visa as Refused?" });
+    expect(await within(asking).findByRole("alert")).toHaveTextContent(
+      "This visa is decided. A new try is a new visa application.",
     );
-    expect(select).toHaveValue("applied");
+  });
+
+  it("shows the API's reason when the status is refused", async () => {
+    backend(
+      profile(APPLIED),
+      on("PATCH", VISA_URL, { status: ["The visa already has this status."] }, 400),
+    );
+    renderPage();
+
+    await decide("Granted");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("The visa already has this status.");
   });
 
   it("refuses an answer that isn't a profile", async () => {
@@ -389,6 +496,24 @@ describe("the visa dates", () => {
     expect(
       within(row).getByRole("button", { name: "Change dates for the Deakin University visa" }),
     ).toBeInTheDocument();
+  });
+
+  it("puts the time beside an AD date, and on its own line under a BS date (ticket 25)", async () => {
+    backend(profile(APPLIED));
+    const shown = renderPage();
+    const add = "Add dates for the Deakin University visa";
+    const rowOf = (dialog: HTMLElement) =>
+      within(dialog).getByLabelText("Medical time").closest("[data-appointment]");
+
+    // An AD date is one box: the time fits on its line.
+    expect(rowOf(await openDates(add))).toHaveClass("phone:grid-cols-2");
+
+    shown.unmount();
+    renderPage({ ...COUNSELLOR, dateDisplay: "BS" });
+    const row = rowOf(await openDates(add));
+    // A BS date is three boxes (day, month, year), so they take the whole line.
+    expect(row).not.toHaveClass("phone:grid-cols-2");
+    expect(row).toHaveClass("grid", "gap-4");
   });
 
   it("books dates: only what changed is sent, then a toast and the card shows them", async () => {
@@ -566,6 +691,12 @@ describe("Upload visa letter", () => {
     return form;
   }
 
+  /** Say yes to the popup that asks before the letter decides the visa. */
+  async function confirmResult(result: "Granted" | "Refused"): Promise<void> {
+    const asking = await screen.findByRole("dialog", { name: `Mark this visa as ${result}?` });
+    await userEvent.click(within(asking).getByRole("button", { name: `Mark as ${result}` }));
+  }
+
   async function openLetter(): Promise<HTMLElement> {
     await userEvent.click(await screen.findByRole("button", { name: UPLOAD }));
     return screen.findByRole("dialog", { name: "Upload the visa letter" });
@@ -604,6 +735,8 @@ describe("Upload visa letter", () => {
     await userEvent.upload(within(dialog).getByLabelText(/The letter/), pdf());
     await userEvent.click(within(dialog).getByRole("radio", { name: "Granted" }));
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    expect(fetchFn.mock.calls.some(([p]) => p === LETTER_URL)).toBe(false);
+    await confirmResult("Granted");
 
     expect(await screen.findByText("Deakin University visa: Granted")).toBeInTheDocument();
     const form = sentForm(fetchFn);
@@ -630,6 +763,7 @@ describe("Upload visa letter", () => {
     await userEvent.upload(within(dialog).getByLabelText(/The letter/), pdf());
     await userEvent.click(within(dialog).getByRole("radio", { name: "Refused" }));
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await confirmResult("Refused");
 
     expect(
       await screen.findByText("Deakin University visa: Refused. Stage is now Offer."),
@@ -661,13 +795,35 @@ describe("Upload visa letter", () => {
     const dialog = await openLetter();
     expect(within(dialog).queryByRole("radio")).not.toBeInTheDocument();
     expect(
-      within(dialog).getByText("The visa stays Granted. To change it, set its status by hand."),
+      within(dialog).getByText("The visa stays Granted. Only the letter is added."),
     ).toBeInTheDocument();
     await userEvent.upload(within(dialog).getByLabelText(/The letter/), pdf());
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
 
     expect(await screen.findByText("Visa letter saved")).toBeInTheDocument();
     expect([...sentForm(fetchFn).keys()]).toEqual(["file"]);
+  });
+
+  it("asks before a letter decides the visa; Cancel keeps the letter and sends nothing", async () => {
+    const fetchFn = backend(profile(APPLIED));
+    renderPage();
+
+    const dialog = await openLetter();
+    await userEvent.upload(within(dialog).getByLabelText(/The letter/), pdf());
+    await userEvent.click(within(dialog).getByRole("radio", { name: "Refused" }));
+    await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    const asking = await screen.findByRole("dialog", { name: "Mark this visa as Refused?" });
+    expect(within(asking).getByRole("button", { name: "Cancel" })).toHaveFocus();
+    await userEvent.click(within(asking).getByRole("button", { name: "Cancel" }));
+
+    expect(screen.queryByRole("dialog", { name: /Mark this visa/ })).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Upload the visa letter" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("radio", { name: "Refused" })).toBeChecked();
+    expect(within(dialog).getByRole("button", { name: "Save" })).toHaveFocus();
+    expect(fetchFn.mock.calls.some(([p]) => p === LETTER_URL)).toBe(false);
+    expect(within(await visaList()).getByRole("combobox", { name: STATUS_LIST })).toHaveValue(
+      "applied",
+    );
   });
 
   it("shows the API's reason under the field it refused", async () => {
@@ -679,8 +835,10 @@ describe("Upload visa letter", () => {
     await userEvent.upload(within(dialog).getByLabelText(/The letter/), pdf());
     await userEvent.click(within(dialog).getByRole("radio", { name: "Granted" }));
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
+    await confirmResult("Granted");
 
     expect(await within(dialog).findByText(message)).toBeVisible();
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
   });
 
   it("closes with Escape and puts focus in the dialog", async () => {
@@ -695,9 +853,9 @@ describe("Upload visa letter", () => {
   });
 });
 
-describe.each(THEME_CASES)("Upload visa letter in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Upload visa letter in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {
@@ -716,5 +874,18 @@ describe.each(THEME_CASES)("Upload visa letter in the $name Theme", ({ config, m
     const dialog = await screen.findByRole("dialog", { name: "Upload the visa letter" });
     expect(within(dialog).getByRole("radio", { name: "Granted" })).toBeInTheDocument();
     expect(within(dialog).getByRole("radio", { name: "Refused" })).toBeInTheDocument();
+  });
+
+  it("asks before a visa is decided, and then names its Status in words", async () => {
+    const saved = { ...APPLIED, visas: [visa(uid(21), "granted")] };
+    backend(profile(APPLIED), on("PATCH", `/api/students/${uid(7)}/visas/${uid(21)}/`, saved));
+    renderPage();
+
+    const asking = await choose("Granted");
+    expect(within(asking).getByRole("button", { name: "Mark as Granted" })).toBeVisible();
+    await userEvent.click(within(asking).getByRole("button", { name: "Mark as Granted" }));
+
+    const row = within(await visaList()).getByRole("listitem");
+    expect(await within(row).findByText("Granted")).toBeVisible();
   });
 });

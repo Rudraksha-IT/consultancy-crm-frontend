@@ -110,7 +110,7 @@ describe("OfficeLoginForm", () => {
       expect(await screen.findByText("JBSW Y3DP EHPK 3PXP")).toBeInTheDocument();
     });
 
-    it("goes back to the password when the sign-in has to start again", async () => {
+    it("goes back to the password when the login has to start again", async () => {
       backend(
         on("POST", "/api/auth/login/", { two_factor: "verify" }),
         on(

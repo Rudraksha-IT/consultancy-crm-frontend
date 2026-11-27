@@ -15,6 +15,7 @@ import { LABELS } from "@/constants/messages";
 import { MY_SETTINGS_TEXT as TEXT } from "@/constants/mySettings";
 import { ROLE_LABELS } from "@/constants/roles";
 import { InvalidFieldsError, saveMyDetails, type MyDetails, type MyDetailsField } from "@/lib/api";
+import { LABEL_CLASSES } from "@/components/ui/Field";
 
 type MyDetailsSectionProps = {
   details: MyDetails;
@@ -152,8 +153,8 @@ function DetailsForm({ details, onCancel, onSaved }: DetailsFormProps) {
           />
         </div>
         <div className="grid gap-1">
-          <p className="text-secondary text-ink font-semibold">{TEXT.workEmail}</p>
-          <p className="text-ink-2 wrap-anywhere">{TEXT.setByAdmin(details.email)}</p>
+          <p className={LABEL_CLASSES}>{TEXT.workEmail}</p>
+          <p className="text-ink wrap-anywhere">{TEXT.setByAdmin(details.email)}</p>
         </div>
         {problem !== null && <Banner tone="problem">{problem}</Banner>}
         <div className="flex flex-wrap justify-end gap-3">

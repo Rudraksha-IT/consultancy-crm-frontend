@@ -15,14 +15,14 @@ export type VisaListState =
  */
 export function useVisaList(filters: VisaFilters, page: number, version: number): VisaListState {
   const [list, setList] = useState<VisaListState>({ status: "loading" });
-  const { status, country, intake, counsellor, appointment, sort } = filters;
+  const { search, status, country, intake, counsellor, appointment, sort } = filters;
 
   useEffect(() => {
     let isCancelled = false;
     async function load(): Promise<void> {
       try {
         const found = await fetchVisas(
-          { status, country, intake, counsellor, appointment, sort },
+          { search, status, country, intake, counsellor, appointment, sort },
           page,
           todayIso(),
         );
@@ -35,7 +35,7 @@ export function useVisaList(filters: VisaFilters, page: number, version: number)
     return () => {
       isCancelled = true;
     };
-  }, [status, country, intake, counsellor, appointment, sort, page, version]);
+  }, [search, status, country, intake, counsellor, appointment, sort, page, version]);
 
   return list;
 }

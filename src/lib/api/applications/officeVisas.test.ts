@@ -82,6 +82,19 @@ describe("fetchVisas", () => {
     await expect(fetchVisas(defaultVisaFilters(Role.Admin), 1, TODAY, fetchFn)).rejects.toThrow();
   });
 
+  it("asks for a search as `q` (ticket 24)", async () => {
+    const fetchFn = answering({ count: 0, page: 1, page_size: 25, results: [] });
+
+    await fetchVisas(
+      { ...defaultVisaFilters(Role.Admin), search: "Deakin Uni" },
+      1,
+      TODAY,
+      fetchFn,
+    );
+
+    expect(fetchFn.mock.calls[0]?.[0]).toBe("/api/visas/?q=Deakin+Uni");
+  });
+
   it("fails when the API refuses", async () => {
     const fetchFn = answering({ detail: "Teachers can't see Students." }, 403);
 

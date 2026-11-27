@@ -2,22 +2,15 @@
 
 import { useEffect, useState } from "react";
 
-import { useStoredValue } from "@/hooks/useStoredValue";
-
-const COLLAPSED_KEY = "crm.sidebar-collapsed";
-
 export type SidebarState = {
-  /** Above 1024px: shown as an 80px icon strip. The browser remembers it. */
-  isCollapsed: boolean;
-  setIsCollapsed: (isCollapsed: boolean) => void;
   /** At 1024px and below: the slide-out menu is open. */
   isDrawerOpen: boolean;
   openDrawer: () => void;
   closeDrawer: () => void;
 };
 
+/** The slide-out menu at 1024px and below; above it the side menu is always there. */
 export function useSidebar(): SidebarState {
-  const [collapsed, storeCollapsed] = useStoredValue(COLLAPSED_KEY);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -32,10 +25,6 @@ export function useSidebar(): SidebarState {
   }, [isDrawerOpen]);
 
   return {
-    isCollapsed: collapsed === "true",
-    setIsCollapsed: (isCollapsed) => {
-      storeCollapsed(String(isCollapsed));
-    },
     isDrawerOpen,
     openDrawer: () => {
       setIsDrawerOpen(true);

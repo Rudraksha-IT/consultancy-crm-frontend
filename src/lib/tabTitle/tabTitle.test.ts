@@ -28,7 +28,7 @@ describe("the browser tab's title on an office's address (first live fixes, tick
     ["/reports", "Reports"],
     ["/configuration", "Configuration"],
     [`/configuration/universities/${uid(1)}/edit`, "Configuration"],
-    ["/clock", "My working hours"],
+    ["/clock", "Working hours"],
     ["/settings", "My settings"],
     ["/settings/progress", "My progress"],
     ["/login", "Log in"],

@@ -128,7 +128,7 @@ describe("a tab strip keeps the chosen tab in view", () => {
       "max-phone:w-full",
       "max-phone:overflow-x-auto",
     );
-    expect(screen.getByRole("button", { name: "Student fees" })).toHaveClass("max-phone:grow");
+    expect(screen.getByRole("button", { name: "Student fees" })).toHaveClass("max-phone:shrink-0");
   });
 
   it("does the same for Tabs", () => {

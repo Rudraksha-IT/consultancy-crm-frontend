@@ -3,7 +3,9 @@
 import clsx from "clsx";
 import { useRef } from "react";
 
+import { ChosenLine } from "./Tabs";
 import { useChosenInView } from "./useChosenInView";
+import { useMarkerSlide, useSwapFade, whatFollows } from "./useMovement";
 
 type SegmentedOption<Value extends string> = {
   value: Value;
@@ -37,13 +39,16 @@ export function SegmentedControl<Value extends string>({
 }: SegmentedControlProps<Value>) {
   const stripRef = useRef<HTMLDivElement>(null);
   useChosenInView(stripRef, value, CHOSEN);
+  // The underline slides to the choice and what comes after the strip fades in (Movement).
+  useMarkerSlide(stripRef, value);
+  useSwapFade(() => whatFollows(stripRef.current), value);
   return (
     <div
       ref={stripRef}
       role="group"
       aria-label={label}
       data-strip=""
-      className="rounded-control bg-fill-2 max-phone:flex max-phone:w-full max-phone:flex-nowrap max-phone:overflow-x-auto inline-flex flex-wrap gap-1 justify-self-start p-1"
+      className="border-rule max-phone:flex max-phone:w-full max-phone:flex-nowrap max-phone:overflow-x-auto inline-flex gap-4.5 justify-self-start border-b"
     >
       {options.map((option) => (
         <button
@@ -54,8 +59,8 @@ export function SegmentedControl<Value extends string>({
             onChange(option.value);
           }}
           className={clsx(
-            "rounded-control text-secondary text-ink-2 max-phone:grow max-phone:shrink-0 max-phone:px-3.5 cursor-pointer px-4.5 font-semibold whitespace-nowrap",
-            "aria-pressed:bg-paper aria-pressed:text-ink aria-pressed:shadow-raise",
+            "text-secondary text-ink-3 hover:text-ink max-phone:shrink-0 relative -mb-px cursor-pointer border-b-2 border-transparent font-medium whitespace-nowrap",
+            "aria-pressed:text-ink",
             size === "lg" ? "min-h-control-lg" : "min-h-control",
           )}
         >
@@ -65,12 +70,13 @@ export function SegmentedControl<Value extends string>({
               <span className="sr-only">{`, ${String(option.count)}`}</span>
               <span
                 aria-hidden="true"
-                className="rounded-pill bg-fill-2 text-small ml-2 inline-block min-w-6 px-2 text-center leading-6 tabular-nums"
+                className="text-small text-ink-3 ml-1.5 inline-block tabular-nums"
               >
                 {option.count}
               </span>
             </>
           )}
+          {option.value === value && <ChosenLine />}
         </button>
       ))}
     </div>

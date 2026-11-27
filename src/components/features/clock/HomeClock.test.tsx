@@ -7,7 +7,6 @@ import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import { SESSION_TEXT } from "@/constants/session";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 
@@ -18,7 +17,6 @@ const COUNSELLOR: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const CLOCK_OFF: StaffContext = { ...COUNSELLOR, modules: ["students"] };
@@ -66,7 +64,7 @@ afterEach(() => {
 });
 
 describe("HomeClock", () => {
-  it("is beside the greeting, not clocked in, on the office network, with a link to my month", async () => {
+  it("is beside the greeting, not clocked in, on the office network", async () => {
     backend(on("GET", CLOCK, NOT_IN));
 
     renderGreeting();
@@ -76,19 +74,47 @@ describe("HomeClock", () => {
     expect(within(clock).getByText("Not clocked in")).toBeInTheDocument();
     expect(within(clock).getByText("Office network")).toBeInTheDocument();
     expect(within(clock).getByRole("button", { name: "Clock in" })).toBeEnabled();
-    expect(
-      within(clock).getByRole("link", { name: "My working hours this month" }),
-    ).toHaveAttribute("href", "/clock");
   });
 
-  it("moves the button under the words on a narrow screen, never squeezing them (issue 91)", async () => {
+  it("only clocks in and out: no link to the month, no Work from home (UI revamp 07)", async () => {
     backend(on("GET", CLOCK, NOT_IN));
 
     renderGreeting();
     const clock = await clockRegion();
 
+    expect(within(clock).queryByRole("link")).toBeNull();
+    expect(within(clock).getAllByRole("button")).toHaveLength(1);
+    expect(within(clock).queryByRole("button", { name: "Work from home" })).toBeNull();
+  });
+
+  it("on phones is a rounded box with a compact button under the words, not a wide bar", async () => {
+    backend(on("GET", CLOCK, NOT_IN));
+
+    renderGreeting();
+    const clock = await clockRegion();
+
+    expect(clock).toHaveClass("max-phone:rounded-clock", "max-phone:grid");
     const words = within(clock).getByText("Not clocked in").parentElement;
-    expect(words).toHaveClass("basis-48", "flex-1", "min-w-0");
+    expect(words).toHaveClass("max-phone:col-start-2", "max-phone:row-start-1");
+    const button = within(clock).getByRole("button", { name: "Clock in" });
+    expect(button).toHaveClass("min-h-control-sm", "text-button-sm");
+    expect(button.parentElement).toHaveClass(
+      "max-phone:col-start-2",
+      "max-phone:row-start-2",
+      "max-phone:justify-self-start",
+      "*:rounded-pill",
+    );
+  });
+
+  it("keeps the button beside the words when there is room, and wraps it under them before squeezing them (issue 91)", async () => {
+    backend(on("GET", CLOCK, NOT_IN));
+
+    renderGreeting();
+    const clock = await clockRegion();
+
+    expect(clock).toHaveClass("flex-wrap");
+    const words = within(clock).getByText("Not clocked in").parentElement;
+    expect(words).toHaveClass("basis-auto", "flex-1", "min-w-0");
   });
 
   it("shows the time since clocking in from the server's clock, never the computer's", async () => {
@@ -286,40 +312,6 @@ describe("HomeClock", () => {
     const clock = await clockRegion();
 
     expect(within(clock).getByText("Working from home today")).toBeInTheDocument();
-  });
-
-  it("Work from home beside the clock asks for dates", async () => {
-    const user = userEvent.setup();
-    const fetchFn = backend(
-      on("GET", CLOCK, NOT_IN),
-      on(
-        "POST",
-        "/api/clock/work-from-home/",
-        {
-          id: uid(7),
-          staff_id: uid(3),
-          starts_on: "2026-11-05",
-          ends_on: null,
-          reason: "Plumber",
-          status: "waiting",
-          set_directly: false,
-          asked_by: "Bikash Thapa",
-          asked_at: NOW,
-          answered_by: null,
-          answered_at: null,
-        },
-        201,
-      ),
-    );
-    renderGreeting();
-
-    await user.click(within(await clockRegion()).getByRole("button", { name: "Work from home" }));
-    const dialog = screen.getByRole("dialog", { name: "Ask to work from home" });
-    await user.type(within(dialog).getByLabelText("Reason"), "Plumber");
-    await user.click(within(dialog).getByRole("button", { name: "Send request" }));
-
-    expect(await screen.findByText("Request sent")).toBeInTheDocument();
-    expect(callsTo(fetchFn, "POST", "/api/clock/work-from-home/")).toHaveLength(1);
   });
 
   it("off the office network, the dialog offers to ask to work from home", async () => {

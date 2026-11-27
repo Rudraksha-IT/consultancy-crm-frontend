@@ -11,7 +11,7 @@ import {
   DOCUMENT_TEXT,
   DocumentState,
 } from "@/constants/documents";
-import type { BinTarget, ChecklistItem, DocumentLinkedTo, StoredDocument } from "@/lib/api";
+import type { ChecklistItem, DocumentLinkedTo, StoredDocument } from "@/lib/api";
 import { isZipFileName } from "@/lib/documents";
 
 import { BinnedDocuments, BinnedFileItems, type BinViewer } from "./ChecklistBin";
@@ -53,7 +53,7 @@ type DocumentChecklistProps = {
   onReject: (item: CheckedItem) => void;
   /** Take a type asked for this Student alone off the checklist ("Not needed"), after asking. */
   onNotNeeded?: (documentType: ChecklistItem["documentType"]) => void;
-  /** Delete a Document or one of its files, after asking: to the Bin, or for good by an Admin. */
+  /** Delete a Document, after asking which files: to the Bin, or for good by an Admin. */
   onDelete: (deleting: Deleting) => void;
   /** Who is looking, for what is in the Bin (issue 79). */
   bin: BinViewer;
@@ -61,8 +61,14 @@ type DocumentChecklistProps = {
   emailExamples?: { firstName: string; onEmail: (item: ChecklistItem) => void } | undefined;
 };
 
-/** A Document, or one of its files, being deleted, with the name the dialog shows. */
-export type Deleting = { target: BinTarget; name: string };
+/**
+ * The Document being deleted, with the name the dialog shows and the type whose row it is on
+ * (UI revamp 11: one Delete per Document; the dialog asks which of its files go).
+ */
+export type Deleting = { documentId: RecordId; documentTypeId: RecordId; name: string };
+
+/** Marks a type's row with its id, so the cursor can come back to it (design-system rule 8). */
+export const ROW_OF_TYPE = "data-document-type";
 
 /** An item with a Document, to check. */
 export type CheckedItem = { documentId: RecordId; typeName: string };
@@ -113,23 +119,20 @@ function ItemExample({ item, emailExamples }: Pick<ItemActionsProps, "item" | "e
 
 /** One type: its state in words, what it is for, its files and why it was rejected. */
 function ChecklistRow(props: ItemActionsProps) {
-  const { item, canChange, onShow, onDelete, bin } = props;
+  const { item, canChange, onShow, bin } = props;
   const { document } = item;
   const typeName = item.documentType.name;
   return (
-    <li className="tablet:grid-cols-[auto_minmax(0,1fr)_auto] grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 px-6 py-5">
+    <li
+      {...{ [ROW_OF_TYPE]: item.documentType.id }}
+      className="tablet:grid-cols-[auto_minmax(0,1fr)_auto] px-gutter grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-4 gap-y-3 py-5"
+    >
       <Tick state={item.state} />
       <div className="grid min-w-0 gap-1">
         <ItemName item={item} />
         <StateLine item={item} />
         {document !== null && (
-          <FileList
-            document={document}
-            typeName={typeName}
-            onShow={onShow}
-            onDelete={canChange ? onDelete : null}
-            bin={bin}
-          />
+          <FileList document={document} typeName={typeName} onShow={onShow} bin={bin} />
         )}
         {item.state === DocumentState.Rejected && <RejectionReason document={document} />}
         <BinnedDocuments {...bin} typeName={typeName} documents={item.inBin} />
@@ -183,17 +186,15 @@ type FileListProps = {
   document: StoredDocument;
   typeName: string;
   onShow: DocumentChecklistProps["onShow"];
-  /** Delete one file; offered only while the Document has more than one in use. */
-  onDelete: DocumentChecklistProps["onDelete"] | null;
   bin: BinViewer;
 };
 
 /**
  * Every file of the Document, oldest first: its name opens it, the icon beside it saves it. Its
- * files in the Bin follow, by name only (issue 79).
+ * files in the Bin follow, by name only (issue 79). No file has a delete of its own: the
+ * Document's one Delete asks which files go (UI revamp 11).
  */
-function FileList({ document, typeName, onShow, onDelete, bin }: FileListProps) {
-  const canDeleteOne = onDelete !== null && document.files.length > 1;
+function FileList({ document, typeName, onShow, bin }: FileListProps) {
   return (
     <ul aria-label={DOCUMENT_TEXT.filesOf(typeName)} className="text-secondary grid">
       {document.files.map((file) => (
@@ -210,18 +211,6 @@ function FileList({ document, typeName, onShow, onDelete, bin }: FileListProps) 
               label={DOCUMENT_TEXT.download(file.fileName)}
               onClick={() => {
                 onShow(document.id, file.id, "download");
-              }}
-            />
-          )}
-          {canDeleteOne && (
-            <IconButton
-              icon="trash"
-              label={BIN_TEXT.deleteFile(file.fileName)}
-              onClick={() => {
-                onDelete({
-                  target: { documentId: document.id, fileId: file.id },
-                  name: file.fileName,
-                });
               }}
             />
           )}
@@ -303,7 +292,10 @@ function StateActions(props: ItemActionsProps) {
   );
 }
 
-/** "Delete" the whole Document: to the Bin, or for good by an Admin (issue 79). */
+/**
+ * The Document's one "Delete": to the Bin, or for good by an Admin (issue 79). With several
+ * files its dialog asks which ones go (UI revamp 11).
+ */
 function DeleteButton({ item, onDelete, documentId }: ItemActionsProps & { documentId: RecordId }) {
   const name = item.documentType.name;
   return (
@@ -311,7 +303,7 @@ function DeleteButton({ item, onDelete, documentId }: ItemActionsProps & { docum
       variant="ghost"
       icon="trash"
       onClick={() => {
-        onDelete({ target: { documentId, fileId: null }, name });
+        onDelete({ documentId, documentTypeId: item.documentType.id, name });
       }}
     >
       <span aria-hidden="true">{BIN_TEXT.delete}</span>

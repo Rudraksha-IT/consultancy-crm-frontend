@@ -4,20 +4,15 @@
  *
  * - Phones and tablets: one finger from the left edge pulls the slide-out menu open, a finger on
  *   the open menu pushes it shut; it follows the finger and settles on the nearer side.
- * - Laptops: one two-finger sideways swipe on the touchpad collapses the sidebar (left) or opens
- *   it (right), once per gesture. A mouse wheel never does (a best guess, so when unsure, nothing).
+ * - Computers (above 1024 px): nothing. A sideways touchpad swipe is the browser's own back and
+ *   forward, and the app never takes it (UI revamp, ticket 19).
  */
-
-import { isMouseNotch, isPixelOrLineStep, wheelPixels } from "./wheel";
 
 /** How close to the left edge (px) a finger must start to pull the shut menu open. */
 export const EDGE_ZONE = 24;
 
 /** How far (px) a finger moves before its direction is decided. */
 const DIRECTION_SLOP = 8;
-
-/** How far (px) a touchpad gesture moves sideways before it switches the sidebar. */
-export const TOUCHPAD_DISTANCE = 50;
 
 /** A pause (ms) between wheel steps longer than this ends one touchpad gesture. */
 export const GESTURE_GAP_MS = 250;
@@ -72,85 +67,4 @@ export function drawerShownWidth({ width, wasOpen, dx }: DrawerDrag): number {
 /** Whether the menu ends up open when the finger lets go: past halfway it goes, else it snaps back. */
 export function drawerOpensOnRelease(drag: DrawerDrag): boolean {
   return drawerShownWidth(drag) > drag.width / 2;
-}
-
-/** One wheel event, with what the page knows when it arrives. */
-export type WheelStep = {
-  deltaX: number;
-  deltaY: number;
-  deltaMode: number;
-  /** Milliseconds, as on the event. */
-  timeStamp: number;
-  shiftKey: boolean;
-  /** Set by browsers for pinch-to-zoom on a touchpad. */
-  ctrlKey: boolean;
-  isNarrow: boolean;
-  startsInSidewaysScroller: boolean;
-  isDialogOpen: boolean;
-};
-
-/** The touchpad gesture so far. */
-export type TouchpadSwipe = {
-  /** Sideways distance so far (px; to the left is positive, as wheel events report it). */
-  total: number;
-  lastAt: number;
-  /** The sidebar has already been switched in this gesture. */
-  isDone: boolean;
-  /** The gesture is not for the sidebar (it began in a wide table, over a dialog, or a mouse). */
-  isIgnored: boolean;
-};
-
-export const NO_TOUCHPAD_SWIPE: TouchpadSwipe = {
-  total: 0,
-  lastAt: Number.NEGATIVE_INFINITY,
-  isDone: false,
-  isIgnored: false,
-};
-
-export type TouchpadAnswer = {
-  swipe: TouchpadSwipe;
-  /** true: collapse to the icon strip; false: open it; null: leave it. */
-  collapse: boolean | null;
-  /** Stop the browser's own swipe back/forward for this step. */
-  blocksBrowser: boolean;
-};
-
-function isSidewaysTouchpadStep(step: WheelStep): boolean {
-  if (step.isNarrow || step.ctrlKey) return false;
-  return Math.abs(step.deltaX) > Math.abs(step.deltaY);
-}
-
-function looksLikeMouseWheel(step: WheelStep): boolean {
-  // Shift turns a mouse wheel sideways; a touchpad sends no Shift.
-  return step.shiftKey || isMouseNotch(step.deltaX, step.deltaMode);
-}
-
-function isIgnoredGesture(step: WheelStep): boolean {
-  const isPageStep = !isPixelOrLineStep(step.deltaMode);
-  return (
-    step.startsInSidewaysScroller || step.isDialogOpen || isPageStep || looksLikeMouseWheel(step)
-  );
-}
-
-function continueGesture(swipe: TouchpadSwipe, step: WheelStep): TouchpadSwipe {
-  if (step.timeStamp - swipe.lastAt <= GESTURE_GAP_MS) return { ...swipe, lastAt: step.timeStamp };
-  return { total: 0, lastAt: step.timeStamp, isDone: false, isIgnored: isIgnoredGesture(step) };
-}
-
-/**
- * Reads one wheel step of a touchpad gesture. The gesture's first step decides whether it is for
- * the sidebar at all; once it has switched the sidebar, the rest of the gesture does nothing more.
- */
-export function readTouchpadStep(swipe: TouchpadSwipe, step: WheelStep): TouchpadAnswer {
-  if (!isSidewaysTouchpadStep(step)) return { swipe, collapse: null, blocksBrowser: false };
-  const current = continueGesture(swipe, step);
-  if (current.isIgnored) return { swipe: current, collapse: null, blocksBrowser: false };
-  if (current.isDone) return { swipe: current, collapse: null, blocksBrowser: true };
-  const total = current.total + wheelPixels(step.deltaX, step.deltaMode);
-  const isDone = Math.abs(total) > TOUCHPAD_DISTANCE;
-  return {
-    swipe: { ...current, total, isDone },
-    collapse: isDone ? total > 0 : null,
-    blocksBrowser: true,
-  };
 }

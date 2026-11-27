@@ -1,6 +1,5 @@
 /** Colour arithmetic on six-digit hex colours, used only by the theme function. */
 
-const HEX_COLOUR = /^#[0-9a-f]{6}$/i;
 const CHANNEL_MAX = 255;
 const HEX_RADIX = 16;
 const CHANNEL_OFFSETS = [1, 3, 5] as const;
@@ -17,10 +16,6 @@ const READABLE_STEP = 0.08;
 const READABLE_MAX_STEPS = 40;
 
 type Rgb = readonly [number, number, number];
-
-export function isHexColour(value: unknown): value is string {
-  return typeof value === "string" && HEX_COLOUR.test(value);
-}
 
 function toRgb(hex: string): Rgb {
   const [red, green, blue] = CHANNEL_OFFSETS.map((offset) =>

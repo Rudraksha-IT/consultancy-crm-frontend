@@ -4,6 +4,7 @@ import { useCallback, useState, type ReactNode } from "react";
 
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
 import { ButtonLink } from "@/components/ui/ButtonLink";
+import { ChartViewsProvider } from "@/components/ui/ChartViews";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
@@ -76,24 +77,26 @@ function Reports({ modules }: { modules: readonly Module[] }) {
   const [range, setRange] = useState<DateRange>(() => rangeEndingOn(todayIso()));
 
   return (
-    <div className="grid gap-8">
-      <PageHeader
-        title={REPORTS_TEXT.title}
-        subtitle={REPORTS_TEXT.intro}
-        actions={
-          MONTHLY_TABS.includes(tab) ? (
-            <MonthsSwitch months={months} onChange={setMonths} />
-          ) : undefined
-        }
-      />
-      <SegmentedControl
-        label={REPORTS_TEXT.chooseReport}
-        options={tabs}
-        value={tab}
-        onChange={setTab}
-      />
-      <ChosenReport tab={tab} months={months} range={range} onRange={setRange} />
-    </div>
+    <ChartViewsProvider>
+      <div className="grid gap-8">
+        <PageHeader
+          title={REPORTS_TEXT.title}
+          subtitle={REPORTS_TEXT.intro}
+          actions={
+            MONTHLY_TABS.includes(tab) ? (
+              <MonthsSwitch months={months} onChange={setMonths} />
+            ) : undefined
+          }
+        />
+        <SegmentedControl
+          label={REPORTS_TEXT.chooseReport}
+          options={tabs}
+          value={tab}
+          onChange={setTab}
+        />
+        <ChosenReport tab={tab} months={months} range={range} onRange={setRange} />
+      </div>
+    </ChartViewsProvider>
   );
 }
 

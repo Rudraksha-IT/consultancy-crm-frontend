@@ -12,6 +12,7 @@ import {
 } from "react";
 
 import { Icon } from "./Icon";
+import { IconButton } from "./IconButton";
 import { useChosenInView } from "./useChosenInView";
 import { usePhoneWidth } from "./usePhoneWidth";
 
@@ -68,6 +69,12 @@ type SectionMenuProps = {
   keepsAllMounted?: boolean;
   /** Shown under the section, and under the list at phone width (Edit details' Save bar). */
   footer?: ReactNode;
+  /**
+   * The page's title row, drawn by the menu so that at phone width the way back is an arrow on
+   * the title's line, left of it (owner, 2026-11-27), given here as `back` (null when the list
+   * is shown). Without it, the way back is a line of its own above the section.
+   */
+  header?: (back: ReactNode) => ReactNode;
 };
 
 const CHOSEN = '[aria-current="true"]';
@@ -87,61 +94,84 @@ export function SectionMenu({
   choice,
   keepsAllMounted,
   footer,
+  header,
 }: SectionMenuProps) {
   const isPhone = usePhoneWidth();
   const focus = useMenuFocus(choice.isOpen);
   const current = shownSection(sections, choice.current);
-  const view = menuView(isPhone, choice.isOpen);
+  const view = menuView(isPhone, choice.isOpen, header !== undefined);
   useChosenInView(focus.stripRef, current, CHOSEN);
 
   return (
-    <div className="wide:grid-cols-[var(--spacing-settings-menu)_minmax(0,1fr)] max-phone:gap-4 grid grid-cols-1 items-start gap-8">
-      {view.showsMenu && (
-        <SectionNav
-          label={label}
-          sections={sections}
-          current={current}
-          isList={isPhone}
-          stripRef={focus.stripRef}
-          onChoose={(id) => {
-            if (isPhone) focus.next("back");
-            choice.choose(id);
+    <>
+      {header !== undefined && (
+        <MenuHeader
+          header={header}
+          backLabel={view.showsBackArrow ? backLabel : null}
+          buttonRef={focus.backRef}
+          onBack={() => {
+            focus.next("item");
+            choice.showList();
           }}
         />
       )}
-      <div className="grid min-w-0 gap-8">
-        {view.showsBack && (
-          <BackButton
-            label={backLabel}
-            buttonRef={focus.backRef}
-            onBack={() => {
-              focus.next("item");
-              choice.showList();
+      <div className="wide:grid-cols-[var(--spacing-settings-menu)_minmax(0,1fr)] max-phone:gap-4 grid grid-cols-1 items-start gap-8">
+        {view.showsMenu && (
+          <SectionNav
+            label={label}
+            sections={sections}
+            current={current}
+            isList={isPhone}
+            stripRef={focus.stripRef}
+            onChoose={(id) => {
+              if (isPhone) focus.next("back");
+              choice.choose(id);
             }}
           />
         )}
-        {sections.map((section) => (
-          <SectionBox
-            key={section.id}
-            section={section}
-            isShown={view.showsSection && section.id === current}
-            keepsMounted={keepsAllMounted}
-          />
-        ))}
-        {footer}
+        <div className="grid min-w-0 gap-8">
+          {view.showsBackLine && (
+            <BackButton
+              label={backLabel}
+              buttonRef={focus.backRef}
+              onBack={() => {
+                focus.next("item");
+                choice.showList();
+              }}
+            />
+          )}
+          {sections.map((section) => (
+            <SectionBox
+              key={section.id}
+              section={section}
+              isShown={view.showsSection && section.id === current}
+              keepsMounted={keepsAllMounted}
+            />
+          ))}
+          {footer}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
-/** What is drawn: above phone width the menu and the section; at phone width one or the other. */
-function menuView(isPhone: boolean, isOpen: boolean) {
+/**
+ * What is drawn: above phone width the menu and the section; at phone width one or the other,
+ * with a way back while a section is open: an arrow beside the title when the menu draws the
+ * page's title, otherwise a line of its own.
+ */
+function menuView(isPhone: boolean, isOpen: boolean, hasHeader: boolean) {
   const isListShown = isPhone && !isOpen;
   return {
     showsMenu: !isPhone || isListShown,
-    showsBack: isPhone && isOpen,
+    ...backView(isPhone && isOpen, hasHeader),
     showsSection: !isListShown,
   };
+}
+
+/** Where the way back goes while a section is open at phone width. */
+function backView(showsBack: boolean, hasHeader: boolean) {
+  return { showsBackArrow: showsBack && hasHeader, showsBackLine: showsBack && !hasHeader };
 }
 
 /** The chosen section, or the first one when the chosen one is gone (a Module switched off). */
@@ -216,6 +246,23 @@ function SectionNav({ label, sections, current, isList, stripRef, onChoose }: Se
   );
 }
 
+type MenuHeaderProps = {
+  header: (back: ReactNode) => ReactNode;
+  /** The way back's name while a section is open at phone width; null while it is not. */
+  backLabel: string | null;
+  buttonRef: RefObject<HTMLButtonElement | null>;
+  onBack: () => void;
+};
+
+/** The page's title row, with the way back as an arrow left of the title when there is one. */
+function MenuHeader({ header, backLabel, buttonRef, onBack }: MenuHeaderProps) {
+  const back =
+    backLabel === null ? null : (
+      <IconButton icon="left" label={backLabel} ref={buttonRef} onClick={onBack} />
+    );
+  return header(back);
+}
+
 type BackButtonProps = {
   label: string;
   buttonRef: RefObject<HTMLButtonElement | null>;
@@ -269,7 +316,7 @@ function MenuItem({ title, isCurrent, isListRow, onChoose }: MenuItemProps) {
       className={clsx(
         "relative flex items-center text-left",
         isListRow
-          ? "min-h-row border-rule text-ink active:bg-fill justify-between gap-3 border-b pr-3 pl-4 font-medium last:border-b-0"
+          ? "min-h-row border-rule text-name text-ink active:bg-fill justify-between gap-3 border-b pr-3 pl-4 font-medium last:border-b-0"
           : [
               "min-h-control rounded-control flex-none px-3.5 font-semibold whitespace-nowrap",
               isCurrent

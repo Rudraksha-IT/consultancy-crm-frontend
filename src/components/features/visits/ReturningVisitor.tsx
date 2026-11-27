@@ -186,11 +186,7 @@ function ProgressBlock({ name, progress }: { name: string; progress: StudentProg
   return (
     <div className="grid gap-2">
       <b>{STAGE_LABELS[progress.stage]}</b>
-      <ProgressBar
-        label={VISIT_TEXT.progressLabel(name)}
-        value={progress.percent}
-        tone={progress.isDone ? "good" : "accent"}
-      />
+      <ProgressBar label={VISIT_TEXT.progressLabel(name)} value={progress.percent} />
       <p className="text-ink-2">
         {progress.isDone ? HOME_TEXT.done(progress.nextStep) : HOME_TEXT.next(progress.nextStep)}
       </p>

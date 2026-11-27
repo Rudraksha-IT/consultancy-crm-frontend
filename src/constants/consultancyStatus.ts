@@ -117,7 +117,7 @@ export const SETUP_TEXT = {
   tryingAgain: "Starting again…",
   setupStartedAgain: (name: string) => `Setting up ${name} again`,
   tryAgainFailed: "We couldn't start the setup again. Please try again.",
-  notReadyHint: "Its features, colours and status can be changed once it is set up.",
+  notReadyHint: "Its features and status can be changed once it is set up.",
   adminsAfterSetup: "Once it is set up, add its Admins with Add admin on its row.",
   setupStarted: (name: string) => `Setting up ${name}. It will be ready in a minute or two.`,
 } as const;

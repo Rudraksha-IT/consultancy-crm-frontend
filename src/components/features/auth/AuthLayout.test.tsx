@@ -3,8 +3,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { PlatformBrand } from "@/components/features/platform/PlatformBrand";
-import { buildThemeTokens, DEFAULT_THEME } from "@/lib/theme";
+import { buildThemeTokens } from "@/lib/theme";
 import { resetTheme } from "@/test/themes";
+
+import { copyrightLine, yearInNepal } from "@/lib/brand/copyright";
 
 import { AuthLayout } from "./AuthLayout";
 
@@ -22,6 +24,18 @@ describe("AuthLayout", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Log in" })).toBeInTheDocument();
     expect(screen.getByText("Use your work email and password.")).toBeInTheDocument();
     expect(screen.getByText("Form")).toBeInTheDocument();
+  });
+
+  it("ends with the copyright line for this year, under the panel (owner)", () => {
+    render(
+      <AuthLayout brand={<p>Brand</p>} title="Log in" intro="Intro">
+        <p>Form</p>
+      </AuthLayout>,
+    );
+
+    expect(screen.getByRole("contentinfo")).toHaveTextContent(
+      copyrightLine(yearInNepal(new Date())),
+    );
   });
 });
 
@@ -59,13 +73,13 @@ describe("PlatformBrand", () => {
     expect(screen.getByText(LABELS.staffLogin)).toBeInTheDocument();
   });
 
-  it("shows the product's name in the default Theme", () => {
+  it("shows the product's name in the Porcelain theme", () => {
     render(<PlatformBrand />);
 
     expect(screen.getByRole("heading", { level: 2, name: LABELS.productName })).toBeInTheDocument();
     expect(screen.queryByText(LABELS.platform)).not.toBeInTheDocument();
     expect(document.documentElement.style.getPropertyValue("--accent")).toBe(
-      buildThemeTokens(DEFAULT_THEME).light.accent,
+      buildThemeTokens().light.accent,
     );
   });
 });

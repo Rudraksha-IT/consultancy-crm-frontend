@@ -1,5 +1,4 @@
 import { uid } from "@/test/ids";
-import { DEFAULT_THEME } from "@/lib/theme";
 
 import { InvalidFieldsError } from "../core/errors";
 import {
@@ -42,7 +41,6 @@ const CONTEXT = {
   },
   modules: ["students"],
   date_display: "AD",
-  theme: DEFAULT_THEME,
   support_access: { platform_admin_name: "Ramesh", platform_host: testHost("admin") },
 };
 

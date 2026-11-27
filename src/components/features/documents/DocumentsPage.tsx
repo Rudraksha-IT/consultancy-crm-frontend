@@ -22,6 +22,7 @@ import type { PaperworkCounts, PaperworkPage, PaperworkRow } from "@/lib/api";
 
 import { BinTab } from "./BinTab";
 import { ChecklistDialog } from "./ChecklistDialog";
+import { DocumentPillKey } from "./DocumentPill";
 import { PaperworkList } from "./PaperworkList";
 import { useBin } from "./useBin";
 import { usePaperwork } from "./usePaperwork";
@@ -86,32 +87,41 @@ function AdminDocuments({ initialTab, onlyWaiting }: AdminDocumentsProps) {
       onChange={setTab}
     />
   );
-  if (tab === "students") {
-    return <Paperwork isCounsellor={false} onlyWaiting={onlyWaiting} tabs={tabs} />;
-  }
+  // One page for both tabs: the title and the tabs stay where they are, so the tab that was
+  // pressed keeps the cursor (design system rule 8).
   return (
     <div className="grid gap-8">
       <PageHeader title={DOCUMENT_TEXT.pageTitle} subtitle={DOCUMENT_TEXT.pageIntro} />
-      <TabsRow tabs={tabs} note={BIN_TEXT.binIntro} />
-      <BinTab
-        state={bin}
-        onPage={setBinPage}
-        onChanged={() => {
-          setBinVersion((current) => current + 1);
-        }}
-      />
+      <TabsRow tabs={tabs} note={tab === "bin" ? BIN_TEXT.binIntro : undefined} />
+      {tab === "students" ? (
+        <PaperworkBody isCounsellor={false} onlyWaiting={onlyWaiting} />
+      ) : (
+        <BinTab
+          state={bin}
+          onPage={setBinPage}
+          onChanged={() => {
+            setBinVersion((current) => current + 1);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-type PaperworkProps = {
-  isCounsellor: boolean;
-  onlyWaiting: boolean;
-  /** The Admin's switch to the Bin, under the title. */
-  tabs?: React.ReactNode;
-};
+type PaperworkProps = { isCounsellor: boolean; onlyWaiting: boolean };
 
-function Paperwork({ isCounsellor, onlyWaiting, tabs }: PaperworkProps) {
+/** The page for a Counsellor: the title, then the paperwork. */
+function Paperwork(props: PaperworkProps) {
+  return (
+    <div className="grid gap-8">
+      <PageHeader title={DOCUMENT_TEXT.pageTitle} subtitle={DOCUMENT_TEXT.pageIntro} />
+      <PaperworkBody {...props} />
+    </div>
+  );
+}
+
+/** Whose paperwork, the figures and the list; each a block of the page that holds it. */
+function PaperworkBody({ isCounsellor, onlyWaiting }: PaperworkProps) {
   const [scope, setScope] = useState<PaperworkScope>(
     isCounsellor ? PaperworkScope.Mine : PaperworkScope.Everyone,
   );
@@ -122,9 +132,7 @@ function Paperwork({ isCounsellor, onlyWaiting, tabs }: PaperworkProps) {
   const state = usePaperwork({ scope, page, onlyWaiting }, version);
 
   return (
-    <div className="grid gap-8">
-      <PageHeader title={DOCUMENT_TEXT.pageTitle} subtitle={DOCUMENT_TEXT.pageIntro} />
-      {tabs}
+    <>
       {onlyWaiting && (
         <Banner
           tone="info"
@@ -165,7 +173,7 @@ function Paperwork({ isCounsellor, onlyWaiting, tabs }: PaperworkProps) {
           }}
         />
       )}
-    </div>
+    </>
   );
 }
 
@@ -183,6 +191,7 @@ function PaperworkContent({ state, showsCounsellor, onOpen, onPage }: PaperworkC
   return (
     <>
       <Tiles totals={page.totals} />
+      {page.rows.length > 0 && <DocumentPillKey />}
       <Panel>
         {page.rows.length === 0 ? (
           <EmptyState>{DOCUMENT_TEXT.noStudents}</EmptyState>

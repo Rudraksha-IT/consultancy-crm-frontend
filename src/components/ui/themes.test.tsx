@@ -4,7 +4,6 @@ import { buildThemeTokens } from "@/lib/theme";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
 
 import { CodeField } from "./CodeField";
-import { ArrowSteps } from "./ArrowSteps";
 import { Avatar } from "./Avatar";
 import { Banner } from "./Banner";
 import { BarList } from "./BarList";
@@ -34,12 +33,13 @@ import { Section } from "./Section";
 import { SegmentedChoice } from "./SegmentedChoice";
 import { SegmentedControl } from "./SegmentedControl";
 import { SelectField } from "./SelectField";
-import { StageCards } from "./StageCards";
+import { PipelineThread } from "./PipelineThread";
 import { StageMeter } from "./StageMeter";
 import { Switch } from "./Switch";
 import { Tabs } from "./Tabs";
 import { TextAreaField } from "./TextAreaField";
 import { TextField } from "./TextField";
+import { Thread } from "./Thread";
 import { InfoTip } from "./InfoTip";
 import { Timeline } from "./Timeline";
 import { ToastProvider } from "./ToastProvider";
@@ -108,9 +108,9 @@ function Gallery() {
         <FigureTile label="Visitors" value="3" />
         <EmptyState>Nothing yet.</EmptyState>
         <Avatar name="Sita Sharma" />
-        <ArrowSteps stage="visa" />
+        <Thread stage="visa" />
         <StageMeter stage="lost" />
-        <StageCards counts={COUNTS} hrefFor={(stage) => `/${stage}`} />
+        <PipelineThread counts={COUNTS} hrefFor={(stage) => `/${stage}`} />
         <RowList>
           <RowItem title="Row" />
         </RowList>
@@ -165,12 +165,12 @@ function Gallery() {
   );
 }
 
-describe.each(THEME_CASES)("ui components in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("ui components in the $name Theme", ({ mode }) => {
   afterEach(resetTheme);
 
   it("render with the Theme's tokens on the page", () => {
-    applyThemeCase(config, mode);
-    const tokens = buildThemeTokens(config)[mode];
+    applyThemeCase(mode);
+    const tokens = buildThemeTokens()[mode];
 
     render(<Gallery />);
 

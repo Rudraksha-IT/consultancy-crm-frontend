@@ -16,7 +16,7 @@ import { errorsOf, useRefusal } from "./useRefusal";
 type TwoFactorVerifyFormProps = {
   /** The second step passed: the Next.js server now holds the login tokens. */
   onPassed: () => void;
-  /** Back to the password, after the sign-in has timed out or was used. */
+  /** Back to the password, after the login has timed out or was used. */
   onStartAgain: () => void;
   /** A Platform Admin's login (61), or a Staff member's on their office's address (62). */
   side?: TwoFactorSide;

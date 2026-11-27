@@ -270,3 +270,49 @@ export const STUDENT_PRIORITY_TEXT = {
   saved: (priority: string) => `Priority set to ${priority}`,
   failed: "We couldn't change the priority. Try again.",
 };
+
+/** Where this device remembers how Students are shown: as a Board or a List (UI revamp 08). */
+export const STUDENTS_VIEW_KEY = "crm:students-view";
+
+/** The two ways to see Students on a computer or tablet; a phone always shows the List. */
+export const StudentsView = { Board: "board", List: "list" } as const;
+
+export type StudentsView = (typeof StudentsView)[keyof typeof StudentsView];
+
+/** The words of the Students board (UI revamp 08). */
+export const BOARD_TEXT = {
+  showAs: "Show Students as",
+  board: "Board",
+  list: "List",
+  hintDrag: "Drag a card to another Stage, or use Move.",
+  hintTouch: "Use Move on a card to change its Stage.",
+  boardLabel: "Students by Stage",
+  columnLabel: (stage: string, count: number) => `${stage}, ${String(count)}`,
+  nobodyHere: "Nobody here",
+  loading: "Loading…",
+  failed: "Couldn't load these Students.",
+  showMore: "Show more",
+  showMoreOf: (stage: string) => `Show more: ${stage}`,
+  documents: (done: number, total: number) => `${String(done)}/${String(total)} documents`,
+  noCounsellor: "No counsellor",
+  counsellorNamed: (name: string) => `Counsellor ${name}`,
+  move: "Move",
+  moveNamed: (name: string) => `Move ${name}`,
+  nowAt: (stage: string) => `Now: ${stage}.`,
+  moveHelp:
+    "Moving forward asks for what the Stage needs: a counsellor, an application, an offer letter or the visa.",
+  stages: "Stages",
+  bringBackNamed: (label: string, name: string) => `${label}: ${name}`,
+  studentNotLoaded: "Couldn't load this Student. Try again.",
+  whoCounsels: (name: string) => `Who counsels ${name}?`,
+  counsellorHelp: (firstName: string) =>
+    `Choose a counsellor to move ${firstName} to Counselling. You can skip this and assign one later.`,
+  skipForNow: "Skip for now",
+  assignAndMove: "Assign and move",
+  visaFor: (firstName: string) => `Apply for ${firstName}'s visa`,
+  visaHelp:
+    "Choose the offer to go ahead with. The visa starts as Applied, and the Student moves to Visa.",
+  goAheadWith: "Go ahead with",
+  offerLine: (course: string, kind: string) => `${course}, ${kind} offer`,
+  applyForVisa: "Apply for the visa",
+};

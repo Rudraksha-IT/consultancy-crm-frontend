@@ -4,6 +4,7 @@ import { LABELS } from "@/constants/messages";
 
 import { describeField, FieldNote, type FieldDescription } from "./FieldNote";
 import type { SelectOption } from "./SelectField";
+import { LABEL_CLASSES } from "./Field";
 
 type CheckboxGroupProps = {
   label: string;
@@ -46,7 +47,7 @@ export function CheckboxGroup({
         {options.map((option) => (
           <label
             key={option.value}
-            className="min-h-control rounded-control hover:bg-fill inline-flex cursor-pointer items-center gap-2.5 px-2"
+            className="min-h-control rounded-control text-body hover:bg-fill inline-flex cursor-pointer items-center gap-2.5 px-2"
           >
             <input
               type="checkbox"
@@ -56,7 +57,7 @@ export function CheckboxGroup({
               onChange={(event) => {
                 toggle(option.value, event.target.checked);
               }}
-              className="accent-accent size-5"
+              className="accent-accent size-5 flex-none"
             />
             {option.label}
           </label>
@@ -69,7 +70,7 @@ export function CheckboxGroup({
 
 function GroupLegend({ label, isOptional }: { label: string; isOptional: boolean }) {
   return (
-    <legend className="text-secondary text-ink mb-2 font-semibold">
+    <legend className={`${LABEL_CLASSES} mb-2`}>
       {label}
       {isOptional && <span className="text-ink-2 font-normal"> {LABELS.optional}</span>}
     </legend>

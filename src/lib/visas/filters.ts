@@ -9,8 +9,10 @@ import {
 } from "@/constants/visas";
 import { addDaysIso } from "@/lib/dates";
 
-/** The office-wide Visas list's filters and order; "" means any (spec 62b). */
+/** The office-wide Visas list's search, filters and order; "" means any (spec 62b). */
 export type VisaFilters = {
+  /** The Student (name, phone or email) or the University's name (UI revamp ticket 24). */
+  search: string;
   status: VisaStatus | "";
   /** The country of the Visa's University. */
   country: Country | "";
@@ -25,6 +27,7 @@ export type VisaFilters = {
 /** Where the list starts: a Counsellor sees their own Students' Visas, others everyone. */
 export function defaultVisaFilters(role: Role): VisaFilters {
   return {
+    search: "",
     status: "",
     country: "",
     intake: "",
@@ -49,7 +52,7 @@ export function visaListQuery(filters: VisaFilters, page: number, today: string)
   return query === "" ? "" : `?${query}`;
 }
 
-/** Whether any filter narrows the list (the order doesn't). */
+/** Whether any search or filter narrows the list (the order doesn't). */
 export function hasAnyVisaFilter(filters: VisaFilters): boolean {
   return [...filterValues(filters), ["appointment", filters.appointment]].some(
     ([, value]) => value !== "",
@@ -58,6 +61,7 @@ export function hasAnyVisaFilter(filters: VisaFilters): boolean {
 
 function filterValues(filters: VisaFilters): [string, string][] {
   return [
+    ["q", filters.search.trim()],
     ["status", filters.status],
     ["country", filters.country],
     ["intake", filters.intake],

@@ -184,6 +184,19 @@ describe("LoginForm: the password", () => {
     expect(navigate).not.toHaveBeenCalled();
   });
 
+  it("says how long to wait once the wrong passwords are used up (security 01)", async () => {
+    backend(answer({ detail: "Too many wrong passwords." }, 429));
+    render(<LoginForm />);
+
+    await logInWith("sita@acme.test", "wrong");
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Too many wrong passwords. Try again in 15 minutes, or reset your password.",
+    );
+    expect(screen.getByRole("link", { name: "Forgot your password?" })).toBeVisible();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it("says the app is being updated, keeping the password typed (ticket 14)", async () => {
     backend(
       answer(
@@ -244,9 +257,9 @@ describe("LoginForm: the password", () => {
   });
 });
 
-describe.each(THEME_CASES)("LoginForm in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("LoginForm in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
   afterEach(resetTheme);
 

@@ -4,7 +4,6 @@ import userEvent from "@testing-library/user-event";
 import { StaffContextContext } from "@/components/features/shell/staffContext";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 import type { StaffContext } from "@/lib/api";
-import { DEFAULT_THEME } from "@/lib/theme";
 import { backend, callsTo, on } from "@/test/backend";
 import { consultancySummary } from "@/test/consultancy";
 import { applyThemeCase, resetTheme, THEME_CASES } from "@/test/themes";
@@ -20,7 +19,6 @@ const ADMIN: StaffContext = {
   dateDisplay: "AD",
   colourMode: "light",
   supportAccess: null,
-  theme: DEFAULT_THEME,
 };
 
 const TOTALS_URL = "/api/accounts/fees-by-type/";
@@ -191,6 +189,11 @@ describe("One Fee Type's Students", () => {
     expect(within(aarav).getByText("NPR 30,000")).toHaveClass("text-warn");
     expect(screen.getByText("2 Students")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Lost, not counted" })).not.toBeInTheDocument();
+    // The note is 16 from the sheet above it, as blocks of a page are (ticket 25).
+    expect(screen.getByText(/whole balance/).closest(".gap-4")).toContainElement(table);
+    expect(screen.getByText(/whole balance/).closest(".gap-4")).not.toContainElement(
+      screen.getByRole("heading", { level: 1, name: "Visa fee" }),
+    );
   });
 
   it("shows Lost Students apart, with their reason", async () => {
@@ -202,6 +205,9 @@ describe("One Fee Type's Students", () => {
 
     const lost = await screen.findByRole("region", { name: "Lost, not counted" });
     const row = within(lost).getByRole("row", { name: /Hari Lama/ });
+    const intro = within(lost).getByText(/These Students stopped their process/);
+    expect(intro.closest(".gap-4")).toContainElement(row);
+    expect(lost).toContainElement(intro.closest<HTMLElement>(".gap-4"));
     expect(within(row).getByText("Lost")).toBeInTheDocument();
     expect(within(row).getByText("Went with another office")).toBeInTheDocument();
     expect(within(row).getByText("NPR 25,000")).toBeInTheDocument();
@@ -279,9 +285,9 @@ describe("One Fee Type's Students", () => {
   });
 });
 
-describe.each(THEME_CASES)("Fees by type in the $name Theme", ({ config, mode }) => {
+describe.each(THEME_CASES)("Fees by type in the $name Theme", ({ mode }) => {
   beforeEach(() => {
-    applyThemeCase(config, mode);
+    applyThemeCase(mode);
   });
 
   afterEach(() => {
