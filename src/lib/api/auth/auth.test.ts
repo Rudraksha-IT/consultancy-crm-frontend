@@ -178,7 +178,7 @@ describe("fetchStaffContext", () => {
       .mockResolvedValueOnce(jsonResponse(badLogo));
 
     await expect(fetchStaffContext(fetchFn)).resolves.toMatchObject({
-      consultancy: { logo: { url: "/api/consultancy/logo/2/", showName: false } },
+      consultancy: { logo: { url: "/api/consultancy/logo/2/" } },
     });
     await expect(fetchStaffContext(fetchFn)).resolves.toMatchObject({
       consultancy: { logo: null },

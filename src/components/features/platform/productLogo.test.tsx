@@ -51,7 +51,7 @@ describe("the product logo (issue 65)", () => {
     await screen.findByRole("heading", { level: 2, name: LABELS.productName });
 
     act(() => {
-      setProductLogo({ url: "/api/platform/brand/logo/3/", showName: true });
+      setProductLogo({ url: "/api/platform/brand/logo/3/" });
     });
 
     expect(logoSrc()).toContain("/api/platform/brand/logo/3/");

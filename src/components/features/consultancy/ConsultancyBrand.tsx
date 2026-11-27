@@ -16,7 +16,7 @@ import { useCurrentConsultancy } from "./useCurrentConsultancy";
 const VISITOR = VISITOR_KEY;
 
 /** The app's own logo (ticket 08), shown when the office has none, with the name beside it. */
-const APP_LOGO: BrandLogo = { url: APP_LOGO_URL, showName: true };
+const APP_LOGO: BrandLogo = { url: APP_LOGO_URL };
 
 type ConsultancyBrandProps = {
   /** The login page (ticket 08): "Welcome back, <office>" in place of the name alone. */
@@ -87,7 +87,7 @@ type AuthBrandProps = {
 export function AuthBrand({ name, heading, tagline, logo = null }: AuthBrandProps) {
   return (
     <div className="grid justify-items-center gap-4 text-center">
-      <BrandMark name={name} logo={logo === null ? null : { ...logo, showName: true }} size="lg" />
+      <BrandMark name={name} logo={logo} size="lg" />
       <div>
         <h2 className="text-page-title-sm">{heading ?? name}</h2>
         {tagline !== undefined && <p className="text-ink-3 mt-1">{tagline}</p>}

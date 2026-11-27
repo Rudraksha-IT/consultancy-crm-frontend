@@ -2,7 +2,7 @@ import clsx from "clsx";
 import type { Ref } from "react";
 
 import type { ColourModeState } from "@/components/features/theme/useColourMode";
-import { BrandMark, showsOfficeName } from "@/components/ui/BrandMark";
+import { BrandMark } from "@/components/ui/BrandMark";
 import type { StaffContext } from "@/lib/api";
 
 import { Navigation } from "./Navigation";
@@ -45,12 +45,9 @@ export function Sidebar({ context, sidebar, colourMode, ref }: SidebarProps) {
       )}
     >
       <SidebarHead consultancyName={name} logo={logo} onCloseDrawer={sidebar.closeDrawer} />
-      {/* A logo that carries the office's name is too wide for the strip: it sits in the top bar. */}
-      {showsOfficeName(logo) && (
-        <div className="wide:grid mx-auto mt-4 mb-2 hidden size-12 flex-none place-items-center">
-          <BrandMark name={name} logo={logo} size="rail" />
-        </div>
-      )}
+      <div className="wide:grid mx-auto mt-4 mb-2 hidden size-12 flex-none place-items-center">
+        <BrandMark name={name} logo={logo} size="rail" />
+      </div>
       <Navigation
         role={context.staff.role}
         modules={context.modules}

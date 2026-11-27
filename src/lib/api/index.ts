@@ -160,7 +160,6 @@ export type { ReadyMadeDraft, ReadyMadeEntry, ReadyMadeTarget } from "./office/r
 export {
   removeLogo,
   saveOfficeDetails,
-  setShowNameBesideLogo,
   updateDateDisplay,
   uploadLogo,
 } from "./office/configuration";

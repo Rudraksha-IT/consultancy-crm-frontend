@@ -19,24 +19,24 @@ describe("fetchCurrentConsultancy", () => {
     expect(fetchFn).toHaveBeenCalledWith("/api/consultancy/", expect.anything());
   });
 
-  it("returns the office logo, in frontend naming", async () => {
+  it("returns the office logo, ignoring the name choice an older backend still sends", async () => {
     const logo = { url: "/api/consultancy/logo/3/", show_name: false };
     const fetchFn = vi
       .fn<typeof fetch>()
       .mockResolvedValue(new Response(JSON.stringify({ name: "Acme Education", logo })));
 
-    await expect(fetchCurrentConsultancy(fetchFn)).resolves.toMatchObject({
-      logo: { url: "/api/consultancy/logo/3/", showName: false },
+    expect((await fetchCurrentConsultancy(fetchFn)).logo).toEqual({
+      url: "/api/consultancy/logo/3/",
     });
   });
 
   it.each([
-    { url: "https://evil.test/logo.png", show_name: true },
-    { url: "javascript:alert(1)", show_name: true },
-    { url: "/api/consultancy/logo/3/?x=1", show_name: true },
-    { url: "/api/consultancy/logo/../../x/", show_name: true },
-    { url: "/api/consultancy/logo/3/", show_name: "yes" },
-    { url: "/api/consultancy/logo/3/" },
+    { url: "https://evil.test/logo.png" },
+    { url: "javascript:alert(1)" },
+    { url: "/api/consultancy/logo/3/?x=1" },
+    { url: "/api/consultancy/logo/../../x/" },
+    { url: 3 },
+    {},
     "/api/consultancy/logo/3/",
   ])("shows the initials instead of a logo answer that isn't ours: %j", async (logo) => {
     const fetchFn = vi

@@ -3,8 +3,8 @@ import Image from "next/image";
 
 const INITIALS_COUNT = 2;
 
-/** The office logo as the mark needs it: where it is, and whether the name is written beside it. */
-export type BrandLogo = { url: string; showName: boolean };
+/** The office logo as the mark needs it: where it is. The name is always written beside it. */
+export type BrandLogo = { url: string };
 
 type BrandMarkProps = {
   /** The office's name; its initials stand in when there is no logo. */
@@ -31,22 +31,22 @@ const LOGO_SIZES = {
 } as const;
 
 /**
- * The office's mark: its logo, or its initials on the accent. Decorative while the name is written beside it; a logo shown alone
- * carries the office's name for screen readers.
+ * The office's mark: its logo, or its initials on the accent. Decorative: the office's name is
+ * always written beside it (owner, 2026-11-27).
  */
 export function BrandMark({ name, logo = null, size = "md" }: BrandMarkProps) {
-  if (logo !== null) return <LogoImage name={name} logo={logo} size={size} />;
+  if (logo !== null) return <LogoImage logo={logo} size={size} />;
   return <Initials name={name} isLarge={size === "lg"} />;
 }
 
-type LogoImageProps = { name: string; logo: BrandLogo; size: keyof typeof LOGO_SIZES };
+type LogoImageProps = { logo: BrandLogo; size: keyof typeof LOGO_SIZES };
 
 /** The logo as served by our own API: never resized by Next.js, loaded at once (it's on top). */
-function LogoImage({ name, logo, size }: LogoImageProps) {
+function LogoImage({ logo, size }: LogoImageProps) {
   return (
     <Image
       src={logo.url}
-      alt={logo.showName ? "" : name}
+      alt=""
       width={0}
       height={0}
       unoptimized
@@ -70,9 +70,4 @@ function Initials({ name, isLarge }: { name: string; isLarge: boolean }) {
       {initialsOf(name)}
     </span>
   );
-}
-
-/** Whether the office's name is written beside its mark: always, unless a logo stands alone. */
-export function showsOfficeName(logo: BrandLogo | null | undefined): boolean {
-  return logo === null || logo === undefined || logo.showName;
 }

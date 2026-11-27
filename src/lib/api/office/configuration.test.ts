@@ -1,4 +1,4 @@
-import { removeLogo, setShowNameBesideLogo, updateDateDisplay, uploadLogo } from "./configuration";
+import { removeLogo, updateDateDisplay, uploadLogo } from "./configuration";
 import { ApiRequestError, InvalidFieldsError } from "../core/errors";
 import { jsonResponse } from "../core/test-helpers";
 
@@ -33,8 +33,8 @@ describe("updateDateDisplay", () => {
   });
 });
 
-const LOGO_ANSWER = { logo: { url: "/api/consultancy/logo/2/", show_name: true } };
-const LOGO = { url: "/api/consultancy/logo/2/", showName: true };
+const LOGO_ANSWER = { logo: { url: "/api/consultancy/logo/2/" } };
+const LOGO = { url: "/api/consultancy/logo/2/" };
 
 describe("uploadLogo", () => {
   it("posts the file as a form and returns the logo as the screens show it", async () => {
@@ -64,7 +64,7 @@ describe("uploadLogo", () => {
     });
   });
 
-  it.each([{}, { logo: null }, { logo: { url: "https://evil.test/x.png", show_name: true } }])(
+  it.each([{}, { logo: null }, { logo: { url: "https://evil.test/x.png" } }])(
     "refuses an answer without our logo: %j",
     async (answer) => {
       const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(answer));
@@ -72,22 +72,6 @@ describe("uploadLogo", () => {
       await expect(uploadLogo(new File(["x"], "x.png"), fetchFn)).rejects.toThrow();
     },
   );
-});
-
-describe("setShowNameBesideLogo", () => {
-  it("patches the choice and returns the logo", async () => {
-    const answer = { logo: { url: "/api/consultancy/logo/2/", show_name: false } };
-    const fetchFn = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse(answer));
-
-    await expect(setShowNameBesideLogo(false, fetchFn)).resolves.toEqual({
-      ...LOGO,
-      showName: false,
-    });
-    expect(fetchFn).toHaveBeenCalledWith(
-      "/api/configuration/logo/",
-      expect.objectContaining({ method: "PATCH", body: JSON.stringify({ show_name: false }) }),
-    );
-  });
 });
 
 describe("removeLogo", () => {

@@ -148,7 +148,7 @@ const PRODUCT_LOGO_URL = /^\/api\/platform\/brand\/logo\/[0-9]{1,10}\/$/;
 // Shown like an office logo, the product's name always beside it.
 export const ProductLogoSchema = z
   .object({ url: z.string().regex(PRODUCT_LOGO_URL) })
-  .transform(({ url }): OfficeLogo => ({ url, showName: true }));
+  .transform(({ url }): OfficeLogo => ({ url }));
 const ProductBrandSchema = z
   .object({ logo: ProductLogoSchema.nullable().catch(null) })
   .transform(({ logo }) => logo);
