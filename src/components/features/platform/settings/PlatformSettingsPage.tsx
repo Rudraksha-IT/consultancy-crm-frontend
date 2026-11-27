@@ -49,12 +49,12 @@ export function PlatformSettingsPage() {
   ];
   return (
     <>
-      <PageHeader title={TEXT.title} subtitle={TEXT.intro} />
       <SectionMenu
         label={TEXT.title}
         backLabel={TEXT.backLabel}
         sections={sections}
         choice={choice}
+        header={(back) => <PageHeader title={TEXT.title} subtitle={TEXT.intro} leading={back} />}
       />
     </>
   );

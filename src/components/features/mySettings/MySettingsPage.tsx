@@ -81,19 +81,22 @@ function StaffSettings() {
 
   return (
     <div className="grid gap-8">
-      <PageHeader
-        title={MY_SETTINGS_TEXT.title}
-        actions={
-          <ButtonLink href={ROUTES.myProgress} icon="chart">
-            {PROGRESS_TEXT.myProgress}
-          </ButtonLink>
-        }
-      />
       <SectionMenu
         label={MY_SETTINGS_TEXT.menu}
         backLabel={MY_SETTINGS_TEXT.backLabel}
         sections={sections}
         choice={choice}
+        header={(back) => (
+          <PageHeader
+            title={MY_SETTINGS_TEXT.title}
+            leading={back}
+            actions={
+              <ButtonLink href={ROUTES.myProgress} icon="chart">
+                {PROGRESS_TEXT.myProgress}
+              </ButtonLink>
+            }
+          />
+        )}
       />
     </div>
   );

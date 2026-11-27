@@ -12,6 +12,8 @@ type PageHeaderProps = {
    * Visas) sits beside the title as a small outlined button.
    */
   isActionBesideTitle?: boolean;
+  /** Something on the title's own line, left of it: a settings page's way back on phones. */
+  leading?: ReactNode;
 };
 
 /** A compact rounded button on the title's line; still 44 tall to tap. */
@@ -61,6 +63,7 @@ export function PageHeader({
   actions,
   crumbs,
   isActionBesideTitle,
+  leading,
 }: PageHeaderProps) {
   return (
     <div className="max-phone:items-center max-phone:justify-start max-phone:gap-x-2 max-phone:gap-y-1 flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
@@ -68,9 +71,7 @@ export function PageHeader({
         {crumbs !== undefined && (
           <div className="max-phone:order-1 max-phone:basis-full">{crumbs}</div>
         )}
-        <h1 className="text-page-title-sm wide:text-page-title max-phone:order-2 max-phone:flex-1 text-balance">
-          {title}
-        </h1>
+        <Title title={title} leading={leading} />
         {subtitle !== undefined && (
           <p className="text-small text-ink-2 max-phone:order-4 max-phone:basis-full max-w-prose">
             {subtitle}
@@ -90,4 +91,25 @@ export function PageHeader({
       )}
     </div>
   );
+}
+
+/** The page title, with what goes left of it on its line (a way back) when there is one. */
+function Title({ title, leading }: { title: string; leading: ReactNode }) {
+  const heading = (
+    <h1 className="text-page-title-sm wide:text-page-title max-phone:order-2 max-phone:flex-1 min-w-0 text-balance">
+      {title}
+    </h1>
+  );
+  if (!isPresent(leading)) return heading;
+  return (
+    <div className="max-phone:order-2 max-phone:flex-1 -ml-2.5 flex min-w-0 items-center gap-0.5">
+      {leading}
+      {heading}
+    </div>
+  );
+}
+
+/** Whether a slot holds something to draw (not left out, null or false). */
+function isPresent(node: ReactNode): boolean {
+  return node !== undefined && node !== null && node !== false;
 }
