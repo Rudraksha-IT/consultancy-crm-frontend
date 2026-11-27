@@ -4,7 +4,6 @@ import clsx from "clsx";
 import { PageFooter } from "@/components/ui/CopyrightLine";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useRef, type CSSProperties, type ReactNode } from "react";
-import { flushSync } from "react-dom";
 
 import { SupportAccessBanner } from "@/components/features/supportAccess/SupportAccessBanner";
 import { useAppliedTheme } from "@/components/features/theme/useAppliedTheme";
@@ -14,7 +13,6 @@ import { useArrival, useRowWash } from "@/components/ui/useMovement";
 import { LABELS } from "@/constants/messages";
 import { useTabTitle } from "@/hooks/useTabTitle";
 import { saveColourMode, type StaffContext } from "@/lib/api";
-import { crossFade } from "@/lib/motion";
 import { buildNavigation } from "@/lib/navigation";
 
 import { ConsultancyStatusBanner } from "./ConsultancyStatusBanner";
@@ -47,19 +45,10 @@ type ShellFrameProps = {
 export function ShellFrame({ context, children }: ShellFrameProps) {
   useTabTitle(context.consultancy.name, context.staff.role);
   // A Platform Admin has no account here to save it in (issue 27): it lasts for the visit.
-  const savedMode = useSavedColourMode(
+  const colourMode = useSavedColourMode(
     context.colourMode,
     context.supportAccess === null ? saveColourMode : keepForThisVisit,
   );
-  // Light and dark swap in one cross-fade of the whole screen (design system: Movement).
-  const colourMode = {
-    mode: savedMode.mode,
-    toggleMode: () => {
-      crossFade(() => {
-        flushSync(savedMode.toggleMode);
-      });
-    },
-  };
   const sidebar = useSidebar();
   const menuRef = useRef<HTMLElement>(null);
   useSidebarSwipe(sidebar, menuRef);

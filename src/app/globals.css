@@ -1029,15 +1029,23 @@ main[data-page-move="in-from-bottom"] {
     animation: move-fade-out var(--move-ring) ease-out forwards;
   }
 
-  /* Light and dark: one cross-fade of the whole screen, where the browser can. */
+  /*
+   * Light and dark: one cross-fade of the whole screen, where the browser can. The old screen
+   * stays put and the new one fades in over it, so nothing dims half-way through.
+   */
   html[data-theme-fade]::view-transition-old(root) {
-    animation: move-fade-out var(--move-open) ease both;
+    animation: none;
     mix-blend-mode: normal;
   }
 
   html[data-theme-fade]::view-transition-new(root) {
-    animation: move-fade var(--move-open) ease both;
+    animation: move-fade var(--move-cross) ease-out both;
     mix-blend-mode: normal;
+  }
+
+  /* Meanwhile no element runs its own colour fade, which would flicker under the screen's. */
+  html[data-theme-fade] :is(*, *::before, *::after) {
+    transition: none !important;
   }
 }
 
