@@ -455,26 +455,46 @@ describe("taking a payment", () => {
     expect(screen.queryByRole("button", { name: "Take a payment" })).not.toBeInTheDocument();
   });
 
-  it("is a compact rounded button on its own line under the name on phones (ticket 25)", async () => {
+  it("on phones is a compact rounded button in the line of actions under the name (owner, 2026-11-27)", async () => {
     backend(on("GET", `/api/students/${uid(7)}/`, DESK_PROFILE));
     renderPage();
 
     const button = await screen.findByRole("button", { name: "Take a payment" });
     expect(button).toHaveAttribute("data-variant", "primary");
     expect(button).toHaveClass("min-h-control");
-    // The name takes its whole line, however long; the main action is on the next line and the
-    // rest go underneath.
+    // Priority and every action share one line that wraps, all small; the main one is a pill.
     expect(button.parentElement).toHaveClass(
       "max-phone:contents",
       "max-phone:*:order-5",
-      "max-phone:*:data-[variant=primary]:order-3",
+      "max-phone:*:text-button-sm",
       "max-phone:*:data-[variant=primary]:rounded-pill",
       "max-phone:*:data-[variant=primary]:flex-none",
     );
+    expect(button.parentElement).not.toHaveClass("max-phone:*:data-[variant=primary]:order-3");
     const name = screen.getByRole("heading", { name: "Sita Gurung" });
     const who = name.closest(".max-phone\\:order-1");
-    expect(who).toHaveClass("max-phone:basis-full", "min-w-0");
-    expect(who).not.toHaveClass("max-phone:flex-1");
+    expect(who).toHaveClass("max-phone:flex-1", "min-w-0");
+    expect(screen.getByRole("button", { name: /^Priority:/ })).toHaveClass(
+      "max-phone:text-button-sm",
+      "max-phone:rounded-pill",
+      "min-h-control",
+    );
+  });
+
+  it("on phones puts More beside the name, at the right, as a small icon (owner, 2026-11-27)", async () => {
+    backend(on("GET", `/api/students/${uid(7)}/`, { ...DESK_PROFILE, can_edit_details: true }));
+    renderPage();
+
+    const more = await screen.findByRole("button", { name: "More" });
+    // Its word is kept for screen readers; the icon alone is drawn on a phone.
+    expect(within(more).getByText("More")).toHaveClass("max-phone:sr-only");
+    expect(more).toHaveClass("min-h-control", "max-phone:min-w-control");
+    const holder = more.parentElement;
+    expect(holder).toHaveAttribute("data-menu");
+    expect(holder?.parentElement).toHaveClass(
+      "max-phone:*:data-menu:order-2",
+      "max-phone:*:data-menu:flex-none",
+    );
   });
 
   it("sits beside Assign a counsellor for a Student who has none", async () => {

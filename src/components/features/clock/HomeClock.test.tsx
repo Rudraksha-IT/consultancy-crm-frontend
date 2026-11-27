@@ -102,7 +102,7 @@ describe("HomeClock", () => {
       "max-phone:col-start-2",
       "max-phone:row-start-2",
       "max-phone:justify-self-start",
-      "max-phone:*:rounded-pill",
+      "*:rounded-pill",
     );
   });
 

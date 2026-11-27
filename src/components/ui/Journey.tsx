@@ -79,17 +79,23 @@ function stopClasses(index: number, state: StopState): string {
   return BEADS[index]?.[state] ?? NEXT_STOP;
 }
 
+/**
+ * On a phone the names stand alone, with no dots (owner, 2026-11-27): every name keeps room for
+ * a line under it, and only the current Stage's is drawn.
+ */
+const PHONE_NAME = "max-phone:border-b-2 max-phone:pb-0.5";
 const NAME_CLASSES: Record<StopState, string> = {
-  done: "text-ink-2 font-medium",
-  current: "text-ink font-semibold",
-  next: "text-ink-3 font-medium",
+  done: "text-ink-2 font-medium max-phone:border-transparent",
+  current: "text-ink font-semibold max-phone:border-accent",
+  next: "text-ink-3 font-medium max-phone:border-transparent",
 };
 
 /**
  * A Student's Stage journey: Lead → Counselling → Applying → Offer → Visa; a granted Visa ticks
  * the last step too. A Lost Student's journey is faded with nothing marked. It runs across: above
- * 640 at full size, scrolling inside its panel if it must; at 640 and below as a compact stepper,
- * five dots in a row with the names small under them (design system: Journey).
+ * 640 at full size, scrolling inside its panel if it must; at 640 and below as the five names in
+ * a row, small, with no dots: the current Stage in bold with a line under it (design system:
+ * Journey).
  */
 export function Journey(props: JourneyProps) {
   const { stage, nextStep, isDone, onMoveTo, isMoving, info, isOnSheet } = props;
@@ -154,8 +160,8 @@ type StopProps = {
 };
 
 /**
- * A compact stepper on a phone: the stop centred over its small name, the line running from this
- * stop's centre to the next one's.
+ * On a phone: the small name centred in its fifth of the row. The stop and the line from it to
+ * the next one are hidden there.
  */
 const PHONE_STOP =
   "grid-cols-1 content-start items-start justify-items-center gap-1.5 text-center before:top-2.5 before:left-1/2 before:-right-1/2 before:h-0.75";
@@ -168,7 +174,7 @@ function Stop({ step, index, state, onMove, isMoving, isLast }: StopProps) {
     <li
       data-state={state}
       className={clsx(
-        "before:bg-fill-2 relative grid before:absolute before:rounded-full",
+        "before:bg-fill-2 max-phone:before:hidden relative grid before:absolute before:rounded-full",
         PHONE_STOP,
         ACROSS_STOP,
         lineClasses(index, state),
@@ -177,7 +183,7 @@ function Stop({ step, index, state, onMove, isMoving, isLast }: StopProps) {
     >
       <span
         className={clsx(
-          "relative z-10 grid size-5.5 place-items-center rounded-full border-3",
+          "max-phone:hidden relative z-10 grid size-5.5 place-items-center rounded-full border-3",
           stopClasses(index, state),
         )}
       >
@@ -187,6 +193,7 @@ function Stop({ step, index, state, onMove, isMoving, isLast }: StopProps) {
         <span
           className={clsx(
             "text-body max-phone:text-tiny max-phone:truncate max-w-full min-w-0",
+            PHONE_NAME,
             NAME_CLASSES[state],
           )}
         >

@@ -11,6 +11,7 @@ import { jsonResponse } from "@/lib/api/core/test-helpers";
 import { consultancySummary } from "@/test/consultancy";
 import { uid } from "@/test/ids";
 import { fakeMatchMedia } from "@/test/matchMedia";
+import { BOARD_TOO_NARROW_QUERY } from "@/lib/students";
 import { PROFILE } from "@/test/studentProfile";
 
 import { StudentsPage } from "./StudentsPage";
@@ -441,22 +442,59 @@ describe("Students board (UI revamp 08)", () => {
   it("keeps the page as wide in the List as on the Board, so the switch stays under the pointer (ticket 25)", async () => {
     office([ANISH]);
     const user = userEvent.setup();
-    const { container } = renderPage();
+    renderPage();
 
     await card("Anish Neupane");
-    expect(container.querySelector("[data-wide-page]")).not.toBeNull();
+    expect(document.documentElement).toHaveAttribute("data-wide-page");
     await user.click(screen.getByRole("button", { name: "List" }));
     await screen.findByRole("table");
-    expect(container.querySelector("[data-wide-page]")).not.toBeNull();
+    expect(document.documentElement).toHaveAttribute("data-wide-page");
+  });
+
+  it("is wide only while Students is the page shown: another page opened after it is not", async () => {
+    office([ANISH]);
+    const shown = renderPage();
+    await card("Anish Neupane");
+    // The mark is on the document, set while the page is shown: a page kept hidden in the
+    // background (as Next.js keeps the one just left) can't widen the page opened after it.
+    expect(shown.container.querySelector("[data-wide-page]")).toBeNull();
+
+    shown.unmount();
+
+    expect(document.documentElement).not.toHaveAttribute("data-wide-page");
   });
 
   it("on a phone, the page is not marked wide", async () => {
     onPhone();
     office([ANISH]);
-    const { container } = renderPage();
+    renderPage();
 
     await screen.findByRole("table");
-    expect(container.querySelector("[data-wide-page]")).toBeNull();
+    expect(document.documentElement).not.toHaveAttribute("data-wide-page");
+  });
+
+  it("where the five columns don't fit, shows the List only: no switch, no board and no board calls (owner, 2026-11-27)", async () => {
+    vi.stubGlobal(
+      "matchMedia",
+      fakeMatchMedia(
+        () => false,
+        (query) => query === BOARD_TOO_NARROW_QUERY,
+      ).matchMedia,
+    );
+    const { fetchFn } = office([ANISH, SITA]);
+    renderPage();
+
+    expect(await screen.findByRole("table")).toBeInTheDocument();
+    expect(screen.queryByRole("group", { name: "Show Students as" })).toBeNull();
+    expect(screen.queryByRole("region", { name: /^Lead/ })).toBeNull();
+    expect(boardCalls(fetchFn)).toEqual([]);
+    expect(document.documentElement).not.toHaveAttribute("data-wide-page");
+  });
+
+  it("asks for the board only from a width that holds five columns of 224 without scrolling", () => {
+    // 5 x 224, 4 gaps of 12, the sheet's 18 on each side and its 2 of border, the page's 26 on
+    // each side and the side menu's 112: 1370.
+    expect(BOARD_TOO_NARROW_QUERY).toBe("(width < 85.625rem)");
   });
 
   it("on a phone, shows the List only: no switch and no board", async () => {

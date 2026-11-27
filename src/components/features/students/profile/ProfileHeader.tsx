@@ -12,7 +12,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Menu, type MenuItem } from "@/components/ui/Menu";
-import { PHONE_LINE_BREAK, PHONE_MAIN_ACTION } from "@/components/ui/PageHeader";
+import { PHONE_LINE_BREAK } from "@/components/ui/PageHeader";
 import { useToast } from "@/components/ui/useToast";
 import { COMMUNICATION_TEXT } from "@/constants/communication";
 import { LABELS } from "@/constants/messages";
@@ -59,12 +59,11 @@ export function ProfileHeader({ profile, onSaved, children }: ProfileHeaderProps
         aria-labelledby={nameId}
         className="rounded-panel border-sheet-rule bg-paper shadow-raise min-w-0 border"
       >
-        {/* Phones (ticket 25): the name takes its whole line, so a long one is never squeezed; the
-            main action is a compact rounded button on the next line, and Priority and the other
-            actions follow on the line after. */}
+        {/* Phones (owner, 2026-11-27): More is a small icon beside the name, at the right; Priority
+            and the actions share the next line, all small, the main one a compact pill. */}
         {/* On phones the row is what the Priority and More menus open from (UI revamp 23). */}
         <div className="max-phone:relative max-phone:px-gutter max-phone:py-4 max-phone:items-start max-phone:justify-start max-phone:gap-x-2 max-phone:gap-y-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-5 p-5">
-          <div className="max-phone:order-1 max-phone:basis-full max-phone:gap-3 flex min-w-0 items-center gap-5">
+          <div className="max-phone:order-1 max-phone:flex-1 max-phone:gap-3 flex min-w-0 items-center gap-5">
             <Avatar name={profile.name} size="lg" />
             <div className="grid min-w-0 gap-1">
               <h1 id={nameId} className="text-page-title-sm wide:text-page-title wrap-anywhere">
@@ -185,7 +184,8 @@ function HeaderActions({ profile, onOpen }: HeaderActionsProps) {
       className={clsx(
         "flex flex-wrap items-center gap-3 empty:hidden",
         "max-phone:contents max-phone:*:order-5 max-phone:*:text-button-sm",
-        PHONE_MAIN_ACTION,
+        PHONE_SMALL,
+        MORE_BESIDE_NAME,
       )}
     >
       {profile.canAssign && (
@@ -203,10 +203,17 @@ function HeaderActions({ profile, onOpen }: HeaderActionsProps) {
           {COMMUNICATION_TEXT.sendEmail}
         </MainOrSecond>
       )}
-      {items.length > 0 && <Menu label={LABELS.more} items={items} />}
+      {items.length > 0 && <Menu label={LABELS.more} items={items} isIconOnPhone />}
     </div>
   );
 }
+
+/** Phones: every action is small, and the main one a compact pill as wide as its words. */
+const PHONE_SMALL =
+  "max-phone:[&>:where([data-variant])]:px-button-sm max-phone:*:data-[variant=primary]:rounded-pill max-phone:*:data-[variant=primary]:flex-none max-phone:*:data-[variant=primary]:px-3.5";
+
+/** Phones: the More menu leaves the line of actions and sits beside the name, at the right. */
+const MORE_BESIDE_NAME = "max-phone:*:data-menu:order-2 max-phone:*:data-menu:flex-none";
 
 type HeaderDialogProps = {
   open: OpenDialog;

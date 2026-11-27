@@ -69,9 +69,10 @@ function ClockCard({ clock, sinceAnswerMs, onAnswer }: ClockCardProps) {
         <span>{look.line}</span>
         <NetworkLine clock={clock} />
       </div>
+      {/* The button is a pill on every width, like the card it sits in (owner, 2026-11-27). */}
       <span
         data-clock-action=""
-        className="max-phone:col-start-2 max-phone:row-start-2 max-phone:block max-phone:justify-self-start max-phone:*:rounded-pill max-phone:*:px-4 contents"
+        className="max-phone:col-start-2 max-phone:row-start-2 max-phone:block max-phone:justify-self-start max-phone:*:px-4 *:rounded-pill contents"
       >
         <Button
           size="sm"

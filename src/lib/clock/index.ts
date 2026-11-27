@@ -86,6 +86,7 @@ export function leadingBlanks(month: string): number {
 export {
   clockTabFrom,
   clockViewFrom,
+  correctableDays,
   dayStatus,
   listedDays,
   pageOf,

@@ -278,11 +278,12 @@ describe("Employees → Working hours", () => {
     const list = within(dialog).getByRole("list", { name: "Days that can be corrected" });
     const rows = within(list).getAllByRole("listitem");
     expect(rows).toHaveLength(3);
-    const first = rows[0];
-    if (first === undefined) throw new Error("no day to correct");
+    // Newest first, in the same order as the List above them: 1 Nov is the last row.
+    const oldest = rows.at(-1);
+    if (oldest === undefined) throw new Error("no day to correct");
     const [date, reason] = [
-      within(first).getByText("1 Nov 2026"),
-      within(first).getByText("Not in"),
+      within(oldest).getByText("1 Nov 2026"),
+      within(oldest).getByText("Not in"),
     ];
     expect(date).not.toBe(reason);
     expect(date.contains(reason) || reason.contains(date)).toBe(false);

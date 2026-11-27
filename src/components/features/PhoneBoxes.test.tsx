@@ -182,15 +182,23 @@ describe("The Stage on a phone", () => {
     expect(container.querySelector("[data-step]")?.parentElement).toHaveClass("flex-none");
   });
 
-  it("is a compact stepper on the Student's page: five dots in a row, small names under them", () => {
+  it("is only the five Stage names in a row on the Student's page: no dots and no line (owner, 2026-11-27)", () => {
     render(<Journey stage={Stage.Applying} nextStep="Add the Offer Letter" />);
 
     const steps = screen.getByRole("list");
     expect(steps).toHaveClass("grid-cols-[repeat(5,minmax(0,1fr))]");
     expect(steps).not.toHaveClass("grid-cols-1");
-    const stop = within(steps).getAllByRole("listitem")[0];
-    expect(stop).toHaveClass("justify-items-center", "before:left-1/2", "phone:before:left-5");
+    const stops = within(steps).getAllByRole("listitem");
+    for (const stop of stops) {
+      // The line between the dots, and the dot itself, are for wider screens.
+      expect(stop).toHaveClass("max-phone:before:hidden", "justify-items-center");
+      expect(stop.firstElementChild).toHaveClass("max-phone:hidden");
+    }
     expect(screen.getByText("Lead")).toHaveClass("max-phone:text-tiny", "max-phone:truncate");
+    // Where the Student is: its name in bold with a line under it; the rest have none.
+    expect(screen.getByText("Applying")).toHaveClass("font-semibold", "max-phone:border-accent");
+    expect(screen.getByText("Lead")).toHaveClass("max-phone:border-transparent");
+    expect(screen.getByText("Visa")).toHaveClass("max-phone:border-transparent");
   });
 
   it("cuts the next step to two lines", () => {

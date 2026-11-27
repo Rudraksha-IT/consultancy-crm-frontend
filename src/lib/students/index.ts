@@ -8,7 +8,7 @@ export {
   studentListQuery,
 } from "./filters";
 export type { StudentFilters } from "./filters";
-export { studentsViewFrom } from "./view";
+export { BOARD_TOO_NARROW_QUERY, studentsViewFrom } from "./view";
 export { addressText, ageOn, viewOnlyReason } from "./profile";
 export type { AddressParts } from "./profile";
 export { mergeActivity, olderAdded, readAgain, sourcesToLoadNext } from "./activity";

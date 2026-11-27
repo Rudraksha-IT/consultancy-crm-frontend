@@ -15,6 +15,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Panel } from "@/components/ui/Panel";
 import { Loading } from "@/components/ui/Loading";
 import { usePhoneWidth } from "@/components/ui/usePhoneWidth";
+import { useScreenQuery } from "@/components/ui/useScreenQuery";
 import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { COMMUNICATION_TEXT } from "@/constants/communication";
 import { EXPORT_TEXT } from "@/constants/exports";
@@ -34,9 +35,11 @@ import {
 } from "@/constants/students";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useStoredValue } from "@/hooks/useStoredValue";
+import { useWidePage } from "@/hooks/useWidePage";
 import type { CounsellorChoice, StaffContext } from "@/lib/api";
 import { describeFilters, exportFilters } from "@/lib/exports";
 import {
+  BOARD_TOO_NARROW_QUERY,
   defaultStudentFilters,
   hasAnyFilter,
   studentListQuery,
@@ -232,26 +235,28 @@ function StudentList({
 }
 
 /**
- * How Students are shown: a phone always shows the List; a computer or tablet what this device
- * remembers, the Board first (UI revamp 08).
+ * How Students are shown: the List alone on a phone and wherever the board's five columns don't
+ * fit (it would scroll sideways); on a wider screen what this device remembers, the Board first
+ * (UI revamp 08; owner, 2026-11-27).
  */
 function useStudentsView() {
   const isPhone = usePhoneWidth();
+  const isTooNarrow = useScreenQuery(BOARD_TOO_NARROW_QUERY);
   const [stored, storeView] = useStoredValue(STUDENTS_VIEW_KEY);
-  /** Null on a phone: the List, with no switch. */
-  const view = isPhone ? null : studentsViewFrom(stored);
+  /** Null where there is no board: the List, with no switch. */
+  const view = isPhone || isTooNarrow ? null : studentsViewFrom(stored);
   return { view, isBoard: view === StudentsView.Board, storeView };
 }
 
 type StudentsContentProps = {
-  /** The view shown, or null on a phone: the List, with no switch. */
+  /** The view shown, or null where there is no board: the List, with no switch. */
   view: StudentsView | null;
   onView: (view: StudentsView) => void;
   board: ReactNode;
   list: ReactNode;
 };
 
-/** The Board / List switch (not on phones) and the view it chooses. */
+/** The Board / List switch (only where the board fits) and the view it chooses. */
 function StudentsContent({ view, onView, board, list }: StudentsContentProps) {
   if (view === null) return list;
   return (
@@ -269,14 +274,14 @@ type ViewBarProps = {
 
 /**
  * How to move a card (on the Board) on the left, the Board / List switch on the right. The page
- * is as wide for the List as for the Board (`data-wide-page`), so the switch stays under the
- * pointer when it is pressed (ticket 25).
+ * is as wide for the List as for the Board (`useWidePage`), so the switch stays under the pointer
+ * when it is pressed (ticket 25).
  */
 function ViewBar({ view, onChange }: ViewBarProps) {
+  useWidePage(true);
   return (
     <div
       data-swap-bar=""
-      data-wide-page=""
       className="px-gutter flex flex-wrap items-center justify-between gap-3 py-3"
     >
       {view === StudentsView.Board && (

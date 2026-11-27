@@ -34,8 +34,9 @@ export function PriorityPicker({ profile, onSaved }: PriorityPickerProps) {
   return <PriorityMenu profile={profile} onSaved={onSaved} />;
 }
 
+/** On a phone it is small, like the actions beside it: a pill, still 44 tall to tap. */
 const CONTROL =
-  "min-h-control rounded-control border-rule bg-paper text-body inline-flex items-center gap-2.5 border px-4";
+  "min-h-control rounded-control border-rule bg-paper text-body max-phone:rounded-pill max-phone:text-button-sm max-phone:gap-1.5 max-phone:px-3 inline-flex items-center gap-2.5 border px-4";
 
 /** "Priority" quietly, then the dot and the word. */
 function PriorityValue({ priority }: { priority: Priority }) {

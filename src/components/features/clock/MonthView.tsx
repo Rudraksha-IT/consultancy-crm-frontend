@@ -11,7 +11,7 @@ import { TileGrid } from "@/components/ui/TileGrid";
 import { ViewSwitch } from "@/components/ui/ViewSwitch";
 import { CLOCK_TEXT as TEXT, ClockView } from "@/constants/clock";
 import type { ClockDay, ClockMonth } from "@/lib/api";
-import { durationText, hoursText } from "@/lib/clock";
+import { correctableDays, durationText, hoursText } from "@/lib/clock";
 import { formatMonth } from "@/lib/dates";
 
 import { MonthCalendar } from "./MonthCalendar";
@@ -105,8 +105,8 @@ function Figures({ month }: { month: ClockMonth }) {
 }
 
 /**
- * Beside the List: the days that can be corrected, the date and the reason on two lines, each
- * with its own Correct button.
+ * Beside the List: the days that can be corrected, newest first as the List is, the date and the
+ * reason on two lines, each with its own Correct button.
  */
 function CorrectableDays({
   month,
@@ -116,7 +116,7 @@ function CorrectableDays({
   onOpen: (day: ClockDay) => void;
 }) {
   const dates = useDates();
-  const days = month.days.filter((day) => day.isCorrectable);
+  const days = correctableDays(month.days);
   if (days.length === 0) return null;
   return (
     <div className="border-rule border-t">

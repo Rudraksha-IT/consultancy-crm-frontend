@@ -27,6 +27,11 @@ export function listedDays(days: readonly ClockDay[]): ClockDay[] {
   return days.filter((day) => !day.isLater).reverse();
 }
 
+/** The days an Admin can correct, newest first, in the same order as the List above them. */
+export function correctableDays(days: readonly ClockDay[]): ClockDay[] {
+  return days.filter((day) => day.isCorrectable).reverse();
+}
+
 /** One page of `items`; a page past the end gives the last one. */
 export function pageOf<Item>(items: readonly Item[], page: number, pageSize: number): Item[] {
   const last = Math.max(1, Math.ceil(items.length / pageSize));

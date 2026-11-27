@@ -178,16 +178,17 @@
 
 /*
  * The Students page (its Board and its List alike, so the switch between them never moves) grows
- * further, so the board's five columns need no sideways scroll.
+ * further, so the board's five columns need no sideways scroll. The mark is put on the document
+ * only while that page is shown (`useWidePage`).
  */
 @media (width >= 100rem) {
-  :root:has([data-wide-page]) {
+  :root[data-wide-page] {
     --size-content: 105rem;
   }
 }
 
 @media (width >= 137.5rem) {
-  :root:has([data-wide-page]) {
+  :root[data-wide-page] {
     --size-content: 127.5rem;
   }
 }

@@ -1,6 +1,14 @@
 import type { ClockDay } from "@/lib/api";
 
-import { clockTabFrom, clockViewFrom, dayStatus, listedDays, pageOf, weekdayName } from ".";
+import {
+  clockTabFrom,
+  clockViewFrom,
+  correctableDays,
+  dayStatus,
+  listedDays,
+  pageOf,
+  weekdayName,
+} from ".";
 
 function day(overrides: Partial<ClockDay> = {}): ClockDay {
   return {
@@ -81,6 +89,24 @@ describe("listedDays", () => {
     expect(listedDays(days).map((one) => one.date)).toEqual([
       "2026-11-05",
       "2026-11-04",
+      "2026-11-03",
+    ]);
+    expect(days[0]?.date).toBe("2026-11-03");
+  });
+});
+
+describe("correctableDays", () => {
+  it("lists only the days that can be corrected, newest first, as the List does", () => {
+    const days = [
+      day({ date: "2026-11-03", isCorrectable: true }),
+      day({ date: "2026-11-04" }),
+      day({ date: "2026-11-05", isCorrectable: true }),
+      day({ date: "2026-11-06", isCorrectable: true }),
+    ];
+
+    expect(correctableDays(days).map((one) => one.date)).toEqual([
+      "2026-11-06",
+      "2026-11-05",
       "2026-11-03",
     ]);
     expect(days[0]?.date).toBe("2026-11-03");
