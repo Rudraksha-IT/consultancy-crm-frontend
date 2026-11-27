@@ -3,7 +3,7 @@
 import clsx from "clsx";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useRef, type ReactNode } from "react";
+import { useRef, useState, type MouseEvent, type ReactNode } from "react";
 
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { useMarkerSlide } from "@/components/ui/useMovement";
@@ -48,10 +48,11 @@ function PhoneTabBar({ role, modules, isMenuOpen, onOpenMenu }: TabBarProps) {
   const tabs = barPages(role)
     .map((href) => items.find((item) => item.href === href))
     .filter((item): item is NavItem => item !== undefined);
-  const isMenuCurrent = !tabs.some((tab) => isCurrentPage(tab.href, pathname));
+  const [shown, tap] = useShownTab(tabs, pathname);
+  const isMenuCurrent = shown === MENU;
   const barRef = useRef<HTMLElement>(null);
   // The tinted pill slides sideways to the tab that was tapped (Movement).
-  useMarkerSlide(barRef, tabs.find((tab) => isCurrentPage(tab.href, pathname))?.href ?? "menu");
+  useMarkerSlide(barRef, shown);
   return (
     <nav
       ref={barRef}
@@ -64,9 +65,13 @@ function PhoneTabBar({ role, modules, isMenuOpen, onOpenMenu }: TabBarProps) {
           key={tab.href}
           href={tab.href}
           aria-current={isCurrentPage(tab.href, pathname) ? "page" : undefined}
+          {...(shown === tab.href ? { "data-current": "" } : {})}
+          onClick={(event) => {
+            if (isPlainClick(event)) tap(tab.href);
+          }}
           className={TAB_CLASSES}
         >
-          <TabIcon icon={tab.icon} isCurrent={isCurrentPage(tab.href, pathname)}>
+          <TabIcon icon={tab.icon} isCurrent={shown === tab.href}>
             <TabBadge waiting={counts[tab.href]} />
           </TabIcon>
           <TabLabel>{tab.href === ROUTES.home ? LABELS.tabHome : tab.label}</TabLabel>
@@ -88,21 +93,55 @@ function PhoneTabBar({ role, modules, isMenuOpen, onOpenMenu }: TabBarProps) {
   );
 }
 
+/** The pill on Menu: no page is a tab's, so Menu is the place you are. */
+const MENU = "menu";
+
+/**
+ * The tab that shows as current: the one tapped, at once, until the page it opens has come (a
+ * page can take a moment); then the open page's tab, or Menu on a page that isn't in the bar.
+ */
+function useShownTab(tabs: readonly NavItem[], pathname: string): [string, (href: string) => void] {
+  const [tapped, setTapped] = useState<{ href: string; from: string } | null>(null);
+  const open = tabs.find((tab) => isCurrentPage(tab.href, pathname))?.href ?? MENU;
+  const isTapStill = tapped !== null && tapped.from === pathname;
+  return [
+    isTapStill ? tapped.href : open,
+    (href) => {
+      setTapped({ href, from: pathname });
+    },
+  ];
+}
+
+/** A plain tap or click; one that opens a new tab or window leaves this page as it is. */
+function isPlainClick(event: MouseEvent): boolean {
+  return !(event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0);
+}
+
 const TAB_CLASSES = clsx(
   "group min-h-tabbar text-tiny text-ink-3 grid min-w-0 content-center justify-items-center gap-0.5 px-0.5 py-1 font-semibold no-underline",
-  "aria-[current=page]:text-accent data-current:text-accent",
+  "data-current:text-accent transition-colors",
 );
 
+/**
+ * A tab's icon on a pill-sized place. The current tab's tinted pill is a layer of its own behind
+ * the icon, so when it slides to another tab only the pill moves, never an icon (owner).
+ */
 function TabIcon(props: { icon: IconName; isCurrent: boolean; children?: ReactNode }) {
   const { icon, isCurrent, children } = props;
   return (
     <span
-      {...(isCurrent ? { "data-marker": "" } : {})}
       className={clsx(
-        "h-tab-pill-h w-tab-pill rounded-pill relative grid place-items-center transition-colors",
-        isCurrent ? "bg-tint" : "group-active:bg-fill-2",
+        "h-tab-pill-h w-tab-pill rounded-pill relative isolate grid place-items-center",
+        !isCurrent && "group-active:bg-fill-2",
       )}
     >
+      {isCurrent && (
+        <span
+          data-marker=""
+          aria-hidden="true"
+          className="bg-tint rounded-pill absolute inset-0 -z-1"
+        />
+      )}
       <Icon name={icon} size="lg" />
       {children}
     </span>
