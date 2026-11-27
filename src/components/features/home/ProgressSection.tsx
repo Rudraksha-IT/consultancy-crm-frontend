@@ -18,7 +18,8 @@ import { ROUTES } from "@/constants/routes";
 import { COUNTRY_LABELS } from "@/constants/students";
 import { fetchProgress, type ProgressList, type ProgressRow } from "@/lib/api";
 
-import { useLoaded } from "./useLoaded";
+import { SeeAllLink } from "./SeeAllLink";
+import { useLoaded, type Loaded } from "./useLoaded";
 
 type ProgressSectionProps = {
   title: string;
@@ -40,14 +41,7 @@ export function ProgressSection({ title, mine, limit, showsCounsellor }: Progres
   const state = useLoaded(load, version);
 
   return (
-    <Section
-      title={title}
-      aside={
-        <Link href={ROUTES.students} className="min-h-control inline-flex items-center">
-          {HOME_TEXT.allStudents}
-        </Link>
-      }
-    >
+    <Section title={title} keepsAsideOnLine {...seeAllAside(state)}>
       {state.status === "loading" && <Loading />}
       {state.status === "failed" && <Banner tone="problem">{HOME_TEXT.progressFailed}</Banner>}
       {state.status === "loaded" && (
@@ -64,6 +58,12 @@ export function ProgressSection({ title, mine, limit, showsCounsellor }: Progres
       )}
     </Section>
   );
+}
+
+/** The one way to the full list, beside the title, like every Home section (owner, 2026-11-27). */
+function seeAllAside(state: Loaded<ProgressList>) {
+  if (state.status !== "loaded") return {};
+  return { aside: <SeeAllLink href={ROUTES.students} count={state.data.count} /> };
 }
 
 type ProgressPanelProps = {
@@ -92,14 +92,6 @@ function ProgressPanel({ list, showsCounsellor, onOpen }: ProgressPanelProps) {
           />
         ))}
       </ul>
-      {list.count > list.rows.length && (
-        <div className="border-rule text-secondary text-ink-2 px-gutter flex flex-wrap items-center justify-between gap-x-4 border-t py-2">
-          <span>{HOME_TEXT.showingFurthest(list.rows.length, list.count)}</span>
-          <Link href={ROUTES.students} className="min-h-control inline-flex items-center">
-            {HOME_TEXT.seeAllStudents}
-          </Link>
-        </div>
-      )}
     </Panel>
   );
 }

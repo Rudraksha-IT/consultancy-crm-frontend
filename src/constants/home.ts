@@ -24,10 +24,6 @@ export const HOME_TEXT = {
     (beside === null ? "" : ` (${beside})`),
   yourProgress: "Your Students' progress",
   everyonesProgress: "Students' progress",
-  allStudents: "All Students",
-  seeAllStudents: "See all Students",
-  showingFurthest: (shown: number, count: number) =>
-    `Showing the ${String(shown)} furthest along out of ${String(count)}.`,
   // Finished Students (Visa granted) are left out, so "yet" would be wrong (list tidy-ups 14).
   noStudents: "No Students on their way right now.",
   noCounsellorYet: "no counsellor yet",

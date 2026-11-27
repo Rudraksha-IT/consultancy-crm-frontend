@@ -374,7 +374,7 @@ describe("The Admin's Home", () => {
     expect(progress.queryByText(/^Next:/)).not.toBeInTheDocument();
   });
 
-  it("shows the furthest along with their counsellor, and how many more there are", async () => {
+  it("shows the furthest along with their counsellor, and one See all beside the title (owner)", async () => {
     backend(...EVERYTHING);
     renderHome(ADMIN);
     const progress = within(await region("Students' progress"));
@@ -387,11 +387,11 @@ describe("The Admin's Home", () => {
     expect(progress.getByText("Australia, no counsellor yet")).toBeInTheDocument();
     expect(progress.getAllByRole("list", { name: "Stage: Applying" })).toHaveLength(1);
     expect(progress.getByText("Next: Waiting for an offer, Deakin University")).toBeInTheDocument();
-    expect(progress.getByText("Showing the 2 furthest along out of 9.")).toBeInTheDocument();
-    expect(progress.getByRole("link", { name: "See all Students" })).toHaveAttribute(
-      "href",
-      "/students",
-    );
+    expect(progress.queryByText(/furthest along/)).toBeNull();
+    const seeAll = progress.getAllByRole("link", { name: "See all (9)" });
+    expect(seeAll).toHaveLength(1);
+    expect(seeAll[0]).toHaveAttribute("href", "/students");
+    expect(progress.queryByRole("link", { name: /All Students/ })).toBeNull();
   });
 
   it("opens a Student's checklist from their documents button", async () => {
