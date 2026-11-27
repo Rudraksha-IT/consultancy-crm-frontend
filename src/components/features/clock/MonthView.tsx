@@ -84,10 +84,13 @@ type MonthBarProps = {
 function MonthBar({ stepper, view, onView }: MonthBarProps) {
   if (stepper === undefined && view === null) return null;
   return (
-    <div data-swap-bar="" className="flex flex-wrap items-center justify-between gap-3">
-      {stepper !== undefined && <MonthStepper value={stepper.chosen} onChange={stepper.onMonth} />}
+    // The month and its arrows in the middle of the line, the switch at its right (owner).
+    <div data-swap-bar="" className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+      {stepper !== undefined && (
+        <MonthStepper value={stepper.chosen} onChange={stepper.onMonth} className="col-start-2" />
+      )}
       {view !== null && (
-        <span className="ml-auto">
+        <span className="col-start-3 justify-self-end">
           <ViewSwitch
             label={TEXT.showMonthAs}
             options={VIEW_OPTIONS}

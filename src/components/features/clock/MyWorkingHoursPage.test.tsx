@@ -205,6 +205,9 @@ describe("MyWorkingHoursPage", () => {
     expect(stepper.parentElement).toContainElement(
       screen.getByRole("group", { name: "Show the month as" }),
     );
+    // The month and its arrows sit in the middle of that line, the switch at its right (owner).
+    expect(stepper.parentElement).toHaveClass("grid", "grid-cols-[1fr_auto_1fr]");
+    expect(stepper).toHaveClass("col-start-2");
     const previous = within(stepper).getByRole("button", { name: "Previous month" });
     await user.click(previous);
 

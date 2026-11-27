@@ -12,6 +12,8 @@ type MonthStepperProps = {
   /** The month shown ("YYYY-MM"). */
   value: string;
   onChange: (month: string) => void;
+  /** Where it sits in its line, e.g. the middle column of the month's bar. */
+  className?: string;
 };
 
 /**
@@ -20,10 +22,14 @@ type MonthStepperProps = {
  * the last; the first is a year back. An arrow with nowhere to go stays where it is, greyed, so
  * the cursor is never lost on it.
  */
-export function MonthStepper({ value, onChange }: MonthStepperProps) {
+export function MonthStepper({ value, onChange, className }: MonthStepperProps) {
   const months = recentMonths(todayIso(), CLOCK_MONTHS_SHOWN);
   return (
-    <div role="group" aria-label={TEXT.month} className="flex items-center gap-1">
+    <div
+      role="group"
+      aria-label={TEXT.month}
+      className={clsx("flex items-center gap-1", className)}
+    >
       <Arrow
         icon="left"
         label={TEXT.previousMonth}
