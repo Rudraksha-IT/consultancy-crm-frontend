@@ -62,8 +62,10 @@ describe("the light and dark fade (owner: smoother)", () => {
   });
 
   it("stops every element's own colour fade while the screen fades, so colours don't flicker", () => {
+    // Plain selectors: `::before` and `::after` aren't allowed inside `:is()`, so they'd be dropped.
     expect(css).toMatch(
-      /html\[data-theme-fade\] :is\(\*, \*::before, \*::after\) \{\s*transition: none !important;/,
+      /html\[data-theme-fade\] \*,\s*html\[data-theme-fade\] \*::before,\s*html\[data-theme-fade\] \*::after \{\s*transition: none !important;/,
     );
+    expect(css).not.toMatch(/:is\([^)]*::(before|after)/);
   });
 });
