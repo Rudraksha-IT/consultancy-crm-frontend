@@ -69,16 +69,21 @@ function onAPhone(): void {
 }
 
 /** The cells of the List's rows, each row as its texts. */
+/** What an element says, or "" when it is not there. */
+function wordsOf(element: Element | undefined): string {
+  return element?.textContent ?? "";
+}
+
+/** A day of the List as its three parts: the day, its times line (or ""), and its status. */
+function rowParts(row: HTMLElement): string[] {
+  const [words, status] = [...row.children];
+  const [day, times] = words === undefined ? [] : [...words.children];
+  return [wordsOf(day), wordsOf(times), wordsOf(status)];
+}
+
 function listRows(): string[][] {
-  const table = screen.getByRole("table", { name: "Days of November 2026" });
-  return within(table)
-    .getAllByRole("row")
-    .slice(1)
-    .map((row) =>
-      within(row)
-        .getAllByRole("cell")
-        .map((cell) => cell.textContent),
-    );
+  const list = screen.getByRole("list", { name: "Days of November 2026" });
+  return within(list).getAllByRole("listitem").map(rowParts);
 }
 
 beforeEach(() => {
@@ -194,10 +199,45 @@ describe("MyWorkingHoursPage", () => {
     renderPage();
     await screen.findByRole("group", { name: "Clock-ins, November 2026" });
 
-    await user.selectOptions(screen.getByLabelText("Month"), "2026-10");
+    // The month is chosen above the calendar, on the line of the Calendar / List switch.
+    const stepper = screen.getByRole("group", { name: "Month" });
+    expect(stepper).toHaveTextContent("November 2026");
+    expect(stepper.parentElement).toContainElement(
+      screen.getByRole("group", { name: "Show the month as" }),
+    );
+    const previous = within(stepper).getByRole("button", { name: "Previous month" });
+    await user.click(previous);
 
     expect(await screen.findByText("Your clock-ins for October 2026.")).toBeInTheDocument();
     expect(callsTo(fetchFn, "GET", "/api/clock/month/?month=2026-10")).toHaveLength(1);
+    // The name changes at once and the cursor stays on the arrow (rule 8).
+    expect(stepper).toHaveTextContent("October 2026");
+    expect(previous).toHaveFocus();
+  });
+
+  it("stops at this month: the arrow to the next month is off, and stays where the cursor is", async () => {
+    const user = userEvent.setup();
+    const fetchFn = backend(
+      on("GET", MONTH, novemberMonth()),
+      on("GET", "/api/clock/month/?month=2026-10", { ...novemberMonth(), month: "2026-10" }),
+    );
+    renderPage();
+    await screen.findByRole("group", { name: "Clock-ins, November 2026" });
+    const stepper = screen.getByRole("group", { name: "Month" });
+    const next = within(stepper).getByRole("button", { name: "Next month" });
+
+    expect(next).toHaveAttribute("aria-disabled", "true");
+    await user.click(next);
+    expect(callsTo(fetchFn, "GET", MONTH)).toHaveLength(1);
+
+    await user.click(within(stepper).getByRole("button", { name: "Previous month" }));
+    expect(next).toHaveAttribute("aria-disabled", "false");
+    await user.click(next);
+
+    expect(stepper).toHaveTextContent("November 2026");
+    // Back at this month the arrow is off again, yet still there with the cursor on it.
+    expect(next).toHaveAttribute("aria-disabled", "true");
+    expect(next).toHaveFocus();
   });
 
   it("gives an Admin a way to everyone's hours", async () => {
@@ -261,7 +301,7 @@ describe("Working hours: the tabs (UI revamp 16)", () => {
     ]);
     expect(tabs[0]).toHaveAttribute("aria-selected", "true");
     expect(await screen.findByRole("group", { name: "Clock-ins, November 2026" })).toBeVisible();
-    expect(screen.getByLabelText("Month")).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Month" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Ask for dates" })).toBeNull();
     // My dates are only read when their tab opens.
     expect(callsTo(fetchFn, "GET", MINE)).toHaveLength(0);
@@ -362,7 +402,7 @@ describe("Working hours: the month as a Calendar or a List (UI revamp 16)", () =
 
     await user.click(within(switcher).getByRole("button", { name: "List" }));
 
-    expect(screen.getByRole("table", { name: "Days of November 2026" })).toBeInTheDocument();
+    expect(screen.getByRole("list", { name: "Days of November 2026" })).toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Clock-ins, November 2026" })).toBeNull();
     expect(screen.queryByRole("list", { name: "What the days show" })).toBeNull();
     expect(within(switcher).getByRole("button", { name: "List" })).toHaveFocus();
@@ -381,7 +421,7 @@ describe("Working hours: the month as a Calendar or a List (UI revamp 16)", () =
     unmount();
     renderPage();
 
-    expect(await screen.findByRole("table", { name: "Days of November 2026" })).toBeInTheDocument();
+    expect(await screen.findByRole("list", { name: "Days of November 2026" })).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Calendar" }));
 
@@ -408,38 +448,17 @@ describe("Working hours: the month as a Calendar or a List (UI revamp 16)", () =
     backend(on("GET", MONTH, novemberMonth()));
 
     renderPage();
-    const table = await screen.findByRole("table", { name: "Days of November 2026" });
+    await screen.findByRole("list", { name: "Days of November 2026" });
 
-    expect(
-      within(table)
-        .getAllByRole("columnheader")
-        .map((head) => head.textContent),
-    ).toEqual(["Day", "In", "Out", "Hours", "Status"]);
-    // Each row: the day, In, Out, Hours, Status, then the one line a phone shows for the times.
+    // Each row: the day, its times on one line, and its status.
     expect(listRows()).toEqual([
-      ["5 Nov 2026Thursday, today", "", "", "", "Not in yet", ""],
-      ["4 Nov 2026Wednesday", "9:00 AM", "Missing", "", "No clock-out", "9:00 AM – Missing"],
-      [
-        "3 Nov 2026Tuesday",
-        "9:00 AM",
-        "1:00 PM",
-        "4h 00m",
-        "Short day",
-        "9:00 AM – 1:00 PM · 4h 00m",
-      ],
-      [
-        "2 Nov 2026Monday",
-        "9:02 AM",
-        "5:26 PM",
-        "8h 24m",
-        "Full dayCorrected",
-        "9:02 AM – 5:26 PM · 8h 24m",
-      ],
-      ["1 Nov 2026Sunday", "", "", "", "Not in", ""],
+      ["5 Nov 2026 Thursday, today", "", "Not in yet"],
+      ["4 Nov 2026 Wednesday", "9:00 AM – Missing", "No clock-out"],
+      ["3 Nov 2026 Tuesday", "9:00 AM – 1:00 PM · 4h 00m", "Short day"],
+      ["2 Nov 2026 Monday", "9:02 AM – 5:26 PM · 8h 24m", "Full dayCorrected"],
+      ["1 Nov 2026 Sunday", "", "Not in"],
     ]);
     expect(screen.getByText("5 days so far in November 2026")).toBeInTheDocument();
-    // Five days fit one page.
-    expect(screen.queryByRole("navigation", { name: "Pages" })).toBeNull();
     // My own days never open.
     expect(screen.queryByRole("button", { name: /Correct/ })).toBeNull();
     expect(screen.queryByRole("list", { name: "Days that can be corrected" })).toBeNull();
@@ -474,55 +493,44 @@ describe("Working hours: the month as a Calendar or a List (UI revamp 16)", () =
     backend(on("GET", MONTH, { ...month, days }));
 
     renderPage();
-    await screen.findByRole("table", { name: "Days of November 2026" });
+    await screen.findByRole("list", { name: "Days of November 2026" });
 
     const rows = listRows();
     expect(rows[0]).toEqual([
-      "10 Nov 2026Tuesday, today",
-      "9:10 AM",
-      "Still in",
-      "1h 05m",
-      "Still inHome",
+      "10 Nov 2026 Tuesday, today",
       "9:10 AM – Still in · 1h 05m",
+      "Still inHome",
     ]);
     // A holiday shows its own name, as text.
-    expect(rows[1]).toEqual(["9 Nov 2026Monday", "", "", "", "Tihar <b>", ""]);
+    expect(rows[1]).toEqual(["9 Nov 2026 Monday", "", "Tihar <b>"]);
     // 7 Nov 2026 is a Saturday, the office's weekly day off.
-    expect(rows[3]).toEqual(["7 Nov 2026Saturday", "", "", "", "Day off", ""]);
+    expect(rows[3]).toEqual(["7 Nov 2026 Saturday", "", "Day off"]);
   });
 
-  it("pages the List ten days at a time, and the cursor stays on the pager", async () => {
-    const user = userEvent.setup();
+  it("shows the whole month small, in two columns, with no pages (owner, 2026-11-27)", async () => {
     window.localStorage.setItem(CLOCK_VIEW_KEY, "list");
     backend(on("GET", MONTH, novemberMonth(undefined, {}, 25)));
     renderPage();
-    await screen.findByRole("table", { name: "Days of November 2026" });
+    const list = await screen.findByRole("list", { name: "Days of November 2026" });
 
-    expect(listRows()).toHaveLength(10);
-    expect(listRows()[0]?.[0]).toBe("25 Nov 2026Wednesday, today");
-    expect(listRows()[9]?.[0]).toBe("16 Nov 2026Monday");
+    const rows = listRows();
+    expect(rows).toHaveLength(25);
+    expect(rows[0]?.[0]).toBe("25 Nov 2026 Wednesday, today");
+    expect(rows[24]?.[0]).toBe("1 Nov 2026 Sunday");
     expect(screen.getByText("25 days so far in November 2026")).toBeInTheDocument();
-    expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Previous page" })).toBeDisabled();
-
-    await user.click(screen.getByRole("button", { name: "Next page" }));
-
-    expect(screen.getByText("Page 2 of 3")).toBeInTheDocument();
-    expect(listRows()[0]?.[0]).toBe("15 Nov 2026Sunday");
-    expect(screen.getByRole("button", { name: "Next page" })).toHaveFocus();
-
-    await user.click(screen.getByRole("button", { name: "Next page" }));
-
-    expect(listRows().map((row) => row[0])).toEqual([
-      "5 Nov 2026Thursday",
-      "4 Nov 2026Wednesday",
-      "3 Nov 2026Tuesday",
-      "2 Nov 2026Monday",
-      "1 Nov 2026Sunday",
-    ]);
+    expect(screen.queryByRole("navigation", { name: "Pages" })).toBeNull();
+    expect(screen.queryByText(/^Page 1 of/)).toBeNull();
+    // Two columns filled downwards from tablet width: the newer 13 days, then the older 12.
+    expect(list).toHaveClass("grid", "tablet:grid-cols-2", "tablet:grid-flow-col");
+    expect(list).toHaveStyle({ gridTemplateRows: "repeat(13, auto)" });
+    const items = within(list).getAllByRole("listitem");
+    expect(items[12]).toHaveClass("tablet:border-r");
+    expect(items[13]).not.toHaveClass("tablet:border-r");
+    // Small rows: the day and its times as small text.
+    expect(items[0]?.firstElementChild).toHaveClass("text-small");
   });
 
-  it("starts another month's List on its first page, and counts a finished month without 'so far'", async () => {
+  it("shows another month's whole List, and counts a finished month without 'so far'", async () => {
     const user = userEvent.setup();
     window.localStorage.setItem(CLOCK_VIEW_KEY, "list");
     const october = {
@@ -540,14 +548,12 @@ describe("Working hours: the month as a Calendar or a List (UI revamp 16)", () =
       on("GET", "/api/clock/month/?month=2026-10", october),
     );
     renderPage();
-    await screen.findByRole("table", { name: "Days of November 2026" });
-    await user.click(screen.getByRole("button", { name: "Next page" }));
-    expect(screen.getByText("Page 2 of 3")).toBeInTheDocument();
+    await screen.findByRole("list", { name: "Days of November 2026" });
 
-    await user.selectOptions(screen.getByLabelText("Month"), "2026-10");
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
 
-    expect(await screen.findByRole("table", { name: "Days of October 2026" })).toBeInTheDocument();
-    expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
+    const list = await screen.findByRole("list", { name: "Days of October 2026" });
+    expect(within(list).getAllByRole("listitem")).toHaveLength(30);
     expect(screen.getByText("30 days in October 2026")).toBeInTheDocument();
   });
 
@@ -558,7 +564,7 @@ describe("Working hours: the month as a Calendar or a List (UI revamp 16)", () =
 
     renderPage();
 
-    expect(await screen.findByRole("table", { name: "Days of November 2026" })).toBeInTheDocument();
+    expect(await screen.findByRole("list", { name: "Days of November 2026" })).toBeInTheDocument();
     expect(screen.queryByRole("group", { name: "Clock-ins, November 2026" })).toBeNull();
     expect(screen.queryByRole("group", { name: "Show the month as" })).toBeNull();
     expect(screen.queryByRole("list", { name: "What the days show" })).toBeNull();

@@ -6,7 +6,7 @@ import {
   correctableDays,
   dayStatus,
   listedDays,
-  pageOf,
+  monthBeside,
   weekdayName,
 } from ".";
 
@@ -113,24 +113,22 @@ describe("correctableDays", () => {
   });
 });
 
-describe("pageOf", () => {
-  const items = Array.from({ length: 25 }, (_, index) => index + 1);
+describe("monthBeside", () => {
+  const months = ["2026-11", "2026-10", "2026-09"];
 
-  it("gives ten at a time", () => {
-    expect(pageOf(items, 1, 10)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-    expect(pageOf(items, 3, 10)).toEqual([21, 22, 23, 24, 25]);
+  it("gives the month before and the month after", () => {
+    expect(monthBeside(months, "2026-10", "older")).toBe("2026-09");
+    expect(monthBeside(months, "2026-10", "newer")).toBe("2026-11");
   });
 
-  it.each([
-    [0, 1],
-    [-4, 1],
-    [99, 21],
-  ])("keeps page %d inside the list", (page, first) => {
-    expect(pageOf(items, page, 10)[0]).toBe(first);
+  it("gives nothing past either end", () => {
+    expect(monthBeside(months, "2026-11", "newer")).toBeNull();
+    expect(monthBeside(months, "2026-09", "older")).toBeNull();
   });
 
-  it("gives nothing for an empty list", () => {
-    expect(pageOf([], 1, 10)).toEqual([]);
+  it("gives nothing for a month that is not offered", () => {
+    expect(monthBeside(months, "2020-01", "older")).toBeNull();
+    expect(monthBeside(months, "nonsense", "newer")).toBeNull();
   });
 });
 

@@ -89,6 +89,6 @@ export {
   correctableDays,
   dayStatus,
   listedDays,
-  pageOf,
+  monthBeside,
   weekdayName,
 } from "./monthList";

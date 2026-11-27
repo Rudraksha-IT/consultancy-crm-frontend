@@ -16,6 +16,7 @@ import { formatMonth } from "@/lib/dates";
 
 import { MonthCalendar } from "./MonthCalendar";
 import { MonthList } from "./MonthList";
+import { MonthStepper } from "./MonthStepper";
 import { useClockView } from "./useClockView";
 
 const VIEW_OPTIONS = [
@@ -25,9 +26,12 @@ const VIEW_OPTIONS = [
 
 type MonthViewProps = {
   month: ClockMonth;
-  /** The page of the month's List, from 1, and how to change it. */
-  listPage: number;
-  onListPage: (page: number) => void;
+  /**
+   * The month chosen and how to change it: given, the month's name sits between two arrows on
+   * the line of the Calendar / List switch. `chosen` may be a step ahead of `month` while the
+   * next one loads.
+   */
+  stepper?: { chosen: string; onMonth: (month: string) => void };
   /** Admins: open a day that can be corrected. Without it, no day opens. */
   onOpenDay?: (day: ClockDay) => void;
 };
@@ -39,27 +43,18 @@ type MonthViewProps = {
  * For an Admin the Calendar's days open; beside the List the days that can be corrected are
  * listed with a button each, as a list row itself opens nothing.
  */
-export function MonthView({ month, listPage, onListPage, onOpenDay }: MonthViewProps) {
+export function MonthView({ month, stepper, onOpenDay }: MonthViewProps) {
   const { view, isList, storeView } = useClockView();
   const working = hoursText(month.workingDayMinutes);
   return (
     <div className="grid gap-6">
       <Figures month={month} />
       <div className="grid gap-2.5">
-        {view !== null && (
-          <div data-swap-bar="" className="flex justify-end">
-            <ViewSwitch
-              label={TEXT.showMonthAs}
-              options={VIEW_OPTIONS}
-              value={view}
-              onChange={storeView}
-            />
-          </div>
-        )}
+        <MonthBar stepper={stepper} view={view} onView={storeView} />
         <Panel>
           {isList ? (
             <>
-              <MonthList month={month} page={listPage} onPage={onListPage} />
+              <MonthList month={month} />
               {onOpenDay !== undefined && <CorrectableDays month={month} onOpen={onOpenDay} />}
             </>
           ) : (
@@ -71,6 +66,36 @@ export function MonthView({ month, listPage, onListPage, onOpenDay }: MonthViewP
           </PanelFoot>
         </Panel>
       </div>
+    </div>
+  );
+}
+
+type MonthBarProps = {
+  stepper: MonthViewProps["stepper"] | undefined;
+  /** The view shown, or null on a phone: the List, with no switch. */
+  view: ClockView | null;
+  onView: (view: ClockView) => void;
+};
+
+/**
+ * Above the month: which month, on the left, and Calendar or List, on the right, on one line
+ * (owner, 2026-11-27). Either may be missing: a phone has no switch, a popup no arrows.
+ */
+function MonthBar({ stepper, view, onView }: MonthBarProps) {
+  if (stepper === undefined && view === null) return null;
+  return (
+    <div data-swap-bar="" className="flex flex-wrap items-center justify-between gap-3">
+      {stepper !== undefined && <MonthStepper value={stepper.chosen} onChange={stepper.onMonth} />}
+      {view !== null && (
+        <span className="ml-auto">
+          <ViewSwitch
+            label={TEXT.showMonthAs}
+            options={VIEW_OPTIONS}
+            value={view}
+            onChange={onView}
+          />
+        </span>
+      )}
     </div>
   );
 }

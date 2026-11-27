@@ -1,87 +1,72 @@
 "use client";
 
+import clsx from "clsx";
+
 import { useDates } from "@/components/features/shell/dateDisplay";
 import { Chip, type ChipTone } from "@/components/ui/Chip";
-import { DataCell, DataRow, DataTable } from "@/components/ui/DataTable";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Pager } from "@/components/ui/Pager";
-import { CLOCK_LIST_PAGE_SIZE, CLOCK_TEXT as TEXT, DayStatus } from "@/constants/clock";
+import { CLOCK_TEXT as TEXT, DayStatus } from "@/constants/clock";
 import { WORK_FROM_HOME_TEXT } from "@/constants/workFromHome";
 import type { ClockDay, ClockMonth } from "@/lib/api";
-import { dayStatus, listedDays, officeTime, pageOf, shortHours, weekdayName } from "@/lib/clock";
+import { dayStatus, listedDays, officeTime, shortHours, weekdayName } from "@/lib/clock";
 import { formatMonth } from "@/lib/dates";
 
-type MonthListProps = {
-  month: ClockMonth;
-  /** Which ten days show, from 1; kept by whoever shows the month, so a redraw keeps the page. */
-  page: number;
-  onPage: (page: number) => void;
-};
-
-const HEAD = "px-3 py-3 text-left";
-const CELL = "px-3 py-3 align-middle";
-const TIME = `${CELL} tabular-nums whitespace-nowrap`;
+type MonthListProps = { month: ClockMonth };
 
 /**
- * One person's month as a list (UI revamp 16): the days up to today, newest first, ten a page,
- * each with its first clock-in, last clock-out, hours and what kind of day it was, in words. On a
- * phone a row is the day, its times on one line and the status.
+ * One person's month as a list (UI revamp 16; made small on 2026-11-27, as the owner asked): every
+ * day up to today, newest first, the whole month in view with no pages. From tablet width the days
+ * run down two columns, the newer half on the left. A row is the day, its times on one line
+ * under it, and what kind of day it was, in words.
  */
-export function MonthList({ month, page, onPage }: MonthListProps) {
+export function MonthList({ month }: MonthListProps) {
   const days = listedDays(month.days);
   const monthName = formatMonth(month.month);
   if (days.length === 0) return <EmptyState>{TEXT.nothingYet}</EmptyState>;
   const isThisMonth = days.some((day) => day.isToday);
+  const perColumn = Math.ceil(days.length / COLUMNS);
   return (
     <>
-      <DataTable phone="list" label={TEXT.listLabel(monthName)}>
-        <thead>
-          <tr>
-            {[TEXT.day, TEXT.timeIn, TEXT.timeOut, TEXT.hours, TEXT.status].map((heading) => (
-              <th key={heading} scope="col" className={HEAD}>
-                {heading}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-rule divide-y">
-          {pageOf(days, page, CLOCK_LIST_PAGE_SIZE).map((day) => (
-            <DayRow key={day.date} day={day} />
-          ))}
-        </tbody>
-      </DataTable>
-      <Pager
-        summary={(isThisMonth ? TEXT.daysSoFar : TEXT.daysIn)(days.length, monthName)}
-        count={days.length}
-        page={page}
-        pageSize={CLOCK_LIST_PAGE_SIZE}
-        onPage={onPage}
-      />
+      <ul
+        aria-label={TEXT.listLabel(monthName)}
+        // Two columns filled downwards, each holding half the days.
+        style={{ gridTemplateRows: `repeat(${String(perColumn)}, auto)` }}
+        className="tablet:grid-flow-col tablet:grid-cols-2 grid"
+      >
+        {days.map((day, index) => (
+          <DayRow key={day.date} day={day} isInFirstColumn={index < perColumn} />
+        ))}
+      </ul>
+      <p className="text-small text-ink-2 px-gutter py-3">
+        {(isThisMonth ? TEXT.daysSoFar : TEXT.daysIn)(days.length, monthName)}
+      </p>
     </>
   );
 }
 
-function DayRow({ day }: { day: ClockDay }) {
+const COLUMNS = 2;
+
+function DayRow({ day, isInFirstColumn }: { day: ClockDay; isInFirstColumn: boolean }) {
   const dates = useDates();
-  const times = timesOf(day);
+  const line = timesLine(timesOf(day));
   return (
-    // Today stands out with a light tint, and says so in words beside its weekday.
-    <DataRow className={day.isToday ? "phone:bg-tint/55" : ""}>
-      <DataCell part="title" className={CELL}>
-        <b className="font-semibold">{dates.date(day.date)}</b>
-        <span className="text-secondary text-ink-2 block font-normal">{weekdayWords(day)}</span>
-      </DataCell>
-      <DataCell className={TIME}>{times.start}</DataCell>
-      <DataCell className={TIME}>{times.end}</DataCell>
-      <DataCell className={TIME}>{times.hours}</DataCell>
-      <DataCell part="fact" className={CELL}>
-        <DayStatusWords day={day} />
-      </DataCell>
-      {/* Phones only: the times on one line under the day, in place of the three columns. */}
-      <DataCell part="line" className="phone:hidden tabular-nums">
-        {timesLine(times)}
-      </DataCell>
-    </DataRow>
+    <li
+      className={clsx(
+        "border-rule px-gutter grid min-h-13 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-b py-1.5",
+        // A line between the two columns; today stands out with a light tint, and says so.
+        isInFirstColumn && "tablet:border-r",
+        day.isToday && "bg-tint/55",
+      )}
+    >
+      <span className="text-small grid min-w-0">
+        <span className="truncate">
+          <b className="text-ink font-semibold">{dates.date(day.date)}</b>{" "}
+          <span className="text-ink-2">{weekdayWords(day)}</span>
+        </span>
+        {line !== "" && <span className="text-ink-2 truncate tabular-nums">{line}</span>}
+      </span>
+      <DayStatusWords day={day} />
+    </li>
   );
 }
 
@@ -148,7 +133,7 @@ function DayStatusWords({ day }: { day: ClockDay }) {
     day.isHome ? WORK_FROM_HOME_TEXT.homeTag : null,
   ].filter((note) => note !== null);
   return (
-    <span className="max-phone:flex-col max-phone:items-end max-phone:gap-y-0 flex min-w-0 flex-wrap items-center gap-x-2.5">
+    <span className="flex min-w-0 flex-col items-end">
       {look !== null && <Chip tone={look.tone}>{look.label}</Chip>}
       {notes.map((note) => (
         <span key={note} className="text-small text-ink-2 font-normal">

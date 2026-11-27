@@ -31,7 +31,7 @@ import { describeFilters } from "@/lib/exports";
 import { formatMonth, todayIso } from "@/lib/dates";
 
 import { StaffMonthDialog } from "./CorrectDayDialogs";
-import { MonthPicker } from "./MonthPicker";
+import { MonthStepper } from "./MonthStepper";
 
 const MONTH_LENGTH = 7;
 
@@ -200,8 +200,8 @@ function ByMonth({ month, onMonth, version, onOpen }: ByMonthProps) {
   const monthName = formatMonth(month);
   return (
     <div className="grid gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <MonthPicker value={month} onChange={onMonth} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <MonthStepper value={month} onChange={onMonth} />
         <ExportButton
           list="clock_in"
           count={state.status === "loaded" ? state.data.rows.length : null}

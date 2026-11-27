@@ -462,6 +462,9 @@
   /* A day of the Clock-in month calendar (issue 56), and on phones. */
   --spacing-cal-day: 5.75rem;
   --spacing-cal-day-sm: 3.625rem;
+  /* the month's name between the two arrows of the month stepper: wide enough for "September
+     2026", so the arrows don't move as the months change */
+  --spacing-month-name: 9.5rem;
   /* the Inbox (issue 86; UI revamp 14): the conversation list's width, the small picture in a
      list row and the unread dot. Its height is the window's (useFillWindow), not a token. */
   --spacing-conversations: 21.25rem;

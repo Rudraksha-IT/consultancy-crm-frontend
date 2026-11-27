@@ -58,7 +58,6 @@ export function StaffMonthDialog({
   const { state, reload } = useClockMonth(month, staffId);
   const [open, setOpen] = useState<Open>({ kind: "month" });
   // Kept here, so the List is on the same page after a day was opened and closed (rule 8).
-  const [listPage, setListPage] = useState(1);
   const backToMonth = () => {
     setOpen({ kind: "month" });
   };
@@ -69,8 +68,6 @@ export function StaffMonthDialog({
       <MonthDialog
         title={TEXT.personMonth(name, formatMonth(month))}
         state={state}
-        listPage={listPage}
-        onListPage={setListPage}
         onOpenDay={(chosen) => {
           setOpen({ kind: "day", date: chosen.date });
         }}
@@ -124,8 +121,6 @@ function openDay(
 type MonthDialogProps = {
   title: string;
   state: ClockMonthState;
-  listPage: number;
-  onListPage: (page: number) => void;
   onOpenDay: (day: ClockDay) => void;
   onClose: () => void;
 };
@@ -134,7 +129,7 @@ type MonthDialogProps = {
  * The month in a popup, as a Calendar or a List: the switch and the List's pager redraw it in
  * place, so the popup stays open and the cursor stays on what was pressed (UI revamp 16).
  */
-function MonthDialog({ title, state, listPage, onListPage, onOpenDay, onClose }: MonthDialogProps) {
+function MonthDialog({ title, state, onOpenDay, onClose }: MonthDialogProps) {
   return (
     <Dialog
       isOpen
@@ -149,14 +144,7 @@ function MonthDialog({ title, state, listPage, onListPage, onOpenDay, onClose }:
     >
       {state.status === "loading" && <p className="text-ink-2">{TEXT.monthLoading}</p>}
       {state.status === "failed" && <Banner tone="problem">{TEXT.monthFailed}</Banner>}
-      {state.status === "loaded" && (
-        <MonthView
-          month={state.month}
-          listPage={listPage}
-          onListPage={onListPage}
-          onOpenDay={onOpenDay}
-        />
-      )}
+      {state.status === "loaded" && <MonthView month={state.month} onOpenDay={onOpenDay} />}
     </Dialog>
   );
 }

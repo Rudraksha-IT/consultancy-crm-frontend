@@ -43,9 +43,6 @@ export const CLOCK_VIEW_KEY = "crm:clock-view";
 export const ClockView = { Calendar: "calendar", List: "list" } as const;
 export type ClockView = (typeof ClockView)[keyof typeof ClockView];
 
-/** How many days one page of the month's list holds. */
-export const CLOCK_LIST_PAGE_SIZE = 10;
-
 /** What one day of the month's list says in its Status column. */
 export const DayStatus = {
   FullDay: "full_day",
@@ -118,6 +115,8 @@ export const CLOCK_TEXT = {
   timesLine: (start: string, end: string) => `${start} – ${end}`,
   daysSoFar: (count: number, month: string) => `${plural(count, "day", "days")} so far in ${month}`,
   daysIn: (count: number, month: string) => `${plural(count, "day", "days")} in ${month}`,
+  previousMonth: "Previous month",
+  nextMonth: "Next month",
   nothingYet: "Nothing yet this month.",
   home: "Home",
   myHoursIntro: (month: string) => `Your clock-ins for ${month}.`,

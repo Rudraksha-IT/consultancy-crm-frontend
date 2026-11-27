@@ -21,7 +21,6 @@ import { WORK_FROM_HOME_TEXT } from "@/constants/workFromHome";
 import { clockTabFrom } from "@/lib/clock";
 import { formatMonth, todayIso } from "@/lib/dates";
 
-import { MonthPicker } from "./MonthPicker";
 import { MonthView } from "./MonthView";
 import { MyHolidays } from "./MyHolidays";
 import { MyWorkFromHome } from "./MyWorkFromHome";
@@ -81,7 +80,6 @@ function MyPage({ askedTab }: { askedTab: string | null }) {
   const tabs = isAdmin ? ADMIN_TABS : STAFF_TABS;
   const [tab, setTab] = useClockTab(askedTab, tabs);
   const [month, setMonth] = useState(() => todayIso().slice(0, MONTH_LENGTH));
-  const [listPage, setListPage] = useState(1);
   const [isAsking, setIsAsking] = useState(false);
   const onAskingDone = (): void => {
     setIsAsking(false);
@@ -96,12 +94,7 @@ function MyPage({ askedTab }: { askedTab: string | null }) {
         actions={
           <TabActions
             tab={tab}
-            month={month}
             isAdmin={isAdmin}
-            onMonth={(next) => {
-              setMonth(next);
-              setListPage(1);
-            }}
             onAsk={() => {
               setIsAsking(true);
             }}
@@ -109,9 +102,7 @@ function MyPage({ askedTab }: { askedTab: string | null }) {
         }
       />
       <TabStrip tabs={tabs} tab={tab} onSelect={setTab}>
-        {tab === ClockTab.Hours && (
-          <MyMonth month={month} listPage={listPage} onListPage={setListPage} />
-        )}
+        {tab === ClockTab.Hours && <MyMonth month={month} onMonth={setMonth} />}
         {tab === ClockTab.WorkFromHome && (
           <MyWorkFromHome isAsking={isAsking} onAskingDone={onAskingDone} />
         )}
@@ -127,16 +118,15 @@ function subtitleOf(tab: ClockTab, month: string): string {
   return tab === ClockTab.WorkFromHome ? TEXT.workFromHomeIntro : HOLIDAY_TEXT.intro;
 }
 
-type TabActionsProps = HoursActionsProps & { tab: ClockTab; onAsk: () => void };
+type TabActionsProps = { tab: ClockTab; isAdmin: boolean; onAsk: () => void };
 
 /**
- * Beside the title: the month on my hours, "Ask for dates" on Work from home, and on Holidays
- * the Admin's way to change them (Configuration → Working hours); other Roles only read them.
+ * Beside the title: for an Admin the way to everyone's hours on my hours, "Ask for dates" on Work
+ * from home, and on Holidays the Admin's way to change them (Configuration → Working hours);
+ * other Roles only read them. The month is chosen above the month itself (`MonthView`).
  */
-function TabActions({ tab, month, isAdmin, onMonth, onAsk }: TabActionsProps) {
-  if (tab === ClockTab.Hours) {
-    return <HoursActions month={month} isAdmin={isAdmin} onMonth={onMonth} />;
-  }
+function TabActions({ tab, isAdmin, onAsk }: TabActionsProps) {
+  if (tab === ClockTab.Hours) return <HoursActions isAdmin={isAdmin} />;
   if (tab === ClockTab.WorkFromHome) {
     return (
       <Button variant="primary" icon="plus" onClick={onAsk}>
@@ -176,19 +166,13 @@ function TabStrip({ tabs, tab, onSelect, children }: TabStripProps) {
   );
 }
 
-type HoursActionsProps = { month: string; isAdmin: boolean; onMonth: (month: string) => void };
-
-/** Beside the title on my hours: the month, and for an Admin the way to everyone's hours. */
-function HoursActions({ month, isAdmin, onMonth }: HoursActionsProps) {
+/** Beside the title on my hours: for an Admin, the way to everyone's hours. */
+function HoursActions({ isAdmin }: { isAdmin: boolean }) {
+  if (!isAdmin) return null;
   return (
-    <>
-      <MonthPicker value={month} onChange={onMonth} />
-      {isAdmin && (
-        <ButtonLink href={ROUTES.workingHours} icon="badge">
-          {TEXT.everyonesHours}
-        </ButtonLink>
-      )}
-    </>
+    <ButtonLink href={ROUTES.workingHours} icon="badge">
+      {TEXT.everyonesHours}
+    </ButtonLink>
   );
 }
 
@@ -224,13 +208,14 @@ function keepTabInAddress(tab: ClockTab): void {
   window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
 }
 
-type MyMonthProps = { month: string; listPage: number; onListPage: (page: number) => void };
+type MyMonthProps = { month: string; onMonth: (month: string) => void };
 
-function MyMonth({ month, listPage, onListPage }: MyMonthProps) {
+/** My month, with the month's name between two arrows above it. */
+function MyMonth({ month, onMonth }: MyMonthProps) {
   const { state } = useClockMonth(month, null);
   if (state.status === "loading") return <p className="text-ink-2">{TEXT.monthLoading}</p>;
   if (state.status === "failed") return <Banner tone="problem">{TEXT.monthFailed}</Banner>;
-  return <MonthView month={state.month} listPage={listPage} onListPage={onListPage} />;
+  return <MonthView month={state.month} stepper={{ chosen: month, onMonth }} />;
 }
 
 function CrumbHome() {

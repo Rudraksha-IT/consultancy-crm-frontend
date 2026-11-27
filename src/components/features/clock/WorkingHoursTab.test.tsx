@@ -182,7 +182,14 @@ describe("Employees → Working hours", () => {
     expect(await within(now).findByText("1 of 3")).toBeInTheDocument();
     const month = screen.getByRole("region", { name: "Hours by month" });
     expect(await within(month).findByRole("table", { name: "Clock-in" })).toBeInTheDocument();
-    expect(within(month).getByRole("combobox", { name: "Month" })).toBeInTheDocument();
+    // The month is its name between two arrows, as a calendar has it.
+    const stepper = within(month).getByRole("group", { name: "Month" });
+    expect(stepper).toHaveTextContent("November 2026");
+    expect(within(stepper).getByRole("button", { name: "Previous month" })).toBeInTheDocument();
+    expect(within(stepper).getByRole("button", { name: "Next month" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
     expect(within(month).getByRole("button", { name: "Export" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Who's in now" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "By month" })).not.toBeInTheDocument();
@@ -266,7 +273,7 @@ describe("Employees → Working hours", () => {
 
     // The same popup, now with the List, and the cursor still on the switch.
     expect(screen.getByRole("dialog", { name: "Bikash Thapa, November 2026" })).toBe(dialog);
-    expect(within(dialog).getByRole("table", { name: "Days of November 2026" })).toBeVisible();
+    expect(within(dialog).getByRole("list", { name: "Days of November 2026" })).toBeVisible();
     expect(within(dialog).queryByRole("group", { name: "Clock-ins, November 2026" })).toBeNull();
     expect(within(dialog).getByRole("button", { name: "List" })).toHaveFocus();
     expect(within(dialog).getByRole("button", { name: "List" })).toHaveAttribute(
@@ -300,7 +307,7 @@ describe("Employees → Working hours", () => {
     expect(within(dialog).getByRole("button", { name: "Calendar" })).toHaveFocus();
   });
 
-  it("pages a person's List inside the popup, and comes back to the same page after a day was opened", async () => {
+  it("shows a person's whole month in the List inside the popup, and comes back to it after a day was opened", async () => {
     const user = userEvent.setup();
     window.localStorage.setItem(CLOCK_VIEW_KEY, "list");
     backend(
@@ -310,24 +317,20 @@ describe("Employees → Working hours", () => {
     );
     renderPage();
     const dialog = await openBikashsMonth(user);
-    const table = await within(dialog).findByRole("table", { name: "Days of November 2026" });
-    expect(within(table).getByText("25 Nov 2026")).toBeInTheDocument();
-    expect(within(dialog).getByText("Page 1 of 3")).toBeInTheDocument();
-
-    await user.click(within(dialog).getByRole("button", { name: "Next page" }));
-
-    expect(screen.getByRole("dialog", { name: "Bikash Thapa, November 2026" })).toBe(dialog);
-    expect(within(dialog).getByText("Page 2 of 3")).toBeInTheDocument();
-    expect(within(table).getByText("15 Nov 2026")).toBeInTheDocument();
-    expect(within(table).queryByText("25 Nov 2026")).toBeNull();
-    expect(within(dialog).getByRole("button", { name: "Next page" })).toHaveFocus();
+    const list = await within(dialog).findByRole("list", { name: "Days of November 2026" });
+    // Every day up to today, with no pages; the popup has no arrows of its own for the month.
+    expect(within(list).getAllByRole("listitem")).toHaveLength(25);
+    expect(within(list).getByText("25 Nov 2026")).toBeInTheDocument();
+    expect(within(list).getByText("1 Nov 2026")).toBeInTheDocument();
+    expect(within(dialog).queryByRole("navigation", { name: "Pages" })).toBeNull();
+    expect(within(dialog).queryByRole("group", { name: "Month" })).toBeNull();
 
     await user.click(within(dialog).getByRole("button", { name: "Correct 4 Nov 2026" }));
     const day = await screen.findByRole("dialog", { name: "Bikash Thapa, 4 Nov 2026" });
     await user.click(within(day).getByRole("button", { name: "Back to the month" }));
 
     const month = await screen.findByRole("dialog", { name: "Bikash Thapa, November 2026" });
-    expect(within(month).getByText("Page 2 of 3")).toBeInTheDocument();
+    expect(within(month).getByRole("list", { name: "Days of November 2026" })).toBeInTheDocument();
   });
 
   it("on a phone shows a person's month as the List only, with the days to correct", async () => {
@@ -348,7 +351,7 @@ describe("Employees → Working hours", () => {
     const dialog = await openBikashsMonth(user);
 
     expect(
-      await within(dialog).findByRole("table", { name: "Days of November 2026" }),
+      await within(dialog).findByRole("list", { name: "Days of November 2026" }),
     ).toBeInTheDocument();
     expect(within(dialog).queryByRole("group", { name: "Show the month as" })).toBeNull();
     expect(within(dialog).queryByRole("group", { name: "Clock-ins, November 2026" })).toBeNull();

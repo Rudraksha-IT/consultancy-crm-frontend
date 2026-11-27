@@ -32,11 +32,18 @@ export function correctableDays(days: readonly ClockDay[]): ClockDay[] {
   return days.filter((day) => day.isCorrectable).reverse();
 }
 
-/** One page of `items`; a page past the end gives the last one. */
-export function pageOf<Item>(items: readonly Item[], page: number, pageSize: number): Item[] {
-  const last = Math.max(1, Math.ceil(items.length / pageSize));
-  const shown = Math.min(Math.max(1, Math.floor(page)), last);
-  return items.slice((shown - 1) * pageSize, shown * pageSize);
+/**
+ * The month before or after `month` among the months offered (newest first, as `recentMonths`
+ * gives them), or null at either end or when `month` is not one of them.
+ */
+export function monthBeside(
+  months: readonly string[],
+  month: string,
+  toward: "older" | "newer",
+): string | null {
+  const at = months.indexOf(month);
+  if (at < 0) return null;
+  return months[toward === "older" ? at + 1 : at - 1] ?? null;
 }
 
 type Rule = readonly [applies: (day: ClockDay) => boolean, status: DayStatus];
