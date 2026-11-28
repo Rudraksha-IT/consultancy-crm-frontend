@@ -57,10 +57,7 @@ export function StudentFinder({
   excludesLost,
 }: StudentFinderProps) {
   const [search, setSearch] = useState("");
-  const matches = useMatches(
-    useDebouncedValue(search.trim(), SEARCH_DELAY_MS),
-    excludesLost === true,
-  );
+  const matches = useStudentMatches(search, excludesLost === true) ?? [];
   const choices = withChosen(value, matches);
   return (
     <div className="grid gap-5">
@@ -97,8 +94,15 @@ function withChosen(value: StudentChoice | null, matches: StudentChoice[]): Stud
   return [value, ...matches];
 }
 
-/** The first page of Students matching `search`; none until something is typed. */
-function useMatches(search: string, excludesLost: boolean): StudentChoice[] {
+/**
+ * The first page of Students matching what was typed, searched a moment after typing stops;
+ * null until something is typed and while the answer is on its way.
+ */
+export function useStudentMatches(typed: string, excludesLost: boolean): StudentChoice[] | null {
+  return useMatches(useDebouncedValue(typed.trim(), SEARCH_DELAY_MS), excludesLost);
+}
+
+function useMatches(search: string, excludesLost: boolean): StudentChoice[] | null {
   const [found, setFound] = useState<{ search: string; students: StudentChoice[] }>({
     search: "",
     students: [],
@@ -124,5 +128,5 @@ function useMatches(search: string, excludesLost: boolean): StudentChoice[] {
     };
   }, [search, excludesLost]);
 
-  return search === "" || found.search !== search ? [] : found.students;
+  return search === "" || found.search !== search ? null : found.students;
 }
