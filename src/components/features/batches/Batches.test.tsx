@@ -467,6 +467,59 @@ describe("Who's in a class", () => {
     });
   });
 
+  it("clears the search once nobody else it found is left to add", async () => {
+    backend(
+      on("GET", LIST, pageOf([MORNING])),
+      onEach("GET", `/api/batches/${uid(1)}/`, () => ({ ...MORNING, students: [RAM] })),
+      SEARCH_SITA,
+      on("POST", `/api/batches/${uid(1)}/students/`, MORNING_WITH_STUDENTS, 201),
+    );
+    renderWith(<BatchesPage />);
+    const dialog = await openMorning();
+    const search = await within(dialog).findByRole("searchbox", { name: "Find a Student" });
+
+    await userEvent.type(search, "Sita");
+    await userEvent.click(
+      await within(dialog).findByRole("button", { name: "Add Sita Gurung to the class" }),
+    );
+
+    await waitFor(() => {
+      expect(search).toHaveValue("");
+    });
+    expect(search).toHaveFocus();
+  });
+
+  it("keeps the search while others it found can still be added", async () => {
+    backend(
+      on("GET", LIST, pageOf([MORNING])),
+      onEach("GET", `/api/batches/${uid(1)}/`, () => ({ ...MORNING, students: [RAM] })),
+      on("GET", "/api/students/?q=Sita", {
+        count: 2,
+        page: 1,
+        page_size: 25,
+        results: [SEARCH_RESULT, { ...SEARCH_RESULT, id: uid(13), name: "Sita Rai" }],
+      }),
+      on("POST", `/api/batches/${uid(1)}/students/`, MORNING_WITH_STUDENTS, 201),
+    );
+    renderWith(<BatchesPage />);
+    const dialog = await openMorning();
+    const search = await within(dialog).findByRole("searchbox", { name: "Find a Student" });
+
+    await userEvent.type(search, "Sita");
+    await userEvent.click(
+      await within(dialog).findByRole("button", { name: "Add Sita Gurung to the class" }),
+    );
+
+    expect(await screen.findByText("Sita Gurung added to IELTS Morning")).toBeInTheDocument();
+    expect(search).toHaveValue("Sita");
+    expect(
+      within(dialog).queryByRole("button", { name: "Add Sita Gurung to the class" }),
+    ).toBeNull();
+    expect(
+      within(dialog).getByRole("button", { name: "Add Sita Rai to the class" }),
+    ).toBeInTheDocument();
+  });
+
   it("shows why a Student couldn't be added", async () => {
     backend(
       on("GET", LIST, pageOf([MORNING])),
