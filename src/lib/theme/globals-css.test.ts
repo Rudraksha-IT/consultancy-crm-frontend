@@ -39,8 +39,10 @@ describe("globals.css", () => {
     expect(declarations(':root[data-theme="dark"]').get("gold")).toBe("#9fb6cf");
   });
 
-  it("uses one font, Geist", () => {
+  it("uses Geist, and Fraunces only for the office's name (owner, 2026-11-28)", () => {
     expect(css).toContain("--font-sans: var(--font-geist)");
+    expect(css).toContain("--font-office: var(--font-fraunces)");
+    expect(css).toContain("--text-office-name: 1.25rem;");
     expect(css).not.toContain("public-sans");
   });
 
@@ -55,7 +57,9 @@ describe("globals.css", () => {
       [...value.matchAll(/var\(--([\w-]+)\)/g)].map(([, name = ""]) => name),
     );
 
-    const missing = mapped.filter((name) => name !== "font-geist" && !defined.has(name));
+    const missing = mapped.filter(
+      (name) => !["font-geist", "font-fraunces"].includes(name) && !defined.has(name),
+    );
 
     expect(missing).toEqual([]);
   });

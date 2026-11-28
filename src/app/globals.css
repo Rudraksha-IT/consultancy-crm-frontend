@@ -8,6 +8,15 @@
  * keeps these values equal to the function's output.
  */
 :root {
+  /* the burgundy arrow and hand (owner, 2026-11-28); the computer's own if the picture fails */
+  --cursor-arrow:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M4%203v16.5l4.6-4.3%203%206.8%202.9-1.3-3-6.6h6.4z%22%20fill%3D%22%236e1a26%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E")
+      4 3,
+    default;
+  --cursor-hand:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2226%22%20height%3D%2226%22%20viewBox%3D%220%200%2026%2026%22%3E%3Cpath%20d%3D%22M9%2013V4.5a1.8%201.8%200%200%201%203.6%200V11l.2-1.4a1.7%201.7%200%200%201%203.4.2V12a1.7%201.7%200%200%201%203.3.4v1.2a1.6%201.6%200%200%201%203%20.8v3.2c0%204-2.8%206.9-6.6%206.9h-1.5c-2.3%200-3.9-.9-5.2-2.7l-3.6-5a1.8%201.8%200%200%201%202.8-2.2z%22%20fill%3D%22%236e1a26%22%20stroke%3D%22%23ffffff%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E")
+      10 3,
+    pointer;
   /* the product logo's own red, for the loading animation (list tidy-ups 06); brighter (24) */
   --mark: #c8102e;
   /* themed: Porcelain, light */
@@ -108,6 +117,7 @@
   --move-cross: 320ms;
   --move-ring: 1100ms;
   --move-wash: 1200ms;
+  --move-spin: 2000ms;
   /* a page's blocks come in this far apart, and its rows this far apart */
   --move-step-block: 40ms;
   --move-step-row: 18ms;
@@ -215,6 +225,15 @@
 
 /* Dark by the person's choice. Same values as above. */
 :root[data-theme="dark"] {
+  /* the burgundy arrow and hand (owner, 2026-11-28); the computer's own if the picture fails */
+  --cursor-arrow:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%3E%3Cpath%20d%3D%22M4%203v16.5l4.6-4.3%203%206.8%202.9-1.3-3-6.6h6.4z%22%20fill%3D%22%23d98a8f%22%20stroke%3D%22%231a0b0e%22%20stroke-width%3D%221.5%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E")
+      4 3,
+    default;
+  --cursor-hand:
+    url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2226%22%20height%3D%2226%22%20viewBox%3D%220%200%2026%2026%22%3E%3Cpath%20d%3D%22M9%2013V4.5a1.8%201.8%200%200%201%203.6%200V11l.2-1.4a1.7%201.7%200%200%201%203.4.2V12a1.7%201.7%200%200%201%203.3.4v1.2a1.6%201.6%200%200%201%203%20.8v3.2c0%204-2.8%206.9-6.6%206.9h-1.5c-2.3%200-3.9-.9-5.2-2.7l-3.6-5a1.8%201.8%200%200%201%202.8-2.2z%22%20fill%3D%22%23d98a8f%22%20stroke%3D%22%231a0b0e%22%20stroke-width%3D%221.4%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E")
+      10 3,
+    pointer;
   --mark: #ff5263;
   --paper: #141a20;
   --canvas: #0d1115;
@@ -326,6 +345,8 @@
   --color-gap: var(--gap);
 
   --font-sans: var(--font-geist), "Geist", "Segoe UI", system-ui, sans-serif;
+  /* the office's name beside its mark, and nothing else (owner, 2026-11-28) */
+  --font-office: var(--font-fraunces), "Fraunces", Georgia, serif;
 
   /* type: size / line height / weight (computers, then phones through the --size-* values) */
   --text-*: initial;
@@ -340,6 +361,10 @@
   --text-section-title: var(--size-section-title);
   --text-section-title--line-height: var(--size-section-title-line);
   --text-section-title--font-weight: 600;
+  /* the office's name in the top bar above 1024 (owner, 2026-11-28) */
+  --text-office-name: 1.25rem;
+  --text-office-name--line-height: 1.75rem;
+  --text-office-name--font-weight: 600;
   --text-section-title--letter-spacing: -0.01em;
   --text-card-title: 1.125rem;
   --text-card-title--line-height: 1.5rem;
@@ -1110,6 +1135,53 @@ main[data-page-move="in-from-bottom"] {
   }
 }
 
+/*
+ * The product's mark at the foot of the side menu keeps turning, at the loading mark's pace, for
+ * as long as the mouse is on it (owner, 2026-11-28). Not for a finger, nor with "reduce motion".
+ */
+@keyframes move-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  [data-spins-on-hover]:hover {
+    animation: move-spin var(--move-spin) linear infinite;
+  }
+}
+
+/*
+ * The cursor (owner, 2026-11-28): the burgundy arrow everywhere, the burgundy hand on what can be
+ * clicked, and the computer's own text bar in a box to type in. Outside any layer, so it wins
+ * over the `cursor-pointer` and `cursor-default` classes. A finger never sees a cursor.
+ */
+html,
+.cursor-default {
+  cursor: var(--cursor-arrow);
+}
+
+a[href],
+summary,
+select:not(:disabled),
+label:has(> input:is([type="checkbox"], [type="radio"]):not(:disabled)),
+.cursor-pointer {
+  cursor: var(--cursor-hand);
+}
+
+input:not(
+  [type="checkbox"],
+  [type="radio"],
+  [type="range"],
+  [type="file"],
+  [type="button"],
+  [type="submit"]
+),
+textarea,
+[contenteditable="true"] {
+  cursor: text;
+}
+
 /* A row that opens something shows a soft fill under the pointer; a finger leaves no shade. */
 @media (hover: hover) {
   tr[data-opens-page]:hover {
@@ -1161,7 +1233,7 @@ main[data-page-move="in-from-bottom"] {
 }
 
 [data-card] {
-  cursor: pointer;
+  cursor: var(--cursor-hand);
   box-shadow: 0 1px 0 var(--rule);
 }
 
@@ -1213,7 +1285,7 @@ main[data-page-move="in-from-bottom"] {
  */
 tr[data-opens-page] {
   position: relative;
-  cursor: pointer;
+  cursor: var(--cursor-hand);
 }
 
 tr[data-opens-page] td[data-part="title"] a::after {

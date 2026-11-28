@@ -45,7 +45,7 @@ export function Sidebar({ context, sidebar, colourMode, ref }: SidebarProps) {
       )}
     >
       <SidebarHead consultancyName={name} logo={logo} onCloseDrawer={sidebar.closeDrawer} />
-      <div className="wide:grid mx-auto mt-4 mb-2 hidden size-12 flex-none place-items-center">
+      <div className="wide:grid mx-auto mt-1.5 mb-6 hidden size-12 flex-none place-items-center">
         <BrandMark name={name} logo={logo} size="rail" />
       </div>
       <Navigation

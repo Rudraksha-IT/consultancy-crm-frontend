@@ -37,9 +37,12 @@ describe("one place for durations and easings", () => {
   );
 
   it("is calm: what opens, closes or slides takes 100 to 320 ms", () => {
-    const { wash, ring, ...short } = MOVE.ms;
+    const { wash, ring, spin, ...short } = MOVE.ms;
 
     expect(Object.values(short).every((ms) => ms >= 100 && ms <= 320)).toBe(true);
+    // one turn of the product's mark, over and over while the mouse is on it, at the
+    // loading mark's pace (owner, 2026-11-28)
+    expect(spin).toBe(2000);
     expect(wash).toBeLessThanOrEqual(1200);
     expect(ring).toBeLessThanOrEqual(1200);
   });
@@ -70,5 +73,17 @@ describe("one place for durations and easings", () => {
     );
 
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("the product's mark at the foot of the side menu", () => {
+  it("keeps turning while the mouse is on it, never for a finger or with reduce motion on", () => {
+    const guard = "@media (hover: hover) and (prefers-reduced-motion: no-preference)";
+    const block = css.slice(css.indexOf(guard));
+
+    expect(css).toContain(guard);
+    expect(block).toMatch(
+      /\[data-spins-on-hover\]:hover\s*\{\s*animation: move-spin var\(--move-spin\) linear infinite;/,
+    );
   });
 });

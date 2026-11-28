@@ -368,6 +368,9 @@ describe("AppShell's side menu (UI revamp, ticket 05)", () => {
     expect(mark).toHaveClass("size-control");
     expect(sidebar.lastElementChild).toContainElement(mark);
     expect(sidebar.lastElementChild).not.toHaveTextContent("Rudraksha CRM");
+    // Under the mouse it only turns: no tooltip (owner, 2026-11-28).
+    expect(mark).not.toHaveAttribute("title");
+    expect(mark).toHaveAttribute("data-spins-on-hover");
   });
 
   it("can't be collapsed: there is one narrow strip", async () => {
@@ -483,6 +486,28 @@ describe("AppShell above phone width", () => {
     const name = within(screen.getByRole("banner")).getByText("Acme Education");
     expect(name).toBeVisible();
     expect(name.closest("a")).toBeNull();
+  });
+
+  it("is 60 tall, with the office name in Fraunces, 20 on computers (owner, 2026-11-28)", async () => {
+    await renderShellFor(ADMIN_CONTEXT);
+
+    const bar = screen.getByRole("banner");
+    expect(bar).toHaveClass("min-h-office-bar");
+    expect(bar.className).not.toContain("office-bar-wide");
+    expect(within(bar).getByText("Acme Education")).toHaveClass(
+      "font-office",
+      "wide:text-office-name",
+    );
+  });
+
+  it("leaves a plain gap under the office mark before Home, with no line", async () => {
+    await renderShellFor(ADMIN_CONTEXT);
+
+    // The mark's box is 6 down and 48 tall, so the 40 mark's middle is 30 down: half of the
+    // 60 tall top bar, level with the office name. Then a 24 gap: Home starts 78 down.
+    const markBox = document.querySelector("#side-nav > .size-12");
+    expect(markBox).toHaveClass("mt-1.5", "mb-6");
+    expect(markBox).not.toHaveClass("border-b");
   });
 
   it("keeps light/dark in the top bar, and none in the side menu", async () => {

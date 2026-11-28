@@ -17,6 +17,7 @@ import { MESSAGES } from "@/constants/messages";
 import { createBatch, saveBatch, type Batch, type BatchTeacher } from "@/lib/api";
 import { todayIso } from "@/lib/dates";
 
+import { TimeSlotField } from "./TimeSlotField";
 import { useBatchTeachers, type Loaded } from "./useBatchData";
 
 // A new class starts in five days and runs for two months, as the prototype suggests.
@@ -128,13 +129,7 @@ export function BatchFormDialog({ batch, onClose, onSaved }: BatchFormDialogProp
           current={batch?.teacher.id}
           errors={fieldErrors.teacherId}
         />
-        <TextField
-          label={BATCH_TEXT.timeSlot}
-          name="timeSlot"
-          placeholder={BATCH_TEXT.timeSlotPlaceholder}
-          defaultValue={start.timeSlot}
-          errors={fieldErrors.timeSlot}
-        />
+        <TimeSlotField name="timeSlot" saved={start.timeSlot} errors={fieldErrors.timeSlot} />
         <DateField
           label={BATCH_TEXT.starts}
           name="startsOn"
