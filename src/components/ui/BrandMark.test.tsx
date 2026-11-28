@@ -40,6 +40,8 @@ describe("BrandLockup", () => {
 
     expect(screen.getByText("Acme Education")).toBeInTheDocument();
     expect(screen.queryByText("Education consultancy")).toBeNull();
+    // The office's name is always in Fraunces (owner, 2026-11-28).
+    expect(screen.getByText("Acme Education")).toHaveClass("font-office");
   });
 
   it("always writes the name beside a logo, with no way to hide it (owner, 2026-11-27)", () => {

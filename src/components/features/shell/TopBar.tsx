@@ -125,7 +125,7 @@ function Office({ consultancy: { name, logo }, hasName }: OfficeProps) {
         <BrandMark name={name} logo={logo} />
       </span>
       {hasName && (
-        <b className="text-body wide:text-section-title truncate font-semibold">{name}</b>
+        <b className="text-body wide:text-office-name font-office truncate font-semibold">{name}</b>
       )}
     </span>
   );

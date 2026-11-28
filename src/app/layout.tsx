@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Fraunces, Geist } from "next/font/google";
 
 import { ProductNameProvider } from "@/components/features/brand/ProductName";
 import { TAB_ICON } from "@/constants/tabIcon";
@@ -12,6 +12,14 @@ const geist = Geist({
   subsets: ["latin"],
   display: "swap",
   variable: "--font-geist",
+});
+
+// The office's name beside its mark, and nothing else (owner, 2026-11-28).
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  display: "swap",
+  weight: "600",
+  variable: "--font-fraunces",
 });
 
 /** The tab shows the product's saved name until a page sets its own (ticket 15). */
@@ -27,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function RootLayout({ children }: LayoutProps<"/">) {
   const productName = await getProductName();
   return (
-    <html lang="en" className={`h-full ${geist.variable}`}>
+    <html lang="en" className={`h-full ${geist.variable} ${fraunces.variable}`}>
       <head>
         {/* The page's own tab title from the start of a reload (list tidy-ups 30). */}
         <script dangerouslySetInnerHTML={{ __html: KEEP_TITLE_SCRIPT }} />
