@@ -448,7 +448,7 @@
   --spacing-rail-item: 4.125rem;
   --spacing-office-bar: 3.75rem;
   /* above 1024: the office name lines up with the side menu's mark (owner, 2026-11-28) */
-  --spacing-office-bar-wide: 5rem;
+  --spacing-office-bar-wide: 4.5rem;
   --spacing-mark: 2.5rem;
   --spacing-mark-lg: 4.5rem;
   --spacing-icon: 1.25rem;
@@ -503,7 +503,7 @@
      while pinned under the top bar (the screen less the bar, the gap under it and one above
      the foot) */
   --spacing-note-side: 21.25rem;
-  --spacing-note-room: calc(100dvh - 8rem);
+  --spacing-note-room: calc(100dvh - 7.5rem);
   --spacing-desk-empty: 10.5rem;
   /* the Documents page (UI revamp 12): the least a row's name column is wide beside its pills */
   --spacing-doc-name: 12.5rem;

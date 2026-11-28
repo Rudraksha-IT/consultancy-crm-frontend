@@ -134,7 +134,7 @@ const NOTE_BESIDE_WORK =
   "desk:grid-cols-[minmax(0,1fr)_var(--spacing-note-side)] desk:items-start grid min-w-0 grid-cols-1 gap-7";
 /** A long Note scrolls inside its column, so its end is never out of reach while it is pinned. */
 const NOTE_SIDE =
-  "desk:sticky desk:top-26 desk:order-2 desk:max-h-note-room desk:overflow-y-auto min-w-0";
+  "desk:sticky desk:top-24 desk:order-2 desk:max-h-note-room desk:overflow-y-auto min-w-0";
 
 type ProfileProps = {
   profile: StudentProfile;

@@ -167,7 +167,7 @@ describe("StudentProfilePage", () => {
 
     const note = await screen.findByRole("region", { name: "Note" });
     const side = note.closest("[data-note-side]");
-    expect(side).toHaveClass("desk:sticky", "desk:top-26", "desk:order-2", "min-w-0");
+    expect(side).toHaveClass("desk:sticky", "desk:top-24", "desk:order-2", "min-w-0");
     const grid = side?.parentElement;
     expect(grid).toHaveClass("desk:grid-cols-[minmax(0,1fr)_var(--spacing-note-side)]");
     const tabs = screen.getByRole("tablist", { name: "Sections" });
