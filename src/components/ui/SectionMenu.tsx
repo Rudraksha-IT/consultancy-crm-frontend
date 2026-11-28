@@ -228,7 +228,7 @@ function SectionNav({ label, sections, current, isList, stripRef, onChoose }: Se
         "min-w-0",
         isList
           ? "bg-paper border-rule rounded-panel grid overflow-hidden border"
-          : "wide:sticky wide:top-24 wide:grid wide:overflow-visible flex gap-1 overflow-x-auto",
+          : "wide:sticky wide:top-29 wide:grid wide:overflow-visible flex gap-1 overflow-x-auto",
       )}
     >
       {sections.map((section) => (

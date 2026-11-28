@@ -37,6 +37,8 @@ export const MOVE = {
     ring: 1100,
     /** the wash on a new or changed row clears */
     wash: 1200,
+    /** one turn of the product's mark at the side menu's foot, again and again under the mouse */
+    spin: 2000,
   },
   /** A page's blocks come in this far apart (ms), and its rows this far apart. */
   step: { block: 40, row: 18 },

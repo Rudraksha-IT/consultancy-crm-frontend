@@ -3,7 +3,6 @@
 import { useId, useState } from "react";
 
 import { FieldNote, describeField } from "@/components/ui/FieldNote";
-import { LABEL_CLASSES } from "@/components/ui/Field";
 import { SelectField } from "@/components/ui/SelectField";
 import { BATCH_TEXT } from "@/constants/batches";
 
@@ -34,7 +33,8 @@ export function TimeSlotField({ name, saved, errors }: TimeSlotFieldProps) {
 
   return (
     <fieldset aria-describedby={note && noteId} className="grid content-start gap-2">
-      <legend className={`${LABEL_CLASSES} mb-2`}>{BATCH_TEXT.timeSlot}</legend>
+      {/* From and To say enough on screen (owner, 2026-11-28); the pair is named for screen readers. */}
+      <legend className="sr-only">{BATCH_TEXT.timeSlot}</legend>
       <div className="grid grid-cols-2 gap-3">
         <SelectField
           label={BATCH_TEXT.timeFrom}

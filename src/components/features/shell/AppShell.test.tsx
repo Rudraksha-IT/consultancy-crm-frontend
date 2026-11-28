@@ -368,6 +368,9 @@ describe("AppShell's side menu (UI revamp, ticket 05)", () => {
     expect(mark).toHaveClass("size-control");
     expect(sidebar.lastElementChild).toContainElement(mark);
     expect(sidebar.lastElementChild).not.toHaveTextContent("Rudraksha CRM");
+    // Under the mouse it only turns: no tooltip (owner, 2026-11-28).
+    expect(mark).not.toHaveAttribute("title");
+    expect(mark).toHaveAttribute("data-spins-on-hover");
   });
 
   it("can't be collapsed: there is one narrow strip", async () => {
@@ -483,6 +486,13 @@ describe("AppShell above phone width", () => {
     const name = within(screen.getByRole("banner")).getByText("Acme Education");
     expect(name).toBeVisible();
     expect(name.closest("a")).toBeNull();
+  });
+
+  it("is tall enough on computers for the office name to line up with the mark beside it", async () => {
+    await renderShellFor(ADMIN_CONTEXT);
+
+    // The side menu's mark is 16 + 4 down and 40 tall, so its middle is 40 down: half of 80.
+    expect(screen.getByRole("banner")).toHaveClass("wide:min-h-office-bar-wide");
   });
 
   it("keeps light/dark in the top bar, and none in the side menu", async () => {

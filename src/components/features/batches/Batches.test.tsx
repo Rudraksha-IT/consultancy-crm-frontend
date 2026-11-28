@@ -237,6 +237,9 @@ describe("New class", () => {
     await userEvent.type(within(dialog).getByLabelText("Name"), "IELTS Morning");
     await userEvent.selectOptions(within(dialog).getByLabelText("Test type"), "ielts");
     await userEvent.selectOptions(await within(dialog).findByLabelText("Teacher"), uid(9));
+    // Only From and To show; "Time slot" names the pair for screen readers alone.
+    expect(within(dialog).getByRole("group", { name: "Time slot" })).toBeInTheDocument();
+    expect(within(dialog).getByText("Time slot")).toHaveClass("sr-only");
     expect(within(dialog).getByLabelText("From")).toHaveDisplayValue("7:00 AM");
     expect(within(dialog).getByLabelText("To")).toHaveDisplayValue("8:30 AM");
     await userEvent.selectOptions(within(dialog).getByLabelText("From"), "11:30 AM");

@@ -44,7 +44,7 @@ export function TopBar({ context, colourMode, isDrawerOpen, onOpenDrawer }: TopB
   return (
     <header
       data-scrolled={isScrolled ? "" : undefined}
-      className="min-h-office-bar border-rule bg-canvas max-phone:bg-canvas/88 max-phone:backdrop-blur-lg max-phone:backdrop-saturate-150 phone:gap-4 wide:pr-10 wide:pl-8 wide:grid wide:grid-cols-[minmax(0,1fr)_minmax(0,var(--container-search))_minmax(0,1fr)] data-scrolled:shadow-bar sticky top-0 z-30 flex items-center gap-2 border-b px-4 transition-shadow duration-(--move-marker)"
+      className="min-h-office-bar wide:min-h-office-bar-wide border-rule bg-canvas max-phone:bg-canvas/88 max-phone:backdrop-blur-lg max-phone:backdrop-saturate-150 phone:gap-4 wide:pr-10 wide:pl-8 wide:grid wide:grid-cols-[minmax(0,1fr)_minmax(0,var(--container-search))_minmax(0,1fr)] data-scrolled:shadow-bar sticky top-0 z-30 flex items-center gap-2 border-b px-4 transition-shadow duration-(--move-marker)"
     >
       <div className={clsx("flex min-w-0 items-center gap-1", hiddenWhileSearching)}>
         {!isPhone && (

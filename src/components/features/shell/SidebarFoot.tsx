@@ -10,7 +10,8 @@ import { APP_LOGO_URL } from "@/lib/brand/appLogo";
 
 /**
  * The foot of the side menu (UI revamp, ticket 05): the product's own mark, alone, with no line
- * above it. On phones light/dark sits beside it, since the top bar drops it there.
+ * above it. On phones light/dark sits beside it, since the top bar drops it there. Under a mouse
+ * the mark keeps turning (`data-spins-on-hover`, in globals.css).
  */
 export function SidebarFoot({ colourMode }: { colourMode: ColourModeState }) {
   const product = useProductName();
@@ -20,10 +21,10 @@ export function SidebarFoot({ colourMode }: { colourMode: ColourModeState }) {
       <Image
         src={APP_LOGO_URL}
         alt={product}
-        title={product}
         width={0}
         height={0}
         unoptimized
+        data-spins-on-hover=""
         className="size-control flex-none"
       />
       {isPhone && (
