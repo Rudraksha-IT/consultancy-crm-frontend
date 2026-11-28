@@ -237,7 +237,13 @@ describe("New class", () => {
     await userEvent.type(within(dialog).getByLabelText("Name"), "IELTS Morning");
     await userEvent.selectOptions(within(dialog).getByLabelText("Test type"), "ielts");
     await userEvent.selectOptions(await within(dialog).findByLabelText("Teacher"), uid(9));
-    await userEvent.type(within(dialog).getByLabelText("Time slot"), "7:00-8:30 AM");
+    // Only From and To show; "Time slot" names the pair for screen readers alone.
+    expect(within(dialog).getByRole("group", { name: "Time slot" })).toBeInTheDocument();
+    expect(within(dialog).getByText("Time slot")).toHaveClass("sr-only");
+    expect(within(dialog).getByLabelText("From")).toHaveDisplayValue("7:00 AM");
+    expect(within(dialog).getByLabelText("To")).toHaveDisplayValue("8:30 AM");
+    await userEvent.selectOptions(within(dialog).getByLabelText("From"), "11:30 AM");
+    expect(within(dialog).getByLabelText("To")).toHaveDisplayValue("1:00 PM");
     await userEvent.click(within(dialog).getByRole("button", { name: "Create class" }));
 
     expect(await screen.findByText("Class saved")).toBeInTheDocument();
@@ -245,7 +251,7 @@ describe("New class", () => {
       name: "IELTS Morning",
       test_type: "ielts",
       teacher: uid(9),
-      time_slot: "7:00-8:30 AM",
+      time_slot: "11:30 AM-1:00 PM",
       starts_on: "2026-11-07",
       ends_on: "2027-01-06",
     });
@@ -346,28 +352,50 @@ describe("Who's in a class", () => {
     expect(within(dialog).getByRole("button", { name: "Done" })).toBeInTheDocument();
   });
 
-  it("never offers a Lost Student to add", async () => {
+  it("lists matches under the search, leaving out Lost Students and those already in", async () => {
     backend(
       on("GET", LIST, pageOf([MORNING])),
-      on("GET", `/api/batches/${uid(1)}/`, { ...MORNING, students: [] }),
-      on("GET", "/api/students/?q=Sita", {
-        count: 2,
+      on("GET", `/api/batches/${uid(1)}/`, { ...MORNING, students: [RAM] }),
+      on("GET", "/api/students/?q=S", {
+        count: 3,
         page: 1,
         page_size: 25,
         results: [
           { ...SEARCH_RESULT, id: uid(7), name: "Sita Gurung" },
           { ...SEARCH_RESULT, id: uid(12), name: "Sita Lost", stage: "lost" },
+          { ...SEARCH_RESULT, id: uid(8), name: "Ram Shrestha" },
         ],
       }),
     );
     renderWith(<BatchesPage />);
     const dialog = await openMorning();
+    const search = await within(dialog).findByRole("searchbox", { name: "Find a Student" });
 
-    await userEvent.type(await within(dialog).findByLabelText("Find a Student"), "Sita");
-    const choice = within(dialog).getByLabelText("Student to add");
-    await within(choice).findByRole("option", { name: "Sita Gurung" });
+    // The search comes first, above the class's Students.
+    const inClass = within(dialog).getByText("Ram Shrestha");
+    expect(search.compareDocumentPosition(inClass) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(dialog).queryByLabelText("Student to add")).toBeNull();
+    await userEvent.type(search, "S");
 
-    expect(within(choice).queryByRole("option", { name: "Sita Lost" })).toBeNull();
+    expect(
+      await within(dialog).findByRole("button", { name: "Add Sita Gurung to the class" }),
+    ).toBeInTheDocument();
+    expect(within(dialog).queryByRole("button", { name: /Sita Lost/ })).toBeNull();
+    expect(within(dialog).queryByRole("button", { name: /^Add Ram Shrestha/ })).toBeNull();
+  });
+
+  it("says when nobody matches", async () => {
+    backend(
+      on("GET", LIST, pageOf([MORNING])),
+      on("GET", `/api/batches/${uid(1)}/`, { ...MORNING, students: [] }),
+      on("GET", "/api/students/?q=Zed", { count: 0, page: 1, page_size: 25, results: [] }),
+    );
+    renderWith(<BatchesPage />);
+    const dialog = await openMorning();
+
+    await userEvent.type(await within(dialog).findByLabelText("Find a Student"), "Zed");
+
+    expect(await within(dialog).findByText("No Students match.")).toBeInTheDocument();
   });
 
   it("removes a Student and says so", async () => {
@@ -432,15 +460,67 @@ describe("Who's in a class", () => {
     const dialog = await openMorning();
 
     await userEvent.type(await within(dialog).findByLabelText("Find a Student"), "Sita");
-    const choice = within(dialog).getByLabelText("Student to add");
-    await within(choice).findByRole("option", { name: "Sita Gurung" });
-    await userEvent.selectOptions(choice, uid(7));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Add to class" }));
+    await userEvent.click(
+      await within(dialog).findByRole("button", { name: "Add Sita Gurung to the class" }),
+    );
 
     expect(await screen.findByText("Sita Gurung added to IELTS Morning")).toBeInTheDocument();
     expect(sentBody(fetchFn, "POST", `/api/batches/${uid(1)}/students/`)).toEqual({
       student: uid(7),
     });
+  });
+
+  it("clears the search once nobody else it found is left to add", async () => {
+    backend(
+      on("GET", LIST, pageOf([MORNING])),
+      onEach("GET", `/api/batches/${uid(1)}/`, () => ({ ...MORNING, students: [RAM] })),
+      SEARCH_SITA,
+      on("POST", `/api/batches/${uid(1)}/students/`, MORNING_WITH_STUDENTS, 201),
+    );
+    renderWith(<BatchesPage />);
+    const dialog = await openMorning();
+    const search = await within(dialog).findByRole("searchbox", { name: "Find a Student" });
+
+    await userEvent.type(search, "Sita");
+    await userEvent.click(
+      await within(dialog).findByRole("button", { name: "Add Sita Gurung to the class" }),
+    );
+
+    await waitFor(() => {
+      expect(search).toHaveValue("");
+    });
+    expect(search).toHaveFocus();
+  });
+
+  it("keeps the search while others it found can still be added", async () => {
+    backend(
+      on("GET", LIST, pageOf([MORNING])),
+      onEach("GET", `/api/batches/${uid(1)}/`, () => ({ ...MORNING, students: [RAM] })),
+      on("GET", "/api/students/?q=Sita", {
+        count: 2,
+        page: 1,
+        page_size: 25,
+        results: [SEARCH_RESULT, { ...SEARCH_RESULT, id: uid(13), name: "Sita Rai" }],
+      }),
+      on("POST", `/api/batches/${uid(1)}/students/`, MORNING_WITH_STUDENTS, 201),
+    );
+    renderWith(<BatchesPage />);
+    const dialog = await openMorning();
+    const search = await within(dialog).findByRole("searchbox", { name: "Find a Student" });
+
+    await userEvent.type(search, "Sita");
+    await userEvent.click(
+      await within(dialog).findByRole("button", { name: "Add Sita Gurung to the class" }),
+    );
+
+    expect(await screen.findByText("Sita Gurung added to IELTS Morning")).toBeInTheDocument();
+    expect(search).toHaveValue("Sita");
+    expect(
+      within(dialog).queryByRole("button", { name: "Add Sita Gurung to the class" }),
+    ).toBeNull();
+    expect(
+      within(dialog).getByRole("button", { name: "Add Sita Rai to the class" }),
+    ).toBeInTheDocument();
   });
 
   it("shows why a Student couldn't be added", async () => {
@@ -454,10 +534,9 @@ describe("Who's in a class", () => {
     const dialog = await openMorning();
 
     await userEvent.type(await within(dialog).findByLabelText("Find a Student"), "Sita");
-    const choice = within(dialog).getByLabelText("Student to add");
-    await within(choice).findByRole("option", { name: "Sita Gurung" });
-    await userEvent.selectOptions(choice, uid(7));
-    await userEvent.click(within(dialog).getByRole("button", { name: "Add to class" }));
+    await userEvent.click(
+      await within(dialog).findByRole("button", { name: "Add Sita Gurung to the class" }),
+    );
 
     expect(await within(dialog).findByText("Already in this class.")).toBeInTheDocument();
   });
@@ -678,6 +757,11 @@ describe("One class's page", () => {
 
     expect(within(dialog).getByLabelText("Name")).toHaveValue("IELTS Morning");
     expect(await within(dialog).findByLabelText("Teacher")).toHaveValue(uid(9));
+    expect(within(dialog).getByLabelText("From")).toHaveDisplayValue("7:00 AM");
+    expect(within(dialog).getByLabelText("To")).toHaveDisplayValue("8:30 AM");
+    const ends = within(within(dialog).getByLabelText("To"));
+    expect(ends.getByRole("option", { name: "7:30 AM" })).toBeInTheDocument();
+    expect(ends.queryByRole("option", { name: "7:00 AM" })).toBeNull();
     await userEvent.clear(within(dialog).getByLabelText("Name"));
     await userEvent.type(within(dialog).getByLabelText("Name"), "IELTS Early");
     await userEvent.click(within(dialog).getByRole("button", { name: "Save" }));
@@ -694,6 +778,21 @@ describe("One class's page", () => {
     expect(
       await screen.findByRole("heading", { level: 1, name: "IELTS Early" }),
     ).toBeInTheDocument();
+  });
+
+  it("asks for the times again when the saved slot was typed in some other way", async () => {
+    backend(
+      on("GET", ONE, { ...MORNING_WITH_STUDENTS, time_slot: "Early mornings" }),
+      on("GET", "/api/batches/teachers/", TEACHERS),
+    );
+    renderWith(<BatchPage batchId={uid(1)} />);
+    await userEvent.click(await screen.findByRole("button", { name: "Edit class details" }));
+    const dialog = screen.getByRole("dialog", { name: "Edit class" });
+
+    expect(
+      within(dialog).getByText('It was "Early mornings". Choose the times again.'),
+    ).toBeInTheDocument();
+    expect(within(dialog).getByLabelText("From")).toHaveDisplayValue("7:00 AM");
   });
 
   it("shows a Teacher the Students by name only, with nothing to change", async () => {

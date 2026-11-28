@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type SubmitEvent } from "react";
+import { useState } from "react";
 
 import { useDates } from "@/components/features/shell/dateDisplay";
 import { useCurrentStaff } from "@/components/features/shell/useCurrentStaff";
-import { StudentFinder, type StudentChoice } from "@/components/features/tasks/StudentFinder";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -18,19 +17,16 @@ import { RowList } from "@/components/ui/RowList";
 import { useToast } from "@/components/ui/useToast";
 import { Loading } from "@/components/ui/Loading";
 import { BATCH_TEXT } from "@/constants/batches";
-import { MESSAGES } from "@/constants/messages";
 import { Role } from "@/constants/roles";
 import { ROUTES } from "@/constants/routes";
 import {
-  addStudentToBatch,
-  InvalidFieldsError,
   removeStudentFromBatch,
   type Batch,
   type BatchMember,
   type BatchWithStudents,
 } from "@/lib/api";
 
-import { ADD_LABELS } from "./finderLabels";
+import { AddStudentSearch } from "./AddStudentSearch";
 import { useBatch, type Loaded } from "./useBatchData";
 
 type ClassDialogProps = {
@@ -77,8 +73,8 @@ function ClassDialogBody({ state, onChanged }: BodyProps) {
   return (
     <>
       <ClassFacts batch={batch} />
+      {batch.canChange && <AddStudentSearch batch={batch} onAdded={onChanged} />}
       <Members batch={batch} onChanged={onChanged} />
-      {batch.canChange && <AddStudent batch={batch} onAdded={onChanged} />}
     </>
   );
 }
@@ -176,63 +172,5 @@ function Members({ batch, onChanged }: MembersProps) {
         </ConfirmDialog>
       )}
     </>
-  );
-}
-
-type AddStudentProps = { batch: BatchWithStudents; onAdded: () => void };
-
-/** Find a Student and add them to the class. */
-function AddStudent({ batch, onAdded }: AddStudentProps) {
-  const { showToast } = useToast();
-  const [student, setStudent] = useState<StudentChoice | null>(null);
-  const [errors, setErrors] = useState<readonly string[] | undefined>(undefined);
-  const [isSaving, setIsSaving] = useState(false);
-
-  async function handleSubmit(event: SubmitEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    if (student === null) {
-      setErrors([BATCH_TEXT.chooseStudentFirst]);
-      return;
-    }
-    setIsSaving(true);
-    setErrors(undefined);
-    try {
-      await addStudentToBatch(batch.id, student.id);
-      showToast(BATCH_TEXT.added(student.name, batch.name));
-      setStudent(null);
-      onAdded();
-    } catch (error) {
-      setErrors(
-        error instanceof InvalidFieldsError && error.fieldErrors.studentId !== undefined
-          ? error.fieldErrors.studentId
-          : [MESSAGES.saveFailed],
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }
-
-  return (
-    <form
-      noValidate
-      className="grid gap-4"
-      onSubmit={(event) => {
-        void handleSubmit(event);
-      }}
-    >
-      <StudentFinder
-        value={student}
-        onChange={setStudent}
-        errors={errors}
-        labels={ADD_LABELS}
-        isRequired
-        excludesLost
-      />
-      <div>
-        <Button type="submit" icon="plus" isLoading={isSaving} loadingLabel={MESSAGES.loading}>
-          {BATCH_TEXT.addToClass}
-        </Button>
-      </div>
-    </form>
   );
 }
