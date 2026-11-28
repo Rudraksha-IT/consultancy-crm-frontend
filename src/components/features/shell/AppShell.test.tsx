@@ -488,19 +488,25 @@ describe("AppShell above phone width", () => {
     expect(name.closest("a")).toBeNull();
   });
 
-  it("is tall enough on computers for the office name to line up with the mark beside it", async () => {
+  it("is 60 tall, with the office name in Fraunces, 20 on computers (owner, 2026-11-28)", async () => {
     await renderShellFor(ADMIN_CONTEXT);
 
-    // The side menu's mark is 12 + 4 down and 40 tall, so its middle is 36 down: half of 72.
-    expect(screen.getByRole("banner")).toHaveClass("wide:min-h-office-bar-wide");
+    const bar = screen.getByRole("banner");
+    expect(bar).toHaveClass("min-h-office-bar");
+    expect(bar.className).not.toContain("office-bar-wide");
+    expect(within(bar).getByText("Acme Education")).toHaveClass(
+      "font-office",
+      "wide:text-office-name",
+    );
   });
 
   it("leaves a plain gap under the office mark before Home, with no line", async () => {
     await renderShellFor(ADMIN_CONTEXT);
 
-    // 12 + 48 + 24: Home starts 84 down, just under the 72 tall top bar (owner, 2026-11-28).
+    // The mark's box is 6 down and 48 tall, so the 40 mark's middle is 30 down: half of the
+    // 60 tall top bar, level with the office name. Then a 24 gap: Home starts 78 down.
     const markBox = document.querySelector("#side-nav > .size-12");
-    expect(markBox).toHaveClass("mt-3", "mb-6");
+    expect(markBox).toHaveClass("mt-1.5", "mb-6");
     expect(markBox).not.toHaveClass("border-b");
   });
 

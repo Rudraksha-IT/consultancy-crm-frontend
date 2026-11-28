@@ -345,6 +345,8 @@
   --color-gap: var(--gap);
 
   --font-sans: var(--font-geist), "Geist", "Segoe UI", system-ui, sans-serif;
+  /* the office's name beside its mark, and nothing else (owner, 2026-11-28) */
+  --font-office: var(--font-fraunces), "Fraunces", Georgia, serif;
 
   /* type: size / line height / weight (computers, then phones through the --size-* values) */
   --text-*: initial;
@@ -359,6 +361,10 @@
   --text-section-title: var(--size-section-title);
   --text-section-title--line-height: var(--size-section-title-line);
   --text-section-title--font-weight: 600;
+  /* the office's name in the top bar above 1024 (owner, 2026-11-28) */
+  --text-office-name: 1.25rem;
+  --text-office-name--line-height: 1.75rem;
+  --text-office-name--font-weight: 600;
   --text-section-title--letter-spacing: -0.01em;
   --text-card-title: 1.125rem;
   --text-card-title--line-height: 1.5rem;
@@ -447,8 +453,6 @@
   --spacing-rail: 7rem;
   --spacing-rail-item: 4.125rem;
   --spacing-office-bar: 3.75rem;
-  /* above 1024: the office name lines up with the side menu's mark (owner, 2026-11-28) */
-  --spacing-office-bar-wide: 4.5rem;
   --spacing-mark: 2.5rem;
   --spacing-mark-lg: 4.5rem;
   --spacing-icon: 1.25rem;
@@ -503,7 +507,7 @@
      while pinned under the top bar (the screen less the bar, the gap under it and one above
      the foot) */
   --spacing-note-side: 21.25rem;
-  --spacing-note-room: calc(100dvh - 7.5rem);
+  --spacing-note-room: calc(100dvh - 6.75rem);
   --spacing-desk-empty: 10.5rem;
   /* the Documents page (UI revamp 12): the least a row's name column is wide beside its pills */
   --spacing-doc-name: 12.5rem;

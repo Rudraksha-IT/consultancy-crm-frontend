@@ -1,6 +1,9 @@
 import { generateMetadata } from "./layout";
 
-vi.mock("next/font/google", () => ({ Geist: () => ({ variable: "font" }) }));
+vi.mock("next/font/google", () => ({
+  Geist: () => ({ variable: "font" }),
+  Fraunces: () => ({ variable: "office-font" }),
+}));
 const getProductName = vi.hoisted(() =>
   vi.fn<() => Promise<string>>(() => Promise.resolve("Acme Office Suite")),
 );
